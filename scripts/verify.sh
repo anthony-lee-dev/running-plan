@@ -77,7 +77,6 @@ verify_ios() {
   (cd ios && xcodegen generate --quiet)
   local dest="${IOS_SIM_DEST:-}"
   if [[ -z "$dest" ]]; then
-    # First available iPhone simulator on this Mac.
     # First iPhone on the newest iOS runtime; older runtimes may not match the installed Xcode.
     local id
     id="$(xcrun simctl list devices available | pick_ios_sim)"

@@ -23,6 +23,9 @@ struct ThemeTests {
         #expect(Palette.muted == RGB(hex: "#ABA597"))
         #expect(Palette.accent == RGB(hex: "#C9411B"))
         #expect(Palette.accentText == RGB(hex: "#FF8A63"))
+        #expect(Palette.line == RGB(hex: "#3A362B"))
+        #expect(Palette.accentSoft == RGB(hex: "#4A2418"))
+        #expect(Palette.green == RGB(hex: "#4FC79A"))
         #expect(Palette.tabBar == RGB(hex: "#141310"))
     }
 
