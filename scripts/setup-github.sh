@@ -17,6 +17,9 @@ gh api -X PATCH "repos/$REPO" --silent --input - <<'JSON'
 JSON
 gh api -X PUT "repos/$REPO/vulnerability-alerts" --silent
 
+echo "== security: Dependabot security update PRs"
+gh api -X PUT "repos/$REPO/automated-security-fixes" --silent
+
 echo "== ruleset on main: PR required, api and ios checks required, no force push or delete"
 existing="$(gh api "repos/$REPO/rulesets" --jq '.[] | select(.name=="main") | .id' || true)"
 if [[ -n "$existing" ]]; then

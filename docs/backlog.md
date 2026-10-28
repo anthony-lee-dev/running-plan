@@ -20,6 +20,8 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
       as a small PR (before any deploy; 1.5 tests run locally without it)
 - [ ] 0.5 Export the 11 dark boards as PNGs into `designs/dark/png/` (needed by the snapshot tests in phase 3 and 4)
 - [ ] 0.6 Sign in to Xcode with the Apple account so the Personal Team can run the app on the iPhone (needed for gate D)
+- [ ] 0.7 Re-run `bash scripts/setup-github.sh` after 1.6 merges, to turn on Dependabot security update PRs
+      (agents may not run it)
 
 ## Phase 1: Foundations
 
@@ -39,7 +41,10 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
       `design:design-handoff` and `design:accessibility-review` skills if they load (44 pt touch targets).
       needs: 1.2 for the endpoint names
 - [ ] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
-      `updatedAt` and `deletedAt` tombstone), D1 adapter tests with `@cloudflare/vitest-pool-workers`. needs: 1.2
+      `updatedAt` and `deletedAt` tombstone), D1 adapter tests with `@cloudflare/vitest-pool-workers`. needs: 1.2, 1.6
+- [x] 1.6 Clear the Dependabot alerts (all in dev tooling): `vitest` `^4.1.12`, `@redocly/cli` `^2.72.0`, so
+      `npm audit` shows 0. Check dependencies early: audit step in `verify.sh`, dependency review in `api-ci`,
+      `.github/dependabot.yml`, reviewer checks lockfile changes
 
 **Gate A (human):** approve and merge 1.2 line by line. Everything below builds on it.
 

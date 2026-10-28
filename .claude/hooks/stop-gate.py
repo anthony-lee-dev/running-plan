@@ -13,7 +13,9 @@ import sys
 import tempfile
 
 MAX_BLOCKS = 5
-PACKAGES = {"api/": "api", "spec/": "spec", "ios/": "ios"}
+# Prefix -> package. Root npm files and scripts/ map to api, whose verify runs the audit and script tests.
+PACKAGES = {"api/": "api", "spec/": "spec", "ios/": "ios", "scripts/": "api",
+            "package.json": "api", "package-lock.json": "api"}
 
 
 def git(cwd, *args):

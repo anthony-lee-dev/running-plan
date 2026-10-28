@@ -94,6 +94,7 @@ Read it top to bottom: a phase does not start until the gate above it passes, an
 | Contract | Spec lint now; contract tests from `openapi.yaml` against the Workers and Node entries (task 2.7) | Redocly lint, contract suite | Stop hook, `api-ci` |
 | iOS logic | Swift Testing for the offline edit queue, 24-hour draft expiry, min/km pace, local-date matching | `xcodebuild test` passes | Stop hook, ios-ci |
 | iOS screens | Snapshot tests against `designs/dark/png/`; one UI test for interview, then preview, with no account | Snapshots within tolerance | Stop hook, ios-ci |
+| Dependencies | Nothing to write; `npm audit` runs inside `verify.sh`, dependency review runs on every PR, Dependabot opens weekly update and security PRs | No high or critical advisory in runtime packages; no PR adds a vulnerable package | Stop hook, `api-ci`, reviewer subagent |
 
 **Two required checks on `main`.** `api` (Ubuntu) runs spec lint and the API checks on every PR. `ios` (macOS, the newest Xcode on the runner) builds and tests only when `ios/`, `spec/` or the verify script changed, and passes in seconds otherwise. Both run on every PR without path filters, because a required check that never reports would block a PR forever. The runner's Xcode can differ from your 27.1, so the iOS deployment target stays at 17.
 

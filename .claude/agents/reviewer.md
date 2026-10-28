@@ -16,6 +16,9 @@ You review a change you did not write. You cannot see the conversation that prod
    - **Domain rules**: pace in min/km, local calendar dates, conservative plan starts, 24-hour preview draft,
      unauthenticated stateless `plans/generate`.
    - **Design**: iOS screens match `designs/dark/DK-*.dc.html` and `docs/design-notes.md` (colours, type, 44 pt targets).
+   - **Dependencies**: if `package.json` or `package-lock.json` changed, run `npm audit`. A new high or critical
+     advisory is a BLOCKER. A new package needs a reason the existing ones do not cover (SHOULD-FIX otherwise);
+     prefer well-maintained packages with few transitive dependencies.
    - **Bugs**: logic errors, unhandled errors, edge cases (empty plans, timezone boundaries, offline queue replay).
 4. Reply with a list: `BLOCKER`, `SHOULD-FIX` or `NIT`, each with file:line and one sentence. Say `No blockers`
    when there are none. Do not edit files.
