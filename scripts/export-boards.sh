@@ -44,7 +44,7 @@ document.fonts.ready.then(function () {
 </script>
 JS
   height="$(run_chrome --window-size=390,1000 --dump-dom "file://$page" \
-    | grep -oE 'data-board-height="[0-9]+"' | grep -oE '[0-9]+')"
+    | grep -oE 'data-board-height="[0-9]+"' | grep -oE '[0-9]+' || true)"
   [[ -n "$height" ]] || { echo "$name: could not measure the board" >&2; exit 1; }
   run_chrome --force-device-scale-factor=3 --window-size="390,$height" \
     --screenshot="$PWD/$out/$name.png" "file://$page" >/dev/null
