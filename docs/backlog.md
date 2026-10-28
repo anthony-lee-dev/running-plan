@@ -16,7 +16,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 - [x] 0.2 On GitHub, `api` and `ios` ran green on `main`, and Settings, Rules shows the `main` ruleset (before any PR)
 - [x] 0.3 Test the Stop hook once: break a pace test in a worktree, ask Claude to finish, check it keeps going
       (before the first agent task)
-- [ ] 0.4 `npx wrangler login`, `npx wrangler d1 create running-plan` from `api/`, put the id in `api/wrangler.toml`
+- [x] 0.4 `npx wrangler login`, `npx wrangler d1 create running-plan` from `api/`, put the id in `api/wrangler.toml`
       as a small PR (before any deploy; 1.5 tests run locally without it)
 - [ ] 0.5 Export the 11 dark boards as PNGs into `designs/dark/png/` (needed by the snapshot tests in phase 3 and 4)
 - [ ] 0.6 Sign in to Xcode with the Apple account so the Personal Team can run the app on the iPhone (needed for gate D)
