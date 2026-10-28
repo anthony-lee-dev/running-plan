@@ -4,6 +4,8 @@
 #   app    = bearer token with the "app" scope (any signed-in client)
 #   native = bearer token with the "activities:write" scope (iOS and Android only, never web)
 # A route change here is a contract change: update this list in the same spec PR.
+# Also: no schema used inside allOf may set additionalProperties: false (it would reject the fields the
+# other allOf parts add); put unevaluatedProperties: false on the composed schema instead.
 set -uo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
@@ -63,6 +65,18 @@ for (const [path, item] of Object.entries(spec.paths || {})) {
 }
 console.log(out.sort().join("\n"));
 ' "$tmp/spec.json" >"$tmp/actual"
+
+strict="$(node -e '
+const s = require(process.argv[1]).components.schemas;
+for (const [name, schema] of Object.entries(s))
+  for (const part of schema.allOf || [])
+    if (part.$ref && s[part.$ref.split("/").pop()].additionalProperties === false)
+      console.log(`${name} -> ${part.$ref.split("/").pop()}`);
+' "$tmp/spec.json")"
+if [[ -n "$strict" ]]; then
+  echo "FAIL schemas with additionalProperties: false used inside allOf:"; sed 's/^/    /' <<<"$strict"; exit 1
+fi
+echo "ok   no strict schema inside allOf"
 
 sort "$expected" -o "$expected"
 if diff -u "$expected" "$tmp/actual" >"$tmp/diff"; then
