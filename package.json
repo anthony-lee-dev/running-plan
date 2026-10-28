@@ -1,0 +1,13 @@
+{
+  "name": "running-plan",
+  "private": true,
+  "workspaces": [
+    "api"
+  ],
+  "scripts": {
+    "verify": "bash scripts/verify.sh all"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.25.0"
+  }
+}

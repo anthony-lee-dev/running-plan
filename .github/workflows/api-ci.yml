@@ -1,0 +1,23 @@
+name: api-ci
+# Required check "api" on main. No path filter: a required check must report on every PR,
+# or PRs that don't touch the API would wait for it forever.
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: api-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  api:
+    name: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: bash scripts/verify.sh spec api

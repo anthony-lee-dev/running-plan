@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Original Dark: Import inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1A15;--card:#27241D;--ink:#F5F1E6;--muted:#ABA597;--line:#3A362B;--accent:#C9411B;--accent-text:#FF8A63;--green:#4FC79A;--green-soft:#1D3A2E;--blue-soft:#1F2A4D}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#F5F1E6}
+a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+<div style="width:390px;min-height:960px;box-sizing:border-box;background:var(--bg);display:flex;flex-direction:column;padding:56px 20px 34px;gap:16px;font-family:'Inter',system-ui,sans-serif;color:var(--ink)">
+  <a href="DK-Next.dc.html" style="min-height:44px;margin-left:-10px;display:flex;align-items:center;gap:4px;font-size:16px;font-weight:600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Next</a>
+
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;line-height:1.08;font-weight:700;letter-spacing:-0.02em">Import inbox</h1>
+    <p style="margin:0;font-size:15px;line-height:1.45;color:var(--muted)">2 workouts found in Apple Health. Confirm where they belong so your plan stays accurate.</p>
+  </header>
+
+  <section style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:var(--muted)">Mon, Oct 26 · Apple Watch</span><span style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">5.1 km · 33:14</span><span style="font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums">6:30/km average · 148 bpm</span></div>
+      <span style="font-size:12px;font-weight:600;background:var(--green-soft);color:#8EE0BF;padding:4px 10px;border-radius:99px;white-space:nowrap">Likely match</span>
+    </div>
+    <div style="background:var(--bg);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:var(--muted)">Matches your plan</span><span style="font-size:15px;font-weight:600">Easy run · 5 km</span></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="DK-CheckIn.dc.html" style="flex:2;min-height:50px;display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;border-radius:14px;font-size:16px;font-weight:600">Confirm match</a>
+      <a href="#" style="flex:1;min-height:50px;display:flex;align-items:center;justify-content:center;border:1px solid #4A4638;border-radius:14px;font-size:15px;font-weight:600">Change</a>
+    </div>
+  </section>
+
+  <section style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:var(--muted)">Sun, Oct 25 · Apple Watch</span><span style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">3.2 km · 22:05</span><span style="font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums">6:54/km average</span></div>
+      <span style="font-size:12px;font-weight:600;background:var(--blue-soft);color:#B7C7F5;padding:4px 10px;border-radius:99px;white-space:nowrap">Extra run</span>
+    </div>
+    <div style="font-size:14px;line-height:1.45;color:var(--muted)">Nothing was planned that day. Nice bonus. Adding it keeps your totals honest.</div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+      <a href="#" style="min-height:50px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#1C1A15;border-radius:14px;font-size:15px;font-weight:600">Add as extra run</a>
+      <a href="#" style="min-height:50px;display:flex;align-items:center;justify-content:center;border:1px solid #4A4638;border-radius:14px;font-size:15px;font-weight:600">Match to a session</a>
+    </div>
+    <a href="#" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--muted)">Ignore this workout</a>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:4px;padding:4px 4px 0">
+    <div style="font-size:13px;color:var(--muted)">Last synced today at 7:42 AM. If a run didn't come through from your watch app, you can add it by hand.</div>
+    <a href="#" style="min-height:44px;display:flex;align-items:center;font-size:15px;font-weight:600;color:var(--accent-text)">Add a run manually</a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

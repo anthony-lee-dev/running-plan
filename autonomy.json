@@ -1,0 +1,9 @@
+{
+  "level": 0,
+  "levels": {
+    "0": [],
+    "1": ["docs/**", "api/test/**", "api/src/domain/**"],
+    "2": ["docs/**", "api/**"],
+    "3": ["docs/**", "api/**", "ios/**", "designs/**"]
+  }
+}

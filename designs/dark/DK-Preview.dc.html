@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Original Dark: Suggested plan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1A15;--card:#27241D;--ink:#F5F1E6;--muted:#ABA597;--line:#3A362B;--accent:#C9411B;--accent-text:#FF8A63;--amber-soft:#3B3115}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#F5F1E6}
+a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+<div style="width:390px;min-height:1240px;box-sizing:border-box;background:var(--bg);display:flex;flex-direction:column;padding:62px 20px 34px;gap:18px;font-family:'Inter',system-ui,sans-serif;color:var(--ink)">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--accent-text)">PREVIEW · NOT SAVED YET</span>
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.02em">Your suggested plan</h1>
+    <p style="margin:0;font-size:16px;line-height:1.45;color:var(--muted)">10K on Jan 10 · 10 weeks · 4 runs and 1 strength session a week. It starts gently, and you can change anything.</p>
+  </header>
+
+  <section style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:16px;font-weight:600">Weekly distance</h2><span style="font-size:13px;color:var(--muted)">km per week</span></div>
+    <div role="img" aria-label="Bar chart of weekly running distance over 10 weeks: 16, 18, 21, 25, 20, 28, 31, 33, 24, 16 kilometres" style="display:flex;align-items:flex-end;gap:5px;height:130px">
+      <div style="flex:1;height:58px;background:#4C9C80;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:65px;background:#4C9C80;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:76px;background:#4C9C80;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:90px;background:#E9B949;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:72px;background:#E9B949;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:101px;background:#E9B949;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:112px;background:#F0643A;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:119px;background:#F0643A;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:86px;background:#8C9FD8;border-radius:6px 6px 2px 2px"></div>
+      <div style="flex:1;height:58px;background:#8C9FD8;border-radius:6px 6px 2px 2px"></div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)">
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#4C9C80"></span>Base</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#E9B949"></span>Build</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#F0643A"></span>Peak</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#8C9FD8"></span>Taper</span>
+    </div>
+    <p style="margin:0;font-size:14px;line-height:1.45;color:var(--muted)">Week 5 and the final two weeks pull back so you arrive fresh.</p>
+  </section>
+
+  <section style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:16px;font-weight:600">Week 1 · 16 km</h2><span style="font-size:13px;color:var(--muted)">Base</span></div>
+    <div style="display:grid;grid-template-columns:44px 1fr;row-gap:10px;column-gap:12px;align-items:center;font-size:15px">
+      <span style="color:var(--muted);font-weight:600">Mon</span><span>Easy run · 4 km</span>
+      <span style="color:var(--muted);font-weight:600">Tue</span><span>Strength · 20 min</span>
+      <span style="color:var(--muted);font-weight:600">Wed</span><span>Easy run · 4 km</span>
+      <span style="color:var(--muted);font-weight:600">Thu</span><span style="color:var(--muted)">Rest day</span>
+      <span style="color:var(--muted);font-weight:600">Fri</span><span>Easy run · 3 km</span>
+      <span style="color:var(--muted);font-weight:600">Sat</span><span>Long run · 5 km</span>
+      <span style="color:var(--muted);font-weight:600">Sun</span><span style="color:var(--muted)">Rest day</span>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px">
+      <div style="font-size:15px;font-weight:600">Sample: Easy run, 4 km</div>
+      <div style="font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums">Easy effort · 6:25–7:10/km · about 27 min</div>
+      <div style="font-size:14px;color:var(--muted)">Why: easy miles build your base without strain.</div>
+    </div>
+  </section>
+
+  <section style="background:var(--amber-soft);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:8px">
+    <h2 style="margin:0;font-size:15px;font-weight:600;color:#F7E3A6">What we assumed</h2>
+    <div style="font-size:14px;line-height:1.45;color:#E5D29B">Easy pace of 6:25–7:10/km, estimated from your recent 5K of 28:30. Paces are ranges and start on the slower side.</div>
+    <div style="font-size:14px;line-height:1.45;color:#E5D29B">Starting volume sits below your usual 20 km a week, so the first weeks feel comfortable.</div>
+    <a href="#" style="min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#FFC38A">Change an answer</a>
+  </section>
+
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:6px">
+    <a href="DK-Next.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:56px;background:var(--accent);color:#fff;border-radius:18px;font-size:17px;font-weight:600">Save your plan</a>
+    <div style="text-align:center;font-size:13px;color:var(--muted)">Sign in with Apple or email to keep it. Unsaved previews are deleted after 24 hours.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

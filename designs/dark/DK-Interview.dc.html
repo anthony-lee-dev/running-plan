@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Original Dark: Interview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1A15;--card:#27241D;--ink:#F5F1E6;--muted:#ABA597;--line:#3A362B;--accent:#C9411B;--accent-text:#FF8A63;--accent-soft:#4A2418}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#F5F1E6}
+a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:var(--bg);display:flex;flex-direction:column;padding:62px 20px 34px;gap:24px;font-family:'Inter',system-ui,sans-serif;color:var(--ink)">
+  <div style="display:flex;align-items:center;gap:12px">
+    <a href="#" aria-label="Back" style="width:44px;height:44px;margin-left:-10px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+      <div style="height:6px;border-radius:99px;background:var(--line);overflow:hidden"><div style="width:8%;height:100%;background:#F0643A"></div></div>
+      <div style="font-size:12px;color:var(--muted)">Question 1 of 12 · about 2 minutes</div>
+    </div>
+    <a href="#" style="min-height:44px;display:flex;align-items:center;font-size:15px;font-weight:600;color:var(--muted)">Skip</a>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;line-height:1.08;font-weight:700;letter-spacing:-0.02em">What are you training for?</h1>
+    <p style="margin:0;font-size:16px;line-height:1.45;color:var(--muted)">Pick a distance. We'll suggest a plan, and you can change any part of it later.</p>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <button style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:16px;min-height:76px;padding:14px 18px;background:var(--card);border:2px solid var(--line);border-radius:20px">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:700;width:76px">5K</span>
+      <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Your first or fastest 5K</span><span style="font-size:13px;color:var(--muted)">Usually 8–12 weeks</span></span>
+    </button>
+    <button style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:16px;min-height:76px;padding:14px 18px;background:var(--accent-soft);border:2px solid #F0643A;border-radius:20px">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:700;width:76px">10K</span>
+      <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Build speed and stamina</span><span style="font-size:13px;color:#E8B8A6">Usually 8–14 weeks</span></span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF8A63" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-label="Selected"><path d="M5 12l5 5 9-10"/></svg>
+    </button>
+    <button style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:16px;min-height:76px;padding:14px 18px;background:var(--card);border:2px solid var(--line);border-radius:20px">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:700;width:76px">21K</span>
+      <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Half marathon</span><span style="font-size:13px;color:var(--muted)">Usually 10–16 weeks</span></span>
+    </button>
+  </div>
+
+  <p style="margin:0;font-size:13px;line-height:1.45;color:var(--muted)">Your answers stay on this phone until you choose to save your plan. No account needed yet.</p>
+
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+    <a href="DK-Preview.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:56px;background:var(--accent);color:#fff;border-radius:18px;font-size:17px;font-weight:600">Continue</a>
+    <a href="#" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:15px;font-weight:600;color:var(--muted)">I'd rather build my own plan</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash scripts/verify.sh *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(npm install *)",
+      "Bash(npx wrangler *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git switch *)",
+      "Bash(git fetch *)",
+      "Bash(git rebase origin/main)",
+      "Bash(git push -u origin agent/*)",
+      "Bash(git push origin agent/*)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr ready *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh run view *)",
+      "Bash(python3 scripts/request-merge.py *)",
+      "Bash(xcodegen *)",
+      "Bash(xcodebuild *)",
+      "Bash(xcrun simctl *)"
+    ],
+    "deny": [
+      "Bash(gh pr merge *)",
+      "Bash(gh api *)",
+      "Bash(gh repo edit *)",
+      "Bash(gh ruleset *)",
+      "Bash(bash scripts/setup-github.sh *)",
+      "Bash(git push origin main *)",
+      "Bash(git push origin HEAD:main *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push)",
+      "Bash(npx wrangler deploy *)",
+      "Bash(npm run deploy *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-gate.py",
+            "timeout": 900
+          }
+        ]
+      }
+    ]
+  }
+}

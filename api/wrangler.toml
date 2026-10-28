@@ -1,0 +1,10 @@
+name = "running-plan-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "running-plan"
+# Create with: npx wrangler d1 create running-plan  (then paste the id here)
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Original Dark: Session editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1A15;--card:#27241D;--ink:#F5F1E6;--muted:#ABA597;--line:#3A362B;--accent:#C9411B;--accent-text:#FF8A63;--accent-soft:#4A2418;--amber-soft:#3B3115}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#F5F1E6}
+a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+<div style="width:390px;min-height:1200px;box-sizing:border-box;background:var(--bg);display:flex;flex-direction:column;padding:56px 20px 34px;gap:16px;font-family:'Inter',system-ui,sans-serif;color:var(--ink)">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <a href="DK-Session.dc.html" style="min-height:44px;display:flex;align-items:center;font-size:16px;color:var(--muted);font-weight:500">Cancel</a>
+    <span style="font-size:17px;font-weight:600">Edit session</span>
+    <a href="DK-Session.dc.html" style="min-height:44px;display:flex;align-items:center;font-size:16px;color:var(--accent-text);font-weight:700">Save</a>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <label for="title" style="font-size:13px;font-weight:600;color:var(--muted)">Title</label>
+    <input id="title" value="Intervals: 5 × 600 m" style="box-sizing:border-box;min-height:52px;border:1px solid #4A4638;border-radius:14px;padding:0 14px;font:600 17px 'Inter',system-ui,sans-serif;color:var(--ink);background:var(--card)">
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:13px;font-weight:600;color:var(--muted)">Type</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:99px;background:var(--card);font-size:14px;font-weight:600">Easy</button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:99px;background:var(--card);font-size:14px;font-weight:600">Long</button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;padding:0 16px;display:flex;align-items:center;border:2px solid #F0643A;border-radius:99px;background:var(--accent-soft);font-size:14px;font-weight:700">Intervals</button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:99px;background:var(--card);font-size:14px;font-weight:600">Tempo</button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:99px;background:var(--card);font-size:14px;font-weight:600">Strength</button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:99px;background:var(--card);font-size:14px;font-weight:600">Custom</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:600;color:var(--muted)">Steps</span><span style="font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums">Total ~44 min · ~6.9 km</span></div>
+
+    <div style="background:var(--card);border-radius:16px;padding:6px 8px 6px 4px;display:flex;align-items:center;gap:2px;min-height:60px">
+      <span aria-label="Drag to reorder" style="width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:#8A8474"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Warm-up</span><span style="font-size:13px;color:var(--muted)">Easy effort · 6:25–7:10/km</span></div>
+      <button style="all:unset;cursor:pointer;box-sizing:border-box;min-width:76px;height:44px;display:flex;align-items:center;justify-content:center;background:#38342A;border-radius:10px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums">10:00</button>
+    </div>
+
+    <div style="background:#2F2B22;border-radius:20px;padding:10px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:2px">
+        <span aria-label="Drag to reorder" style="width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:#8A8474"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>
+        <span style="flex:1;font-size:15px;font-weight:700">Repeat</span>
+        <div style="display:flex;align-items:center;background:var(--card);border-radius:12px">
+          <button aria-label="Fewer repeats" style="all:unset;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600">−</button>
+          <span style="min-width:34px;text-align:center;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums">5×</span>
+          <button aria-label="More repeats" style="all:unset;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600">+</button>
+        </div>
+      </div>
+      <div style="background:var(--card);border-radius:14px;padding:6px 8px 6px 12px;display:flex;align-items:center;gap:8px;min-height:60px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Fast</span><span style="font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums">Pace 5:15–5:30/km</span></div>
+        <button style="all:unset;cursor:pointer;box-sizing:border-box;min-width:76px;height:44px;display:flex;align-items:center;justify-content:center;background:#38342A;border-radius:10px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums">600 m</button>
+      </div>
+      <div style="background:var(--card);border-radius:14px;padding:6px 8px 6px 12px;display:flex;align-items:center;gap:8px;min-height:60px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Easy jog</span><span style="font-size:13px;color:var(--muted)">No pace target</span></div>
+        <button style="all:unset;cursor:pointer;box-sizing:border-box;min-width:76px;height:44px;display:flex;align-items:center;justify-content:center;background:#38342A;border-radius:10px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums">2:00</button>
+      </div>
+      <a href="#" style="min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:600;color:var(--accent-text)">+ Add step to repeat</a>
+    </div>
+
+    <div style="background:var(--card);border-radius:16px;padding:6px 8px 6px 4px;display:flex;align-items:center;gap:2px;min-height:60px">
+      <span aria-label="Drag to reorder" style="width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:#8A8474"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Cool-down</span><span style="font-size:13px;color:var(--muted)">Easy effort · 6:25–7:10/km</span></div>
+      <button style="all:unset;cursor:pointer;box-sizing:border-box;min-width:76px;height:44px;display:flex;align-items:center;justify-content:center;background:#38342A;border-radius:10px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums">8:00</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+      <a href="#" style="min-height:48px;display:flex;align-items:center;justify-content:center;border:1.5px dashed #6A6455;border-radius:14px;font-size:14px;font-weight:600">+ Add step</a>
+      <a href="#" style="min-height:48px;display:flex;align-items:center;justify-content:center;border:1.5px dashed #6A6455;border-radius:14px;font-size:14px;font-weight:600">+ Add repeat</a>
+    </div>
+  </div>
+
+  <div style="background:var(--amber-soft);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px">
+    <span style="font-size:14px;font-weight:700;color:#F7E3A6">Heads up</span>
+    <span style="font-size:14px;line-height:1.45;color:#E5D29B">This is a hard session, and Saturday is your long run. Thursday's rest and Friday's easy run give you buffer now, but moving it later would remove it. You can still save any change.</span>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <label for="notes" style="font-size:13px;font-weight:600;color:var(--muted)">Notes</label>
+    <textarea id="notes" rows="2" placeholder="Anything to remember on the day" style="box-sizing:border-box;border:1px solid #4A4638;border-radius:14px;padding:12px 14px;font:400 15px 'Inter',system-ui,sans-serif;color:var(--ink);background:var(--card);resize:none"></textarea>
+  </div>
+
+  <div style="font-size:13px;line-height:1.45;color:var(--muted)">Saving marks this session as yours. Suggested changes will leave it alone.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

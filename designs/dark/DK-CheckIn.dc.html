@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Original Dark: Plan vs actual</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1A15;--card:#27241D;--ink:#F5F1E6;--muted:#ABA597;--line:#3A362B;--accent:#C9411B;--accent-text:#FF8A63;--accent-soft:#4A2418;--green:#4FC79A;--green-soft:#1D3A2E}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#F5F1E6}
+a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+<div style="width:390px;min-height:1000px;box-sizing:border-box;background:var(--bg);display:flex;flex-direction:column;padding:56px 20px 34px;gap:16px;font-family:'Inter',system-ui,sans-serif;color:var(--ink)">
+  <a href="DK-Inbox.dc.html" style="min-height:44px;margin-left:-10px;display:flex;align-items:center;gap:4px;font-size:16px;font-weight:600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Inbox</a>
+
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--green)">MATCHED · EASY RUN</span>
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;line-height:1.08;font-weight:700;letter-spacing:-0.02em">Nice work, that's a solid one</h1>
+    <p style="margin:0;font-size:15px;line-height:1.45;color:var(--muted)">You ran a little over plan and kept the pace easy, right where it should be.</p>
+  </header>
+
+  <section style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:16px;font-weight:600">Plan vs actual</h2>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">Distance</span><span style="color:var(--muted);font-variant-numeric:tabular-nums">5.0 planned · <b style="color:var(--ink)">5.1 km</b></span></div>
+      <div style="height:10px;border-radius:99px;background:#4A4638"><div style="width:100%;height:100%;border-radius:99px;background:var(--green)"></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">Time</span><span style="color:var(--muted);font-variant-numeric:tabular-nums">~34 min planned · <b style="color:var(--ink)">33:14</b></span></div>
+      <div style="height:10px;border-radius:99px;background:#4A4638"><div style="width:97%;height:100%;border-radius:99px;background:var(--green)"></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">Pace</span><span style="color:var(--muted);font-variant-numeric:tabular-nums">6:25–7:10 target · <b style="color:var(--ink)">6:30/km</b></span></div>
+      <div style="height:10px;border-radius:99px;background:#4A4638;position:relative"><div style="position:absolute;left:12%;width:60%;height:100%;border-radius:99px;background:var(--green-soft);border:1px solid var(--green);box-sizing:border-box"></div><div style="position:absolute;left:20%;top:-3px;width:4px;height:16px;border-radius:2px;background:var(--ink)"></div></div>
+      <span style="font-size:13px;color:#8EE0BF;font-weight:600">In your easy range</span>
+    </div>
+  </section>
+
+  <section style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font-size:16px;font-weight:600">How did it feel?</h2>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:50px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:14px;font-size:15px;font-weight:600">Easier than I expected</button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:50px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border:2px solid #F0643A;background:var(--accent-soft);border-radius:14px;font-size:15px;font-weight:700">About right<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF8A63" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-label="Selected"><path d="M5 12l5 5 9-10"/></svg></button>
+      <button style="all:unset;box-sizing:border-box;cursor:pointer;min-height:50px;padding:0 16px;display:flex;align-items:center;border:1px solid #4A4638;border-radius:14px;font-size:15px;font-weight:600">Harder than I expected</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding-top:6px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Any pain or niggle?</span><span style="font-size:13px;color:var(--muted)">Just yes or no</span></div>
+      <div style="display:flex;background:#2D2A22;border-radius:12px;padding:3px">
+        <button style="all:unset;cursor:pointer;min-width:56px;min-height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:15px;font-weight:600;color:var(--muted)">Yes</button>
+        <button style="all:unset;cursor:pointer;min-width:56px;min-height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#443F33;font-size:15px;font-weight:600">No</button>
+      </div>
+    </div>
+    <div style="font-size:13px;line-height:1.45;color:var(--muted)">If something hurts, stop and talk to a qualified professional. This app can't give medical advice.</div>
+  </section>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto">
+    <a href="DK-Next.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:56px;background:var(--accent);color:#fff;border-radius:18px;font-size:17px;font-weight:600">Save</a>
+    <a href="DK-Next.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:15px;font-weight:600;color:var(--muted)">Skip for now</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+openapi: 3.1.0
+info:
+  title: Running Planner API
+  version: 0.1.0
+  description: >
+    Contract for the iOS app (phase 1) and the web companion (phase 2).
+    Only /v1/health exists so far. Backlog task 1.2 derives the full contract from
+    "designs/Running Planner — System Design v1.0.md".
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: http://localhost:8787
+    description: Local Workers dev server
+security: []
+paths:
+  /v1/health:
+    get:
+      operationId: getHealth
+      summary: Liveness and storage check
+      tags: [system]
+      responses:
+        "200":
+          description: Service and storage are up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: Storage is not answering
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status, storage, time]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        storage:
+          type: boolean
+        time:
+          type: string
+          format: date-time
+tags:
+  - name: system
+    description: Operational endpoints
