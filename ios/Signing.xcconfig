@@ -1,0 +1,6 @@
+// Committed signing settings (see ios/CLAUDE.md).
+// Free Personal Team builds use the .dev suffix; never register the release ID with it.
+BUNDLE_ID_SUFFIX = .dev
+
+// The human's team ID lives in the gitignored Local.xcconfig. Optional, so CI builds without it.
+#include? "Local.xcconfig"
