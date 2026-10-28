@@ -1,57 +1,156 @@
 # Backlog
 
-Agents take the first unticked task whose phase gate has passed (`/next-task`). One task = one PR.
-`ask first` = post the plan and wait for the human before writing code.
+Agents take the first unticked task whose phase gate has passed and whose `needs` are ticked (`/next-task`).
+One task = one PR. `ask first` = post the plan and wait for the human before writing code.
+Task numbers are stable IDs, not order: work top to bottom within a phase. Tasks without a shared `needs` can run
+side by side, one worktree each (`claude --worktree <name>`); two or three at once is a sensible limit.
+
+Sources: § points to `designs/Running Planner — System Design v1.0.md` (what to build). The test approach per layer,
+gates and manual-gate rules come from `designs/Running Planner Agent Build Workflow.md` (how to build).
+
+## Phase 0: Setup on the Mac (human)
+
+From the workflow doc's Day-1 checklist. Each line says what it unblocks.
+
+- [x] 0.1 Tools installed, email hidden, `bash scripts/bootstrap.sh` ended with "main is protected"
+- [ ] 0.2 On GitHub, `api` and `ios` ran green on `main`, and Settings, Rules shows the `main` ruleset (before any PR)
+- [ ] 0.3 Test the Stop hook once: break a pace test in a worktree, ask Claude to finish, check it keeps going
+      (before the first agent task)
+- [ ] 0.4 `npx wrangler login`, `npx wrangler d1 create running-plan` from `api/`, put the id in `api/wrangler.toml`
+      as a small PR (before any deploy; 1.5 tests run locally without it)
+- [ ] 0.5 Export the 11 dark boards as PNGs into `designs/dark/png/` (needed by the snapshot tests in phase 3 and 4)
+- [ ] 0.6 Sign in to Xcode with the Apple account so the Personal Team can run the app on the iPhone (needed for gate D)
 
 ## Phase 1: Foundations
 
 - [x] 1.1 Monorepo scaffold, CLAUDE.md files, verify scripts, Stop hook, reviewer, `/ship`, api-ci
-- [ ] 1.2 `ask first` Derive the full `spec/openapi.yaml` from the system design (all 15 endpoints, schemas, auth). Spec only, no code.
-- [ ] 1.3 iOS bootstrap: `ios/project.yml` (XcodeGen), SwiftUI app shell with the four tabs, Swift Testing target, `verify.sh ios` green
-- [ ] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map
-- [ ] 1.5 D1 schema: first migration from the system design data model, D1 adapter tests with `@cloudflare/vitest-pool-workers`
+- [ ] 1.2 `ask first` Derive the full `spec/openapi.yaml` from §7 (the 19 operations it lists: auth sign-in, refresh,
+      account delete; `plans/generate`; plans list, create, get, patch, delete; session patch; sync; activities
+      batch and list; session match and check-ins; proposals generate, accept, dismiss; plan progress), schemas
+      from §5, auth with client-type token scopes. Sign-in is email only for now (root `CLAUDE.md`). Propose routes
+      for the gaps §7 leaves open, so later tasks need no extra spec PR: email sign-in needs two steps (request a
+      code, verify it); creating and deleting single sessions (or say they go through plan PATCH and sync); the
+      Profile (target display, review frequency and day); the weekly review summary; account data export.
+      Spec only, no code; Redocly lint green. needs: 0.2, 0.3
+- [ ] 1.3 iOS bootstrap (runs alongside 1.2): `ios/project.yml` (XcodeGen), SwiftUI app shell with the four tabs
+      (Next, Plan, Progress, Goal, as in `docs/design-notes.md`), Swift Testing and UI test targets, bundle ID and
+      signing as in `ios/CLAUDE.md`, `verify.sh ios` green. needs: 0.2, 0.3
+- [ ] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map, using the
+      `design:design-handoff` and `design:accessibility-review` skills if they load (44 pt touch targets).
+      needs: 1.2 for the endpoint names
+- [ ] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
+      `updatedAt` and `deletedAt` tombstone), D1 adapter tests with `@cloudflare/vitest-pool-workers`. needs: 1.2
 
 **Gate A (human):** approve and merge 1.2 line by line. Everything below builds on it.
 
 ## Phase 2: API and plan engine (needs gate A)
 
-- [ ] 2.1 Rule engine: 5K preset, table-driven tests over interview answers, property tests for conservative start
-- [ ] 2.2 Rule engine: 10K and half-marathon presets, strength sessions included
-- [ ] 2.3 `POST /v1/plans/generate` (stateless, no auth)
-- [ ] 2.4 `ask first` Auth: email sign-in with a one-time code, refresh tokens, account delete. Sending email goes through an `EmailSender` port; the dev adapter logs the code, and the task proposes a provider
-- [ ] 2.5 Plans and sessions CRUD; regenerate future weeks keeps past and user-owned sessions
-- [ ] 2.6 `POST /v1/sync` for the offline edit queue
-- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry
+Engine tasks (2.8, 2.9, 2.1, 2.2, 2.10) are pure domain code with table-driven and property tests: the safest
+first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits for both.
+
+- [ ] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
+      day between hard sessions, one protected rest day, long-run share cap, taper, strength placement. Warn, never
+      block; hard errors only for invalid data. Runs on generated, edited and blank plans
+- [ ] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
+      ranges in min/km starting on the slow side; effort targets when there is no recent result; heart rate only
+      when the user gives max HR or zones
+- [ ] 2.1 Rule engine: 5K preset, table-driven tests over interview answers (runs per week, tier, plan length, day
+      constraints), property tests for conservative start and bounded weekly growth; response carries assumptions
+      and warnings. needs: 2.8, 2.9
+- [ ] 2.2 Rule engine: 10K and half-marathon presets, strength sessions from a small curated exercise library,
+      snapshot tests over the 54 base variants (§6.2). needs: 2.1
+- [ ] 2.10 Rule engine edge cases (§6.5): goal date too soon (shorten to a minimum, else propose a later date),
+      goal date far away (base phase), baseline far below the goal, pain flag selects the cautious variant. needs: 2.1
+- [ ] 2.3 `POST /v1/plans/generate` (stateless, no auth) with the §7 abuse controls: rate limit by IP and device,
+      strict schema bounds, no persistence, no logging of interview answers, bounded compute and response size.
+      Rate limiting goes through a `RateLimiter` port; the Workers implementation lives in `adapters/cloudflare/`.
+      needs: 2.1
+- [ ] 2.4 `ask first` Auth: email sign-in with a one-time code, refresh tokens with client-type scopes, account
+      delete. Sending email goes through an `EmailSender` port; the dev adapter logs the code, and the task
+      proposes a provider. needs: 1.5
+- [ ] 2.5 Plans and sessions CRUD, including blank plans and user-owned custom sessions; edits carry the base
+      revision. needs: 2.4
+- [ ] 2.6 `POST /v1/sync` for the offline edit queue: idempotency keys, cursor, per-session revision conflicts,
+      tombstones. needs: 2.5
+- [ ] 2.11 Activities: `POST /v1/activities:batch` (native clients only, by token scope; App Attest is L.2) and
+      `GET /v1/activities`; dedupe on start time, duration and distance, not only the external id. needs: 2.4
+- [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. needs: 2.5, 2.11
+- [ ] 2.13 Proposal engine `propose_adjustments` (§6.6): missed key session is dropped not rescheduled, harder than
+      planned eases next week, pain flag reduces load, consistently easy progresses; never edits the plan;
+      user-owned sessions locked; off for blank plans unless opted in. needs: 2.1
+- [ ] 2.14 Proposals API: generate, accept, dismiss; stale when the plan revision moves; re-running the interview
+      regenerates future weeks only (property test: keeps past and user-owned sessions) and is delivered as a
+      proposal. needs: 2.12, 2.13
+- [ ] 2.15 `GET /v1/plans/{id}/progress`: adherence, volume trend, key and strength sessions completed, goal
+      countdown. needs: 2.12
+- [ ] 2.16 Account data export (§10). needs: 2.12
+- [ ] 2.17 Profile API: target display, derived pace ranges and their provenance, scheduling preferences, review
+      frequency and day (§5, §6.6a). needs: 2.4
+- [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
+      feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. needs: 2.12, 2.17
+- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry. needs: every
+      other phase 2 task
 
 **Gate B:** contract tests green on both entries.
 
 ## Phase 3: iOS shell and onboarding (needs 1.3, gate B for networked parts)
 
-- [ ] 3.1 Generated API client from the spec
-- [ ] 3.2 Interview screen (DK-Interview)
-- [ ] 3.3 Preview with no account, 24-hour local draft (DK-Preview)
-- [ ] 3.4 Email sign-in and save plan
-- [ ] 3.5 Next (DK-Next), Plan week (DK-Week), whole plan (DK-Whole)
-- [ ] 3.6 Offline edit queue and sync
+Logic is tested with Swift Testing; each screen gets a snapshot test against `designs/dark/png/` (needs 0.5).
 
-**Gate C:** snapshot tests match the dark boards; interview-to-preview UI test passes with no account.
+- [ ] 3.1 Generated API client from the spec with Apple's swift-openapi-generator package plugin. needs: 1.3
+- [ ] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
+      needs: 1.3, 0.5
+- [ ] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
+      changing an answer regenerates; draft kept on the device for 24 hours (unit test for expiry).
+      needs: 3.1, 3.2, 0.5
+- [ ] 3.4 Email sign-in and save plan. needs: 3.3
+- [ ] 3.5 Next (DK-Next), Plan week (DK-Week), whole plan (DK-Whole); paces shown as `6:30/km`. needs: 3.4, 0.5
+- [ ] 3.6 Offline edit queue and sync: unit tests for the queue, keep-mine-or-theirs conflict prompt, tombstones,
+      stale proposals. needs: 3.4
+- [ ] 3.7 `ask first` Goal and settings: goal, re-run interview, review frequency and day, target display, account,
+      privacy, data export. There is no DK board for it, so the plan proposes a layout from the existing tokens.
+      needs: 3.4, 2.17
 
-## Phase 4: iOS training loop
+**Gate C:** snapshot tests match the dark boards; the interview-to-preview UI test passes with no account.
 
-- [ ] 4.1 Session spec sheet and editor (DK-Session, DK-Editor)
-- [ ] 4.2 Send to watch with WorkoutKit
-- [ ] 4.3 HealthKit import inbox and matching by local date (DK-Inbox)
-- [ ] 4.4 Plan vs actual and check-in (DK-CheckIn)
-- [ ] 4.5 Weekly review and proposals (DK-Review), review frequency setting
-- [ ] 4.6 Progress (DK-Progress)
+## Phase 4: iOS training loop (needs gate C)
 
-**Gate D (human):** device checklist ticked: send-to-watch, HealthKit import.
+PRs that touch WorkoutKit or HealthKit list the device checks as unticked boxes; agents never tick them.
+Every screen task here also needs 0.5 for its snapshot test.
+
+- [ ] 4.1 Session spec sheet and editor (DK-Session, DK-Editor): steps in watch-builder order with repeat groups,
+      strength exercise checklist, copy or share as text, custom sessions, build a plan from blank, quick offline
+      adjustments (shorter, easier, swap, skip) that mark the session user-owned, optional before-session check-in.
+      needs: 0.5
+- [ ] 4.2 Send to watch with WorkoutKit: Add to Watch preview, and scheduling a rolling window (up to 15 workouts).
+      Manual-gate box: WorkoutKit and HealthKit work on the free Personal Team. needs: 4.1, 0.6
+- [ ] 4.3 HealthKit import inbox and matching by local date (DK-Inbox, unit tests for local-date matching): running,
+      strength and other workout types; extra runs, unmatched, two runs in one day, missed sessions; manual entry
+      as a short fallback. needs: 0.5, 0.6
+- [ ] 4.4 Plan vs actual and check-in (DK-CheckIn); pain guidance shows whatever the review setting. needs: 4.3
+- [ ] 4.5 Weekly review and proposals (DK-Review), review frequency setting (default Weekly plus urgent).
+      needs: 4.4, 2.18
+- [ ] 4.6 Progress (DK-Progress). needs: 0.5
+
+**Gate D (human, needs 0.6):** device checklist ticked: send-to-watch, HealthKit import (check Apple Watch, Garmin
+and Nike data).
+
+## Human, not for agents
+
+- [ ] H.1 Coach review of the presets, invariants and strength exercise library (§12.1)
+- [ ] H.2 Apply for the Garmin Training API early (§12.3)
+- [ ] H.3 Legal review of injury and plan-guidance wording, and a privacy policy (§10, §12.7)
 
 ## Later: needs the paid Apple Developer Program
 
 - [ ] L.1 Sign in with Apple alongside email (API and iOS)
 - [ ] L.2 App Attest: attest on iOS, verify on the API, then turn on `APP_ATTEST_REQUIRED` for activity uploads
 - [ ] L.3 TestFlight build for wider testing
+
+## Later: needs Garmin API access
+
+- [ ] G.1 Push workouts to Garmin Connect through the Training API (backend)
+- [ ] G.2 Import from the Garmin Activity API as a second route besides Apple Health
 
 ## Phase 5: Web companion
 

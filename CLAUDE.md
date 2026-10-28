@@ -10,7 +10,9 @@ set up each session on their watch by hand, then import results and review. Live
 - `web/` phase 2 planning companion. Empty for now.
 - `spec/openapi.yaml` the API contract. The only place endpoints are defined.
 - `designs/` source of truth for behaviour and looks:
-  - `designs/Running Planner — System Design v1.0.md` behaviour, data model, endpoints.
+  - `designs/Running Planner — System Design v1.0.md` behaviour, data model, endpoints (what to build).
+  - `designs/Running Planner Agent Build Workflow.md` phases, gates, test approach per layer, review loop,
+    autonomy dial and Day-1 setup (how to build).
   - `designs/dark/DK-*.dc.html` the 11 dark-theme screens (HTML source with exact colours and spacing).
   - `docs/design-notes.md` tokens and the screen-to-endpoint map pulled from those screens.
 - `docs/backlog.md` the task list agents pick from. `autonomy.json` and `docs/autonomy.md` what may auto-merge.
