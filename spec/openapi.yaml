@@ -1,11 +1,31 @@
 openapi: 3.1.0
 info:
   title: Running Planner API
-  version: 0.1.0
-  description: >
-    Contract for the iOS app (phase 1) and the web companion (phase 2).
-    Only /v1/health exists so far. Backlog task 1.2 derives the full contract from
-    "designs/Running Planner — System Design v1.0.md".
+  version: 1.0.0
+  description: |
+    Contract for the iOS app (phase 1) and the web companion (phase 2), derived from
+    "designs/Running Planner — System Design v1.0.md" (§5 data model, §6 engine, §7 API, §8.2 sync).
+
+    **Units.** Distances in metres, durations in seconds, pace in seconds per km (clients show it as
+    `6:30/km`). Session dates are local calendar dates (`YYYY-MM-DD`, no time zone).
+
+    **Auth.** Email sign-in with a one-time code returns an access token and a rotating refresh token.
+    Tokens carry scopes by client type: every client gets `app`; native clients (iOS, Android) also get
+    `activities:write`, so the web client can never upload activities. App Attest is added later
+    behind `APP_ATTEST_REQUIRED` (off by default).
+
+    **Sync metadata.** Every synced entity has a client-generated UUID `id`, a `revision` (starts at 1,
+    +1 on each server-applied change), `updatedAt` and a `deletedAt` tombstone. A plan's `revision`
+    also moves whenever one of its sessions changes, so proposals built on an older plan revision
+    become stale.
+
+    **Revisions on writes.** REST writes to a plan or session send the base revision in `If-Match`
+    (the bare number, for example `If-Match: 7`). A mismatch returns 409 with the current revision.
+
+    **Validators** (§6.4) warn, never block: writes return the plan's current `warnings`. Only invalid
+    data is rejected (400).
+
+    **Errors** use Problem Details (`application/problem+json`, RFC 9457).
   license:
     name: Proprietary
     identifier: LicenseRef-Proprietary
@@ -13,6 +33,25 @@ servers:
   - url: http://localhost:8787
     description: Local Workers dev server
 security: []
+tags:
+  - name: system
+    description: Operational endpoints
+  - name: auth
+    description: Email sign-in, tokens and the account
+  - name: profile
+    description: Target display, paces, scheduling and review settings
+  - name: plans
+    description: Plan generation and plan CRUD
+  - name: sessions
+    description: Sessions, matches and check-ins
+  - name: sync
+    description: Offline edit queue
+  - name: activities
+    description: Imported workouts (native clients write)
+  - name: proposals
+    description: Suggested plan adjustments, accepted or dismissed by the user
+  - name: insights
+    description: Progress and weekly review summaries
 paths:
   /v1/health:
     get:
@@ -32,7 +71,953 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Health"
+
+  /v1/auth/email/start:
+    post:
+      operationId: startEmailSignIn
+      summary: Send a one-time sign-in code by email
+      description: |
+        Always answers 202 for a well-formed email, whether or not an account exists, so the endpoint
+        cannot be used to find accounts. Creates the account on first verify, not here. Rate limited
+        per email and per IP.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailStartRequest"
+      responses:
+        "202":
+          description: A code was sent if the address can receive one
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/auth/email/verify:
+    post:
+      operationId: verifyEmailSignIn
+      summary: Exchange the emailed code for tokens
+      description: |
+        Codes are single use, expire after 10 minutes and allow 5 attempts. The first successful
+        verify for an email creates the account. Scopes follow `clientType`.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailVerifyRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Rotate the refresh token and get a new access token
+      description: The old refresh token stops working. Reusing a rotated token revokes the whole token family.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /v1/account:
+    delete:
+      operationId: deleteAccount
+      summary: Delete the account and all its data
+      description: Removes plans, sessions, activities, matches, check-ins, proposals and the profile, and revokes every token.
+      tags: [auth]
+      security:
+        - bearerAuth: [app]
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /v1/account/export:
+    post:
+      operationId: exportAccount
+      summary: Export all of the account's data as JSON
+      description: Synchronous for now. Tombstoned entities are left out.
+      tags: [auth]
+      security:
+        - bearerAuth: [app]
+      responses:
+        "200":
+          description: Everything stored for the account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountExport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/profile:
+    get:
+      operationId: getProfile
+      summary: Get the profile
+      tags: [profile]
+      security:
+        - bearerAuth: [app]
+      responses:
+        "200":
+          description: The profile (defaults until first updated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      operationId: updateProfile
+      summary: Update profile settings
+      description: Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+      tags: [profile]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+
+  /v1/plans/generate:
+    post:
+      operationId: generatePlan
+      summary: Suggest a plan from interview answers (no account, nothing stored)
+      description: |
+        Stateless and unauthenticated (§7). Nothing is persisted and interview answers are never
+        logged. Rate limited by IP and by `X-Device-Id`. Inputs are strictly bounded and the response
+        size is capped. Deterministic for the same request.
+      tags: [plans]
+      parameters:
+        - name: X-Device-Id
+          in: header
+          required: false
+          description: Random per-install identifier, used only for rate limiting.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateRequest"
+      responses:
+        "200":
+          description: Suggested plan draft with assumptions and warnings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDraft"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: |
+            No plan fits the answers (for example the goal date is closer than the preset's minimum
+            length). The problem lists alternatives such as a later date.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/plans:
+    get:
+      operationId: listPlans
+      summary: List the user's plans
+      tags: [plans]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Plan summaries, newest first
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createPlan
+      summary: Save a plan (a saved preview draft, or a blank plan)
+      description: |
+        Saving the preview draft is a normal create: the client assigns UUIDs to the plan and its
+        sessions. Repeating a create with the same plan `id` and body returns the stored plan (200).
+      tags: [plans]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanCreate"
+      responses:
+        "200":
+          description: Already created with this id (idempotent replay)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDetail"
+        "201":
+          description: Created
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+
+  /v1/plans/{planId}:
+    parameters:
+      - $ref: "#/components/parameters/PlanId"
+    get:
+      operationId: getPlan
+      summary: Get a plan with its weeks, sessions and current warnings
+      tags: [plans]
+      security:
+        - bearerAuth: [app]
+      responses:
+        "200":
+          description: The plan
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updatePlan
+      summary: Update plan-level fields (goal, adaptive, week notes)
+      description: Sessions change through the session endpoints or sync.
+      tags: [plans]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanUpdate"
+      responses:
+        "200":
+          description: Updated plan
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+    delete:
+      operationId: deletePlan
+      summary: Delete a plan (tombstone)
+      tags: [plans]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+
+  /v1/plans/{planId}/sessions:
+    parameters:
+      - $ref: "#/components/parameters/PlanId"
+    post:
+      operationId: createSession
+      summary: Add a session to a plan
+      description: |
+        Sessions created by the user are always `owner: user`, so the engine never changes them. Also
+        available offline as a sync operation. Repeating with the same session `id` and body returns 200.
+      tags: [sessions]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionCreate"
+      responses:
+        "200":
+          description: Already created with this id (idempotent replay)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionWriteResult"
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionWriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /v1/sessions/{sessionId}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    patch:
+      operationId: updateSession
+      summary: Edit a session
+      description: |
+        Any edit by the user sets `owner: user` unless the body only changes `status`. The base
+        revision goes in `If-Match` (§7 "edits carry the base revision").
+      tags: [sessions]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionUpdate"
+      responses:
+        "200":
+          description: Updated session and the plan's current warnings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionWriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+    delete:
+      operationId: deleteSession
+      summary: Delete a session (tombstone, so it cannot reappear)
+      tags: [sessions]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+
+  /v1/sessions/{sessionId}/match:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    put:
+      operationId: putMatch
+      summary: Link an imported activity to this session (suggest or confirm)
+      description: |
+        Replaces any existing match for the session. An activity can be matched to one session at a
+        time; matching it elsewhere moves it. Confirming sets the session `status` to `done`.
+      tags: [sessions]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchPut"
+      responses:
+        "200":
+          description: The match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteMatch
+      summary: Unlink the activity from this session
+      description: The activity goes back to the import inbox; a session that was `done` from this match returns to `planned`.
+      tags: [sessions]
+      security:
+        - bearerAuth: [app]
+      responses:
+        "204":
+          description: Unlinked
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/sessions/{sessionId}/checkins:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      operationId: createCheckIn
+      summary: Record a before- or after-session check-in
+      description: |
+        The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
+        setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+      tags: [sessions]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInCreate"
+      responses:
+        "200":
+          description: Already recorded with this id (idempotent replay)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckIn"
+        "201":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckIn"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/sync:
+    post:
+      operationId: sync
+      summary: Push queued offline edits, then pull changes since the cursor
+      description: |
+        §8.2. Operations apply in order. Each carries an idempotency key, so a retried batch never
+        applies twice. Conflicts are per entity by revision, not by device clocks: if the server
+        revision differs from `baseRevision`, the operation is not applied and the server version is
+        returned so the user can keep theirs (resend with the new base revision) or take the other.
+        Deletes are tombstones and come back in `changes` with `deletedAt` set.
+      tags: [sync]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncRequest"
+      responses:
+        "200":
+          description: Per-operation results and server changes since the cursor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+
+  /v1/activities:batch:
+    post:
+      operationId: importActivities
+      summary: Upload imported workout summaries (native clients only)
+      description: |
+        Requires the `activities:write` scope, which only native clients get. Dedupes on `source` +
+        `externalId` and also on start time, duration and distance within tolerance (Garmin re-writes
+        Health records, §8.3), so a re-written record maps to the existing activity. Summaries only, no routes.
+      tags: [activities]
+      security:
+        - bearerAuth: [activities:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityBatchRequest"
+      responses:
+        "200":
+          description: One result per input activity, in order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityBatchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+
+  /v1/activities:
+    get:
+      operationId: listActivities
+      summary: List imported activities (the import inbox uses `inbox=true`)
+      tags: [activities]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - name: from
+          in: query
+          description: First local date to include.
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+        - name: to
+          in: query
+          description: Last local date to include.
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+        - name: inbox
+          in: query
+          description: Only activities that are neither confirmed to a session nor marked extra or ignored.
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Activities, newest first
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /v1/activities/{activityId}:
+    parameters:
+      - name: activityId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: updateActivity
+      summary: Mark an activity as an extra run, ignored, or back in the inbox
+      description: For activities that match no session (§8.3 extra runs and unmatched activities).
+      tags: [activities]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityUpdate"
+      responses:
+        "200":
+          description: Updated activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/plans/{planId}/proposals:generate:
+    parameters:
+      - $ref: "#/components/parameters/PlanId"
+    post:
+      operationId: generateProposals
+      summary: Run the proposal engine, or re-run the interview, for a plan
+      description: |
+        Without a body, runs `propose_adjustments` (§6.6) on matches, plan-versus-actual and check-ins
+        and returns the new pending proposals (possibly none). With `interview`, regenerates future
+        weeks only, keeping past weeks and user-owned sessions, and returns that as one proposal of kind
+        `interview_rerun` (produced even when reviews are off). Never edits the plan. Blank plans with
+        `adaptive: false` get no adjustment proposals.
+      tags: [proposals]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalGenerateRequest"
+      responses:
+        "200":
+          description: Newly created pending proposals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/plans/{planId}/proposals:
+    parameters:
+      - $ref: "#/components/parameters/PlanId"
+    get:
+      operationId: listProposals
+      summary: List a plan's proposals
+      tags: [proposals]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - name: status
+          in: query
+          description: Filter by status. Defaults to pending.
+          schema:
+            $ref: "#/components/schemas/ProposalStatus"
+      responses:
+        "200":
+          description: Proposals, newest first
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/proposals/{proposalId}:accept:
+    parameters:
+      - $ref: "#/components/parameters/ProposalId"
+    post:
+      operationId: acceptProposal
+      summary: Apply a pending proposal to its plan
+      description: |
+        Fails with 409 if the proposal is stale (the plan revision moved since it was made) or no longer
+        pending. Changes to user-owned sessions are applied only if `includeUserOwned` is true.
+      tags: [proposals]
+      security:
+        - bearerAuth: [app]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalAcceptRequest"
+      responses:
+        "200":
+          description: The updated plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /v1/proposals/{proposalId}:dismiss:
+    parameters:
+      - $ref: "#/components/parameters/ProposalId"
+    post:
+      operationId: dismissProposal
+      summary: Dismiss a pending proposal
+      tags: [proposals]
+      security:
+        - bearerAuth: [app]
+      responses:
+        "200":
+          description: The dismissed proposal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /v1/plans/{planId}/progress:
+    parameters:
+      - $ref: "#/components/parameters/PlanId"
+    get:
+      operationId: getProgress
+      summary: Whole-plan aggregates for the Progress screen
+      tags: [insights]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/Today"
+      responses:
+        "200":
+          description: Progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Progress"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/plans/{planId}/reviews/{weekIndex}:
+    parameters:
+      - $ref: "#/components/parameters/PlanId"
+      - name: weekIndex
+        in: path
+        required: true
+        description: Zero-based week index within the plan.
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 51
+    get:
+      operationId: getWeeklyReview
+      summary: Weekly review summary (§6.6a), computed on the backend
+      description: |
+        Summary, pending proposals and loose ends for one plan week. Available whatever the review
+        frequency; `due` says whether the review should be surfaced on the Next screen now.
+        Blank plans with adaptation off get the summary with no proposals.
+      tags: [insights]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/Today"
+      responses:
+        "200":
+          description: The review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReview"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Access token from email sign-in (15 minutes). Required scope per operation: `app` (any client)
+        or `activities:write` (native clients only).
+
+  headers:
+    ETag:
+      description: The entity's current revision, as a bare number. Send it back in `If-Match`.
+      schema:
+        type: string
+        pattern: "^[0-9]+$"
+
+  parameters:
+    PlanId:
+      name: planId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProposalId:
+      name: proposalId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Base revision the edit was made against (bare number).
+      schema:
+        type: string
+        pattern: "^[0-9]+$"
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque cursor from the previous page.
+      schema:
+        type: string
+        maxLength: 512
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    Today:
+      name: today
+      in: query
+      description: The user's local date, so "this week" and countdowns follow the device. Defaults to the server's UTC date.
+      schema:
+        $ref: "#/components/schemas/LocalDate"
+
+  responses:
+    BadRequest:
+      description: Invalid data (schema or bounds)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Missing, expired or invalid token or code
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: The token lacks the required scope
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Not found, or not the caller's
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: The request conflicts with the current state (same id with a different body, stale or non-pending proposal)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RevisionConflict:
+      description: "`If-Match` does not match the current revision. `currentRevision` says what it is."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    PayloadTooLarge:
+      description: Request body or batch too large
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    TooManyRequests:
+      description: Rate limited
+      headers:
+        Retry-After:
+          description: Seconds to wait.
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
   schemas:
     Health:
       type: object
@@ -46,6 +1031,1433 @@ components:
         time:
           type: string
           format: date-time
-tags:
-  - name: system
-    description: Operational endpoints
+
+    Problem:
+      type: object
+      description: RFC 9457 Problem Details.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          description: A URI or a short code such as `revision_conflict`, `stale_proposal`, `goal_date_too_soon`.
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:
+          type: array
+          description: Field-level validation errors.
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path:
+                type: string
+                description: JSON Pointer to the bad field.
+              message:
+                type: string
+        currentRevision:
+          type: integer
+          description: On a revision conflict, the server's revision.
+        alternatives:
+          type: array
+          description: On 422 from generate, options the client can offer (for example a later goal date).
+          items:
+            $ref: "#/components/schemas/Warning"
+
+    # ---------- Primitives ----------
+    LocalDate:
+      type: string
+      format: date
+      description: Local calendar date, `YYYY-MM-DD`, no time zone.
+    Weekday:
+      type: string
+      enum: [mon, tue, wed, thu, fri, sat, sun]
+    PaceRange:
+      type: object
+      description: Pace range in seconds per km; `minSecPerKm` is the faster end. Shown as `5:45–6:00/km`.
+      required: [minSecPerKm, maxSecPerKm]
+      properties:
+        minSecPerKm:
+          type: integer
+          minimum: 120
+          maximum: 1200
+        maxSecPerKm:
+          type: integer
+          minimum: 120
+          maximum: 1200
+    HeartRateRange:
+      type: object
+      required: [minBpm, maxBpm]
+      properties:
+        minBpm:
+          type: integer
+          minimum: 40
+          maximum: 230
+        maxBpm:
+          type: integer
+          minimum: 40
+          maximum: 230
+    Effort:
+      type: string
+      description: Effort level for effort-based targets and custom sessions.
+      enum: [easy, moderate, hard]
+    SyncMeta:
+      type: object
+      required: [id, revision, updatedAt, deletedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Client-generated UUID.
+        revision:
+          type: integer
+          minimum: 1
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: [string, "null"]
+          format: date-time
+          description: Tombstone; set when deleted.
+
+    # ---------- Auth ----------
+    EmailStartRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+    ClientType:
+      type: string
+      description: Decides token scopes. `ios` and `android` get `activities:write`; `web` does not.
+      enum: [ios, android, web]
+    EmailVerifyRequest:
+      type: object
+      additionalProperties: false
+      required: [email, code, clientType]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        code:
+          type: string
+          pattern: "^[0-9]{6}$"
+        clientType:
+          $ref: "#/components/schemas/ClientType"
+        deviceName:
+          type: string
+          maxLength: 64
+          description: Shown in a future "signed-in devices" list.
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          maxLength: 512
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, tokenType, expiresIn, scopes, userId]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresIn:
+          type: integer
+          description: Access token lifetime in seconds.
+        scopes:
+          type: array
+          items:
+            type: string
+            enum: [app, "activities:write"]
+        userId:
+          type: string
+          format: uuid
+        newAccount:
+          type: boolean
+          description: True when this verify created the account.
+
+    # ---------- Profile ----------
+    TargetDisplay:
+      type: string
+      enum: [pace, heart_rate, effort]
+    ReviewFrequency:
+      type: string
+      description: §6.6a. Default `weekly_plus_urgent`.
+      enum: [weekly, weekly_plus_urgent, after_import, "off"]
+    DerivedPaces:
+      type: object
+      description: Pace ranges and where they came from (§6.3). Absent ranges mean effort-based targets.
+      required: [source]
+      properties:
+        source:
+          type: string
+          enum: [race, estimated, manual, none]
+        basedOn:
+          type: string
+          maxLength: 200
+          description: Human-readable provenance, for example "5K in 27:30 on 2026-09-14".
+        easy:
+          $ref: "#/components/schemas/PaceRange"
+        long:
+          $ref: "#/components/schemas/PaceRange"
+        tempo:
+          $ref: "#/components/schemas/PaceRange"
+        interval:
+          $ref: "#/components/schemas/PaceRange"
+    HeartRateSettings:
+      type: object
+      description: Only what the user supplied; never inferred (§6.3).
+      properties:
+        maxBpm:
+          type: integer
+          minimum: 100
+          maximum: 230
+        zones:
+          type: array
+          minItems: 5
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/HeartRateRange"
+    SchedulingPreferences:
+      type: object
+      properties:
+        longRunDay:
+          $ref: "#/components/schemas/Weekday"
+        restDay:
+          $ref: "#/components/schemas/Weekday"
+        unavailableDays:
+          type: array
+          maxItems: 6
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Weekday"
+    ReviewSettings:
+      type: object
+      required: [frequency]
+      properties:
+        frequency:
+          $ref: "#/components/schemas/ReviewFrequency"
+        day:
+          $ref: "#/components/schemas/Weekday"
+          description: Review day; absent means the last day of the plan week.
+    Profile:
+      type: object
+      required: [targetDisplay, paces, heartRate, scheduling, review, revision, updatedAt]
+      properties:
+        targetDisplay:
+          $ref: "#/components/schemas/TargetDisplay"
+        paces:
+          $ref: "#/components/schemas/DerivedPaces"
+        heartRate:
+          $ref: "#/components/schemas/HeartRateSettings"
+        scheduling:
+          $ref: "#/components/schemas/SchedulingPreferences"
+        review:
+          $ref: "#/components/schemas/ReviewSettings"
+        revision:
+          type: integer
+          minimum: 1
+        updatedAt:
+          type: string
+          format: date-time
+    ProfileUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        targetDisplay:
+          $ref: "#/components/schemas/TargetDisplay"
+        paces:
+          type: object
+          additionalProperties: false
+          description: Manual pace ranges.
+          properties:
+            easy:
+              $ref: "#/components/schemas/PaceRange"
+            long:
+              $ref: "#/components/schemas/PaceRange"
+            tempo:
+              $ref: "#/components/schemas/PaceRange"
+            interval:
+              $ref: "#/components/schemas/PaceRange"
+        heartRate:
+          $ref: "#/components/schemas/HeartRateSettings"
+        scheduling:
+          $ref: "#/components/schemas/SchedulingPreferences"
+        review:
+          $ref: "#/components/schemas/ReviewSettings"
+
+    # ---------- Interview and generate ----------
+    GoalDistance:
+      type: string
+      enum: [5k, 10k, half_marathon]
+    InterviewAnswers:
+      type: object
+      description: |
+        Appendix B. Every question is skippable: absent answers take the engine's conservative
+        defaults, and each default shows up as an assumption in the draft.
+      additionalProperties: false
+      required: [goal]
+      properties:
+        goal:
+          type: object
+          additionalProperties: false
+          required: [distance]
+          properties:
+            distance:
+              $ref: "#/components/schemas/GoalDistance"
+            date:
+              $ref: "#/components/schemas/LocalDate"
+            targetTimeSec:
+              type: integer
+              minimum: 600
+              maximum: 21600
+        recentResult:
+          type: object
+          description: A run or race from the last 4 to 6 weeks.
+          additionalProperties: false
+          required: [distanceM, timeSec]
+          properties:
+            distanceM:
+              type: integer
+              minimum: 1000
+              maximum: 42195
+            timeSec:
+              type: integer
+              minimum: 120
+              maximum: 28800
+            date:
+              $ref: "#/components/schemas/LocalDate"
+        weeklyDistanceM:
+          type: integer
+          description: Average weekly running distance over the last 4 weeks.
+          minimum: 0
+          maximum: 200000
+        longestRunM:
+          type: integer
+          description: Longest run in the last 4 weeks.
+          minimum: 0
+          maximum: 50000
+        runningHistory:
+          type: string
+          description: How long the user has been running regularly.
+          enum: [new_or_returning, under_1_year, 1_to_3_years, over_3_years]
+        runsPerWeek:
+          type: integer
+          minimum: 3
+          maximum: 5
+        unavailableDays:
+          type: array
+          maxItems: 4
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Weekday"
+        longRunDay:
+          $ref: "#/components/schemas/Weekday"
+        pain:
+          type: boolean
+          description: Coarse flag only (§10). True selects the cautious variant.
+        strength:
+          type: object
+          additionalProperties: false
+          required: [enabled]
+          properties:
+            enabled:
+              type: boolean
+            equipment:
+              type: string
+              enum: [bodyweight, dumbbells]
+        targetDisplay:
+          $ref: "#/components/schemas/TargetDisplay"
+        heartRate:
+          $ref: "#/components/schemas/HeartRateSettings"
+    GenerateRequest:
+      type: object
+      additionalProperties: false
+      required: [answers, today]
+      properties:
+        answers:
+          $ref: "#/components/schemas/InterviewAnswers"
+        today:
+          $ref: "#/components/schemas/LocalDate"
+        presetId:
+          type: string
+          maxLength: 64
+          description: Optional explicit preset; normally derived from the goal distance.
+    Assumption:
+      type: object
+      description: Something the engine assumed or derived, for example the easy pace and what it was based on.
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          maxLength: 64
+        message:
+          type: string
+          maxLength: 500
+    Warning:
+      type: object
+      description: A validator finding (§6.4) or engine notice (§6.5). Never blocks a save.
+      required: [code, severity, message]
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          description: |
+            Stable code, for example `first_week_above_baseline`, `weekly_growth_too_high`,
+            `hard_days_back_to_back`, `no_rest_day`, `long_run_share_high`, `no_taper`,
+            `strength_near_key_session`, `plan_shortened`, `goal_date_far`, `baseline_far_below_goal`,
+            `pain_flag`, `later_goal_date`.
+        severity:
+          type: string
+          enum: [info, caution]
+        message:
+          type: string
+          maxLength: 500
+        weekIndex:
+          type: integer
+          minimum: 0
+        sessionIds:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+        suggestedDate:
+          $ref: "#/components/schemas/LocalDate"
+    EngineInfo:
+      type: object
+      required: [presetId, version]
+      properties:
+        presetId:
+          type: string
+          maxLength: 64
+        version:
+          type: string
+          maxLength: 32
+        interview:
+          $ref: "#/components/schemas/InterviewAnswers"
+          description: Snapshot of the answers the plan was generated from. Absent for blank plans.
+    PlanDraft:
+      type: object
+      description: An unsaved suggested plan. Sessions have no ids yet; the client assigns them on save.
+      required: [goal, startDate, weekCount, source, engine, adaptive, weeks, sessions, assumptions, warnings]
+      properties:
+        goal:
+          $ref: "#/components/schemas/Goal"
+        startDate:
+          $ref: "#/components/schemas/LocalDate"
+        weekCount:
+          type: integer
+          minimum: 1
+          maximum: 52
+        source:
+          type: string
+          enum: [rules, ai]
+        engine:
+          $ref: "#/components/schemas/EngineInfo"
+        adaptive:
+          type: boolean
+        weeks:
+          type: array
+          maxItems: 52
+          items:
+            $ref: "#/components/schemas/Week"
+        sessions:
+          type: array
+          maxItems: 400
+          items:
+            $ref: "#/components/schemas/SessionContent"
+        assumptions:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/Assumption"
+        warnings:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/Warning"
+
+    # ---------- Plans ----------
+    Goal:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [5k, 10k, half_marathon, custom, none]
+        label:
+          type: string
+          maxLength: 80
+          description: For `custom` goals.
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        targetTimeSec:
+          type: integer
+          minimum: 60
+          maximum: 86400
+    Week:
+      type: object
+      additionalProperties: false
+      required: [index]
+      properties:
+        index:
+          type: integer
+          minimum: 0
+          maximum: 51
+        phase:
+          type: string
+          enum: [base, build, peak, taper]
+        notes:
+          type: string
+          maxLength: 1000
+    PlanFields:
+      type: object
+      required: [goal, startDate, weekCount, source, adaptive, weeks]
+      properties:
+        goal:
+          $ref: "#/components/schemas/Goal"
+        startDate:
+          $ref: "#/components/schemas/LocalDate"
+        weekCount:
+          type: integer
+          minimum: 1
+          maximum: 52
+        source:
+          type: string
+          enum: [blank, rules, ai]
+        engine:
+          $ref: "#/components/schemas/EngineInfo"
+          description: Absent for blank plans.
+        adaptive:
+          type: boolean
+          description: Whether the engine may propose adjustments. Default on for rules plans, off for blank.
+        weeks:
+          type: array
+          maxItems: 52
+          items:
+            $ref: "#/components/schemas/Week"
+    PlanCreate:
+      allOf:
+        - $ref: "#/components/schemas/PlanFields"
+        - type: object
+          required: [id, sessions]
+          properties:
+            id:
+              type: string
+              format: uuid
+            sessions:
+              type: array
+              maxItems: 400
+              items:
+                $ref: "#/components/schemas/SessionCreate"
+    PlanUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        goal:
+          $ref: "#/components/schemas/Goal"
+        adaptive:
+          type: boolean
+        weeks:
+          type: array
+          description: Week notes and phase labels; matched by `index`.
+          maxItems: 52
+          items:
+            $ref: "#/components/schemas/Week"
+    PlanSummary:
+      allOf:
+        - $ref: "#/components/schemas/SyncMeta"
+        - type: object
+          required: [goal, startDate, weekCount, source, adaptive]
+          properties:
+            goal:
+              $ref: "#/components/schemas/Goal"
+            startDate:
+              $ref: "#/components/schemas/LocalDate"
+            weekCount:
+              type: integer
+            source:
+              type: string
+              enum: [blank, rules, ai]
+            adaptive:
+              type: boolean
+    Plan:
+      allOf:
+        - $ref: "#/components/schemas/SyncMeta"
+        - $ref: "#/components/schemas/PlanFields"
+    PlanDetail:
+      allOf:
+        - $ref: "#/components/schemas/Plan"
+        - type: object
+          required: [sessions, warnings]
+          properties:
+            sessions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Session"
+            warnings:
+              type: array
+              items:
+                $ref: "#/components/schemas/Warning"
+    PlanList:
+      type: object
+      required: [plans]
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanSummary"
+        nextCursor:
+          type: string
+
+    # ---------- Sessions and steps ----------
+    SessionType:
+      type: string
+      enum: [easy, long, intervals, tempo, strength, rest, custom]
+    SessionContent:
+      type: object
+      description: |
+        A session without sync metadata. Totals (duration, distance) are derived from the steps and
+        never stored. `custom` sessions are free-form cross-training: they use `custom` and no steps.
+      additionalProperties: false
+      required: [date, type]
+      properties:
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        type:
+          $ref: "#/components/schemas/SessionType"
+        title:
+          type: string
+          maxLength: 80
+        key:
+          type: boolean
+          description: A key session (for adherence and review).
+        status:
+          type: string
+          enum: [planned, done, skipped]
+          default: planned
+        owner:
+          type: string
+          enum: [system, user]
+          default: system
+        steps:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/Step"
+        custom:
+          $ref: "#/components/schemas/CustomDetails"
+        notes:
+          type: string
+          maxLength: 2000
+    CustomDetails:
+      type: object
+      description: "Only for `type: custom`. Counts toward training time, not running volume."
+      additionalProperties: false
+      properties:
+        activityLabel:
+          type: string
+          maxLength: 40
+          description: For example cycling or swimming.
+        goal:
+          $ref: "#/components/schemas/StepGoal"
+        effort:
+          $ref: "#/components/schemas/Effort"
+    SessionCreate:
+      allOf:
+        - $ref: "#/components/schemas/SessionContent"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              format: uuid
+    SessionUpdate:
+      type: object
+      description: Fields left out stay unchanged. `steps` replaces the whole list.
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        type:
+          $ref: "#/components/schemas/SessionType"
+        title:
+          type: string
+          maxLength: 80
+        key:
+          type: boolean
+        status:
+          type: string
+          enum: [planned, done, skipped]
+        steps:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/Step"
+        custom:
+          $ref: "#/components/schemas/CustomDetails"
+        notes:
+          type: string
+          maxLength: 2000
+    Session:
+      allOf:
+        - $ref: "#/components/schemas/SyncMeta"
+        - $ref: "#/components/schemas/SessionContent"
+        - type: object
+          required: [planId, status, owner, steps]
+          properties:
+            planId:
+              type: string
+              format: uuid
+    SessionWriteResult:
+      type: object
+      required: [session, planRevision, warnings]
+      properties:
+        session:
+          $ref: "#/components/schemas/Session"
+        planRevision:
+          type: integer
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Warning"
+
+    StepGoal:
+      type: object
+      description: One goal per step, as a watch workout step allows. `value` is seconds or metres; absent for `open`.
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [time, distance, open]
+        value:
+          type: integer
+          minimum: 1
+          maximum: 200000
+    StepTarget:
+      description: At most one target per step, expressible as a watch alert.
+      oneOf:
+        - type: object
+          title: PaceTarget
+          additionalProperties: false
+          required: [type, range]
+          properties:
+            type:
+              const: pace
+            range:
+              $ref: "#/components/schemas/PaceRange"
+        - type: object
+          title: HeartRateTarget
+          additionalProperties: false
+          required: [type, range]
+          properties:
+            type:
+              const: heart_rate
+            range:
+              $ref: "#/components/schemas/HeartRateRange"
+        - type: object
+          title: EffortTarget
+          additionalProperties: false
+          required: [type, effort]
+          properties:
+            type:
+              const: effort
+            effort:
+              $ref: "#/components/schemas/Effort"
+        - type: object
+          title: NoTarget
+          additionalProperties: false
+          required: [type]
+          properties:
+            type:
+              const: none
+    Step:
+      description: Recursive step, in watch-builder order. Drives the editor, the watch handoff and the engine output.
+      oneOf:
+        - $ref: "#/components/schemas/RunStep"
+        - $ref: "#/components/schemas/RepeatStep"
+        - $ref: "#/components/schemas/ExerciseStep"
+      discriminator:
+        propertyName: kind
+        mapping:
+          warmup: "#/components/schemas/RunStep"
+          work: "#/components/schemas/RunStep"
+          recovery: "#/components/schemas/RunStep"
+          cooldown: "#/components/schemas/RunStep"
+          repeat: "#/components/schemas/RepeatStep"
+          exercise: "#/components/schemas/ExerciseStep"
+    RunStep:
+      type: object
+      additionalProperties: false
+      required: [kind, goal]
+      properties:
+        kind:
+          type: string
+          enum: [warmup, work, recovery, cooldown]
+        goal:
+          $ref: "#/components/schemas/StepGoal"
+        target:
+          $ref: "#/components/schemas/StepTarget"
+        note:
+          type: string
+          maxLength: 200
+    RepeatStep:
+      type: object
+      description: For example 4 × (work + recovery). Repeats do not nest further.
+      additionalProperties: false
+      required: [kind, count, steps]
+      properties:
+        kind:
+          type: string
+          const: repeat
+        count:
+          type: integer
+          minimum: 2
+          maximum: 30
+        steps:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/RunStep"
+    ExerciseStep:
+      type: object
+      description: Strength sessions only. Effort-based, no pace or heart-rate target.
+      additionalProperties: false
+      required: [kind, exerciseId, sets]
+      properties:
+        kind:
+          type: string
+          const: exercise
+        exerciseId:
+          type: string
+          maxLength: 64
+          description: Id from the curated exercise library (bodyweight and dumbbell movements).
+        sets:
+          type: integer
+          minimum: 1
+          maximum: 10
+        reps:
+          type: integer
+          minimum: 1
+          maximum: 100
+        durationSec:
+          type: integer
+          minimum: 5
+          maximum: 600
+        restSec:
+          type: integer
+          minimum: 0
+          maximum: 600
+        effort:
+          $ref: "#/components/schemas/Effort"
+        loadNote:
+          type: string
+          maxLength: 100
+
+    # ---------- Check-ins and matches ----------
+    CheckInCreate:
+      type: object
+      additionalProperties: false
+      required: [id, when, feel]
+      properties:
+        id:
+          type: string
+          format: uuid
+        when:
+          type: string
+          enum: [before, after]
+        feel:
+          type: integer
+          description: Overall feel, 1 (awful) to 5 (great).
+          minimum: 1
+          maximum: 5
+        effortFelt:
+          type: integer
+          description: Perceived effort, 1 to 10. After-session check-ins only.
+          minimum: 1
+          maximum: 10
+        pain:
+          type: boolean
+          description: Coarse pain flag. True shows "stop and seek advice" whatever the review setting.
+        note:
+          type: string
+          maxLength: 500
+    CheckIn:
+      allOf:
+        - $ref: "#/components/schemas/SyncMeta"
+        - $ref: "#/components/schemas/CheckInCreate"
+        - type: object
+          required: [sessionId]
+          properties:
+            sessionId:
+              type: string
+              format: uuid
+    MatchPut:
+      type: object
+      additionalProperties: false
+      required: [activityId, status]
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [suggested, confirmed]
+    Match:
+      type: object
+      description: Links an activity to a session. Plan-versus-actual deltas are derived, not stored.
+      required: [sessionId, activityId, status, updatedAt]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        activityId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [suggested, confirmed]
+        updatedAt:
+          type: string
+          format: date-time
+        delta:
+          $ref: "#/components/schemas/PlanVsActual"
+    PlanVsActual:
+      type: object
+      description: Derived session-level comparison.
+      properties:
+        plannedDistanceM:
+          type: integer
+        actualDistanceM:
+          type: integer
+        plannedDurationSec:
+          type: integer
+        actualDurationSec:
+          type: integer
+        actualAvgPaceSecPerKm:
+          type: integer
+
+    # ---------- Activities ----------
+    WorkoutType:
+      type: string
+      enum: [running, strength, cycling, swimming, walking, other]
+    ActivityInput:
+      type: object
+      additionalProperties: false
+      required: [source, externalId, workoutType, startedAt, localDate, durationSec]
+      properties:
+        source:
+          type: string
+          enum: [apple_health, manual]
+        externalId:
+          type: string
+          maxLength: 128
+          description: Source record id (HealthKit UUID). Dedupe key, together with start, duration and distance.
+        sourceApp:
+          type: string
+          maxLength: 64
+          description: The app that wrote the record (for example Garmin Connect), for dedupe diagnostics.
+        workoutType:
+          $ref: "#/components/schemas/WorkoutType"
+        startedAt:
+          type: string
+          format: date-time
+          description: With the UTC offset at the start.
+        localDate:
+          $ref: "#/components/schemas/LocalDate"
+          description: The user's local date when the activity started; used for matching.
+        durationSec:
+          type: integer
+          minimum: 1
+          maximum: 86400
+        distanceM:
+          type: integer
+          minimum: 0
+          maximum: 400000
+        avgHeartRate:
+          type: integer
+          minimum: 30
+          maximum: 250
+        maxHeartRate:
+          type: integer
+          minimum: 30
+          maximum: 250
+        avgCadence:
+          type: integer
+          minimum: 0
+          maximum: 300
+          description: Steps per minute.
+        elevationGainM:
+          type: integer
+          minimum: 0
+          maximum: 10000
+    Activity:
+      allOf:
+        - $ref: "#/components/schemas/ActivityInput"
+        - type: object
+          required: [id, importedAt, disposition]
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Server-assigned.
+            importedAt:
+              type: string
+              format: date-time
+            disposition:
+              type: string
+              description: |
+                `inbox` waiting for review, `matched` confirmed to a session, `extra` an extra run kept
+                for volume, `ignored` left out.
+              enum: [inbox, matched, extra, ignored]
+            match:
+              $ref: "#/components/schemas/Match"
+    ActivityUpdate:
+      type: object
+      additionalProperties: false
+      required: [disposition]
+      properties:
+        disposition:
+          type: string
+          enum: [inbox, extra, ignored]
+    ActivityBatchRequest:
+      type: object
+      additionalProperties: false
+      required: [activities]
+      properties:
+        activities:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            $ref: "#/components/schemas/ActivityInput"
+    ActivityBatchResponse:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [externalId, status, activityId]
+            properties:
+              externalId:
+                type: string
+              status:
+                type: string
+                description: "`updated` when a re-written record matched an existing activity."
+                enum: [created, duplicate, updated]
+              activityId:
+                type: string
+                format: uuid
+              suggestedSessionId:
+                type: string
+                format: uuid
+                description: Suggested match by local date, type and duration.
+    ActivityList:
+      type: object
+      required: [activities]
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        nextCursor:
+          type: string
+
+    # ---------- Sync ----------
+    SyncOperation:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, entity, op, id]
+      properties:
+        idempotencyKey:
+          type: string
+          format: uuid
+        entity:
+          type: string
+          enum: [plan, session, checkin]
+        op:
+          type: string
+          description: "`create` needs `planId` for sessions and `sessionId` for check-ins."
+          enum: [create, update, delete]
+        id:
+          type: string
+          format: uuid
+        planId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        baseRevision:
+          type: integer
+          minimum: 1
+          description: Required for update and delete.
+        data:
+          type: object
+          description: |
+            For create: `SessionContent`, `PlanCreate` or `CheckInCreate`. For update: `SessionUpdate`
+            or `PlanUpdate`. Absent for delete.
+    SyncRequest:
+      type: object
+      additionalProperties: false
+      required: [operations]
+      properties:
+        cursor:
+          type: string
+          maxLength: 512
+          description: From the previous sync; absent on the first sync to pull everything.
+        operations:
+          type: array
+          maxItems: 200
+          items:
+            $ref: "#/components/schemas/SyncOperation"
+    SyncResult:
+      type: object
+      required: [idempotencyKey, status]
+      properties:
+        idempotencyKey:
+          type: string
+          format: uuid
+        status:
+          type: string
+          description: "`duplicate` means this key was already applied; the original result is returned."
+          enum: [applied, duplicate, conflict, rejected]
+        revision:
+          type: integer
+          description: New revision when applied.
+        problem:
+          $ref: "#/components/schemas/Problem"
+        server:
+          description: On conflict, the server's current version (keep mine = resend with its revision).
+          oneOf:
+            - $ref: "#/components/schemas/Session"
+            - $ref: "#/components/schemas/Plan"
+    SyncResponse:
+      type: object
+      required: [results, changes, cursor, hasMore]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyncResult"
+        changes:
+          type: object
+          description: Everything changed since the cursor, including tombstones, after applying this batch.
+          required: [plans, sessions, checkins, proposals]
+          properties:
+            plans:
+              type: array
+              items:
+                $ref: "#/components/schemas/Plan"
+            sessions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Session"
+            checkins:
+              type: array
+              items:
+                $ref: "#/components/schemas/CheckIn"
+            proposals:
+              type: array
+              description: Includes proposals that became stale.
+              items:
+                $ref: "#/components/schemas/Proposal"
+        cursor:
+          type: string
+        hasMore:
+          type: boolean
+          description: More changes are waiting; call again with the new cursor and no operations.
+
+    # ---------- Proposals ----------
+    ProposalStatus:
+      type: string
+      enum: [pending, accepted, dismissed, stale]
+    ProposalChange:
+      type: object
+      required: [op]
+      properties:
+        op:
+          type: string
+          enum: [create, update, delete]
+        sessionId:
+          type: string
+          format: uuid
+          description: The session changed or deleted, or the id the created session will get.
+        before:
+          $ref: "#/components/schemas/SessionContent"
+        after:
+          $ref: "#/components/schemas/SessionContent"
+        userOwned:
+          type: boolean
+          description: Touches a user-owned session; locked unless accepted with `includeUserOwned`.
+    Proposal:
+      type: object
+      required: [id, planId, basePlanRevision, kind, creator, reason, changes, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        planId:
+          type: string
+          format: uuid
+        basePlanRevision:
+          type: integer
+        kind:
+          type: string
+          enum: [adjustment, interview_rerun]
+        creator:
+          type: object
+          required: [type, version]
+          properties:
+            type:
+              type: string
+              enum: [rules, ai]
+            version:
+              type: string
+        reason:
+          type: string
+          maxLength: 200
+          description: One-line reason shown to the user.
+        urgent:
+          type: boolean
+          description: Raised immediately by a pain flag or a missed key session (Weekly plus urgent).
+        changes:
+          type: array
+          maxItems: 400
+          items:
+            $ref: "#/components/schemas/ProposalChange"
+        status:
+          $ref: "#/components/schemas/ProposalStatus"
+        createdAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: [string, "null"]
+          format: date-time
+    ProposalGenerateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        today:
+          $ref: "#/components/schemas/LocalDate"
+        interview:
+          $ref: "#/components/schemas/InterviewAnswers"
+          description: New answers; regenerates future weeks as an `interview_rerun` proposal.
+    ProposalAcceptRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        includeUserOwned:
+          type: boolean
+          default: false
+    ProposalList:
+      type: object
+      required: [proposals]
+      properties:
+        proposals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Proposal"
+
+    # ---------- Insights ----------
+    Progress:
+      type: object
+      required: [planId, asOf, adherence, weeks, keySessions, strengthSessions, goal]
+      properties:
+        planId:
+          type: string
+          format: uuid
+        asOf:
+          $ref: "#/components/schemas/LocalDate"
+        adherence:
+          type: object
+          description: Sessions due so far (dated on or before `asOf`), excluding rest days.
+          required: [due, done, skipped, missed]
+          properties:
+            due:
+              type: integer
+            done:
+              type: integer
+            skipped:
+              type: integer
+            missed:
+              type: integer
+        weeks:
+          type: array
+          description: Volume trend. Running volume and total training time are separate (custom and strength count only toward time).
+          items:
+            type: object
+            required: [index, plannedDistanceM, actualDistanceM, plannedTimeSec, actualTimeSec]
+            properties:
+              index:
+                type: integer
+              plannedDistanceM:
+                type: integer
+              actualDistanceM:
+                type: integer
+              plannedTimeSec:
+                type: integer
+              actualTimeSec:
+                type: integer
+        keySessions:
+          $ref: "#/components/schemas/Tally"
+        strengthSessions:
+          $ref: "#/components/schemas/Tally"
+        goal:
+          type: object
+          required: [onTrack]
+          properties:
+            date:
+              $ref: "#/components/schemas/LocalDate"
+            daysToGo:
+              type: integer
+            onTrack:
+              type: string
+              enum: [on_track, behind, unknown]
+    Tally:
+      type: object
+      required: [planned, completed]
+      properties:
+        planned:
+          type: integer
+        completed:
+          type: integer
+    WeeklyReview:
+      type: object
+      required: [planId, weekIndex, startDate, endDate, due, summary, proposals, looseEnds]
+      properties:
+        planId:
+          type: string
+          format: uuid
+        weekIndex:
+          type: integer
+        startDate:
+          $ref: "#/components/schemas/LocalDate"
+        endDate:
+          $ref: "#/components/schemas/LocalDate"
+        due:
+          type: boolean
+          description: Whether the review should be shown now, from the review frequency and day.
+        summary:
+          type: object
+          required: [sessions, distance, time, keySessions, checkIns]
+          properties:
+            sessions:
+              type: object
+              required: [planned, done, skipped, missed]
+              properties:
+                planned:
+                  type: integer
+                done:
+                  type: integer
+                skipped:
+                  type: integer
+                missed:
+                  type: integer
+            distance:
+              type: object
+              required: [plannedM, actualM]
+              properties:
+                plannedM:
+                  type: integer
+                actualM:
+                  type: integer
+            time:
+              type: object
+              required: [plannedSec, actualSec]
+              properties:
+                plannedSec:
+                  type: integer
+                actualSec:
+                  type: integer
+            keySessions:
+              type: array
+              items:
+                type: object
+                required: [sessionId, outcome]
+                properties:
+                  sessionId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  outcome:
+                    type: string
+                    enum: [hit, missed, skipped, upcoming]
+            checkIns:
+              type: object
+              required: [count, painFlags]
+              properties:
+                count:
+                  type: integer
+                averageFeel:
+                  type: number
+                averageEffortFelt:
+                  type: number
+                painFlags:
+                  type: integer
+        proposals:
+          type: array
+          description: Pending proposals for the coming weeks; empty when adaptation or reviews are off.
+          items:
+            $ref: "#/components/schemas/Proposal"
+        looseEnds:
+          type: object
+          required: [inboxActivities]
+          properties:
+            inboxActivities:
+              type: integer
+              description: Activities still waiting in the import inbox.
+
+    # ---------- Export ----------
+    AccountExport:
+      type: object
+      required: [exportedAt, profile, plans, activities, checkins, proposals]
+      properties:
+        exportedAt:
+          type: string
+          format: date-time
+        email:
+          type: string
+          format: email
+        profile:
+          $ref: "#/components/schemas/Profile"
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanDetail"
+        activities:
+          type: array
+          description: Includes each activity's match.
+          items:
+            $ref: "#/components/schemas/Activity"
+        checkins:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckIn"
+        proposals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Proposal"

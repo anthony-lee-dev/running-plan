@@ -26,7 +26,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 ## Phase 1: Foundations
 
 - [x] 1.1 Monorepo scaffold, CLAUDE.md files, verify scripts, Stop hook, reviewer, `/ship`, api-ci
-- [ ] 1.2 `ask first` Derive the full `spec/openapi.yaml` from §7 (the 19 operations it lists: auth sign-in, refresh,
+- [x] 1.2 `ask first` Derive the full `spec/openapi.yaml` from §7 (the 19 operations it lists: auth sign-in, refresh,
       account delete; `plans/generate`; plans list, create, get, patch, delete; session patch; sync; activities
       batch and list; session match and check-ins; proposals generate, accept, dismiss; plan progress), schemas
       from §5, auth with client-type token scopes. Sign-in is email only for now (root `CLAUDE.md`). Propose routes
