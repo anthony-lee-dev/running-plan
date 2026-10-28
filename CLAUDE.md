@@ -46,5 +46,12 @@ set up each session on their watch by hand, then import results and review. Live
 ## Working style
 
 - One PR = one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
-- Pick work from `docs/backlog.md` (`/next-task`); tick it off in the same PR.
+- Pick work from `docs/backlog.md` (`/next-task`). Never report a backlog task as done without ticking it in
+  `docs/backlog.md` in the same change, including work done outside `/next-task` (a check run in a normal
+  session, say). When the work has no PR of its own, tick it, say in your reply that the tick is uncommitted,
+  and ask the human whether to ship it now or fold it into the next PR. A task that is only partly done stays
+  unticked; say what is left.
+- Human-only items (Phase 0, gates, "Human, not for agents") are ticked only when you did the work yourself in
+  the session, the human says they did it, or a read-only check shows it is done; never on inference. Ticking
+  a backlog line never ticks the `## Manual gates` boxes in a PR body: those stay for the human.
 - When the human corrects you, add the correction to the relevant `CLAUDE.md` in the same PR.
