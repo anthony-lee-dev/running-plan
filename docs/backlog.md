@@ -19,7 +19,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 - [x] 0.4 `npx wrangler login`, `npx wrangler d1 create running-plan` from `api/`, put the id in `api/wrangler.toml`
       as a small PR (before any deploy; 1.5 tests run locally without it)
 - [x] 0.5 Export the 11 dark boards as PNGs into `designs/dark/png/` (needed by the snapshot tests in phase 3 and 4)
-- [ ] 0.6 Sign in to Xcode with the Apple account so the Personal Team can run the app on the iPhone (needed for gate D)
+- [x] 0.6 Sign in to Xcode with the Apple account so the Personal Team can run the app on the iPhone (needed for gate D)
 - [x] 0.7 Re-run `bash scripts/setup-github.sh` after 1.6 merges, to turn on Dependabot security update PRs
       (agents may not run it)
 
