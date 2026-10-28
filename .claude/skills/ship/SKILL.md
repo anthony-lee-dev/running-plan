@@ -9,7 +9,8 @@ Run these steps in order. Never run `gh pr merge` yourself and never push to `ma
 2. **Verify.** Run `bash scripts/verify.sh <packages you touched>`. Fix until it exits 0.
 3. **Review.** Ask the `reviewer` subagent to review the branch. Fix every BLOCKER and SHOULD-FIX, then go back to step 2.
    Stop this loop after 3 rounds and list what is left in the PR body.
-4. **Push and open the PR.** Commit, `git push -u origin <branch>`, then `gh pr create` with the repo's PR template filled in:
+4. **Push and open the PR.** Check that every backlog item the PR closes is ticked in `docs/backlog.md` on this
+   branch (`git diff origin/main -- docs/backlog.md`); tick it now if not. Commit, `git push -u origin <branch>`, then `gh pr create` with the repo's PR template filled in:
    - What changed and which `docs/backlog.md` item it closes.
    - The verify command you ran and its result.
    - Under `## Manual gates`: `None.`, or one unticked box per item needing a real device or the Apple account. Never tick them.

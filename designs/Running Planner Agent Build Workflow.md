@@ -80,6 +80,7 @@ Read it top to bottom: a phase does not start until the gate above it passes, an
 - One PR is one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
 - Every task gets a plan, failing tests, then code; the `next-task` skill enforces that order, and tasks marked `ask first` wait for your OK on the plan.
 - A spec change gets its own PR before any code that uses it.
+- A task is done only when it is ticked in `docs/backlog.md`, in the same change as the work. For work with no PR of its own (Phase 0 setup, a check run in a normal session), the agent ticks it and asks you whether to ship the tick now or with the next PR.
 - Run tasks side by side with one worktree each: `claude --worktree 2-8-validators` in one terminal, `claude --worktree 3-2-interview` in another. Two or three at once is a sensible start: every session draws on the same Pro usage limits, and Xcode builds compete for the Air's CPU.
 - Start with rule-engine tasks (validators 2.8 first, then 2.1 and 2.2 once the pace model in 2.9 is agreed): "green" is fully testable there, so they are the safest first hand-offs once the spec is merged.
 

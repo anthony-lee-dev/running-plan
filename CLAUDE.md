@@ -47,4 +47,8 @@ set up each session on their watch by hand, then import results and review. Live
 
 - One PR = one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
 - Pick work from `docs/backlog.md` (`/next-task`); tick it off in the same PR.
+- Never report a backlog task as done without ticking it in `docs/backlog.md` in the same change. That covers
+  work done outside `/next-task` too (Phase 0 setup, checks run in a normal session). When the work has no PR
+  of its own, tick it, say in your reply that the tick is uncommitted, and ask the human whether to ship it now
+  or fold it into the next PR. A task that is only partly done stays unticked; say what is left.
 - When the human corrects you, add the correction to the relevant `CLAUDE.md` in the same PR.
