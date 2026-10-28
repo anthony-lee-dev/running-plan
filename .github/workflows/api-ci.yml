@@ -21,3 +21,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: bash scripts/verify.sh spec api
+      # Fails a PR that adds or upgrades to a dependency with a high or critical advisory (any scope).
+      # Inside the required "api" job so it blocks merges without a ruleset change.
+      - name: dependency review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

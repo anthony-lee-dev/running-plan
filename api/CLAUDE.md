@@ -21,6 +21,11 @@ entry file, not a rewrite.
 
 ## Notes
 
+- npm 11 (including the newest 11.x) crashes with `Cannot read properties of null (reading 'edgesOut')` when it
+  adds or changes vitest 4.x. Change dependencies with `npx -y npm@12 install ...` instead; `npm ci` and
+  `npm install` with no arguments work fine from the committed lockfile. npm 12 wants Node 24.15 or later.
+- Stay on vitest 4.x: `@cloudflare/vitest-pool-workers` (task 1.5) supports `^4.1`, not 5.
+
 - D1 is SQLite: keep SQL to portable basics (no SQLite-only JSON tricks) so a later move to Postgres stays a
   dialect change, not a redesign. Use integer seconds for durations and `TEXT` `YYYY-MM-DD` for local dates.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.

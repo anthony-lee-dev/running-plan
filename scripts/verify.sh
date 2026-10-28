@@ -18,6 +18,27 @@ verify_spec() {
   npx --no-install redocly lint spec/openapi.yaml
 }
 
+# Known vulnerabilities in npm packages. High or critical in runtime dependencies fails;
+# in dev tooling it warns, so a new upstream advisory does not block unrelated work.
+# Offline on the Mac it skips with a note; in CI (CI=true) an unreachable registry fails.
+verify_deps() {
+  echo "== deps: audit"
+  local out rc=0
+  out="$(npm audit --omit=dev --audit-level=high 2>&1)" || rc=$?
+  if [[ $rc -ne 0 ]]; then
+    if grep -qiE 'ENOTFOUND|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|audit endpoint returned an error' <<<"$out"; then
+      if [[ -n "${CI:-}" ]]; then echo "$out"; return 1; fi
+      echo "== deps: skipped (npm registry unreachable); CI runs it"; return 0
+    fi
+    echo "$out"
+    echo "== deps: high or critical vulnerability in runtime dependencies; fix it or ask the human" >&2
+    return 1
+  fi
+  if ! npm audit --audit-level=high >/dev/null 2>&1; then
+    echo "== deps: WARNING high or critical advisory in dev tooling; run 'npm audit' and add a backlog task"
+  fi
+}
+
 verify_ios() {
   if [[ "$(uname)" != "Darwin" ]]; then
     echo "== ios: skipped (needs macOS with Xcode)"; return 0
@@ -53,4 +74,6 @@ for t in "${targets[@]}"; do
     *) echo "unknown package: $t" >&2; exit 2 ;;
   esac
 done
+# One lockfile for the repo, so audit once when any npm package was checked.
+[[ " ${targets[*]} " =~ \ (api|spec)\  ]] && verify_deps
 echo "== verify: all green (${targets[*]})"

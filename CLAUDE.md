@@ -26,6 +26,10 @@ set up each session on their watch by hand, then import results and review. Live
   (`cloudflare:`, `@cloudflare/`, `D1Database`, `KVNamespace`, `R2Bucket`). Domain code is pure functions, no I/O.
 - Pace is minutes per km, shown as `6:30/km`. Sessions are stored as local calendar dates (`YYYY-MM-DD`) and
   matched by local date. Rule-generated plans start conservative and are always suggestions.
+- Dependencies: `verify.sh` audits npm packages (high or critical fails for runtime packages, warns for dev
+  tooling) and CI's dependency review blocks PRs that add a vulnerable package. Before adding a package, check
+  whether an existing one covers it; after adding one, `npm audit` must stay clean. A dev-tooling warning becomes
+  a backlog task, not a fix inside an unrelated PR.
 - Sign-in is email (one-time code) for now. Sign in with Apple and App Attest wait for the paid Apple account
   (backlog "Later"); keep App Attest behind `APP_ATTEST_REQUIRED`, default off.
 - The unsaved preview draft lives on the device for 24 hours. The `plans/generate` endpoint is stateless and unauthenticated.

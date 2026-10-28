@@ -1,0 +1,34 @@
+# Dependabot version updates. Security updates (PRs for alerts) are turned on by scripts/setup-github.sh.
+# .github/ is never auto-merged, and spec/api changes follow autonomy.json, so the human reviews these PRs.
+version: 2
+updates:
+  # One lockfile at the root covers the api workspace too.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    commit-message:
+      prefix: deps
+    groups:
+      # Minor and patch updates of dev tooling land as one PR a week.
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+      runtime:
+        dependency-type: production
+        update-types: [minor, patch]
+    ignore:
+      # @cloudflare/vitest-pool-workers (task 1.5) supports vitest 4.x only; revisit when it supports 5.
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencies]
+    commit-message:
+      prefix: ci
