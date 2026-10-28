@@ -742,7 +742,7 @@ paths:
       operationId: generateProposals
       summary: Run the proposal engine, or re-run the interview, for a plan
       description: |
-        Without a body, runs `propose_adjustments` (§6.6) on matches, plan-versus-actual and check-ins
+        Without `interview`, runs `propose_adjustments` (§6.6) on matches, plan-versus-actual and check-ins
         and returns the new pending proposals (possibly none). With `interview`, regenerates future
         weeks only, keeping past weeks and user-owned sessions, and returns that as one proposal of kind
         `interview_rerun` (produced even when reviews are off). Never edits the plan. Blank plans with
@@ -751,7 +751,7 @@ paths:
       security:
         - bearerAuth: [app]
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -1704,6 +1704,11 @@ components:
           $ref: "#/components/schemas/StepGoal"
         effort:
           $ref: "#/components/schemas/Effort"
+    SessionContentInput:
+      description: "`SessionContent` as a request body: unknown fields are rejected."
+      unevaluatedProperties: false
+      allOf:
+        - $ref: "#/components/schemas/SessionContent"
     SessionCreate:
       unevaluatedProperties: false
       allOf:
@@ -1716,7 +1721,7 @@ components:
               format: uuid
     SessionUpdate:
       type: object
-      description: Fields left out stay unchanged. `steps` replaces the whole list.
+      description: Fields left out stay unchanged; `clear` removes optional ones. `steps` replaces the whole list.
       additionalProperties: false
       minProperties: 1
       properties:
@@ -1725,9 +1730,8 @@ components:
         type:
           $ref: "#/components/schemas/SessionType"
         title:
-          type: [string, "null"]
+          type: string
           maxLength: 80
-          description: "`null` clears it."
         key:
           type: boolean
         status:
@@ -1739,14 +1743,19 @@ components:
           items:
             $ref: "#/components/schemas/Step"
         custom:
-          description: "`null` clears it (for example when a custom session becomes a run)."
-          anyOf:
-            - $ref: "#/components/schemas/CustomDetails"
-            - type: "null"
+          $ref: "#/components/schemas/CustomDetails"
         notes:
-          type: [string, "null"]
+          type: string
           maxLength: 2000
-          description: "`null` clears it."
+        clear:
+          type: array
+          description: |
+            Optional fields to remove (generated clients cannot send an explicit null). Changing `type`
+            away from `custom` also drops `custom`. A field may not be both set and cleared.
+          uniqueItems: true
+          items:
+            type: string
+            enum: [title, notes, custom]
     Session:
       allOf:
         - $ref: "#/components/schemas/SyncMeta"
@@ -1759,7 +1768,7 @@ components:
               format: uuid
     MatchWriteResult:
       type: object
-      required: [match, session, planContentRevision]
+      required: [match, session, planContentRevision, warnings]
       properties:
         match:
           $ref: "#/components/schemas/Match"
@@ -1767,6 +1776,10 @@ components:
           $ref: "#/components/schemas/Session"
         planContentRevision:
           type: integer
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Warning"
     SessionWriteResult:
       type: object
       required: [session, planContentRevision, warnings]
@@ -1941,6 +1954,11 @@ components:
             id:
               type: string
               format: uuid
+    CheckInFieldsInput:
+      description: "`CheckInFields` as a request body: unknown fields are rejected."
+      unevaluatedProperties: false
+      allOf:
+        - $ref: "#/components/schemas/CheckInFields"
     CheckInFields:
       type: object
       required: [when, feel]
@@ -2243,7 +2261,7 @@ components:
           type: string
           format: uuid
         data:
-          $ref: "#/components/schemas/SessionContent"
+          $ref: "#/components/schemas/SessionContentInput"
     SyncOpSessionUpdate:
       type: object
       additionalProperties: false
@@ -2298,7 +2316,7 @@ components:
           type: string
           format: uuid
         data:
-          $ref: "#/components/schemas/CheckInFields"
+          $ref: "#/components/schemas/CheckInFieldsInput"
     SyncRequest:
       type: object
       additionalProperties: false
@@ -2470,6 +2488,7 @@ components:
     ProposalGenerateRequest:
       type: object
       additionalProperties: false
+      required: [today]
       properties:
         today:
           $ref: "#/components/schemas/LocalDate"

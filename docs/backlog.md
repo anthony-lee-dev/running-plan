@@ -93,7 +93,8 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       frequency and day (§5, §6.6a). needs: 2.4
 - [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
       feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. needs: 2.12, 2.17
-- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry. needs: every
+- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry. Request
+      validation must enforce `unevaluatedProperties: false` (Swift's generator ignores it). needs: every
       other phase 2 task
 
 **Gate B:** contract tests green on both entries.
