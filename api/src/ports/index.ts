@@ -1,4 +1,5 @@
 // Interfaces the app depends on. Adapters in src/adapters/* implement them.
+import type { Profile, ProfileFields } from "../domain/profile";
 
 export interface Clock {
   now(): Date;
@@ -61,6 +62,21 @@ export interface AuthStore {
   deleteUser(id: string): Promise<void>;
 }
 
+/** One profile per user. Nothing is stored until the first save; until then the user has the default, revision 1. */
+export interface ProfileStore {
+  get(userId: string): Promise<Profile | undefined>;
+  /**
+   * Stores `fields` as revision `baseRevision + 1`, but only if the stored revision is `baseRevision` (1 when
+   * nothing is stored). Atomic: of two racing saves against one revision, exactly one wins.
+   */
+  save(
+    userId: string,
+    baseRevision: number,
+    fields: ProfileFields,
+    now: string,
+  ): Promise<{ ok: true; profile: Profile } | { ok: false; currentRevision: number }>;
+}
+
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */
 export interface EmailSender {
   sendCode(to: string, code: string): Promise<void>;
@@ -89,6 +105,7 @@ export interface Deps {
   clock: Clock;
   health: HealthProbe;
   auth: AuthStore;
+  profiles: ProfileStore;
   email: EmailSender;
   rateLimiter: RateLimiter;
   ids: IdSource;

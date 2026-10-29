@@ -1,3 +1,4 @@
+import type { Profile, ProfileFields } from "../../domain/profile";
 import type {
   AuthStore,
   Clock,
@@ -6,6 +7,7 @@ import type {
   EmailSender,
   HealthProbe,
   IdSource,
+  ProfileStore,
   RateLimiter,
   RefreshRecord,
   UserRecord,
@@ -112,6 +114,29 @@ export class MemoryAuthStore implements AuthStore {
   }
 }
 
+export class MemoryProfileStore implements ProfileStore {
+  private profiles = new Map<string, Profile>();
+
+  /** Takes the auth store so a profile disappears with its account, as the database cascade does. */
+  constructor(private readonly auth: AuthStore) {}
+
+  async get(userId: string): Promise<Profile | undefined> {
+    if (!(await this.auth.userExists(userId))) return undefined;
+    const profile = this.profiles.get(userId);
+    return profile && structuredClone(profile);
+  }
+
+  async save(userId: string, baseRevision: number, fields: ProfileFields, now: string) {
+    if (!(await this.auth.userExists(userId))) return { ok: false as const, currentRevision: 1 };
+    // From here to the set there is no await, so two racing saves cannot both pass the check.
+    const current = this.profiles.get(userId)?.revision ?? 1;
+    if (current !== baseRevision) return { ok: false as const, currentRevision: current };
+    const profile: Profile = { ...structuredClone(fields), revision: baseRevision + 1, updatedAt: now };
+    this.profiles.set(userId, profile);
+    return { ok: true as const, profile: structuredClone(profile) };
+  }
+}
+
 export class MemoryRateLimiter implements RateLimiter {
   private windows = new Map<string, { start: number; count: number }>();
 
@@ -127,10 +152,12 @@ export class MemoryRateLimiter implements RateLimiter {
 }
 
 export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
+  const auth = overrides.auth ?? new MemoryAuthStore();
   return {
     clock: systemClock,
     health: new MemoryHealthProbe(),
-    auth: new MemoryAuthStore(),
+    auth,
+    profiles: new MemoryProfileStore(auth),
     email: new MemoryEmailSender(),
     rateLimiter: new MemoryRateLimiter(),
     ids: webIdSource,

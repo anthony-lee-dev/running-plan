@@ -90,8 +90,11 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [ ] 2.15 `GET /v1/plans/{id}/progress`: adherence, volume trend, key and strength sessions completed, goal
       countdown. needs: 2.12
 - [ ] 2.16 Account data export (§10). needs: 2.12
-- [ ] 2.17 Profile API: target display, derived pace ranges and their provenance, scheduling preferences, review
+- [x] 2.17 Profile API: target display, derived pace ranges and their provenance, scheduling preferences, review
       frequency and day (§5, §6.6a). needs: 2.4
+- [ ] 2.20 Spec clarification for `PATCH /v1/profile` (own PR, found by the 2.17 review): say that `heartRate`,
+      `scheduling` and `review` replace their whole section (the only way to clear a field), and decide whether
+      ranges may be equal and sub-objects reject unknown keys, as the API does today. needs: 2.17
 - [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
       feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. needs: 2.12, 2.17
 - [ ] 2.19 Prune expired rows: `email_codes`, `rate_limits` windows and expired or rotated `refresh_tokens` (a scheduled
