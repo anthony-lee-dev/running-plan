@@ -77,6 +77,8 @@ verify_ios() {
   if [[ ! -f ios/project.yml ]]; then
     echo "== ios: skipped (no ios/project.yml yet, see docs/backlog.md task 1.3)"; return 0
   fi
+  echo "== ios: api client matches the spec"
+  bash scripts/generate-api-client.sh --check
   echo "== ios: generate project"
   (cd ios && xcodegen generate --quiet)
   local dest="${IOS_SIM_DEST:-}"

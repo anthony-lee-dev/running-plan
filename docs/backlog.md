@@ -57,7 +57,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [x] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
       day between hard sessions, one protected rest day, long-run share cap, taper, strength placement. Warn, never
       block; hard errors only for invalid data. Runs on generated, edited and blank plans
-- [ ] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
+- [x] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
       ranges in min/km starting on the slow side; effort targets when there is no recent result; heart rate only
       when the user gives max HR or zones
 - [ ] 2.1 Rule engine: 5K preset, table-driven tests over interview answers (runs per week, tier, plan length, day
@@ -106,8 +106,10 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 
 Logic is tested with Swift Testing; each screen gets a snapshot test against `designs/dark/png/` (needs 0.5).
 
-- [ ] 3.1 Generated API client from the spec with Apple's swift-openapi-generator package plugin. needs: 1.3
-- [ ] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
+- [x] 3.1 Generated API client from the spec with Apple's swift-openapi-generator, run by
+      `scripts/generate-api-client.sh` with the output committed (the build plugin needs a human to trust it in
+      Xcode and `xcodebuild` skips that only with a safety flag). `verify.sh ios` fails if it is stale. needs: 1.3
+- [x] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
       needs: 1.3, 0.5
 - [ ] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
       changing an answer regenerates; draft kept on the device for 24 hours (unit test for expiry).
