@@ -21,9 +21,10 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 
 - A screen's snapshot test hosts the real view in a `UIHostingController` (not `ImageRenderer`, which leaves out
   ScrollView) and compares it with `designs/dark/png/DK-*.png` on a coarse colour grid (see
-  `InterviewSnapshotTests`). The bundled system fonts differ from Bricolage and Inter, so the tolerance catches
-  layout, colour and selection regressions, not typography. Calibrate it: the right render must score clearly
-  below a wrong selection and a different screen. Filter one Swift Testing test with
+  `InterviewSnapshotTests`). The bundled system fonts differ from Bricolage and Inter and each simulator frames the window
+  differently (CI's iPhone 17 Pro failed an absolute threshold calibrated on the Mac), so compare relatively: the
+  right render must score lower than a wrong selection and than a different screen. That catches layout, colour
+  and selection regressions, not typography. Filter one Swift Testing test with
   `-only-testing:RunningPlanTests/Suite/test()` (the parentheses are needed).
 
 ## Bundle ID
