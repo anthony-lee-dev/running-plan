@@ -17,6 +17,8 @@ verify_spec() {
   npx --no-install redocly lint spec/openapi.yaml
   echo "== spec: operations"
   bash scripts/test/spec-operations.test.sh
+  echo "== spec: design notes endpoint map"
+  bash scripts/test/design-notes.test.sh
 }
 
 # Known vulnerabilities in npm packages. High or critical in runtime dependencies fails;
