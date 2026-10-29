@@ -36,8 +36,10 @@ for (const item of Object.values(spec.paths || {}))
   for (const op of Object.values(item)) if (op && op.operationId) console.log(op.operationId);
 ' "$tmp/spec.json" | sort -u >"$tmp/spec-ops"
 
-# Bare camelCase words in backticks (sync kinds like `session.update` and file names are skipped).
-grep -oE '`[a-z][A-Za-z]*`' "$section" | tr -d '`' | grep -E '[A-Z]|^sync$' | sort -u >"$tmp/named"
+# Bare words in backticks that look like operation ids: camelCase, or any lowercase word the spec uses as
+# an id (such as `sync`). Sync kinds like `session.update`, file names and tokens like `card` are skipped.
+grep -oE '`[a-z][A-Za-z]*`' "$section" | tr -d '`' | sort -u >"$tmp/words"
+{ grep -E '[A-Z]' "$tmp/words"; grep -vE '[A-Z]' "$tmp/words" | grep -Fxf "$tmp/spec-ops"; } | sort -u >"$tmp/named"
 
 unknown="$(comm -23 "$tmp/named" "$tmp/spec-ops")"
 if [[ -n "$unknown" ]]; then
