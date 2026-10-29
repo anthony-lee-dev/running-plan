@@ -54,7 +54,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 Engine tasks (2.8, 2.9, 2.1, 2.2, 2.10) are pure domain code with table-driven and property tests: the safest
 first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits for both.
 
-- [ ] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
+- [x] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
       day between hard sessions, one protected rest day, long-run share cap, taper, strength placement. Warn, never
       block; hard errors only for invalid data. Runs on generated, edited and blank plans
 - [ ] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
