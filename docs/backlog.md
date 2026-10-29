@@ -37,7 +37,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 - [x] 1.3 iOS bootstrap (runs alongside 1.2): `ios/project.yml` (XcodeGen), SwiftUI app shell with the four tabs
       (Next, Plan, Progress, Goal, as in `docs/design-notes.md`), Swift Testing and UI test targets, bundle ID and
       signing as in `ios/CLAUDE.md`, `verify.sh ios` green. needs: 0.2, 0.3
-- [ ] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map, using the
+- [x] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map, using the
       `design:design-handoff` and `design:accessibility-review` skills if they load (44 pt touch targets).
       needs: 1.2 for the endpoint names
 - [ ] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
