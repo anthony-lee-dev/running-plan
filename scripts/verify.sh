@@ -15,6 +15,8 @@ verify_api() {
 verify_spec() {
   echo "== spec: lint"
   npx --no-install redocly lint spec/openapi.yaml
+  echo "== spec: operations"
+  bash scripts/test/spec-operations.test.sh
 }
 
 # Known vulnerabilities in npm packages. High or critical in runtime dependencies fails;

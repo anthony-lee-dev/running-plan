@@ -26,7 +26,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 ## Phase 1: Foundations
 
 - [x] 1.1 Monorepo scaffold, CLAUDE.md files, verify scripts, Stop hook, reviewer, `/ship`, api-ci
-- [ ] 1.2 `ask first` Derive the full `spec/openapi.yaml` from §7 (the 19 operations it lists: auth sign-in, refresh,
+- [x] 1.2 `ask first` Derive the full `spec/openapi.yaml` from §7 (the 19 operations it lists: auth sign-in, refresh,
       account delete; `plans/generate`; plans list, create, get, patch, delete; session patch; sync; activities
       batch and list; session match and check-ins; proposals generate, accept, dismiss; plan progress), schemas
       from §5, auth with client-type token scopes. Sign-in is email only for now (root `CLAUDE.md`). Propose routes
@@ -93,7 +93,8 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       frequency and day (§5, §6.6a). needs: 2.4
 - [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
       feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. needs: 2.12, 2.17
-- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry. needs: every
+- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry. Request
+      validation must enforce `unevaluatedProperties: false` (Swift's generator ignores it). needs: every
       other phase 2 task
 
 **Gate B:** contract tests green on both entries.
