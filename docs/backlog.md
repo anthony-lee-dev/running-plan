@@ -65,7 +65,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       and warnings. needs: 2.8, 2.9
 - [ ] 2.2 Rule engine: 10K and half-marathon presets, strength sessions from a small curated exercise library,
       snapshot tests over the 54 base variants (§6.2). needs: 2.1
-- [ ] 2.10 Rule engine edge cases (§6.5): goal date too soon (shorten to a minimum, else propose a later date),
+- [x] 2.10 Rule engine edge cases (§6.5): goal date too soon (shorten to a minimum, else propose a later date),
       goal date far away (base phase), baseline far below the goal, pain flag selects the cautious variant. needs: 2.1
 - [ ] 2.3 `POST /v1/plans/generate` (stateless, no auth) with the §7 abuse controls: rate limit by IP and device,
       strict schema bounds, no persistence, no logging of interview answers, bounded compute and response size.

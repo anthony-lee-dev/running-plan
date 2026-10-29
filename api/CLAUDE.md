@@ -43,7 +43,8 @@ entry file, not a rewrite.
   weekly volume. The plan always ends on the goal date; the second hard session of a 5-run week is dropped to an easy
   run when no day has an easy or rest day on each side. Fewer than 3 free days is an error (the route returns 400).
   Every number is a starting value for the coach review (H.1); bump `ENGINE_VERSION` when one changes.
-  A goal date that is too soon keeps 8 weeks and suggests a later date; one that is too far starts the plan later;
-  the proper edge cases are task 2.10. Add property tests (fast-check) for each new invariant.
+  Goal dates (design 6.5): too soon keeps 8 weeks and suggests a later date; 13 to 16 weeks away adds extra base weeks
+  that hold the conservative start; further away starts the plan later with 16 weeks; a past date is dropped. A weekly
+  distance under 4 km gets a `baseline_far_below_goal` notice with a later date and a run-walk suggestion. Add property tests (fast-check) for each new invariant.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.

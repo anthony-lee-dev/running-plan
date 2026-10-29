@@ -68,13 +68,43 @@ describe("generatePlan: plan length (5K is 8 to 12 weeks)", () => {
     expect(codes(draft.warnings)).not.toContain("later_goal_date");
   });
 
-  it("starts the plan later when the goal date is more than 12 weeks away", () => {
-    const draft = gen({ goal: { distance: "5k", date: "2027-04-04" } });
+  it("adds base weeks, and says so, when the goal date is 13 to 16 weeks away", () => {
+    const draft = gen({ goal: { distance: "5k", date: "2027-02-14" }, weeklyDistanceM: 20000, runningHistory: "1_to_3_years" }); // 15 weeks
+    expect(draft.weekCount).toBe(15);
+    expect(draft.startDate).toBe(TODAY);
+    expect(draft.weeks.slice(0, 3).map((w) => w.phase)).toEqual(["base", "base", "base"]);
+    const v = volumes(draft);
+    expect(v[1]).toBe(v[0]); // the extra weeks hold the conservative start, no growth yet
+    expect(v[2]).toBe(v[0]);
+    expect(v[3]!).toBeLessThanOrEqual(v[2]! * 1.14 + 300);
+    expect(codes(draft.warnings)).toContain("base_phase_added");
+    expect(codes(draft.warnings)).not.toContain("goal_date_far");
+    expect(codes(draft.warnings)).not.toContain("weekly_growth_too_high");
+    expect(codes(draft.warnings)).not.toContain("no_taper");
+  });
+
+  it("starts a few days later, and says so, when the goal date leaves a partial week", () => {
+    const draft = gen({ goal: { distance: "5k", date: "2027-02-17" } }); // 108 days: 15 whole weeks and 3 days over
+    expect(draft.weekCount).toBe(15);
+    expect(draft.startDate).toBe("2026-11-05");
+    expect(dayNum(draft.startDate) + 15 * 7 - 1).toBe(dayNum("2027-02-17"));
+    expect(codes(draft.assumptions)).toContain("start_date_aligned");
+    expect(codes(draft.warnings)).toContain("base_phase_added");
+  });
+
+  it("adds no base weeks for a goal date exactly 12 weeks away", () => {
+    const draft = gen({ goal: { distance: "5k", date: "2027-01-24" } });
     expect(draft.weekCount).toBe(12);
+    expect(codes(draft.warnings)).not.toContain("base_phase_added");
+  });
+
+  it("starts the plan later, with the full 16 weeks, when the goal date is further away", () => {
+    const draft = gen({ goal: { distance: "5k", date: "2027-04-04" } });
+    expect(draft.weekCount).toBe(16);
     expect(dayNum(draft.startDate)).toBeGreaterThan(dayNum(TODAY));
-    expect(dayNum("2027-04-04") - dayNum(draft.startDate)).toBeLessThan(12 * 7);
-    expect(dayNum("2027-04-04") - dayNum(draft.startDate)).toBeGreaterThanOrEqual(11 * 7);
+    expect(dayNum(draft.startDate) + 16 * 7 - 1).toBe(dayNum("2027-04-04"));
     expect(codes(draft.warnings)).toContain("goal_date_far");
+    expect(draft.warnings.find((w) => w.code === "goal_date_far")?.message).toContain(draft.startDate);
   });
 
   it("never compresses the ramp for a goal date that is too soon: it keeps 8 weeks and suggests a later date", () => {
@@ -175,6 +205,25 @@ describe("generatePlan: load (conservative start, bounded growth, down weeks, ta
 
   it("warns when a tiny baseline forces a first week above it", () => {
     expect(codes(gen({ weeklyDistanceM: 2000 }).warnings)).toContain("first_week_above_baseline");
+  });
+});
+
+describe("generatePlan: a baseline far below the goal (design 6.5)", () => {
+  it("suggests a later date, and a gentler start, when the runner is barely running yet", () => {
+    for (const weeklyDistanceM of [0, 2000, 3999]) {
+      const draft = gen({ weeklyDistanceM });
+      const w = draft.warnings.find((x) => x.code === "baseline_far_below_goal");
+      expect(w, `baseline ${weeklyDistanceM}`).toMatchObject({ severity: "caution" });
+      expect(w!.message).toMatch(/run-walk|walk/i);
+      expect(w!.suggestedDate).toBeDefined();
+      expect(dayNum(w!.suggestedDate!)).toBeGreaterThan(dayNum(draft.startDate) + draft.weekCount * 7 - 1);
+    }
+  });
+
+  it("says nothing for a runner who already runs a few kilometres a week, or did not say", () => {
+    expect(codes(gen({ weeklyDistanceM: 4000 }).warnings)).not.toContain("baseline_far_below_goal");
+    expect(codes(gen({ weeklyDistanceM: 15000 }).warnings)).not.toContain("baseline_far_below_goal");
+    expect(codes(gen().warnings)).not.toContain("baseline_far_below_goal");
   });
 });
 
@@ -344,7 +393,9 @@ describe("generatePlan: properties over random interview answers", () => {
       fc.property(answersArb, todayArb, goalOffsetArb, (a, today, goalOffset) => {
         const draft = run(a, today, goalOffset);
         expect(draft.weekCount).toBeGreaterThanOrEqual(8);
-        expect(draft.weekCount).toBeLessThanOrEqual(12);
+        expect(draft.weekCount).toBeLessThanOrEqual(16);
+        if (goalOffset === undefined) expect(draft.weekCount).toBeLessThanOrEqual(12);
+        if (goalOffset !== undefined && goalOffset >= 55) expect(draft.weekCount).toBeGreaterThanOrEqual(8);
         expect(draft.assumptions.length).toBeLessThanOrEqual(50);
         expect(draft.warnings.length).toBeLessThanOrEqual(100);
         const days = new Set<string>();
@@ -379,16 +430,19 @@ describe("generatePlan: properties over random interview answers", () => {
 
   it("grows no faster than the engine's own steps, has down weeks, tapers, and never exceeds the tier cap", () => {
     fc.assert(
-      fc.property(answersArb, todayArb, (a, today) => {
-        const draft = run(a, today);
+      fc.property(answersArb, todayArb, goalOffsetArb, (a, today, goalOffset) => {
+        const draft = run(a, today, goalOffset);
         const v = volumes(draft);
         const history = a.runningHistory;
         const tierCap = history === "over_3_years" ? 48_000 : history === "1_to_3_years" ? 36_000 : 24_000;
         const downEvery = a.pain ? 3 : 4;
+        const extra = Math.max(0, draft.weekCount - 12); // extra base weeks hold the start volume
         for (let w = 1; w < v.length - 2; w++) {
           // A step is at most one growth step (8%) or the return from a down week (1 / 0.88), plus rounding.
           expect(v[w]!, `week ${w + 1}: ${v[w - 1]} to ${v[w]}`).toBeLessThanOrEqual(v[w - 1]! * 1.14 + 300);
-          if ((w + 1) % downEvery === 0) expect(v[w]!, `down week ${w + 1}`).toBeLessThanOrEqual(v[w - 1]!);
+          const inPlan = w - extra;
+          if (inPlan > 0 && (inPlan + 1) % downEvery === 0) expect(v[w]!, `down week ${w + 1}`).toBeLessThanOrEqual(v[w - 1]!);
+          if (w < extra) expect(v[w]!, `base week ${w + 1} holds the start`).toBe(v[0]!);
         }
         const peak = Math.max(...v.slice(0, -2));
         expect(v.at(-2)!).toBeLessThanOrEqual(0.8 * peak + 600);
@@ -396,7 +450,8 @@ describe("generatePlan: properties over random interview answers", () => {
         for (const week of v.slice(0, -2)) expect(week).toBeLessThanOrEqual(Math.max(tierCap, v[0]!) + 300);
         expect(codes(draft.warnings)).not.toContain("weekly_growth_too_high");
         expect(codes(draft.warnings)).not.toContain("no_down_week");
-        expect(codes(draft.warnings)).not.toContain("no_taper");
+        // A goal date inside a too-short plan is before the taper, which the validators rightly flag.
+        if (goalOffset === undefined || goalOffset >= 55) expect(codes(draft.warnings)).not.toContain("no_taper");
       }),
       { numRuns: 300 },
     );

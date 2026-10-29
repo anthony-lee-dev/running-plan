@@ -80,6 +80,10 @@ const TIERS: Record<Tier, { baselineM: number; growth: number; capM: number; wee
 };
 const MIN_WEEKS = 8;
 const MAX_WEEKS = 12;
+/** A goal further than 12 weeks away gets up to this many extra base weeks; beyond that the plan starts later. */
+const MAX_EXTRA_BASE_WEEKS = 4;
+/** Below this many metres a week the runner is not running regularly yet (design 6.5, baseline far below the goal). */
+const FAR_BELOW_BASELINE_M = 4000;
 const FIRST_WEEK_SHARE = 0.85; // of the stated baseline: a conservative start
 const CAUTIOUS = { firstWeekShare: 0.7, growth: 0.05, capShare: 0.75, downEvery: 3 };
 const DOWN_EVERY = 4;
@@ -269,6 +273,7 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   let startDay = today;
   let weekCount = preset.weeks;
   let goalDate: string | undefined;
+  let extraBaseWeeks = 0;
   if (answers.goal.date !== undefined) {
     const goalDay = dayNumber(answers.goal.date);
     const fit = Math.floor((goalDay - today + 1) / 7); // whole weeks from today to the goal date
@@ -276,9 +281,15 @@ export function generatePlan(input: GenerateInput): PlanDraft {
       warnings.push({ code: "later_goal_date", severity: "caution", message: "Your goal date has already passed, so this plan has no goal date. Pick a later date to build towards.", suggestedDate: dateOf(today + weekCount * 7 - 1) });
     } else if (fit > MAX_WEEKS) {
       goalDate = answers.goal.date;
-      weekCount = MAX_WEEKS;
-      startDay = goalDay - MAX_WEEKS * 7 + 1;
-      warnings.push({ code: "goal_date_far", severity: "info", message: `Your goal is more than ${MAX_WEEKS} weeks away, so the plan starts on ${dateOf(startDay)} instead of today.` });
+      weekCount = Math.min(fit, MAX_WEEKS + MAX_EXTRA_BASE_WEEKS);
+      extraBaseWeeks = weekCount - MAX_WEEKS;
+      startDay = goalDay - weekCount * 7 + 1; // the plan always ends on the goal date
+      if (fit > weekCount) {
+        warnings.push({ code: "goal_date_far", severity: "info", message: `Your goal is ${fit} weeks away, so the plan is ${weekCount} weeks long and starts on ${dateOf(startDay)}, with ${extraBaseWeeks} extra base weeks, instead of today.` });
+      } else {
+        warnings.push({ code: "base_phase_added", severity: "info", message: `Your goal is ${fit} weeks away, so the plan starts with ${extraBaseWeeks} extra base weeks at an easy, steady load before it builds.` });
+        if (startDay !== today) assumptions.push({ code: "start_date_aligned", message: `The plan starts on ${dateOf(startDay)} so that its last day is your goal date.` });
+      }
     } else if (fit < MIN_WEEKS) {
       goalDate = answers.goal.date;
       weekCount = MIN_WEEKS; // never compress the ramp
@@ -313,7 +324,19 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   if (firstWeek < wantedFirst) {
     assumptions.push({ code: "weekly_distance_capped", message: `You run more than this 5K plan builds to, so it holds at about ${Math.round(firstWeek / 1000)} km a week.` });
   }
-  const volumes = volumeSchedule(weekCount, firstWeek, cautious ? Math.min(preset.growth, CAUTIOUS.growth) : preset.growth, cap, cautious ? CAUTIOUS.downEvery : DOWN_EVERY);
+  // Extra base weeks hold the conservative start; the build, down weeks and taper follow over the usual length.
+  if (answers.weeklyDistanceM !== undefined && answers.weeklyDistanceM < FAR_BELOW_BASELINE_M) {
+    warnings.push({
+      code: "baseline_far_below_goal",
+      severity: "caution",
+      message: `You're running very little right now, and this plan starts at about ${Math.round(firstWeek / 1000)} km a week, which may be a big step. A run-walk start or a later goal date would suit you better.`,
+      suggestedDate: dateOf(startDay + (weekCount + 4) * 7 - 1),
+    });
+  }
+  const volumes = [
+    ...Array<number>(extraBaseWeeks).fill(firstWeek),
+    ...volumeSchedule(weekCount - extraBaseWeeks, firstWeek, cautious ? Math.min(preset.growth, CAUTIOUS.growth) : preset.growth, cap, cautious ? CAUTIOUS.downEvery : DOWN_EVERY),
+  ];
 
   // Paces and targets.
   let paces: DerivedPaces;
@@ -338,11 +361,12 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   const sessions: DraftSession[] = [];
   let build = 0;
   for (let w = 0; w < weekCount; w++) {
-    const phase = phaseOf(w, weekCount);
+    const inPlan = w - extraBaseWeeks; // the week within the usual-length plan; negative for the extra base weeks
+    const phase = inPlan < 0 ? "base" : phaseOf(inPlan, weekCount - extraBaseWeeks);
     weeks.push({ index: w, phase });
     const volume = volumes[w]!;
     const quality1 = cautious || phase === "base" || phase === "taper" ? "tempo" : phase === "peak" ? "intervals" : build++ % 2 === 0 ? "intervals" : "tempo";
-    const progress = weekCount > 1 ? w / (weekCount - 1) : 0;
+    const progress = inPlan > 0 && weekCount - extraBaseWeeks > 1 ? inPlan / (weekCount - extraBaseWeeks - 1) : 0;
     const repM = progress < 0.4 ? 400 : progress < 0.7 ? 600 : 800;
 
     const day = (offset: number) => dateOf(startDay + w * 7 + offset);
