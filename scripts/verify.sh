@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One verification entry point for agents, the Stop hook and CI.
-# Usage: bash scripts/verify.sh <api|spec|ios|all> [more packages...]
+# Usage: bash scripts/verify.sh <api|spec|web|ios|all> [more packages...]
 set -euo pipefail
 
 verify_api() {
@@ -19,6 +19,26 @@ verify_spec() {
   bash scripts/test/spec-operations.test.sh
   echo "== spec: design notes endpoint map"
   bash scripts/test/design-notes.test.sh
+}
+
+verify_web() {
+  echo "== web: api types match the spec"
+  local tmp
+  tmp="$(mktemp)"
+  (cd web && npx --no-install openapi-typescript ../spec/openapi.yaml -o "$tmp" >/dev/null 2>&1) \
+    || { echo "could not generate the web api types" >&2; rm -f "$tmp"; return 1; }
+  if ! diff -q "$tmp" web/src/api/schema.d.ts >/dev/null; then
+    rm -f "$tmp"
+    echo "web/src/api/schema.d.ts is out of date: run npm run generate:types -w web" >&2
+    return 1
+  fi
+  rm -f "$tmp"
+  echo "== web: typecheck"
+  npm run typecheck -w web --silent
+  echo "== web: tests"
+  npm test -w web --silent
+  echo "== web: build"
+  npm run build -w web --silent
 }
 
 # Known vulnerabilities in npm packages. High or critical in runtime dependencies fails;
@@ -96,18 +116,19 @@ verify_ios() {
 
 main() {
   local targets=("$@")
-  [[ ${#targets[@]} -eq 0 || "${targets[0]}" == "all" ]] && targets=(spec api ios)
+  [[ ${#targets[@]} -eq 0 || "${targets[0]}" == "all" ]] && targets=(spec api web ios)
 
   for t in "${targets[@]}"; do
     case "$t" in
       api) verify_api; verify_scripts ;;
       spec) verify_spec ;;
+      web) verify_web ;;
       ios) verify_ios ;;
       *) echo "unknown package: $t" >&2; exit 2 ;;
     esac
   done
   # One lockfile for the repo, so audit once when any npm package was checked.
-  if [[ " ${targets[*]} " =~ \ (api|spec)\  ]]; then verify_deps; fi
+  if [[ " ${targets[*]} " =~ \ (api|spec|web)\  ]]; then verify_deps; fi
   echo "== verify: all green (${targets[*]})"
 }
 

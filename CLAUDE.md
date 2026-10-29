@@ -7,7 +7,7 @@ set up each session on their watch by hand, then import results and review. Live
 
 - `api/` TypeScript API on Cloudflare Workers (Hono) with D1. See `api/CLAUDE.md`.
 - `ios/` SwiftUI app, iOS 17 minimum, phase 1 focus. See `ios/CLAUDE.md`.
-- `web/` phase 2 planning companion. Empty for now.
+- `web/` phase 2 planning companion: React + Vite, hosted as Cloudflare Workers static assets. See `web/README.md`.
 - `spec/openapi.yaml` the API contract. The only place endpoints are defined.
 - `designs/` source of truth for behaviour and looks:
   - `designs/Running Planner — System Design v1.0.md` behaviour, data model, endpoints (what to build).
@@ -37,7 +37,7 @@ set up each session on their watch by hand, then import results and review. Live
 
 ## Definition of done
 
-1. `bash scripts/verify.sh <package>` exits 0 for every package you touched (`api`, `spec`, `ios`).
+1. `bash scripts/verify.sh <package>` exits 0 for every package you touched (`api`, `spec`, `web`, `ios`).
 2. Work is on a branch named `agent/<short-task>` with a PR opened by `/ship`, marked ready for review.
 3. Manual-gate items (real device, Apple account) are listed as unticked boxes in the PR body, never faked.
 4. **Never run `gh pr merge`.** `/ship` calls `python3 scripts/request-merge.py`, which requests auto-merge only when

@@ -1,0 +1,22 @@
+name: web-ci
+# Not a required check yet (the ruleset lists api and ios); make it required when the web app ships.
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: bash scripts/verify.sh web
