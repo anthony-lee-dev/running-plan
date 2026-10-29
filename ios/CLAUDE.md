@@ -13,7 +13,10 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Generate the Xcode project with XcodeGen from `ios/project.yml` (`brew install xcodegen`, then `xcodegen` in `ios/`).
   The `.xcodeproj` is gitignored, so parallel worktrees never conflict on `project.pbxproj`.
 - App target `RunningPlan`, unit test target `RunningPlanTests` (Swift Testing), UI test target `RunningPlanUITests`.
-- API client generated from `../spec/openapi.yaml` with Apple's swift-openapi-generator package plugin.
+- API client generated from `../spec/openapi.yaml` with Apple's swift-openapi-generator, run by
+  `bash scripts/generate-api-client.sh` into `ios/APIClient/Sources/APIClient/Generated` (committed; local package
+  `ios/APIClient`). Not the build plugin: `xcodebuild` cannot trust a plugin without a skip-validation flag.
+  After a spec change, regenerate and commit; `verify.sh ios` fails when the output is stale.
 - Look and feel from `../designs/dark/DK-*.dc.html` and `../docs/design-notes.md`: Bricolage Grotesque for
   headings, Inter for body, the dark palette there, 44 pt minimum touch targets.
 
