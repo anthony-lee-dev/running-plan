@@ -3,6 +3,7 @@ import { createApp } from "./app";
 import { D1AuthStore } from "./adapters/cloudflare/d1-auth-store";
 import { D1HealthProbe } from "./adapters/cloudflare/d1-health";
 import { D1ProfileStore } from "./adapters/cloudflare/d1-profile-store";
+import { D1PlanStore } from "./adapters/cloudflare/d1-plan-store";
 import { D1RateLimiter } from "./adapters/cloudflare/d1-rate-limiter";
 import { LogEmailSender, systemClock, webIdSource } from "./adapters/memory";
 import { ResendEmailSender } from "./adapters/resend/resend-email";
@@ -35,6 +36,7 @@ export default {
       health: new D1HealthProbe(env.DB),
       auth: new D1AuthStore(env.DB),
       profiles: new D1ProfileStore(env.DB),
+      plans: new D1PlanStore(env.DB),
       rateLimiter: new D1RateLimiter(env.DB),
       email:
         env.RESEND_API_KEY && env.MAIL_FROM

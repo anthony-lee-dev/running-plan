@@ -74,7 +74,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [x] 2.4 `ask first` Auth: email sign-in with a one-time code, refresh tokens with client-type scopes, account
       delete. Sending email goes through an `EmailSender` port; the dev adapter logs the code, and the task
       proposes a provider. needs: 1.5
-- [ ] 2.5 Plans and sessions CRUD, including blank plans and user-owned custom sessions; edits carry the base
+- [x] 2.5 Plans and sessions CRUD, including blank plans and user-owned custom sessions; edits carry the base
       revision. needs: 2.4
 - [ ] 2.6 `POST /v1/sync` for the offline edit queue: idempotency keys, cursor, per-session revision conflicts,
       tombstones. needs: 2.5

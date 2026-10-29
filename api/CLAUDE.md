@@ -39,5 +39,11 @@ entry file, not a rewrite.
   are printed). Put local values in `api/.dev.vars` (gitignored). Only `cf-connecting-ip` is trusted for rate limits.
   Access tokens stay valid until they expire (15 minutes) after their refresh family is revoked; account delete
   takes effect at once because each request checks the user still exists. Production secrets are set by the human with `npx wrangler secret put <NAME>`.
+- Plans and sessions (task 2.5): every query is scoped to the signed-in user, so another user's id is a 404. Writes
+  compare the base revision (`If-Match`) atomically; a session write also moves the plan's `contentRevision` in the
+  same D1 batch (a transaction), with later statements guarded by SQLite's `changes()` so a lost race writes
+  nothing. Deletes are tombstones. Creates are idempotent: the request's canonical hash is stored, so a repeat is a
+  200 and the same id with another body a 409. The D1 SQL in `adapters/cloudflare/` may use SQLite features; only
+  the migrations stay portable.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.
