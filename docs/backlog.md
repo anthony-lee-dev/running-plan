@@ -40,8 +40,9 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 - [x] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map, using the
       `design:design-handoff` and `design:accessibility-review` skills if they load (44 pt touch targets).
       needs: 1.2 for the endpoint names
-- [ ] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
-      `updatedAt` and `deletedAt` tombstone), D1 adapter tests with `@cloudflare/vitest-pool-workers`. needs: 1.2, 1.6
+- [x] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
+      `updatedAt` and `deletedAt` tombstone), schema tests in workerd with `@cloudflare/vitest-plugin` (renamed from `vitest-pool-workers`). The D1
+      repositories themselves come with the API tasks that use them (2.4 onwards). needs: 1.2, 1.6
 - [x] 1.6 Clear the Dependabot alerts (all in dev tooling): `vitest` `^4.1.12`, `@redocly/cli` `^2.72.0`, so
       `npm audit` shows 0. Check dependencies early: audit step in `verify.sh`, dependency review in `api-ci`,
       `.github/dependabot.yml`, reviewer checks lockfile changes
@@ -53,7 +54,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 Engine tasks (2.8, 2.9, 2.1, 2.2, 2.10) are pure domain code with table-driven and property tests: the safest
 first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits for both.
 
-- [ ] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
+- [x] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
       day between hard sessions, one protected rest day, long-run share cap, taper, strength placement. Warn, never
       block; hard errors only for invalid data. Runs on generated, edited and blank plans
 - [ ] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
@@ -106,7 +107,7 @@ Logic is tested with Swift Testing; each screen gets a snapshot test against `de
 - [x] 3.1 Generated API client from the spec with Apple's swift-openapi-generator, run by
       `scripts/generate-api-client.sh` with the output committed (the build plugin needs a human to trust it in
       Xcode and `xcodebuild` skips that only with a safety flag). `verify.sh ios` fails if it is stale. needs: 1.3
-- [ ] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
+- [x] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
       needs: 1.3, 0.5
 - [ ] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
       changing an answer regenerates; draft kept on the device for 24 hours (unit test for expiry).
