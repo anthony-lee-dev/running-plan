@@ -60,7 +60,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [x] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
       ranges in min/km starting on the slow side; effort targets when there is no recent result; heart rate only
       when the user gives max HR or zones
-- [ ] 2.1 Rule engine: 5K preset, table-driven tests over interview answers (runs per week, tier, plan length, day
+- [x] 2.1 Rule engine: 5K preset, table-driven tests over interview answers (runs per week, tier, plan length, day
       constraints), property tests for conservative start and bounded weekly growth; response carries assumptions
       and warnings. needs: 2.8, 2.9
 - [ ] 2.2 Rule engine: 10K and half-marathon presets, strength sessions from a small curated exercise library,
