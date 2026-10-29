@@ -1,6 +1,12 @@
 # ios
 
-SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Not created yet: backlog task 1.3 does it.
+SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
+
+- `RunningPlan/App/` entry point, `AppTab` (Next, Plan, Progress, Goal) and `RootView`.
+- `RunningPlan/Theme/` colour tokens (`Palette`, from `docs/design-notes.md`) and `Metrics`.
+- `RunningPlan/Features/` one folder per screen as they land; `PlaceholderScreen` stands in until then.
+- Screens set `accessibilityIdentifier("screen.<name>")` so UI tests can find them.
+- Fonts (Bricolage Grotesque, Inter) are not bundled yet; screens use the system font until a screen task adds them.
 
 ## Decisions for the bootstrap task
 
@@ -33,7 +39,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Not creat
 - `bash scripts/verify.sh ios` (from repo root) regenerates the project, then builds and runs tests on a simulator.
   The `ios` check on GitHub runs the same script on a macOS runner with the newest Xcode it has, which may differ
   from the Mac's Xcode 27.1; keep the deployment target at iOS 17 so both build.
-  Override the simulator with `IOS_SIM_DEST='platform=iOS Simulator,name=<device>'`.
+  It picks the first iPhone on the newest installed iOS runtime (older runtimes may not match the
+  installed Xcode). Override with `IOS_SIM_DEST='platform=iOS Simulator,id=<udid>'`.
 
 ## Manual gates (agents list these in the PR body, the human ticks them)
 

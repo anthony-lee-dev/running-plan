@@ -53,6 +53,21 @@ verify_scripts() {
   for t in scripts/test/*.test.sh; do bash "$t"; done
 }
 
+# Reads `xcrun simctl list devices available` on stdin and prints the id of the first iPhone
+# on the newest iOS runtime that has one (nothing if there is none).
+pick_ios_sim() {
+  awk '
+    /^-- iOS [0-9.]+ --/ { split($3, v, "."); rt = sprintf("%05d%05d%05d", v[1], v[2], v[3]); next }
+    /^-- / { rt = ""; next }
+    rt != "" && /^ +iPhone/ && !(rt in first) {
+      if (match($0, /\(([0-9A-Fa-f-]+)\) \([A-Za-z ]+\) *$/)) {
+        s = substr($0, RSTART + 1); first[rt] = substr(s, 1, index(s, ")") - 1)
+      }
+    }
+    END { best = ""; for (r in first) if (r > best) best = r; if (best != "") print first[best] }
+  '
+}
+
 verify_ios() {
   if [[ "$(uname)" != "Darwin" ]]; then
     echo "== ios: skipped (needs macOS with Xcode)"; return 0
@@ -64,14 +79,14 @@ verify_ios() {
   (cd ios && xcodegen generate --quiet)
   local dest="${IOS_SIM_DEST:-}"
   if [[ -z "$dest" ]]; then
-    # First available iPhone simulator on this Mac.
-    local name
-    name="$(xcrun simctl list devices available | grep -m1 -oE 'iPhone[^()]*' | sed 's/ *$//' || true)"
-    if [[ -z "$name" ]]; then
+    # First iPhone on the newest iOS runtime; older runtimes may not match the installed Xcode.
+    local id
+    id="$(xcrun simctl list devices available | pick_ios_sim)"
+    if [[ -z "$id" ]]; then
       echo "== ios: no iPhone simulator available; install one in Xcode > Settings > Components" >&2
       return 1
     fi
-    dest="platform=iOS Simulator,name=${name}"
+    dest="platform=iOS Simulator,id=${id}"
   fi
   echo "== ios: test on ${dest}"
   xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" -quiet

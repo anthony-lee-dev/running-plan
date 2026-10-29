@@ -34,7 +34,7 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
       code, verify it); creating and deleting single sessions (or say they go through plan PATCH and sync); the
       Profile (target display, review frequency and day); the weekly review summary; account data export.
       Spec only, no code; Redocly lint green. needs: 0.2, 0.3
-- [ ] 1.3 iOS bootstrap (runs alongside 1.2): `ios/project.yml` (XcodeGen), SwiftUI app shell with the four tabs
+- [x] 1.3 iOS bootstrap (runs alongside 1.2): `ios/project.yml` (XcodeGen), SwiftUI app shell with the four tabs
       (Next, Plan, Progress, Goal, as in `docs/design-notes.md`), Swift Testing and UI test targets, bundle ID and
       signing as in `ios/CLAUDE.md`, `verify.sh ios` green. needs: 0.2, 0.3
 - [ ] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map, using the
