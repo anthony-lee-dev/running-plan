@@ -40,8 +40,9 @@ From the workflow doc's Day-1 checklist. Each line says what it unblocks.
 - [x] 1.4 Design handoff: extend `docs/design-notes.md` with component states and a screen-to-endpoint map, using the
       `design:design-handoff` and `design:accessibility-review` skills if they load (44 pt touch targets).
       needs: 1.2 for the endpoint names
-- [ ] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
-      `updatedAt` and `deletedAt` tombstone), D1 adapter tests with `@cloudflare/vitest-pool-workers`. needs: 1.2, 1.6
+- [x] 1.5 D1 schema: first migration from the §5 data model (every synced entity has a client UUID, revision,
+      `updatedAt` and `deletedAt` tombstone), schema tests in workerd with `@cloudflare/vitest-plugin` (renamed from `vitest-pool-workers`). The D1
+      repositories themselves come with the API tasks that use them (2.4 onwards). needs: 1.2, 1.6
 - [x] 1.6 Clear the Dependabot alerts (all in dev tooling): `vitest` `^4.1.12`, `@redocly/cli` `^2.72.0`, so
       `npm audit` shows 0. Check dependencies early: audit step in `verify.sh`, dependency review in `api-ci`,
       `.github/dependabot.yml`, reviewer checks lockfile changes

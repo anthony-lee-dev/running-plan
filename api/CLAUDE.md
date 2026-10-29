@@ -26,7 +26,10 @@ entry file, not a rewrite.
 - npm 12 blocks dependency install scripts. esbuild, workerd and fsevents are blocked and work without them
   (their binaries come from platform packages). Do not approve install scripts (`npm install-scripts approve`)
   without asking the human.
-- Stay on vitest 4.x: `@cloudflare/vitest-pool-workers` (task 1.5) supports `^4.1`, not 5.
+- Adapter tests under `api/test/adapters/cloudflare/` run in workerd with a local D1 through `@cloudflare/vitest-plugin` (the
+  renamed `@cloudflare/vitest-pool-workers`, which is deprecated and ships a workerd too old for our
+  `compatibility_date`). `vitest.config.ts` has two projects: `node` (everything else) and `d1`. Migrations in
+  `migrations/` are applied to the test database automatically.
 - D1 is SQLite: keep SQL to portable basics (no SQLite-only JSON tricks) so a later move to Postgres stays a
   dialect change, not a redesign. Use integer seconds for durations and `TEXT` `YYYY-MM-DD` for local dates.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
