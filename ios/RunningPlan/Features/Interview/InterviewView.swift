@@ -2,9 +2,20 @@ import SwiftUI
 
 /// The interview, one question per screen (DK-Interview). Fonts are the system ones until the screen-font task.
 struct InterviewView: View {
-    @State private var flow = InterviewFlow()
+    @State private var flow: InterviewFlow
     let onFinish: (InterviewAnswers, _ blankPlan: Bool) -> Void
     let onClose: () -> Void
+
+    @MainActor
+    init(
+        flow: InterviewFlow? = nil,
+        onFinish: @escaping (InterviewAnswers, _ blankPlan: Bool) -> Void,
+        onClose: @escaping () -> Void
+    ) {
+        _flow = State(initialValue: flow ?? InterviewFlow())
+        self.onFinish = onFinish
+        self.onClose = onClose
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
