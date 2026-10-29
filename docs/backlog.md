@@ -105,7 +105,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 Logic is tested with Swift Testing; each screen gets a snapshot test against `designs/dark/png/` (needs 0.5).
 
 - [ ] 3.1 Generated API client from the spec with Apple's swift-openapi-generator package plugin. needs: 1.3
-- [ ] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
+- [x] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
       needs: 1.3, 0.5
 - [ ] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
       changing an answer regenerates; draft kept on the device for 24 hours (unit test for expiry).

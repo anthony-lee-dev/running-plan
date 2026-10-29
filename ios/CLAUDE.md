@@ -17,6 +17,16 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Look and feel from `../designs/dark/DK-*.dc.html` and `../docs/design-notes.md`: Bricolage Grotesque for
   headings, Inter for body, the dark palette there, 44 pt minimum touch targets.
 
+## Snapshot tests
+
+- A screen's snapshot test hosts the real view in a `UIHostingController` (not `ImageRenderer`, which leaves out
+  ScrollView) and compares it with `designs/dark/png/DK-*.png` on a coarse colour grid (see
+  `InterviewSnapshotTests`). The bundled system fonts differ from Bricolage and Inter and each simulator frames the window
+  differently (CI's iPhone 17 Pro failed an absolute threshold calibrated on the Mac), so compare relatively: the
+  right render must score lower than a wrong selection and than a different screen. That catches layout, colour
+  and selection regressions, not typography. Filter one Swift Testing test with
+  `-only-testing:RunningPlanTests/Suite/test()` (the parentheses are needed).
+
 ## Bundle ID
 
 - Release ID: `ca.anthonylee.runningplan` (from the human's domain anthonylee.ca). **Never register it with the
