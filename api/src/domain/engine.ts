@@ -5,15 +5,19 @@
 import type { InterviewAnswers } from "./interview";
 import { WEEKDAYS } from "./interview";
 import { derivePaces, heartRateRange, resolveTargetKind, type DerivedPaces, type PaceRange, type Zone } from "./paces";
+import { PRESETS, type GoalType, type PresetParams, type Tier } from "./presets";
+import { placeStrength, strengthSession, type StrengthStep } from "./strength";
 import { sessionDistanceM, validatePlan, type ValidatorSession } from "./validators";
 
 /** Bump when any number below changes (for example after the coach review, backlog H.1): plans record it. */
-export const ENGINE_VERSION = "0.1.0";
+export const ENGINE_VERSION = "0.2.0"; // 0.2.0: 10K and half marathon presets, strength sessions
 
 export interface GenerateInput {
   answers: InterviewAnswers;
   /** The user's local date, YYYY-MM-DD. */
   today: string;
+  /** An explicit preset; normally the goal distance picks it. */
+  presetId?: string;
 }
 
 export type Effort = "easy" | "moderate" | "hard";
@@ -31,16 +35,17 @@ export interface RepeatStep {
   count: number;
   steps: RunStep[];
 }
-export type Step = RunStep | RepeatStep;
+export type Step = RunStep | RepeatStep | StrengthStep;
 
 export interface DraftSession {
   date: string;
-  type: "easy" | "long" | "intervals" | "tempo";
+  type: "easy" | "long" | "intervals" | "tempo" | "strength";
   title: string;
   key: boolean;
   status: "planned";
   owner: "system";
   steps: Step[];
+  notes?: string;
 }
 export interface DraftWeek {
   index: number;
@@ -58,7 +63,7 @@ export interface DraftWarning {
   suggestedDate?: string;
 }
 export interface PlanDraft {
-  goal: { type: "5k"; date?: string; targetTimeSec?: number };
+  goal: { type: GoalType; date?: string; targetTimeSec?: number };
   startDate: string;
   weekCount: number;
   source: "rules";
@@ -70,29 +75,14 @@ export interface PlanDraft {
   warnings: DraftWarning[];
 }
 
-// ---- Preset parameters ----
+// ---- Parameters shared by every preset (the per-preset ones are in presets.ts) ----
 
-type Tier = "beginner" | "intermediate" | "experienced";
-const TIERS: Record<Tier, { baselineM: number; growth: number; capM: number; weeks: number }> = {
-  beginner: { baselineM: 10_000, growth: 0.07, capM: 24_000, weeks: 12 },
-  intermediate: { baselineM: 20_000, growth: 0.08, capM: 36_000, weeks: 10 },
-  experienced: { baselineM: 30_000, growth: 0.08, capM: 48_000, weeks: 8 },
-};
-const MIN_WEEKS = 8;
-const MAX_WEEKS = 12;
-/** A goal further than 12 weeks away gets up to this many extra base weeks; beyond that the plan starts later. */
-const MAX_EXTRA_BASE_WEEKS = 4;
-/** Below this many metres a week the runner is not running regularly yet (design 6.5, baseline far below the goal). */
-const FAR_BELOW_BASELINE_M = 4000;
+
 const FIRST_WEEK_SHARE = 0.85; // of the stated baseline: a conservative start
 const CAUTIOUS = { firstWeekShare: 0.7, growth: 0.05, capShare: 0.75, downEvery: 3 };
 const DOWN_EVERY = 4;
 const DOWN_FACTOR = 0.88; // small enough that coming back up stays inside the validators' growth cap
 const TAPER_FACTORS = [0.8, 0.6]; // the last two weeks, as shares of the peak week
-/** Longest single sessions in a 5K plan: a modest long run, a quality session, an easy run. */
-const LONG_RUN_MAX_M = 14_000;
-const QUALITY_MAX_M = 12_000;
-const EASY_RUN_MAX_M = 10_000;
 const FEASIBLE_MARGIN = 0.95; // room for quality sessions that round to whole repeats
 /** Shares of the week's distance, by runs per week: long run, first quality session, second quality, each easy run. */
 const SHARES: Record<number, { long: number; q1: number; q2: number; easy: number[] }> = {
@@ -207,8 +197,12 @@ function easyRun(date: string, metres: number, ctx: TargetContext): DraftSession
   return { date, type: "easy", title: "Easy run", key: false, status: "planned", owner: "system", steps: [run("work", metres, target(ctx, "easy", "easy"))] };
 }
 
-function longRun(date: string, metres: number, ctx: TargetContext): DraftSession {
-  return { date, type: "long", title: "Long run", key: true, status: "planned", owner: "system", steps: [run("work", metres, target(ctx, "long", "easy"))] };
+function longRun(date: string, metres: number, ctx: TargetContext, progressive: boolean): DraftSession {
+  const base = { date, type: "long" as const, title: "Long run", key: true, status: "planned" as const, owner: "system" as const };
+  if (!progressive) return { ...base, steps: [run("work", metres, target(ctx, "long", "easy"))] };
+  // Progressive: the last third at a steadier effort, so the long run teaches the legs to run on tired.
+  const steady = Math.max(1000, round100(metres / 3));
+  return { ...base, title: "Progressive long run", steps: [run("work", metres - steady, target(ctx, "long", "easy")), run("work", steady, target(ctx, "tempo", "moderate"))] };
 }
 
 function tempoRun(date: string, wanted: number, ctx: TargetContext): DraftSession {
@@ -240,7 +234,8 @@ const metresOf = (s: DraftSession): number => sessionDistanceM(s as unknown as V
 
 export function generatePlan(input: GenerateInput): PlanDraft {
   const { answers } = input;
-  if (answers.goal.distance !== "5k") throw new Error(`No preset for ${answers.goal.distance} yet; only the 5K preset exists`);
+  const preset: PresetParams | undefined = PRESETS[(input.presetId ?? answers.goal.distance) as GoalType];
+  if (!preset) throw new Error(`No preset called "${input.presetId}"`);
   const today = dayNumber(input.today);
   const assumptions: Assumption[] = [];
   const warnings: DraftWarning[] = [];
@@ -248,7 +243,7 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   // Experience tier. Without a history the conservative one applies.
   const tier: Tier =
     answers.runningHistory === "over_3_years" ? "experienced" : answers.runningHistory === "1_to_3_years" ? "intermediate" : "beginner";
-  const preset = TIERS[tier];
+  const tierParams = preset.tiers[tier];
   if (!answers.runningHistory) assumptions.push({ code: "tier_default", message: "You didn't say how long you've been running, so this plan starts as it would for a newer runner." });
 
   const cautious = answers.pain === true;
@@ -260,7 +255,7 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   // Baseline and the first week.
   let baseline = answers.weeklyDistanceM;
   if (baseline === undefined) {
-    baseline = preset.baselineM;
+    baseline = tierParams.baselineM;
     assumptions.push({ code: "baseline_default", message: `You didn't say how far you run in a week, so we assumed ${baseline / 1000} km.` });
   }
 
@@ -271,7 +266,7 @@ export function generatePlan(input: GenerateInput): PlanDraft {
 
   // Plan length and start. The plan always ends on the goal date, so the taper falls just before it.
   let startDay = today;
-  let weekCount = preset.weeks;
+  let weekCount = tierParams.weeks;
   let goalDate: string | undefined;
   let extraBaseWeeks = 0;
   if (answers.goal.date !== undefined) {
@@ -279,10 +274,10 @@ export function generatePlan(input: GenerateInput): PlanDraft {
     const fit = Math.floor((goalDay - today + 1) / 7); // whole weeks from today to the goal date
     if (goalDay < today) {
       warnings.push({ code: "later_goal_date", severity: "caution", message: "Your goal date has already passed, so this plan has no goal date. Pick a later date to build towards.", suggestedDate: dateOf(today + weekCount * 7 - 1) });
-    } else if (fit > MAX_WEEKS) {
+    } else if (fit > preset.maxWeeks) {
       goalDate = answers.goal.date;
-      weekCount = Math.min(fit, MAX_WEEKS + MAX_EXTRA_BASE_WEEKS);
-      extraBaseWeeks = weekCount - MAX_WEEKS;
+      weekCount = Math.min(fit, preset.maxWeeks + preset.extraBaseWeeksMax);
+      extraBaseWeeks = weekCount - preset.maxWeeks;
       startDay = goalDay - weekCount * 7 + 1; // the plan always ends on the goal date
       if (fit > weekCount) {
         warnings.push({ code: "goal_date_far", severity: "info", message: `Your goal is ${fit} weeks away, so the plan is ${weekCount} weeks long and starts on ${dateOf(startDay)}, with ${extraBaseWeeks} extra base weeks, instead of today.` });
@@ -290,10 +285,10 @@ export function generatePlan(input: GenerateInput): PlanDraft {
         warnings.push({ code: "base_phase_added", severity: "info", message: `Your goal is ${fit} weeks away, so the plan starts with ${extraBaseWeeks} extra base weeks at an easy, steady load before it builds.` });
         if (startDay !== today) assumptions.push({ code: "start_date_aligned", message: `The plan starts on ${dateOf(startDay)} so that its last day is your goal date.` });
       }
-    } else if (fit < MIN_WEEKS) {
+    } else if (fit < preset.minWeeks) {
       goalDate = answers.goal.date;
-      weekCount = MIN_WEEKS; // never compress the ramp
-      warnings.push({ code: "later_goal_date", severity: "caution", message: `${MIN_WEEKS} weeks is the shortest sensible 5K plan and your goal date is sooner. Consider a later goal date.`, suggestedDate: dateOf(startDay + MIN_WEEKS * 7 - 1) });
+      weekCount = preset.minWeeks; // never compress the ramp
+      warnings.push({ code: "later_goal_date", severity: "caution", message: `${preset.minWeeks} weeks is the shortest sensible ${preset.name} plan and your goal date is sooner. Consider a later goal date.`, suggestedDate: dateOf(startDay + preset.minWeeks * 7 - 1) });
     } else {
       goalDate = answers.goal.date;
       weekCount = fit;
@@ -316,16 +311,16 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   // The most a week can hold without any single run passing its limit, given the shares each run takes.
   const shares = SHARES[Math.max(3, placed.runs)]!;
   const feasible = Math.floor(
-    FEASIBLE_MARGIN * Math.min(LONG_RUN_MAX_M / shares.long, QUALITY_MAX_M / shares.q1, shares.q2 > 0 ? QUALITY_MAX_M / shares.q2 : Infinity, EASY_RUN_MAX_M / Math.max(...shares.easy)),
+    FEASIBLE_MARGIN * Math.min(preset.longRunMaxM / shares.long, preset.qualityMaxM / shares.q1, shares.q2 > 0 ? preset.qualityMaxM / shares.q2 : Infinity, preset.easyRunMaxM / Math.max(...shares.easy)),
   );
-  const cap = Math.min(cautious ? Math.round(preset.capM * CAUTIOUS.capShare) : preset.capM, feasible);
+  const cap = Math.min(cautious ? Math.round(tierParams.capM * CAUTIOUS.capShare) : tierParams.capM, feasible);
   const wantedFirst = Math.max(round100(baseline * (cautious ? CAUTIOUS.firstWeekShare : FIRST_WEEK_SHARE)), 5000, placed.runs * 1800);
   const firstWeek = Math.min(wantedFirst, round100(cap));
   if (firstWeek < wantedFirst) {
-    assumptions.push({ code: "weekly_distance_capped", message: `You run more than this 5K plan builds to, so it holds at about ${Math.round(firstWeek / 1000)} km a week.` });
+    assumptions.push({ code: "weekly_distance_capped", message: `You run more than this ${preset.name} plan builds to, so it holds at about ${Math.round(firstWeek / 1000)} km a week.` });
   }
   // Extra base weeks hold the conservative start; the build, down weeks and taper follow over the usual length.
-  if (answers.weeklyDistanceM !== undefined && answers.weeklyDistanceM < FAR_BELOW_BASELINE_M) {
+  if (answers.weeklyDistanceM !== undefined && answers.weeklyDistanceM < preset.farBelowBaselineM) {
     warnings.push({
       code: "baseline_far_below_goal",
       severity: "caution",
@@ -335,7 +330,7 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   }
   const volumes = [
     ...Array<number>(extraBaseWeeks).fill(firstWeek),
-    ...volumeSchedule(weekCount - extraBaseWeeks, firstWeek, cautious ? Math.min(preset.growth, CAUTIOUS.growth) : preset.growth, cap, cautious ? CAUTIOUS.downEvery : DOWN_EVERY),
+    ...volumeSchedule(weekCount - extraBaseWeeks, firstWeek, cautious ? Math.min(tierParams.growth, CAUTIOUS.growth) : tierParams.growth, cap, cautious ? CAUTIOUS.downEvery : DOWN_EVERY),
   ];
 
   // Paces and targets.
@@ -354,28 +349,33 @@ export function generatePlan(input: GenerateInput): PlanDraft {
     assumptions.push({ code: "heart_rate_unavailable", message: "Heart rate targets need your maximum heart rate or zones, so this plan shows effort instead." });
   }
   const ctx: TargetContext = { kind, paces, heartRate: answers.heartRate };
-  if (answers.strength?.enabled) assumptions.push({ code: "strength_not_available", message: "Strength sessions are not part of this plan version yet, so none were added." });
+  const strengthOn = answers.strength?.enabled === true;
+  const equipment = answers.strength?.equipment ?? "bodyweight";
+  if (strengthOn && answers.strength?.equipment === undefined) assumptions.push({ code: "strength_equipment_default", message: "You didn't say what equipment you have, so the strength sessions use only your bodyweight." });
 
   // Sessions, week by week.
   const weeks: DraftWeek[] = [];
   const sessions: DraftSession[] = [];
   let build = 0;
+  let strengthShort = false;
   for (let w = 0; w < weekCount; w++) {
     const inPlan = w - extraBaseWeeks; // the week within the usual-length plan; negative for the extra base weeks
     const phase = inPlan < 0 ? "base" : phaseOf(inPlan, weekCount - extraBaseWeeks);
     weeks.push({ index: w, phase });
     const volume = volumes[w]!;
-    const quality1 = cautious || phase === "base" || phase === "taper" ? "tempo" : phase === "peak" ? "intervals" : build++ % 2 === 0 ? "intervals" : "tempo";
+    const alternate = preset.quality1 === "alternate";
+    const quality1 = cautious || !alternate || phase === "base" || phase === "taper" ? "tempo" : phase === "peak" ? "intervals" : build++ % 2 === 0 ? "intervals" : "tempo";
     const progress = inPlan > 0 && weekCount - extraBaseWeeks > 1 ? inPlan / (weekCount - extraBaseWeeks - 1) : 0;
-    const repM = progress < 0.4 ? 400 : progress < 0.7 ? 600 : 800;
+    const repM = preset.repLengthsM[progress < 0.4 ? 0 : progress < 0.7 ? 1 : 2];
 
     const day = (offset: number) => dateOf(startDay + w * 7 + offset);
     const weekSessions: DraftSession[] = [];
-    let longM = Math.min(round100(volume * shares.long), LONG_RUN_MAX_M);
+    let longM = Math.min(round100(volume * shares.long), preset.longRunMaxM);
     const qualityOf = (role: "q1" | "q2", offset: number): DraftSession | undefined => {
       const wanted = round100(volume * (role === "q1" ? shares.q1 : shares.q2));
       if (role === "q1") return quality1 === "intervals" ? intervalRun(day(offset), wanted, repM, ctx) : tempoRun(day(offset), wanted, ctx);
-      return phase === "base" || phase === "taper" ? undefined : tempoRun(day(offset), wanted, ctx);
+      if (phase === "base" || phase === "taper") return undefined;
+      return preset.quality2 === "intervals" && !cautious ? intervalRun(day(offset), wanted, repM, ctx) : tempoRun(day(offset), wanted, ctx);
     };
     const easySlots = placed.slots.filter((s) => s.role === "easy");
     const qualitySessions: DraftSession[] = [];
@@ -397,9 +397,31 @@ export function generatePlan(input: GenerateInput): PlanDraft {
       const metres = i === 0 ? remaining - each * (easyOffsets.length - 1) : each;
       weekSessions.push(easyRun(day(offset), metres, ctx));
     });
-    weekSessions.push(longRun(day(placed.slots.find((s) => s.role === "long")!.offset), longM, ctx), ...qualitySessions);
+    weekSessions.push(longRun(day(placed.slots.find((s) => s.role === "long")!.offset), longM, ctx, preset.progressiveLong && !cautious && (phase === "build" || phase === "peak")), ...qualitySessions);
+    if (strengthOn) {
+      // One or two short sessions, away from the hard runs and the day before them.
+      const count = cautious || runsWanted < 4 || tier === "beginner" ? 1 : 2;
+      // The hard slots, not this week's hard sessions: a second quality session starts in the build, and a strength
+      // session on the last day of a base week must not land the day before it.
+      const hardOffsets = new Set(placed.slots.filter((slot) => slot.role !== "easy").map((slot) => slot.offset));
+      const offsets = placeStrength({
+        runs: weekSessions.map((s) => {
+          const offset = Math.round(dayNumber(s.date) - (startDay + w * 7));
+          return { offset, hard: hardOffsets.has(offset) };
+        }),
+        unavailable: new Set([...unavailable].map((weekday) => (weekday - startWeekday + 7) % 7)),
+        count,
+      });
+      offsets.forEach((offset, i) => {
+        const dose = strengthSession(equipment, phase, w + i, cautious);
+        weekSessions.push({ date: day(offset), type: "strength", title: "Strength", key: false, status: "planned", owner: "system", steps: dose.steps, notes: `About ${dose.minutes} minutes. Stop any movement that hurts.` });
+      });
+      if (offsets.length < count) strengthShort = true;
+    }
     sessions.push(...weekSessions.sort((a, b) => (a.date < b.date ? -1 : 1)));
   }
+
+  if (strengthShort) assumptions.push({ code: "strength_no_room", message: "There isn't a day for every strength session away from your hard runs, so some weeks have fewer." });
 
   // The validators (§6.4) have the last word: their findings join the engine's own notices.
   const validated = validatePlan(
@@ -414,11 +436,11 @@ export function generatePlan(input: GenerateInput): PlanDraft {
   for (const w of validated.warnings) warnings.push({ code: w.code, severity: w.severity, message: w.message, weekIndex: w.weekIndex });
 
   return {
-    goal: { type: "5k", ...(goalDate ? { date: goalDate } : {}), ...(answers.goal.targetTimeSec !== undefined ? { targetTimeSec: answers.goal.targetTimeSec } : {}) },
+    goal: { type: preset.id, ...(goalDate ? { date: goalDate } : {}), ...(answers.goal.targetTimeSec !== undefined ? { targetTimeSec: answers.goal.targetTimeSec } : {}) },
     startDate: dateOf(startDay),
     weekCount,
     source: "rules",
-    engine: { presetId: "5k", version: ENGINE_VERSION, interview: structuredClone(answers) },
+    engine: { presetId: preset.id, version: ENGINE_VERSION, interview: structuredClone(answers) },
     adaptive: true,
     weeks,
     sessions,

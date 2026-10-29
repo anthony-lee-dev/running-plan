@@ -1,0 +1,1156 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 3 runs / beginner / no strength 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    8.5 km: Wed tempo 2.3 | Fri easy 3.0 | Sun long 3.2
+w02 base    9.1 km: Wed tempo 2.5 | Fri easy 3.1 | Sun long 3.5
+w03 base    9.7 km: Wed tempo 2.6 | Fri easy 3.4 | Sun long 3.7
+w04 build   8.5 km: Wed intervals 2x400 2.2 | Fri easy 3.1 | Sun long 3.2
+w05 build   9.7 km: Wed tempo 2.6 | Fri easy 3.4 | Sun long 3.7
+w06 build  10.4 km: Wed intervals 2x600 2.8 | Fri easy 3.6 | Sun long 4.0
+w07 build  11.1 km: Wed tempo 3.0 | Fri easy 3.9 | Sun long 4.2
+w08 build   9.8 km: Wed intervals 2x600 2.6 | Fri easy 3.5 | Sun long 3.7
+w09 peak   11.1 km: Wed intervals 2x800 3.2 | Fri easy 3.7 | Sun long 4.2
+w10 peak   11.9 km: Wed intervals 2x800 3.2 | Fri easy 4.2 | Sun long 4.5
+w11 taper   9.5 km: Wed tempo 2.6 | Fri easy 3.3 | Sun long 3.6
+w12 taper   7.1 km: Wed tempo 1.9 | Fri easy 2.5 | Sun long 2.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 3 runs / beginner / with strength 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    8.5 km: Mon strength(5x2, 15m) | Wed tempo 2.3 | Fri easy 3.0 | Sun long 3.2
+w02 base    9.1 km: Mon strength(5x2, 15m) | Wed tempo 2.5 | Fri easy 3.1 | Sun long 3.5
+w03 base    9.7 km: Mon strength(5x2, 15m) | Wed tempo 2.6 | Fri easy 3.4 | Sun long 3.7
+w04 build   8.5 km: Mon strength(5x3, 20m) | Wed intervals 2x400 2.2 | Fri easy 3.1 | Sun long 3.2
+w05 build   9.7 km: Mon strength(5x3, 20m) | Wed tempo 2.6 | Fri easy 3.4 | Sun long 3.7
+w06 build  10.4 km: Mon strength(5x3, 20m) | Wed intervals 2x600 2.8 | Fri easy 3.6 | Sun long 4.0
+w07 build  11.1 km: Mon strength(5x3, 20m) | Wed tempo 3.0 | Fri easy 3.9 | Sun long 4.2
+w08 build   9.8 km: Mon strength(5x3, 20m) | Wed intervals 2x600 2.6 | Fri easy 3.5 | Sun long 3.7
+w09 peak   11.1 km: Mon strength(5x3, 20m) | Wed intervals 2x800 3.2 | Fri easy 3.7 | Sun long 4.2
+w10 peak   11.9 km: Mon strength(5x3, 20m) | Wed intervals 2x800 3.2 | Fri easy 4.2 | Sun long 4.5
+w11 taper   9.5 km: Mon strength(5x2, 15m) | Wed tempo 2.6 | Fri easy 3.3 | Sun long 3.6
+w12 taper   7.1 km: Mon strength(5x2, 15m) | Wed tempo 1.9 | Fri easy 2.5 | Sun long 2.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 3 runs / experienced / no strength 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Wed tempo 6.9 | Fri easy 8.9 | Sun long 9.7
+w02 base   27.1 km: Wed tempo 7.3 | Fri easy 9.5 | Sun long 10.3
+w03 build  27.1 km: Wed intervals 7x400 7.2 | Fri easy 9.6 | Sun long 10.3
+w04 build  23.9 km: Wed tempo 6.5 | Fri easy 8.3 | Sun long 9.1
+w05 build  27.1 km: Wed intervals 5x600 7.0 | Fri easy 9.8 | Sun long 10.3
+w06 peak   27.1 km: Wed intervals 4x800 7.0 | Fri easy 9.8 | Sun long 10.3
+w07 taper  21.7 km: Wed tempo 5.9 | Fri easy 7.6 | Sun long 8.2
+w08 taper  16.3 km: Wed tempo 4.4 | Fri easy 5.7 | Sun long 6.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 3 runs / experienced / with strength 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon strength(5x2, 15m) | Wed tempo 6.9 | Fri easy 8.9 | Sun long 9.7
+w02 base   27.1 km: Mon strength(5x2, 15m) | Wed tempo 7.3 | Fri easy 9.5 | Sun long 10.3
+w03 build  27.1 km: Mon strength(5x3, 20m) | Wed intervals 7x400 7.2 | Fri easy 9.6 | Sun long 10.3
+w04 build  23.9 km: Mon strength(5x3, 20m) | Wed tempo 6.5 | Fri easy 8.3 | Sun long 9.1
+w05 build  27.1 km: Mon strength(5x3, 20m) | Wed intervals 5x600 7.0 | Fri easy 9.8 | Sun long 10.3
+w06 peak   27.1 km: Mon strength(5x3, 20m) | Wed intervals 4x800 7.0 | Fri easy 9.8 | Sun long 10.3
+w07 taper  21.7 km: Mon strength(5x2, 15m) | Wed tempo 5.9 | Fri easy 7.6 | Sun long 8.2
+w08 taper  16.3 km: Mon strength(5x2, 15m) | Wed tempo 4.4 | Fri easy 5.7 | Sun long 6.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 3 runs / intermediate / no strength 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   17.0 km: Wed tempo 4.6 | Fri easy 5.9 | Sun long 6.5
+w02 base   18.4 km: Wed tempo 5.0 | Fri easy 6.4 | Sun long 7.0
+w03 build  19.9 km: Wed intervals 5x400 5.2 | Fri easy 7.1 | Sun long 7.6
+w04 build  17.5 km: Wed tempo 4.7 | Fri easy 6.1 | Sun long 6.7
+w05 build  19.9 km: Wed intervals 4x600 5.4 | Fri easy 6.9 | Sun long 7.6
+w06 build  21.5 km: Wed tempo 5.8 | Fri easy 7.5 | Sun long 8.2
+w07 peak   23.2 km: Wed intervals 5x600 6.6 | Fri easy 7.8 | Sun long 8.8
+w08 peak   20.4 km: Wed intervals 3x800 5.2 | Fri easy 7.4 | Sun long 7.8
+w09 taper  18.6 km: Wed tempo 5.0 | Fri easy 6.5 | Sun long 7.1
+w10 taper  13.9 km: Wed tempo 3.8 | Fri easy 4.8 | Sun long 5.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 3 runs / intermediate / with strength 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   17.0 km: Mon strength(5x2, 15m) | Wed tempo 4.6 | Fri easy 5.9 | Sun long 6.5
+w02 base   18.4 km: Mon strength(5x2, 15m) | Wed tempo 5.0 | Fri easy 6.4 | Sun long 7.0
+w03 build  19.9 km: Mon strength(5x3, 20m) | Wed intervals 5x400 5.2 | Fri easy 7.1 | Sun long 7.6
+w04 build  17.5 km: Mon strength(5x3, 20m) | Wed tempo 4.7 | Fri easy 6.1 | Sun long 6.7
+w05 build  19.9 km: Mon strength(5x3, 20m) | Wed intervals 4x600 5.4 | Fri easy 6.9 | Sun long 7.6
+w06 build  21.5 km: Mon strength(5x3, 20m) | Wed tempo 5.8 | Fri easy 7.5 | Sun long 8.2
+w07 peak   23.2 km: Mon strength(5x3, 20m) | Wed intervals 5x600 6.6 | Fri easy 7.8 | Sun long 8.8
+w08 peak   20.4 km: Mon strength(5x3, 20m) | Wed intervals 3x800 5.2 | Fri easy 7.4 | Sun long 7.8
+w09 taper  18.6 km: Mon strength(5x2, 15m) | Wed tempo 5.0 | Fri easy 6.5 | Sun long 7.1
+w10 taper  13.9 km: Mon strength(5x2, 15m) | Wed tempo 3.8 | Fri easy 4.8 | Sun long 5.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 4 runs / beginner / no strength 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    8.5 km: Mon easy 1.8 | Wed tempo 2.1 | Fri easy 1.8 | Sun long 2.8
+w02 base    9.1 km: Mon easy 1.9 | Wed tempo 2.3 | Fri easy 1.9 | Sun long 3.0
+w03 base    9.7 km: Mon easy 2.1 | Wed tempo 2.4 | Fri easy 2.0 | Sun long 3.2
+w04 build   8.5 km: Mon easy 1.9 | Wed intervals 2x400 2.0 | Fri easy 1.8 | Sun long 2.8
+w05 build   9.7 km: Mon easy 2.1 | Wed tempo 2.4 | Fri easy 2.0 | Sun long 3.2
+w06 build  10.4 km: Mon easy 2.2 | Wed intervals 2x600 2.6 | Fri easy 2.2 | Sun long 3.4
+w07 build  11.1 km: Mon easy 2.3 | Wed tempo 2.8 | Fri easy 2.3 | Sun long 3.7
+w08 build   9.8 km: Mon easy 2.0 | Wed intervals 2x600 2.6 | Fri easy 2.0 | Sun long 3.2
+w09 peak   11.1 km: Mon easy 2.1 | Wed intervals 2x800 3.2 | Fri easy 2.1 | Sun long 3.7
+w10 peak   11.9 km: Mon easy 2.4 | Wed intervals 2x800 3.2 | Fri easy 2.4 | Sun long 3.9
+w11 taper   9.5 km: Mon easy 2.0 | Wed tempo 2.4 | Fri easy 2.0 | Sun long 3.1
+w12 taper   7.1 km: Mon easy 1.5 | Wed tempo 1.8 | Fri easy 1.5 | Sun long 2.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 4 runs / beginner / with strength 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    8.5 km: Mon easy 1.8 | Wed tempo 2.1 | Thu strength(5x2, 15m) | Fri easy 1.8 | Sun long 2.8
+w02 base    9.1 km: Mon easy 1.9 | Wed tempo 2.3 | Thu strength(5x2, 15m) | Fri easy 1.9 | Sun long 3.0
+w03 base    9.7 km: Mon easy 2.1 | Wed tempo 2.4 | Thu strength(5x2, 15m) | Fri easy 2.0 | Sun long 3.2
+w04 build   8.5 km: Mon easy 1.9 | Wed intervals 2x400 2.0 | Thu strength(5x3, 20m) | Fri easy 1.8 | Sun long 2.8
+w05 build   9.7 km: Mon easy 2.1 | Wed tempo 2.4 | Thu strength(5x3, 20m) | Fri easy 2.0 | Sun long 3.2
+w06 build  10.4 km: Mon easy 2.2 | Wed intervals 2x600 2.6 | Thu strength(5x3, 20m) | Fri easy 2.2 | Sun long 3.4
+w07 build  11.1 km: Mon easy 2.3 | Wed tempo 2.8 | Thu strength(5x3, 20m) | Fri easy 2.3 | Sun long 3.7
+w08 build   9.8 km: Mon easy 2.0 | Wed intervals 2x600 2.6 | Thu strength(5x3, 20m) | Fri easy 2.0 | Sun long 3.2
+w09 peak   11.1 km: Mon easy 2.1 | Wed intervals 2x800 3.2 | Thu strength(5x3, 20m) | Fri easy 2.1 | Sun long 3.7
+w10 peak   11.9 km: Mon easy 2.4 | Wed intervals 2x800 3.2 | Thu strength(5x3, 20m) | Fri easy 2.4 | Sun long 3.9
+w11 taper   9.5 km: Mon easy 2.0 | Wed tempo 2.4 | Thu strength(5x2, 15m) | Fri easy 2.0 | Sun long 3.1
+w12 taper   7.1 km: Mon easy 1.5 | Wed tempo 1.8 | Thu strength(5x2, 15m) | Fri easy 1.5 | Sun long 2.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 4 runs / experienced / no strength 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w02 base   27.5 km: Mon easy 5.8 | Wed tempo 6.9 | Fri easy 5.7 | Sun long 9.1
+w03 build  29.7 km: Mon easy 6.4 | Wed intervals 7x400 7.2 | Fri easy 6.3 | Sun long 9.8
+w04 build  26.1 km: Mon easy 5.5 | Wed tempo 6.5 | Fri easy 5.5 | Sun long 8.6
+w05 build  29.7 km: Mon easy 6.1 | Wed intervals 6x600 7.8 | Fri easy 6.0 | Sun long 9.8
+w06 peak   32.1 km: Mon easy 6.7 | Wed intervals 5x800 8.2 | Fri easy 6.6 | Sun long 10.6
+w07 taper  25.7 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.4 | Sun long 8.5
+w08 taper  19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Fri easy 4.0 | Sun long 6.4"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 4 runs / experienced / with strength 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon easy 5.4 | Mon strength(5x2, 15m) | Wed tempo 6.4 | Thu strength(5x2, 15m) | Fri easy 5.3 | Sun long 8.4
+w02 base   27.5 km: Mon easy 5.8 | Mon strength(5x2, 15m) | Wed tempo 6.9 | Thu strength(5x2, 15m) | Fri easy 5.7 | Sun long 9.1
+w03 build  29.7 km: Mon easy 6.4 | Mon strength(5x3, 20m) | Wed intervals 7x400 7.2 | Thu strength(5x3, 20m) | Fri easy 6.3 | Sun long 9.8
+w04 build  26.1 km: Mon easy 5.5 | Mon strength(5x3, 20m) | Wed tempo 6.5 | Thu strength(5x3, 20m) | Fri easy 5.5 | Sun long 8.6
+w05 build  29.7 km: Mon easy 6.1 | Mon strength(5x3, 20m) | Wed intervals 6x600 7.8 | Thu strength(5x3, 20m) | Fri easy 6.0 | Sun long 9.8
+w06 peak   32.1 km: Mon easy 6.7 | Mon strength(5x3, 20m) | Wed intervals 5x800 8.2 | Thu strength(5x3, 20m) | Fri easy 6.6 | Sun long 10.6
+w07 taper  25.7 km: Mon easy 5.4 | Mon strength(5x2, 15m) | Wed tempo 6.4 | Thu strength(5x2, 15m) | Fri easy 5.4 | Sun long 8.5
+w08 taper  19.3 km: Mon easy 4.1 | Mon strength(5x2, 15m) | Wed tempo 4.8 | Thu strength(5x2, 15m) | Fri easy 4.0 | Sun long 6.4"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 4 runs / intermediate / no strength 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   17.0 km: Mon easy 3.6 | Wed tempo 4.3 | Fri easy 3.5 | Sun long 5.6
+w02 base   18.4 km: Mon easy 3.9 | Wed tempo 4.6 | Fri easy 3.8 | Sun long 6.1
+w03 build  19.9 km: Mon easy 4.2 | Wed intervals 5x400 5.0 | Fri easy 4.1 | Sun long 6.6
+w04 build  17.5 km: Mon easy 3.7 | Wed tempo 4.4 | Fri easy 3.6 | Sun long 5.8
+w05 build  19.9 km: Mon easy 4.1 | Wed intervals 4x600 5.2 | Fri easy 4.0 | Sun long 6.6
+w06 build  21.5 km: Mon easy 4.5 | Wed tempo 5.4 | Fri easy 4.5 | Sun long 7.1
+w07 peak   23.2 km: Mon easy 5.0 | Wed intervals 4x600 5.6 | Fri easy 4.9 | Sun long 7.7
+w08 peak   20.4 km: Mon easy 4.4 | Wed intervals 3x800 5.0 | Fri easy 4.3 | Sun long 6.7
+w09 taper  18.6 km: Mon easy 3.9 | Wed tempo 4.7 | Fri easy 3.9 | Sun long 6.1
+w10 taper  13.9 km: Mon easy 2.9 | Wed tempo 3.5 | Fri easy 2.9 | Sun long 4.6"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 4 runs / intermediate / with strength 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   17.0 km: Mon easy 3.6 | Mon strength(5x2, 15m) | Wed tempo 4.3 | Thu strength(5x2, 15m) | Fri easy 3.5 | Sun long 5.6
+w02 base   18.4 km: Mon easy 3.9 | Mon strength(5x2, 15m) | Wed tempo 4.6 | Thu strength(5x2, 15m) | Fri easy 3.8 | Sun long 6.1
+w03 build  19.9 km: Mon easy 4.2 | Mon strength(5x3, 20m) | Wed intervals 5x400 5.0 | Thu strength(5x3, 20m) | Fri easy 4.1 | Sun long 6.6
+w04 build  17.5 km: Mon easy 3.7 | Mon strength(5x3, 20m) | Wed tempo 4.4 | Thu strength(5x3, 20m) | Fri easy 3.6 | Sun long 5.8
+w05 build  19.9 km: Mon easy 4.1 | Mon strength(5x3, 20m) | Wed intervals 4x600 5.2 | Thu strength(5x3, 20m) | Fri easy 4.0 | Sun long 6.6
+w06 build  21.5 km: Mon easy 4.5 | Mon strength(5x3, 20m) | Wed tempo 5.4 | Thu strength(5x3, 20m) | Fri easy 4.5 | Sun long 7.1
+w07 peak   23.2 km: Mon easy 5.0 | Mon strength(5x3, 20m) | Wed intervals 4x600 5.6 | Thu strength(5x3, 20m) | Fri easy 4.9 | Sun long 7.7
+w08 peak   20.4 km: Mon easy 4.4 | Mon strength(5x3, 20m) | Wed intervals 3x800 5.0 | Thu strength(5x3, 20m) | Fri easy 4.3 | Sun long 6.7
+w09 taper  18.6 km: Mon easy 3.9 | Mon strength(5x2, 15m) | Wed tempo 4.7 | Thu strength(5x2, 15m) | Fri easy 3.9 | Sun long 6.1
+w10 taper  13.9 km: Mon easy 2.9 | Mon strength(5x2, 15m) | Wed tempo 3.5 | Thu strength(5x2, 15m) | Fri easy 2.9 | Sun long 4.6"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 5 runs / beginner / no strength 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    9.0 km: Mon easy 1.5 | Tue easy 1.5 | Wed tempo 1.8 | Fri easy 1.5 | Sun long 2.7
+w02 base    9.6 km: Mon easy 1.6 | Tue easy 1.6 | Wed tempo 1.9 | Fri easy 1.6 | Sun long 2.9
+w03 base   10.3 km: Mon easy 1.7 | Tue easy 1.7 | Wed tempo 2.1 | Fri easy 1.7 | Sun long 3.1
+w04 build   9.1 km: Mon easy 1.5 | Tue easy 1.5 | Wed intervals 2x400 2.0 | Fri tempo 1.4 | Sun long 2.7
+w05 build  10.3 km: Mon easy 1.8 | Tue easy 1.8 | Wed tempo 2.1 | Fri tempo 1.5 | Sun long 3.1
+w06 build  11.0 km: Mon easy 1.8 | Tue easy 1.8 | Wed intervals 2x600 2.4 | Fri tempo 1.7 | Sun long 3.3
+w07 build  11.8 km: Mon easy 2.1 | Tue easy 2.0 | Wed tempo 2.4 | Fri tempo 1.8 | Sun long 3.5
+w08 build  10.4 km: Mon easy 1.7 | Tue easy 1.6 | Wed intervals 2x600 2.4 | Fri tempo 1.6 | Sun long 3.1
+w09 peak   11.8 km: Mon easy 1.8 | Tue easy 1.7 | Wed intervals 2x800 3.0 | Fri tempo 1.8 | Sun long 3.5
+w10 peak   12.6 km: Mon easy 2.0 | Tue easy 1.9 | Wed intervals 2x800 3.0 | Fri tempo 1.9 | Sun long 3.8
+w11 taper  10.1 km: Mon easy 1.7 | Tue easy 1.7 | Wed tempo 2.0 | Fri easy 1.7 | Sun long 3.0
+w12 taper   7.6 km: Mon easy 1.4 | Tue easy 1.2 | Wed tempo 1.5 | Fri easy 1.2 | Sun long 2.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 5 runs / beginner / with strength 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    9.0 km: Mon easy 1.5 | Mon strength(5x2, 15m) | Tue easy 1.5 | Wed tempo 1.8 | Fri easy 1.5 | Sun long 2.7
+w02 base    9.6 km: Mon easy 1.6 | Mon strength(5x2, 15m) | Tue easy 1.6 | Wed tempo 1.9 | Fri easy 1.6 | Sun long 2.9
+w03 base   10.3 km: Mon easy 1.7 | Mon strength(5x2, 15m) | Tue easy 1.7 | Wed tempo 2.1 | Fri easy 1.7 | Sun long 3.1
+w04 build   9.1 km: Mon easy 1.5 | Mon strength(5x3, 20m) | Tue easy 1.5 | Wed intervals 2x400 2.0 | Fri tempo 1.4 | Sun long 2.7
+w05 build  10.3 km: Mon easy 1.8 | Mon strength(5x3, 20m) | Tue easy 1.8 | Wed tempo 2.1 | Fri tempo 1.5 | Sun long 3.1
+w06 build  11.0 km: Mon easy 1.8 | Mon strength(5x3, 20m) | Tue easy 1.8 | Wed intervals 2x600 2.4 | Fri tempo 1.7 | Sun long 3.3
+w07 build  11.8 km: Mon easy 2.1 | Mon strength(5x3, 20m) | Tue easy 2.0 | Wed tempo 2.4 | Fri tempo 1.8 | Sun long 3.5
+w08 build  10.4 km: Mon easy 1.7 | Mon strength(5x3, 20m) | Tue easy 1.6 | Wed intervals 2x600 2.4 | Fri tempo 1.6 | Sun long 3.1
+w09 peak   11.8 km: Mon easy 1.8 | Mon strength(5x3, 20m) | Tue easy 1.7 | Wed intervals 2x800 3.0 | Fri tempo 1.8 | Sun long 3.5
+w10 peak   12.6 km: Mon easy 2.0 | Mon strength(5x3, 20m) | Tue easy 1.9 | Wed intervals 2x800 3.0 | Fri tempo 1.9 | Sun long 3.8
+w11 taper  10.1 km: Mon easy 1.7 | Mon strength(5x2, 15m) | Tue easy 1.7 | Wed tempo 2.0 | Fri easy 1.7 | Sun long 3.0
+w12 taper   7.6 km: Mon easy 1.4 | Mon strength(5x2, 15m) | Tue easy 1.2 | Wed tempo 1.5 | Fri easy 1.2 | Sun long 2.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 5 runs / experienced / no strength 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon easy 4.3 | Tue easy 4.2 | Wed tempo 5.1 | Fri easy 4.2 | Sun long 7.7
+w02 base   27.5 km: Mon easy 4.7 | Tue easy 4.5 | Wed tempo 5.5 | Fri easy 4.5 | Sun long 8.3
+w03 build  29.7 km: Mon easy 5.2 | Tue easy 5.1 | Wed intervals 6x400 6.0 | Fri tempo 4.5 | Sun long 8.9
+w04 build  26.1 km: Mon easy 4.6 | Tue easy 4.6 | Wed tempo 5.2 | Fri tempo 3.9 | Sun long 7.8
+w05 build  29.7 km: Mon easy 5.4 | Tue easy 5.3 | Wed intervals 4x600 5.6 | Fri tempo 4.5 | Sun long 8.9
+w06 peak   32.1 km: Mon easy 5.6 | Tue easy 5.5 | Wed intervals 4x800 6.6 | Fri tempo 4.8 | Sun long 9.6
+w07 taper  25.7 km: Mon easy 4.3 | Tue easy 4.3 | Wed tempo 5.1 | Fri easy 4.3 | Sun long 7.7
+w08 taper  19.3 km: Mon easy 3.2 | Tue easy 3.2 | Wed tempo 3.9 | Fri easy 3.2 | Sun long 5.8"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 5 runs / experienced / with strength 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   25.5 km: Mon easy 4.3 | Mon strength(5x2, 15m) | Tue easy 4.2 | Wed tempo 5.1 | Fri easy 4.2 | Sun long 7.7
+w02 base   27.5 km: Mon easy 4.7 | Mon strength(5x2, 15m) | Tue easy 4.5 | Wed tempo 5.5 | Fri easy 4.5 | Sun long 8.3
+w03 build  29.7 km: Mon easy 5.2 | Mon strength(5x3, 20m) | Tue easy 5.1 | Wed intervals 6x400 6.0 | Fri tempo 4.5 | Sun long 8.9
+w04 build  26.1 km: Mon easy 4.6 | Mon strength(5x3, 20m) | Tue easy 4.6 | Wed tempo 5.2 | Fri tempo 3.9 | Sun long 7.8
+w05 build  29.7 km: Mon easy 5.4 | Mon strength(5x3, 20m) | Tue easy 5.3 | Wed intervals 4x600 5.6 | Fri tempo 4.5 | Sun long 8.9
+w06 peak   32.1 km: Mon easy 5.6 | Mon strength(5x3, 20m) | Tue easy 5.5 | Wed intervals 4x800 6.6 | Fri tempo 4.8 | Sun long 9.6
+w07 taper  25.7 km: Mon easy 4.3 | Mon strength(5x2, 15m) | Tue easy 4.3 | Wed tempo 5.1 | Fri easy 4.3 | Sun long 7.7
+w08 taper  19.3 km: Mon easy 3.2 | Mon strength(5x2, 15m) | Tue easy 3.2 | Wed tempo 3.9 | Fri easy 3.2 | Sun long 5.8"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 5 runs / intermediate / no strength 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   17.0 km: Mon easy 2.9 | Tue easy 2.8 | Wed tempo 3.4 | Fri easy 2.8 | Sun long 5.1
+w02 base   18.4 km: Mon easy 3.2 | Tue easy 3.0 | Wed tempo 3.7 | Fri easy 3.0 | Sun long 5.5
+w03 build  19.9 km: Mon easy 3.5 | Tue easy 3.4 | Wed intervals 4x400 4.0 | Fri tempo 3.0 | Sun long 6.0
+w04 build  17.5 km: Mon easy 3.1 | Tue easy 3.0 | Wed tempo 3.5 | Fri tempo 2.6 | Sun long 5.3
+w05 build  19.9 km: Mon easy 3.5 | Tue easy 3.4 | Wed intervals 3x600 4.0 | Fri tempo 3.0 | Sun long 6.0
+w06 build  21.5 km: Mon easy 3.8 | Tue easy 3.7 | Wed tempo 4.3 | Fri tempo 3.2 | Sun long 6.5
+w07 peak   23.2 km: Mon easy 3.9 | Tue easy 3.8 | Wed intervals 4x600 5.0 | Fri tempo 3.5 | Sun long 7.0
+w08 peak   20.4 km: Mon easy 3.3 | Tue easy 3.3 | Wed intervals 3x800 4.6 | Fri tempo 3.1 | Sun long 6.1
+w09 taper  18.6 km: Mon easy 3.1 | Tue easy 3.1 | Wed tempo 3.7 | Fri easy 3.1 | Sun long 5.6
+w10 taper  13.9 km: Mon easy 2.3 | Tue easy 2.3 | Wed tempo 2.8 | Fri easy 2.3 | Sun long 4.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 5k / 5 runs / intermediate / with strength 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   17.0 km: Mon easy 2.9 | Mon strength(5x2, 15m) | Tue easy 2.8 | Wed tempo 3.4 | Fri easy 2.8 | Sun long 5.1
+w02 base   18.4 km: Mon easy 3.2 | Mon strength(5x2, 15m) | Tue easy 3.0 | Wed tempo 3.7 | Fri easy 3.0 | Sun long 5.5
+w03 build  19.9 km: Mon easy 3.5 | Mon strength(5x3, 20m) | Tue easy 3.4 | Wed intervals 4x400 4.0 | Fri tempo 3.0 | Sun long 6.0
+w04 build  17.5 km: Mon easy 3.1 | Mon strength(5x3, 20m) | Tue easy 3.0 | Wed tempo 3.5 | Fri tempo 2.6 | Sun long 5.3
+w05 build  19.9 km: Mon easy 3.5 | Mon strength(5x3, 20m) | Tue easy 3.4 | Wed intervals 3x600 4.0 | Fri tempo 3.0 | Sun long 6.0
+w06 build  21.5 km: Mon easy 3.8 | Mon strength(5x3, 20m) | Tue easy 3.7 | Wed tempo 4.3 | Fri tempo 3.2 | Sun long 6.5
+w07 peak   23.2 km: Mon easy 3.9 | Mon strength(5x3, 20m) | Tue easy 3.8 | Wed intervals 4x600 5.0 | Fri tempo 3.5 | Sun long 7.0
+w08 peak   20.4 km: Mon easy 3.3 | Mon strength(5x3, 20m) | Tue easy 3.3 | Wed intervals 3x800 4.6 | Fri tempo 3.1 | Sun long 6.1
+w09 taper  18.6 km: Mon easy 3.1 | Mon strength(5x2, 15m) | Tue easy 3.1 | Wed tempo 3.7 | Fri easy 3.1 | Sun long 5.6
+w10 taper  13.9 km: Mon easy 2.3 | Mon strength(5x2, 15m) | Tue easy 2.3 | Wed tempo 2.8 | Fri easy 2.3 | Sun long 4.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 3 runs / beginner / no strength 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   10.2 km: Wed tempo 2.8 | Fri easy 3.5 | Sun long 3.9
+w02 base   10.9 km: Wed tempo 2.9 | Fri easy 3.9 | Sun long 4.1
+w03 base   11.7 km: Wed tempo 3.2 | Fri easy 4.1 | Sun long 4.4
+w04 build  10.3 km: Wed intervals 2x800 3.2 | Fri easy 3.2 | Sun long 3.9
+w05 build  11.7 km: Wed tempo 3.2 | Fri easy 4.1 | Sun long 4.4
+w06 build  12.5 km: Wed intervals 2x1000 3.8 | Fri easy 3.9 | Sun long 4.8
+w07 build  13.4 km: Wed tempo 3.6 | Fri easy 4.7 | Sun long 5.1
+w08 build  11.8 km: Wed intervals 2x1000 3.6 | Fri easy 3.7 | Sun long 4.5
+w09 peak   13.4 km: Wed intervals 2x1200 4.2 | Fri easy 4.1 | Sun long 5.1
+w10 peak   14.3 km: Wed intervals 2x1200 4.4 | Fri easy 4.5 | Sun long 5.4
+w11 taper  11.4 km: Wed tempo 3.1 | Fri easy 4.0 | Sun long 4.3
+w12 taper   8.6 km: Wed tempo 2.3 | Fri easy 3.0 | Sun long 3.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 3 runs / beginner / with strength 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   10.2 km: Mon strength(5x2, 15m) | Wed tempo 2.8 | Fri easy 3.5 | Sun long 3.9
+w02 base   10.9 km: Mon strength(5x2, 15m) | Wed tempo 2.9 | Fri easy 3.9 | Sun long 4.1
+w03 base   11.7 km: Mon strength(5x2, 15m) | Wed tempo 3.2 | Fri easy 4.1 | Sun long 4.4
+w04 build  10.3 km: Mon strength(5x3, 20m) | Wed intervals 2x800 3.2 | Fri easy 3.2 | Sun long 3.9
+w05 build  11.7 km: Mon strength(5x3, 20m) | Wed tempo 3.2 | Fri easy 4.1 | Sun long 4.4
+w06 build  12.5 km: Mon strength(5x3, 20m) | Wed intervals 2x1000 3.8 | Fri easy 3.9 | Sun long 4.8
+w07 build  13.4 km: Mon strength(5x3, 20m) | Wed tempo 3.6 | Fri easy 4.7 | Sun long 5.1
+w08 build  11.8 km: Mon strength(5x3, 20m) | Wed intervals 2x1000 3.6 | Fri easy 3.7 | Sun long 4.5
+w09 peak   13.4 km: Mon strength(5x3, 20m) | Wed intervals 2x1200 4.2 | Fri easy 4.1 | Sun long 5.1
+w10 peak   14.3 km: Mon strength(5x3, 20m) | Wed intervals 2x1200 4.4 | Fri easy 4.5 | Sun long 5.4
+w11 taper  11.4 km: Mon strength(5x2, 15m) | Wed tempo 3.1 | Fri easy 4.0 | Sun long 4.3
+w12 taper   8.6 km: Mon strength(5x2, 15m) | Wed tempo 2.3 | Fri easy 3.0 | Sun long 3.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 3 runs / experienced / no strength 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   32.3 km: Wed tempo 8.7 | Fri easy 11.3 | Sun long 12.3
+w02 base   32.6 km: Wed tempo 8.8 | Fri easy 11.4 | Sun long 12.4
+w03 build  32.6 km: Wed intervals 5x800 8.6 | Fri easy 11.6 | Sun long 12.4
+w04 build  28.7 km: Wed tempo 7.7 | Fri easy 10.1 | Sun long 10.9
+w05 build  32.6 km: Wed intervals 4x1000 8.4 | Fri easy 11.8 | Sun long 12.4
+w06 peak   32.6 km: Wed intervals 4x1200 9.2 | Fri easy 11.0 | Sun long 12.4
+w07 taper  26.1 km: Wed tempo 7.0 | Fri easy 9.2 | Sun long 9.9
+w08 taper  19.5 km: Wed tempo 5.3 | Fri easy 6.8 | Sun long 7.4"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 3 runs / experienced / with strength 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   32.3 km: Mon strength(5x2, 15m) | Wed tempo 8.7 | Fri easy 11.3 | Sun long 12.3
+w02 base   32.6 km: Mon strength(5x2, 15m) | Wed tempo 8.8 | Fri easy 11.4 | Sun long 12.4
+w03 build  32.6 km: Mon strength(5x3, 20m) | Wed intervals 5x800 8.6 | Fri easy 11.6 | Sun long 12.4
+w04 build  28.7 km: Mon strength(5x3, 20m) | Wed tempo 7.7 | Fri easy 10.1 | Sun long 10.9
+w05 build  32.6 km: Mon strength(5x3, 20m) | Wed intervals 4x1000 8.4 | Fri easy 11.8 | Sun long 12.4
+w06 peak   32.6 km: Mon strength(5x3, 20m) | Wed intervals 4x1200 9.2 | Fri easy 11.0 | Sun long 12.4
+w07 taper  26.1 km: Mon strength(5x2, 15m) | Wed tempo 7.0 | Fri easy 9.2 | Sun long 9.9
+w08 taper  19.5 km: Mon strength(5x2, 15m) | Wed tempo 5.3 | Fri easy 6.8 | Sun long 7.4"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 3 runs / intermediate / no strength 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   21.3 km: Wed tempo 5.8 | Fri easy 7.4 | Sun long 8.1
+w02 base   23.0 km: Wed tempo 6.2 | Fri easy 8.1 | Sun long 8.7
+w03 build  24.8 km: Wed intervals 4x800 6.6 | Fri easy 8.8 | Sun long 9.4
+w04 build  21.8 km: Wed tempo 5.9 | Fri easy 7.6 | Sun long 8.3
+w05 build  24.8 km: Wed intervals 3x1000 6.2 | Fri easy 9.2 | Sun long 9.4
+w06 build  26.8 km: Wed tempo 7.2 | Fri easy 9.4 | Sun long 10.2
+w07 peak   28.9 km: Wed intervals 4x1000 8.0 | Fri easy 9.9 | Sun long 11.0
+w08 peak   25.4 km: Wed intervals 3x1200 7.0 | Fri easy 8.7 | Sun long 9.7
+w09 taper  23.1 km: Wed tempo 6.2 | Fri easy 8.1 | Sun long 8.8
+w10 taper  17.3 km: Wed tempo 4.7 | Fri easy 6.0 | Sun long 6.6"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 3 runs / intermediate / with strength 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   21.3 km: Mon strength(5x2, 15m) | Wed tempo 5.8 | Fri easy 7.4 | Sun long 8.1
+w02 base   23.0 km: Mon strength(5x2, 15m) | Wed tempo 6.2 | Fri easy 8.1 | Sun long 8.7
+w03 build  24.8 km: Mon strength(5x3, 20m) | Wed intervals 4x800 6.6 | Fri easy 8.8 | Sun long 9.4
+w04 build  21.8 km: Mon strength(5x3, 20m) | Wed tempo 5.9 | Fri easy 7.6 | Sun long 8.3
+w05 build  24.8 km: Mon strength(5x3, 20m) | Wed intervals 3x1000 6.2 | Fri easy 9.2 | Sun long 9.4
+w06 build  26.8 km: Mon strength(5x3, 20m) | Wed tempo 7.2 | Fri easy 9.4 | Sun long 10.2
+w07 peak   28.9 km: Mon strength(5x3, 20m) | Wed intervals 4x1000 8.0 | Fri easy 9.9 | Sun long 11.0
+w08 peak   25.4 km: Mon strength(5x3, 20m) | Wed intervals 3x1200 7.0 | Fri easy 8.7 | Sun long 9.7
+w09 taper  23.1 km: Mon strength(5x2, 15m) | Wed tempo 6.2 | Fri easy 8.1 | Sun long 8.8
+w10 taper  17.3 km: Mon strength(5x2, 15m) | Wed tempo 4.7 | Fri easy 6.0 | Sun long 6.6"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 4 runs / beginner / no strength 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   10.2 km: Mon easy 2.1 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.4
+w02 base   10.9 km: Mon easy 2.3 | Wed tempo 2.7 | Fri easy 2.3 | Sun long 3.6
+w03 base   11.7 km: Mon easy 2.5 | Wed tempo 2.9 | Fri easy 2.4 | Sun long 3.9
+w04 build  10.3 km: Mon easy 2.0 | Wed intervals 2x800 3.0 | Fri easy 1.9 | Sun long 3.4
+w05 build  11.7 km: Mon easy 2.5 | Wed tempo 2.9 | Fri easy 2.4 | Sun long 3.9
+w06 build  12.5 km: Mon easy 2.4 | Wed intervals 2x1000 3.6 | Fri easy 2.4 | Sun long 4.1
+w07 build  13.4 km: Mon easy 2.8 | Wed tempo 3.4 | Fri easy 2.8 | Sun long 4.4
+w08 build  11.8 km: Mon easy 2.2 | Wed intervals 2x1000 3.6 | Fri easy 2.1 | Sun long 3.9
+w09 peak   13.4 km: Mon easy 2.4 | Wed intervals 2x1200 4.2 | Fri easy 2.4 | Sun long 4.4
+w10 peak   14.3 km: Mon easy 2.7 | Wed intervals 2x1200 4.2 | Fri easy 2.7 | Sun long 4.7
+w11 taper  11.4 km: Mon easy 2.4 | Wed tempo 2.9 | Fri easy 2.3 | Sun long 3.8
+w12 taper   8.6 km: Mon easy 1.8 | Wed tempo 2.2 | Fri easy 1.8 | Sun long 2.8"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 4 runs / beginner / with strength 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   10.2 km: Mon easy 2.1 | Wed tempo 2.6 | Thu strength(5x2, 15m) | Fri easy 2.1 | Sun long 3.4
+w02 base   10.9 km: Mon easy 2.3 | Wed tempo 2.7 | Thu strength(5x2, 15m) | Fri easy 2.3 | Sun long 3.6
+w03 base   11.7 km: Mon easy 2.5 | Wed tempo 2.9 | Thu strength(5x2, 15m) | Fri easy 2.4 | Sun long 3.9
+w04 build  10.3 km: Mon easy 2.0 | Wed intervals 2x800 3.0 | Thu strength(5x3, 20m) | Fri easy 1.9 | Sun long 3.4
+w05 build  11.7 km: Mon easy 2.5 | Wed tempo 2.9 | Thu strength(5x3, 20m) | Fri easy 2.4 | Sun long 3.9
+w06 build  12.5 km: Mon easy 2.4 | Wed intervals 2x1000 3.6 | Thu strength(5x3, 20m) | Fri easy 2.4 | Sun long 4.1
+w07 build  13.4 km: Mon easy 2.8 | Wed tempo 3.4 | Thu strength(5x3, 20m) | Fri easy 2.8 | Sun long 4.4
+w08 build  11.8 km: Mon easy 2.2 | Wed intervals 2x1000 3.6 | Thu strength(5x3, 20m) | Fri easy 2.1 | Sun long 3.9
+w09 peak   13.4 km: Mon easy 2.4 | Wed intervals 2x1200 4.2 | Thu strength(5x3, 20m) | Fri easy 2.4 | Sun long 4.4
+w10 peak   14.3 km: Mon easy 2.7 | Wed intervals 2x1200 4.2 | Thu strength(5x3, 20m) | Fri easy 2.7 | Sun long 4.7
+w11 taper  11.4 km: Mon easy 2.4 | Wed tempo 2.9 | Thu strength(5x2, 15m) | Fri easy 2.3 | Sun long 3.8
+w12 taper   8.6 km: Mon easy 1.8 | Wed tempo 2.2 | Thu strength(5x2, 15m) | Fri easy 1.8 | Sun long 2.8"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 4 runs / experienced / no strength 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   32.3 km: Mon easy 6.8 | Wed tempo 8.1 | Fri easy 6.7 | Sun long 10.7
+w02 base   34.9 km: Mon easy 7.4 | Wed tempo 8.7 | Fri easy 7.3 | Sun long 11.5
+w03 build  37.7 km: Mon easy 7.8 | Wed intervals 6x800 9.8 | Fri easy 7.7 | Sun long 12.4
+w04 build  33.2 km: Mon easy 7.0 | Wed tempo 8.3 | Fri easy 6.9 | Sun long 11.0
+w05 build  37.7 km: Mon easy 7.8 | Wed intervals 5x1000 9.8 | Fri easy 7.7 | Sun long 12.4
+w06 peak   40.7 km: Mon easy 8.9 | Wed intervals 4x1200 9.6 | Fri easy 8.8 | Sun long 13.4
+w07 taper  32.6 km: Mon easy 6.8 | Wed tempo 8.2 | Fri easy 6.8 | Sun long 10.8
+w08 taper  24.4 km: Mon easy 5.1 | Wed tempo 6.1 | Fri easy 5.1 | Sun long 8.1"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 4 runs / experienced / with strength 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   32.3 km: Mon easy 6.8 | Mon strength(5x2, 15m) | Wed tempo 8.1 | Thu strength(5x2, 15m) | Fri easy 6.7 | Sun long 10.7
+w02 base   34.9 km: Mon easy 7.4 | Mon strength(5x2, 15m) | Wed tempo 8.7 | Thu strength(5x2, 15m) | Fri easy 7.3 | Sun long 11.5
+w03 build  37.7 km: Mon easy 7.8 | Mon strength(5x3, 20m) | Wed intervals 6x800 9.8 | Thu strength(5x3, 20m) | Fri easy 7.7 | Sun long 12.4
+w04 build  33.2 km: Mon easy 7.0 | Mon strength(5x3, 20m) | Wed tempo 8.3 | Thu strength(5x3, 20m) | Fri easy 6.9 | Sun long 11.0
+w05 build  37.7 km: Mon easy 7.8 | Mon strength(5x3, 20m) | Wed intervals 5x1000 9.8 | Thu strength(5x3, 20m) | Fri easy 7.7 | Sun long 12.4
+w06 peak   40.7 km: Mon easy 8.9 | Mon strength(5x3, 20m) | Wed intervals 4x1200 9.6 | Thu strength(5x3, 20m) | Fri easy 8.8 | Sun long 13.4
+w07 taper  32.6 km: Mon easy 6.8 | Mon strength(5x2, 15m) | Wed tempo 8.2 | Thu strength(5x2, 15m) | Fri easy 6.8 | Sun long 10.8
+w08 taper  24.4 km: Mon easy 5.1 | Mon strength(5x2, 15m) | Wed tempo 6.1 | Thu strength(5x2, 15m) | Fri easy 5.1 | Sun long 8.1"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 4 runs / intermediate / no strength 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   21.3 km: Mon easy 4.5 | Wed tempo 5.3 | Fri easy 4.5 | Sun long 7.0
+w02 base   23.0 km: Mon easy 4.8 | Wed tempo 5.8 | Fri easy 4.8 | Sun long 7.6
+w03 build  24.8 km: Mon easy 5.1 | Wed intervals 4x800 6.4 | Fri easy 5.1 | Sun long 8.2
+w04 build  21.8 km: Mon easy 4.6 | Wed tempo 5.5 | Fri easy 4.5 | Sun long 7.2
+w05 build  24.8 km: Mon easy 5.3 | Wed intervals 3x1000 6.0 | Fri easy 5.3 | Sun long 8.2
+w06 build  26.8 km: Mon easy 5.7 | Wed tempo 6.7 | Fri easy 5.6 | Sun long 8.8
+w07 peak   28.9 km: Mon easy 5.9 | Wed intervals 4x1000 7.6 | Fri easy 5.9 | Sun long 9.5
+w08 peak   25.4 km: Mon easy 5.1 | Wed intervals 3x1200 6.8 | Fri easy 5.1 | Sun long 8.4
+w09 taper  23.1 km: Mon easy 4.9 | Wed tempo 5.8 | Fri easy 4.8 | Sun long 7.6
+w10 taper  17.3 km: Mon easy 3.7 | Wed tempo 4.3 | Fri easy 3.6 | Sun long 5.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 4 runs / intermediate / with strength 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   21.3 km: Mon easy 4.5 | Mon strength(5x2, 15m) | Wed tempo 5.3 | Thu strength(5x2, 15m) | Fri easy 4.5 | Sun long 7.0
+w02 base   23.0 km: Mon easy 4.8 | Mon strength(5x2, 15m) | Wed tempo 5.8 | Thu strength(5x2, 15m) | Fri easy 4.8 | Sun long 7.6
+w03 build  24.8 km: Mon easy 5.1 | Mon strength(5x3, 20m) | Wed intervals 4x800 6.4 | Thu strength(5x3, 20m) | Fri easy 5.1 | Sun long 8.2
+w04 build  21.8 km: Mon easy 4.6 | Mon strength(5x3, 20m) | Wed tempo 5.5 | Thu strength(5x3, 20m) | Fri easy 4.5 | Sun long 7.2
+w05 build  24.8 km: Mon easy 5.3 | Mon strength(5x3, 20m) | Wed intervals 3x1000 6.0 | Thu strength(5x3, 20m) | Fri easy 5.3 | Sun long 8.2
+w06 build  26.8 km: Mon easy 5.7 | Mon strength(5x3, 20m) | Wed tempo 6.7 | Thu strength(5x3, 20m) | Fri easy 5.6 | Sun long 8.8
+w07 peak   28.9 km: Mon easy 5.9 | Mon strength(5x3, 20m) | Wed intervals 4x1000 7.6 | Thu strength(5x3, 20m) | Fri easy 5.9 | Sun long 9.5
+w08 peak   25.4 km: Mon easy 5.1 | Mon strength(5x3, 20m) | Wed intervals 3x1200 6.8 | Thu strength(5x3, 20m) | Fri easy 5.1 | Sun long 8.4
+w09 taper  23.1 km: Mon easy 4.9 | Mon strength(5x2, 15m) | Wed tempo 5.8 | Thu strength(5x2, 15m) | Fri easy 4.8 | Sun long 7.6
+w10 taper  17.3 km: Mon easy 3.7 | Mon strength(5x2, 15m) | Wed tempo 4.3 | Thu strength(5x2, 15m) | Fri easy 3.6 | Sun long 5.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 5 runs / beginner / no strength 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   10.2 km: Mon easy 1.7 | Tue easy 1.7 | Wed tempo 2.0 | Fri easy 1.7 | Sun long 3.1
+w02 base   10.9 km: Mon easy 1.8 | Tue easy 1.8 | Wed tempo 2.2 | Fri easy 1.8 | Sun long 3.3
+w03 base   11.7 km: Mon easy 2.1 | Tue easy 1.9 | Wed tempo 2.3 | Fri easy 1.9 | Sun long 3.5
+w04 build  10.3 km: Mon easy 1.5 | Tue easy 1.4 | Wed intervals 2x800 2.8 | Fri tempo 1.5 | Sun long 3.1
+w05 build  11.7 km: Mon easy 2.1 | Tue easy 2.0 | Wed tempo 2.3 | Fri tempo 1.8 | Sun long 3.5
+w06 build  12.5 km: Mon easy 1.7 | Tue easy 1.7 | Wed intervals 2x1000 3.4 | Fri tempo 1.9 | Sun long 3.8
+w07 build  13.4 km: Mon easy 2.4 | Tue easy 2.3 | Wed tempo 2.7 | Fri tempo 2.0 | Sun long 4.0
+w08 build  11.8 km: Mon easy 1.6 | Tue easy 1.5 | Wed intervals 2x1000 3.4 | Fri tempo 1.8 | Sun long 3.5
+w09 peak   13.4 km: Mon easy 1.8 | Tue easy 1.8 | Wed intervals 2x1200 3.8 | Fri tempo 2.0 | Sun long 4.0
+w10 peak   14.3 km: Mon easy 2.0 | Tue easy 1.9 | Wed intervals 2x1200 4.0 | Fri tempo 2.1 | Sun long 4.3
+w11 taper  11.4 km: Mon easy 1.9 | Tue easy 1.9 | Wed tempo 2.3 | Fri easy 1.9 | Sun long 3.4
+w12 taper   8.6 km: Mon easy 1.5 | Tue easy 1.4 | Wed tempo 1.7 | Fri easy 1.4 | Sun long 2.6"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 5 runs / beginner / with strength 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   10.2 km: Mon easy 1.7 | Mon strength(5x2, 15m) | Tue easy 1.7 | Wed tempo 2.0 | Fri easy 1.7 | Sun long 3.1
+w02 base   10.9 km: Mon easy 1.8 | Mon strength(5x2, 15m) | Tue easy 1.8 | Wed tempo 2.2 | Fri easy 1.8 | Sun long 3.3
+w03 base   11.7 km: Mon easy 2.1 | Mon strength(5x2, 15m) | Tue easy 1.9 | Wed tempo 2.3 | Fri easy 1.9 | Sun long 3.5
+w04 build  10.3 km: Mon easy 1.5 | Mon strength(5x3, 20m) | Tue easy 1.4 | Wed intervals 2x800 2.8 | Fri tempo 1.5 | Sun long 3.1
+w05 build  11.7 km: Mon easy 2.1 | Mon strength(5x3, 20m) | Tue easy 2.0 | Wed tempo 2.3 | Fri tempo 1.8 | Sun long 3.5
+w06 build  12.5 km: Mon easy 1.7 | Mon strength(5x3, 20m) | Tue easy 1.7 | Wed intervals 2x1000 3.4 | Fri tempo 1.9 | Sun long 3.8
+w07 build  13.4 km: Mon easy 2.4 | Mon strength(5x3, 20m) | Tue easy 2.3 | Wed tempo 2.7 | Fri tempo 2.0 | Sun long 4.0
+w08 build  11.8 km: Mon easy 1.6 | Mon strength(5x3, 20m) | Tue easy 1.5 | Wed intervals 2x1000 3.4 | Fri tempo 1.8 | Sun long 3.5
+w09 peak   13.4 km: Mon easy 1.8 | Mon strength(5x3, 20m) | Tue easy 1.8 | Wed intervals 2x1200 3.8 | Fri tempo 2.0 | Sun long 4.0
+w10 peak   14.3 km: Mon easy 2.0 | Mon strength(5x3, 20m) | Tue easy 1.9 | Wed intervals 2x1200 4.0 | Fri tempo 2.1 | Sun long 4.3
+w11 taper  11.4 km: Mon easy 1.9 | Mon strength(5x2, 15m) | Tue easy 1.9 | Wed tempo 2.3 | Fri easy 1.9 | Sun long 3.4
+w12 taper   8.6 km: Mon easy 1.5 | Mon strength(5x2, 15m) | Tue easy 1.4 | Wed tempo 1.7 | Fri easy 1.4 | Sun long 2.6"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 5 runs / experienced / no strength 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   32.3 km: Mon easy 5.5 | Tue easy 5.3 | Wed tempo 6.5 | Fri easy 5.3 | Sun long 9.7
+w02 base   34.9 km: Mon easy 5.8 | Tue easy 5.8 | Wed tempo 7.0 | Fri easy 5.8 | Sun long 10.5
+w03 build  37.7 km: Mon easy 6.4 | Tue easy 6.3 | Wed intervals 5x800 8.0 | Fri tempo 5.7 | Sun long 11.3
+w04 build  33.2 km: Mon easy 5.8 | Tue easy 5.8 | Wed tempo 6.6 | Fri tempo 5.0 | Sun long 10.0
+w05 build  37.7 km: Mon easy 6.5 | Tue easy 6.4 | Wed intervals 4x1000 7.8 | Fri tempo 5.7 | Sun long 11.3
+w06 peak   40.7 km: Mon easy 6.8 | Tue easy 6.8 | Wed intervals 4x1200 8.8 | Fri tempo 6.1 | Sun long 12.2
+w07 taper  32.6 km: Mon easy 5.5 | Tue easy 5.4 | Wed tempo 6.5 | Fri easy 5.4 | Sun long 9.8
+w08 taper  24.4 km: Mon easy 4.2 | Tue easy 4.0 | Wed tempo 4.9 | Fri easy 4.0 | Sun long 7.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 5 runs / experienced / with strength 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   32.3 km: Mon easy 5.5 | Mon strength(5x2, 15m) | Tue easy 5.3 | Wed tempo 6.5 | Fri easy 5.3 | Sun long 9.7
+w02 base   34.9 km: Mon easy 5.8 | Mon strength(5x2, 15m) | Tue easy 5.8 | Wed tempo 7.0 | Fri easy 5.8 | Sun long 10.5
+w03 build  37.7 km: Mon easy 6.4 | Mon strength(5x3, 20m) | Tue easy 6.3 | Wed intervals 5x800 8.0 | Fri tempo 5.7 | Sun long 11.3
+w04 build  33.2 km: Mon easy 5.8 | Mon strength(5x3, 20m) | Tue easy 5.8 | Wed tempo 6.6 | Fri tempo 5.0 | Sun long 10.0
+w05 build  37.7 km: Mon easy 6.5 | Mon strength(5x3, 20m) | Tue easy 6.4 | Wed intervals 4x1000 7.8 | Fri tempo 5.7 | Sun long 11.3
+w06 peak   40.7 km: Mon easy 6.8 | Mon strength(5x3, 20m) | Tue easy 6.8 | Wed intervals 4x1200 8.8 | Fri tempo 6.1 | Sun long 12.2
+w07 taper  32.6 km: Mon easy 5.5 | Mon strength(5x2, 15m) | Tue easy 5.4 | Wed tempo 6.5 | Fri easy 5.4 | Sun long 9.8
+w08 taper  24.4 km: Mon easy 4.2 | Mon strength(5x2, 15m) | Tue easy 4.0 | Wed tempo 4.9 | Fri easy 4.0 | Sun long 7.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 5 runs / intermediate / no strength 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   21.3 km: Mon easy 3.6 | Tue easy 3.5 | Wed tempo 4.3 | Fri easy 3.5 | Sun long 6.4
+w02 base   23.0 km: Mon easy 3.9 | Tue easy 3.8 | Wed tempo 4.6 | Fri easy 3.8 | Sun long 6.9
+w03 build  24.8 km: Mon easy 4.4 | Tue easy 4.3 | Wed intervals 3x800 5.0 | Fri tempo 3.7 | Sun long 7.4
+w04 build  21.8 km: Mon easy 3.8 | Tue easy 3.8 | Wed tempo 4.4 | Fri tempo 3.3 | Sun long 6.5
+w05 build  24.8 km: Mon easy 4.1 | Tue easy 4.0 | Wed intervals 3x1000 5.6 | Fri tempo 3.7 | Sun long 7.4
+w06 build  26.8 km: Mon easy 4.7 | Tue easy 4.7 | Wed tempo 5.4 | Fri tempo 4.0 | Sun long 8.0
+w07 peak   28.9 km: Mon easy 5.0 | Tue easy 4.9 | Wed intervals 3x1000 6.0 | Fri tempo 4.3 | Sun long 8.7
+w08 peak   25.4 km: Mon easy 4.6 | Tue easy 4.6 | Wed intervals 2x1200 4.8 | Fri tempo 3.8 | Sun long 7.6
+w09 taper  23.1 km: Mon easy 4.0 | Tue easy 3.8 | Wed tempo 4.6 | Fri easy 3.8 | Sun long 6.9
+w10 taper  17.3 km: Mon easy 3.0 | Tue easy 2.8 | Wed tempo 3.5 | Fri easy 2.8 | Sun long 5.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > 10k / 5 runs / intermediate / with strength 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   21.3 km: Mon easy 3.6 | Mon strength(5x2, 15m) | Tue easy 3.5 | Wed tempo 4.3 | Fri easy 3.5 | Sun long 6.4
+w02 base   23.0 km: Mon easy 3.9 | Mon strength(5x2, 15m) | Tue easy 3.8 | Wed tempo 4.6 | Fri easy 3.8 | Sun long 6.9
+w03 build  24.8 km: Mon easy 4.4 | Mon strength(5x3, 20m) | Tue easy 4.3 | Wed intervals 3x800 5.0 | Fri tempo 3.7 | Sun long 7.4
+w04 build  21.8 km: Mon easy 3.8 | Mon strength(5x3, 20m) | Tue easy 3.8 | Wed tempo 4.4 | Fri tempo 3.3 | Sun long 6.5
+w05 build  24.8 km: Mon easy 4.1 | Mon strength(5x3, 20m) | Tue easy 4.0 | Wed intervals 3x1000 5.6 | Fri tempo 3.7 | Sun long 7.4
+w06 build  26.8 km: Mon easy 4.7 | Mon strength(5x3, 20m) | Tue easy 4.7 | Wed tempo 5.4 | Fri tempo 4.0 | Sun long 8.0
+w07 peak   28.9 km: Mon easy 5.0 | Mon strength(5x3, 20m) | Tue easy 4.9 | Wed intervals 3x1000 6.0 | Fri tempo 4.3 | Sun long 8.7
+w08 peak   25.4 km: Mon easy 4.6 | Mon strength(5x3, 20m) | Tue easy 4.6 | Wed intervals 2x1200 4.8 | Fri tempo 3.8 | Sun long 7.6
+w09 taper  23.1 km: Mon easy 4.0 | Mon strength(5x2, 15m) | Tue easy 3.8 | Wed tempo 4.6 | Fri easy 3.8 | Sun long 6.9
+w10 taper  17.3 km: Mon easy 3.0 | Mon strength(5x2, 15m) | Tue easy 2.8 | Wed tempo 3.5 | Fri easy 2.8 | Sun long 5.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 3 runs / beginner / no strength 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   12.8 km: Wed tempo 3.5 | Fri easy 4.4 | Sun long 4.9
+w02 base   13.7 km: Wed tempo 3.7 | Fri easy 4.8 | Sun long 5.2
+w03 base   14.7 km: Wed tempo 4.0 | Fri easy 5.1 | Sun long 5.6
+w04 base   12.9 km: Wed tempo 3.5 | Fri easy 4.5 | Sun long 4.9
+w05 build  14.7 km: Wed tempo 4.0 | Fri easy 5.1 | Sun long prog 5.6
+w06 build  15.7 km: Wed tempo 4.2 | Fri easy 5.5 | Sun long prog 6.0
+w07 build  16.8 km: Wed tempo 4.5 | Fri easy 5.9 | Sun long prog 6.4
+w08 build  14.8 km: Wed tempo 4.0 | Fri easy 5.2 | Sun long prog 5.6
+w09 build  16.8 km: Wed tempo 4.5 | Fri easy 5.9 | Sun long prog 6.4
+w10 build  18.0 km: Wed tempo 4.9 | Fri easy 6.3 | Sun long prog 6.8
+w11 build  19.3 km: Wed tempo 5.2 | Fri easy 6.8 | Sun long prog 7.3
+w12 peak   17.0 km: Wed tempo 4.6 | Fri easy 5.9 | Sun long prog 6.5
+w13 peak   19.3 km: Wed tempo 5.2 | Fri easy 6.8 | Sun long prog 7.3
+w14 peak   20.7 km: Wed tempo 5.6 | Fri easy 7.2 | Sun long prog 7.9
+w15 taper  16.6 km: Wed tempo 4.5 | Fri easy 5.8 | Sun long 6.3
+w16 taper  12.4 km: Wed tempo 3.3 | Fri easy 4.4 | Sun long 4.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 3 runs / beginner / with strength 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   12.8 km: Mon strength(5x2, 15m) | Wed tempo 3.5 | Fri easy 4.4 | Sun long 4.9
+w02 base   13.7 km: Mon strength(5x2, 15m) | Wed tempo 3.7 | Fri easy 4.8 | Sun long 5.2
+w03 base   14.7 km: Mon strength(5x2, 15m) | Wed tempo 4.0 | Fri easy 5.1 | Sun long 5.6
+w04 base   12.9 km: Mon strength(5x2, 15m) | Wed tempo 3.5 | Fri easy 4.5 | Sun long 4.9
+w05 build  14.7 km: Mon strength(5x3, 20m) | Wed tempo 4.0 | Fri easy 5.1 | Sun long prog 5.6
+w06 build  15.7 km: Mon strength(5x3, 20m) | Wed tempo 4.2 | Fri easy 5.5 | Sun long prog 6.0
+w07 build  16.8 km: Mon strength(5x3, 20m) | Wed tempo 4.5 | Fri easy 5.9 | Sun long prog 6.4
+w08 build  14.8 km: Mon strength(5x3, 20m) | Wed tempo 4.0 | Fri easy 5.2 | Sun long prog 5.6
+w09 build  16.8 km: Mon strength(5x3, 20m) | Wed tempo 4.5 | Fri easy 5.9 | Sun long prog 6.4
+w10 build  18.0 km: Mon strength(5x3, 20m) | Wed tempo 4.9 | Fri easy 6.3 | Sun long prog 6.8
+w11 build  19.3 km: Mon strength(5x3, 20m) | Wed tempo 5.2 | Fri easy 6.8 | Sun long prog 7.3
+w12 peak   17.0 km: Mon strength(5x3, 20m) | Wed tempo 4.6 | Fri easy 5.9 | Sun long prog 6.5
+w13 peak   19.3 km: Mon strength(5x3, 20m) | Wed tempo 5.2 | Fri easy 6.8 | Sun long prog 7.3
+w14 peak   20.7 km: Mon strength(5x3, 20m) | Wed tempo 5.6 | Fri easy 7.2 | Sun long prog 7.9
+w15 taper  16.6 km: Mon strength(5x2, 15m) | Wed tempo 4.5 | Fri easy 5.8 | Sun long 6.3
+w16 taper  12.4 km: Mon strength(5x2, 15m) | Wed tempo 3.3 | Fri easy 4.4 | Sun long 4.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 3 runs / experienced / no strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, weekly_distance_capped, paces_effort_only
+warnings: none
+w01 base   38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long 14.4
+w02 base   38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long 14.4
+w03 base   38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long 14.4
+w04 build  33.4 km: Wed tempo 9.0 | Fri easy 11.7 | Sun long prog 12.7
+w05 build  38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w06 build  38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w07 build  38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w08 build  33.4 km: Wed tempo 9.0 | Fri easy 11.7 | Sun long prog 12.7
+w09 peak   38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w10 peak   38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w11 taper  30.4 km: Wed tempo 8.2 | Fri easy 10.6 | Sun long 11.6
+w12 taper  22.8 km: Wed tempo 6.2 | Fri easy 7.9 | Sun long 8.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 3 runs / experienced / with strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, weekly_distance_capped, paces_effort_only
+warnings: none
+w01 base   38.0 km: Mon strength(5x2, 15m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long 14.4
+w02 base   38.0 km: Mon strength(5x2, 15m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long 14.4
+w03 base   38.0 km: Mon strength(5x2, 15m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long 14.4
+w04 build  33.4 km: Mon strength(5x3, 20m) | Wed tempo 9.0 | Fri easy 11.7 | Sun long prog 12.7
+w05 build  38.0 km: Mon strength(5x3, 20m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w06 build  38.0 km: Mon strength(5x3, 20m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w07 build  38.0 km: Mon strength(5x3, 20m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w08 build  33.4 km: Mon strength(5x3, 20m) | Wed tempo 9.0 | Fri easy 11.7 | Sun long prog 12.7
+w09 peak   38.0 km: Mon strength(5x3, 20m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w10 peak   38.0 km: Mon strength(5x3, 20m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w11 taper  30.4 km: Mon strength(5x2, 15m) | Wed tempo 8.2 | Fri easy 10.6 | Sun long 11.6
+w12 taper  22.8 km: Mon strength(5x2, 15m) | Wed tempo 6.2 | Fri easy 7.9 | Sun long 8.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 3 runs / intermediate / no strength 1`] = `
+"half_marathon v0.2.0: 14 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Wed tempo 6.9 | Fri easy 8.9 | Sun long 9.7
+w02 base   27.5 km: Wed tempo 7.4 | Fri easy 9.6 | Sun long 10.5
+w03 base   29.7 km: Wed tempo 8.0 | Fri easy 10.4 | Sun long 11.3
+w04 base   26.1 km: Wed tempo 7.0 | Fri easy 9.2 | Sun long 9.9
+w05 build  29.7 km: Wed tempo 8.0 | Fri easy 10.4 | Sun long prog 11.3
+w06 build  32.1 km: Wed tempo 8.7 | Fri easy 11.2 | Sun long prog 12.2
+w07 build  34.7 km: Wed tempo 9.4 | Fri easy 12.1 | Sun long prog 13.2
+w08 build  30.5 km: Wed tempo 8.2 | Fri easy 10.7 | Sun long prog 11.6
+w09 build  34.7 km: Wed tempo 9.4 | Fri easy 12.1 | Sun long prog 13.2
+w10 build  37.5 km: Wed tempo 10.1 | Fri easy 13.1 | Sun long prog 14.3
+w11 peak   38.0 km: Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w12 peak   33.4 km: Wed tempo 9.0 | Fri easy 11.7 | Sun long prog 12.7
+w13 taper  30.4 km: Wed tempo 8.2 | Fri easy 10.6 | Sun long 11.6
+w14 taper  22.8 km: Wed tempo 6.2 | Fri easy 7.9 | Sun long 8.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 3 runs / intermediate / with strength 1`] = `
+"half_marathon v0.2.0: 14 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon strength(5x2, 15m) | Wed tempo 6.9 | Fri easy 8.9 | Sun long 9.7
+w02 base   27.5 km: Mon strength(5x2, 15m) | Wed tempo 7.4 | Fri easy 9.6 | Sun long 10.5
+w03 base   29.7 km: Mon strength(5x2, 15m) | Wed tempo 8.0 | Fri easy 10.4 | Sun long 11.3
+w04 base   26.1 km: Mon strength(5x2, 15m) | Wed tempo 7.0 | Fri easy 9.2 | Sun long 9.9
+w05 build  29.7 km: Mon strength(5x3, 20m) | Wed tempo 8.0 | Fri easy 10.4 | Sun long prog 11.3
+w06 build  32.1 km: Mon strength(5x3, 20m) | Wed tempo 8.7 | Fri easy 11.2 | Sun long prog 12.2
+w07 build  34.7 km: Mon strength(5x3, 20m) | Wed tempo 9.4 | Fri easy 12.1 | Sun long prog 13.2
+w08 build  30.5 km: Mon strength(5x3, 20m) | Wed tempo 8.2 | Fri easy 10.7 | Sun long prog 11.6
+w09 build  34.7 km: Mon strength(5x3, 20m) | Wed tempo 9.4 | Fri easy 12.1 | Sun long prog 13.2
+w10 build  37.5 km: Mon strength(5x3, 20m) | Wed tempo 10.1 | Fri easy 13.1 | Sun long prog 14.3
+w11 peak   38.0 km: Mon strength(5x3, 20m) | Wed tempo 10.3 | Fri easy 13.3 | Sun long prog 14.4
+w12 peak   33.4 km: Mon strength(5x3, 20m) | Wed tempo 9.0 | Fri easy 11.7 | Sun long prog 12.7
+w13 taper  30.4 km: Mon strength(5x2, 15m) | Wed tempo 8.2 | Fri easy 10.6 | Sun long 11.6
+w14 taper  22.8 km: Mon strength(5x2, 15m) | Wed tempo 6.2 | Fri easy 7.9 | Sun long 8.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 4 runs / beginner / no strength 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   12.8 km: Mon easy 2.7 | Wed tempo 3.2 | Fri easy 2.7 | Sun long 4.2
+w02 base   13.7 km: Mon easy 2.9 | Wed tempo 3.4 | Fri easy 2.9 | Sun long 4.5
+w03 base   14.7 km: Mon easy 3.1 | Wed tempo 3.7 | Fri easy 3.0 | Sun long 4.9
+w04 base   12.9 km: Mon easy 2.7 | Wed tempo 3.2 | Fri easy 2.7 | Sun long 4.3
+w05 build  14.7 km: Mon easy 3.1 | Wed tempo 3.7 | Fri easy 3.0 | Sun long prog 4.9
+w06 build  15.7 km: Mon easy 3.3 | Wed tempo 3.9 | Fri easy 3.3 | Sun long prog 5.2
+w07 build  16.8 km: Mon easy 3.6 | Wed tempo 4.2 | Fri easy 3.5 | Sun long prog 5.5
+w08 build  14.8 km: Mon easy 3.1 | Wed tempo 3.7 | Fri easy 3.1 | Sun long prog 4.9
+w09 build  16.8 km: Mon easy 3.6 | Wed tempo 4.2 | Fri easy 3.5 | Sun long prog 5.5
+w10 build  18.0 km: Mon easy 3.8 | Wed tempo 4.5 | Fri easy 3.8 | Sun long prog 5.9
+w11 build  19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Fri easy 4.0 | Sun long prog 6.4
+w12 peak   17.0 km: Mon easy 3.6 | Wed tempo 4.3 | Fri easy 3.5 | Sun long prog 5.6
+w13 peak   19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Fri easy 4.0 | Sun long prog 6.4
+w14 peak   20.7 km: Mon easy 4.4 | Wed tempo 5.2 | Fri easy 4.3 | Sun long prog 6.8
+w15 taper  16.6 km: Mon easy 3.5 | Wed tempo 4.2 | Fri easy 3.4 | Sun long 5.5
+w16 taper  12.4 km: Mon easy 2.6 | Wed tempo 3.1 | Fri easy 2.6 | Sun long 4.1"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 4 runs / beginner / with strength 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   12.8 km: Mon easy 2.7 | Wed tempo 3.2 | Thu strength(5x2, 15m) | Fri easy 2.7 | Sun long 4.2
+w02 base   13.7 km: Mon easy 2.9 | Wed tempo 3.4 | Thu strength(5x2, 15m) | Fri easy 2.9 | Sun long 4.5
+w03 base   14.7 km: Mon easy 3.1 | Wed tempo 3.7 | Thu strength(5x2, 15m) | Fri easy 3.0 | Sun long 4.9
+w04 base   12.9 km: Mon easy 2.7 | Wed tempo 3.2 | Thu strength(5x2, 15m) | Fri easy 2.7 | Sun long 4.3
+w05 build  14.7 km: Mon easy 3.1 | Wed tempo 3.7 | Thu strength(5x3, 20m) | Fri easy 3.0 | Sun long prog 4.9
+w06 build  15.7 km: Mon easy 3.3 | Wed tempo 3.9 | Thu strength(5x3, 20m) | Fri easy 3.3 | Sun long prog 5.2
+w07 build  16.8 km: Mon easy 3.6 | Wed tempo 4.2 | Thu strength(5x3, 20m) | Fri easy 3.5 | Sun long prog 5.5
+w08 build  14.8 km: Mon easy 3.1 | Wed tempo 3.7 | Thu strength(5x3, 20m) | Fri easy 3.1 | Sun long prog 4.9
+w09 build  16.8 km: Mon easy 3.6 | Wed tempo 4.2 | Thu strength(5x3, 20m) | Fri easy 3.5 | Sun long prog 5.5
+w10 build  18.0 km: Mon easy 3.8 | Wed tempo 4.5 | Thu strength(5x3, 20m) | Fri easy 3.8 | Sun long prog 5.9
+w11 build  19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Thu strength(5x3, 20m) | Fri easy 4.0 | Sun long prog 6.4
+w12 peak   17.0 km: Mon easy 3.6 | Wed tempo 4.3 | Thu strength(5x3, 20m) | Fri easy 3.5 | Sun long prog 5.6
+w13 peak   19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Thu strength(5x3, 20m) | Fri easy 4.0 | Sun long prog 6.4
+w14 peak   20.7 km: Mon easy 4.4 | Wed tempo 5.2 | Thu strength(5x3, 20m) | Fri easy 4.3 | Sun long prog 6.8
+w15 taper  16.6 km: Mon easy 3.5 | Wed tempo 4.2 | Thu strength(5x2, 15m) | Fri easy 3.4 | Sun long 5.5
+w16 taper  12.4 km: Mon easy 2.6 | Wed tempo 3.1 | Thu strength(5x2, 15m) | Fri easy 2.6 | Sun long 4.1"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 4 runs / experienced / no strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   38.3 km: Mon easy 8.1 | Wed tempo 9.6 | Fri easy 8.0 | Sun long 12.6
+w02 base   41.4 km: Mon easy 8.7 | Wed tempo 10.4 | Fri easy 8.6 | Sun long 13.7
+w03 base   44.7 km: Mon easy 9.4 | Wed tempo 11.2 | Fri easy 9.3 | Sun long 14.8
+w04 build  39.3 km: Mon easy 8.3 | Wed tempo 9.8 | Fri easy 8.2 | Sun long prog 13.0
+w05 build  44.7 km: Mon easy 9.4 | Wed tempo 11.2 | Fri easy 9.3 | Sun long prog 14.8
+w06 build  48.3 km: Mon easy 10.2 | Wed tempo 12.1 | Fri easy 10.1 | Sun long prog 15.9
+w07 build  52.2 km: Mon easy 11.0 | Wed tempo 13.1 | Fri easy 10.9 | Sun long prog 17.2
+w08 build  45.9 km: Mon easy 9.7 | Wed tempo 11.5 | Fri easy 9.6 | Sun long prog 15.1
+w09 peak   52.2 km: Mon easy 11.0 | Wed tempo 13.1 | Fri easy 10.9 | Sun long prog 17.2
+w10 peak   56.4 km: Mon easy 11.9 | Wed tempo 14.1 | Fri easy 11.8 | Sun long prog 18.6
+w11 taper  45.1 km: Mon easy 9.5 | Wed tempo 11.3 | Fri easy 9.4 | Sun long 14.9
+w12 taper  33.8 km: Mon easy 7.1 | Wed tempo 8.5 | Fri easy 7.0 | Sun long 11.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 4 runs / experienced / with strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   38.3 km: Mon easy 8.1 | Mon strength(5x2, 15m) | Wed tempo 9.6 | Thu strength(5x2, 15m) | Fri easy 8.0 | Sun long 12.6
+w02 base   41.4 km: Mon easy 8.7 | Mon strength(5x2, 15m) | Wed tempo 10.4 | Thu strength(5x2, 15m) | Fri easy 8.6 | Sun long 13.7
+w03 base   44.7 km: Mon easy 9.4 | Mon strength(5x2, 15m) | Wed tempo 11.2 | Thu strength(5x2, 15m) | Fri easy 9.3 | Sun long 14.8
+w04 build  39.3 km: Mon easy 8.3 | Mon strength(5x3, 20m) | Wed tempo 9.8 | Thu strength(5x3, 20m) | Fri easy 8.2 | Sun long prog 13.0
+w05 build  44.7 km: Mon easy 9.4 | Mon strength(5x3, 20m) | Wed tempo 11.2 | Thu strength(5x3, 20m) | Fri easy 9.3 | Sun long prog 14.8
+w06 build  48.3 km: Mon easy 10.2 | Mon strength(5x3, 20m) | Wed tempo 12.1 | Thu strength(5x3, 20m) | Fri easy 10.1 | Sun long prog 15.9
+w07 build  52.2 km: Mon easy 11.0 | Mon strength(5x3, 20m) | Wed tempo 13.1 | Thu strength(5x3, 20m) | Fri easy 10.9 | Sun long prog 17.2
+w08 build  45.9 km: Mon easy 9.7 | Mon strength(5x3, 20m) | Wed tempo 11.5 | Thu strength(5x3, 20m) | Fri easy 9.6 | Sun long prog 15.1
+w09 peak   52.2 km: Mon easy 11.0 | Mon strength(5x3, 20m) | Wed tempo 13.1 | Thu strength(5x3, 20m) | Fri easy 10.9 | Sun long prog 17.2
+w10 peak   56.4 km: Mon easy 11.9 | Mon strength(5x3, 20m) | Wed tempo 14.1 | Thu strength(5x3, 20m) | Fri easy 11.8 | Sun long prog 18.6
+w11 taper  45.1 km: Mon easy 9.5 | Mon strength(5x2, 15m) | Wed tempo 11.3 | Thu strength(5x2, 15m) | Fri easy 9.4 | Sun long 14.9
+w12 taper  33.8 km: Mon easy 7.1 | Mon strength(5x2, 15m) | Wed tempo 8.5 | Thu strength(5x2, 15m) | Fri easy 7.0 | Sun long 11.2"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 4 runs / intermediate / no strength 1`] = `
+"half_marathon v0.2.0: 14 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w02 base   27.5 km: Mon easy 5.8 | Wed tempo 6.9 | Fri easy 5.7 | Sun long 9.1
+w03 base   29.7 km: Mon easy 6.3 | Wed tempo 7.4 | Fri easy 6.2 | Sun long 9.8
+w04 base   26.1 km: Mon easy 5.5 | Wed tempo 6.5 | Fri easy 5.5 | Sun long 8.6
+w05 build  29.7 km: Mon easy 6.3 | Wed tempo 7.4 | Fri easy 6.2 | Sun long prog 9.8
+w06 build  32.1 km: Mon easy 6.8 | Wed tempo 8.0 | Fri easy 6.7 | Sun long prog 10.6
+w07 build  34.7 km: Mon easy 7.3 | Wed tempo 8.7 | Fri easy 7.2 | Sun long prog 11.5
+w08 build  30.5 km: Mon easy 6.4 | Wed tempo 7.6 | Fri easy 6.4 | Sun long prog 10.1
+w09 build  34.7 km: Mon easy 7.3 | Wed tempo 8.7 | Fri easy 7.2 | Sun long prog 11.5
+w10 build  37.5 km: Mon easy 7.9 | Wed tempo 9.4 | Fri easy 7.8 | Sun long prog 12.4
+w11 peak   40.5 km: Mon easy 8.5 | Wed tempo 10.1 | Fri easy 8.5 | Sun long prog 13.4
+w12 peak   35.6 km: Mon easy 7.5 | Wed tempo 8.9 | Fri easy 7.5 | Sun long prog 11.7
+w13 taper  32.4 km: Mon easy 6.8 | Wed tempo 8.1 | Fri easy 6.8 | Sun long 10.7
+w14 taper  24.3 km: Mon easy 5.1 | Wed tempo 6.1 | Fri easy 5.1 | Sun long 8.0"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 4 runs / intermediate / with strength 1`] = `
+"half_marathon v0.2.0: 14 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon easy 5.4 | Mon strength(5x2, 15m) | Wed tempo 6.4 | Thu strength(5x2, 15m) | Fri easy 5.3 | Sun long 8.4
+w02 base   27.5 km: Mon easy 5.8 | Mon strength(5x2, 15m) | Wed tempo 6.9 | Thu strength(5x2, 15m) | Fri easy 5.7 | Sun long 9.1
+w03 base   29.7 km: Mon easy 6.3 | Mon strength(5x2, 15m) | Wed tempo 7.4 | Thu strength(5x2, 15m) | Fri easy 6.2 | Sun long 9.8
+w04 base   26.1 km: Mon easy 5.5 | Mon strength(5x2, 15m) | Wed tempo 6.5 | Thu strength(5x2, 15m) | Fri easy 5.5 | Sun long 8.6
+w05 build  29.7 km: Mon easy 6.3 | Mon strength(5x3, 20m) | Wed tempo 7.4 | Thu strength(5x3, 20m) | Fri easy 6.2 | Sun long prog 9.8
+w06 build  32.1 km: Mon easy 6.8 | Mon strength(5x3, 20m) | Wed tempo 8.0 | Thu strength(5x3, 20m) | Fri easy 6.7 | Sun long prog 10.6
+w07 build  34.7 km: Mon easy 7.3 | Mon strength(5x3, 20m) | Wed tempo 8.7 | Thu strength(5x3, 20m) | Fri easy 7.2 | Sun long prog 11.5
+w08 build  30.5 km: Mon easy 6.4 | Mon strength(5x3, 20m) | Wed tempo 7.6 | Thu strength(5x3, 20m) | Fri easy 6.4 | Sun long prog 10.1
+w09 build  34.7 km: Mon easy 7.3 | Mon strength(5x3, 20m) | Wed tempo 8.7 | Thu strength(5x3, 20m) | Fri easy 7.2 | Sun long prog 11.5
+w10 build  37.5 km: Mon easy 7.9 | Mon strength(5x3, 20m) | Wed tempo 9.4 | Thu strength(5x3, 20m) | Fri easy 7.8 | Sun long prog 12.4
+w11 peak   40.5 km: Mon easy 8.5 | Mon strength(5x3, 20m) | Wed tempo 10.1 | Thu strength(5x3, 20m) | Fri easy 8.5 | Sun long prog 13.4
+w12 peak   35.6 km: Mon easy 7.5 | Mon strength(5x3, 20m) | Wed tempo 8.9 | Thu strength(5x3, 20m) | Fri easy 7.5 | Sun long prog 11.7
+w13 taper  32.4 km: Mon easy 6.8 | Mon strength(5x2, 15m) | Wed tempo 8.1 | Thu strength(5x2, 15m) | Fri easy 6.8 | Sun long 10.7
+w14 taper  24.3 km: Mon easy 5.1 | Mon strength(5x2, 15m) | Wed tempo 6.1 | Thu strength(5x2, 15m) | Fri easy 5.1 | Sun long 8.0"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 5 runs / beginner / no strength 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   12.8 km: Mon easy 2.2 | Tue easy 2.1 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.8
+w02 base   13.7 km: Mon easy 2.3 | Tue easy 2.3 | Wed tempo 2.7 | Fri easy 2.3 | Sun long 4.1
+w03 base   14.7 km: Mon easy 2.6 | Tue easy 2.4 | Wed tempo 2.9 | Fri easy 2.4 | Sun long 4.4
+w04 base   12.9 km: Mon easy 2.2 | Tue easy 2.1 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.9
+w05 build  14.7 km: Mon easy 2.1 | Tue easy 2.1 | Wed tempo 2.9 | Fri intervals 2x1000 3.2 | Sun long prog 4.4
+w06 build  15.7 km: Mon easy 2.3 | Tue easy 2.2 | Wed tempo 3.1 | Fri intervals 2x1000 3.4 | Sun long prog 4.7
+w07 build  16.8 km: Mon easy 2.3 | Tue easy 2.3 | Wed tempo 3.4 | Fri intervals 2x1200 3.8 | Sun long prog 5.0
+w08 build  14.8 km: Mon easy 1.9 | Tue easy 1.9 | Wed tempo 3.0 | Fri intervals 2x1200 3.6 | Sun long prog 4.4
+w09 build  16.8 km: Mon easy 2.3 | Tue easy 2.3 | Wed tempo 3.4 | Fri intervals 2x1200 3.8 | Sun long prog 5.0
+w10 build  18.0 km: Mon easy 2.6 | Tue easy 2.6 | Wed tempo 3.6 | Fri intervals 2x1200 3.8 | Sun long prog 5.4
+w11 build  19.3 km: Mon easy 2.8 | Tue easy 2.8 | Wed tempo 3.9 | Fri intervals 2x1200 4.0 | Sun long prog 5.8
+w12 peak   17.0 km: Mon easy 2.0 | Tue easy 1.9 | Wed tempo 3.4 | Fri intervals 2x1600 4.6 | Sun long prog 5.1
+w13 peak   19.3 km: Mon easy 2.4 | Tue easy 2.4 | Wed tempo 3.9 | Fri intervals 2x1600 4.8 | Sun long prog 5.8
+w14 peak   20.7 km: Mon easy 2.8 | Tue easy 2.8 | Wed tempo 4.1 | Fri intervals 2x1600 4.8 | Sun long prog 6.2
+w15 taper  16.6 km: Mon easy 2.9 | Tue easy 2.7 | Wed tempo 3.3 | Fri easy 2.7 | Sun long 5.0
+w16 taper  12.4 km: Mon easy 2.2 | Tue easy 2.0 | Wed tempo 2.5 | Fri easy 2.0 | Sun long 3.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 5 runs / beginner / with strength 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   12.8 km: Mon easy 2.2 | Mon strength(5x2, 15m) | Tue easy 2.1 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.8
+w02 base   13.7 km: Mon easy 2.3 | Mon strength(5x2, 15m) | Tue easy 2.3 | Wed tempo 2.7 | Fri easy 2.3 | Sun long 4.1
+w03 base   14.7 km: Mon easy 2.6 | Mon strength(5x2, 15m) | Tue easy 2.4 | Wed tempo 2.9 | Fri easy 2.4 | Sun long 4.4
+w04 base   12.9 km: Mon easy 2.2 | Mon strength(5x2, 15m) | Tue easy 2.1 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.9
+w05 build  14.7 km: Mon easy 2.1 | Mon strength(5x3, 20m) | Tue easy 2.1 | Wed tempo 2.9 | Fri intervals 2x1000 3.2 | Sun long prog 4.4
+w06 build  15.7 km: Mon easy 2.3 | Mon strength(5x3, 20m) | Tue easy 2.2 | Wed tempo 3.1 | Fri intervals 2x1000 3.4 | Sun long prog 4.7
+w07 build  16.8 km: Mon easy 2.3 | Mon strength(5x3, 20m) | Tue easy 2.3 | Wed tempo 3.4 | Fri intervals 2x1200 3.8 | Sun long prog 5.0
+w08 build  14.8 km: Mon easy 1.9 | Mon strength(5x3, 20m) | Tue easy 1.9 | Wed tempo 3.0 | Fri intervals 2x1200 3.6 | Sun long prog 4.4
+w09 build  16.8 km: Mon easy 2.3 | Mon strength(5x3, 20m) | Tue easy 2.3 | Wed tempo 3.4 | Fri intervals 2x1200 3.8 | Sun long prog 5.0
+w10 build  18.0 km: Mon easy 2.6 | Mon strength(5x3, 20m) | Tue easy 2.6 | Wed tempo 3.6 | Fri intervals 2x1200 3.8 | Sun long prog 5.4
+w11 build  19.3 km: Mon easy 2.8 | Mon strength(5x3, 20m) | Tue easy 2.8 | Wed tempo 3.9 | Fri intervals 2x1200 4.0 | Sun long prog 5.8
+w12 peak   17.0 km: Mon easy 2.0 | Mon strength(5x3, 20m) | Tue easy 1.9 | Wed tempo 3.4 | Fri intervals 2x1600 4.6 | Sun long prog 5.1
+w13 peak   19.3 km: Mon easy 2.4 | Mon strength(5x3, 20m) | Tue easy 2.4 | Wed tempo 3.9 | Fri intervals 2x1600 4.8 | Sun long prog 5.8
+w14 peak   20.7 km: Mon easy 2.8 | Mon strength(5x3, 20m) | Tue easy 2.8 | Wed tempo 4.1 | Fri intervals 2x1600 4.8 | Sun long prog 6.2
+w15 taper  16.6 km: Mon easy 2.9 | Mon strength(5x2, 15m) | Tue easy 2.7 | Wed tempo 3.3 | Fri easy 2.7 | Sun long 5.0
+w16 taper  12.4 km: Mon easy 2.2 | Mon strength(5x2, 15m) | Tue easy 2.0 | Wed tempo 2.5 | Fri easy 2.0 | Sun long 3.7"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 5 runs / experienced / no strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   38.3 km: Mon easy 6.5 | Tue easy 6.3 | Wed tempo 7.7 | Fri easy 6.3 | Sun long 11.5
+w02 base   41.4 km: Mon easy 6.9 | Tue easy 6.9 | Wed tempo 8.3 | Fri easy 6.9 | Sun long 12.4
+w03 base   44.7 km: Mon easy 7.6 | Tue easy 7.4 | Wed tempo 8.9 | Fri easy 7.4 | Sun long 13.4
+w04 build  39.3 km: Mon easy 6.8 | Tue easy 6.8 | Wed tempo 7.9 | Fri intervals 3x1000 6.0 | Sun long prog 11.8
+w05 build  44.7 km: Mon easy 8.1 | Tue easy 8.1 | Wed tempo 8.9 | Fri intervals 3x1000 6.2 | Sun long prog 13.4
+w06 build  48.3 km: Mon easy 8.6 | Tue easy 8.5 | Wed tempo 9.7 | Fri intervals 3x1200 7.0 | Sun long prog 14.5
+w07 build  52.2 km: Mon easy 9.4 | Tue easy 9.3 | Wed tempo 10.4 | Fri intervals 3x1200 7.4 | Sun long prog 15.7
+w08 build  45.9 km: Mon easy 8.0 | Tue easy 7.9 | Wed tempo 9.2 | Fri intervals 3x1200 7.0 | Sun long prog 13.8
+w09 peak   52.2 km: Mon easy 8.8 | Tue easy 8.7 | Wed tempo 10.4 | Fri intervals 3x1600 8.6 | Sun long prog 15.7
+w10 peak   56.4 km: Mon easy 9.7 | Tue easy 9.7 | Wed tempo 11.3 | Fri intervals 3x1600 8.8 | Sun long prog 16.9
+w11 taper  45.1 km: Mon easy 7.6 | Tue easy 7.5 | Wed tempo 9.0 | Fri easy 7.5 | Sun long 13.5
+w12 taper  33.8 km: Mon easy 5.7 | Tue easy 5.6 | Wed tempo 6.8 | Fri easy 5.6 | Sun long 10.1"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 5 runs / experienced / with strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   38.3 km: Mon easy 6.5 | Mon strength(5x2, 15m) | Tue easy 6.3 | Wed tempo 7.7 | Fri easy 6.3 | Sun long 11.5
+w02 base   41.4 km: Mon easy 6.9 | Mon strength(5x2, 15m) | Tue easy 6.9 | Wed tempo 8.3 | Fri easy 6.9 | Sun long 12.4
+w03 base   44.7 km: Mon easy 7.6 | Mon strength(5x2, 15m) | Tue easy 7.4 | Wed tempo 8.9 | Fri easy 7.4 | Sun long 13.4
+w04 build  39.3 km: Mon easy 6.8 | Mon strength(5x3, 20m) | Tue easy 6.8 | Wed tempo 7.9 | Fri intervals 3x1000 6.0 | Sun long prog 11.8
+w05 build  44.7 km: Mon easy 8.1 | Mon strength(5x3, 20m) | Tue easy 8.1 | Wed tempo 8.9 | Fri intervals 3x1000 6.2 | Sun long prog 13.4
+w06 build  48.3 km: Mon easy 8.6 | Mon strength(5x3, 20m) | Tue easy 8.5 | Wed tempo 9.7 | Fri intervals 3x1200 7.0 | Sun long prog 14.5
+w07 build  52.2 km: Mon easy 9.4 | Mon strength(5x3, 20m) | Tue easy 9.3 | Wed tempo 10.4 | Fri intervals 3x1200 7.4 | Sun long prog 15.7
+w08 build  45.9 km: Mon easy 8.0 | Mon strength(5x3, 20m) | Tue easy 7.9 | Wed tempo 9.2 | Fri intervals 3x1200 7.0 | Sun long prog 13.8
+w09 peak   52.2 km: Mon easy 8.8 | Mon strength(5x3, 20m) | Tue easy 8.7 | Wed tempo 10.4 | Fri intervals 3x1600 8.6 | Sun long prog 15.7
+w10 peak   56.4 km: Mon easy 9.7 | Mon strength(5x3, 20m) | Tue easy 9.7 | Wed tempo 11.3 | Fri intervals 3x1600 8.8 | Sun long prog 16.9
+w11 taper  45.1 km: Mon easy 7.6 | Mon strength(5x2, 15m) | Tue easy 7.5 | Wed tempo 9.0 | Fri easy 7.5 | Sun long 13.5
+w12 taper  33.8 km: Mon easy 5.7 | Mon strength(5x2, 15m) | Tue easy 5.6 | Wed tempo 6.8 | Fri easy 5.6 | Sun long 10.1"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 5 runs / intermediate / no strength 1`] = `
+"half_marathon v0.2.0: 14 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   25.5 km: Mon easy 4.3 | Tue easy 4.2 | Wed tempo 5.1 | Fri easy 4.2 | Sun long 7.7
+w02 base   27.5 km: Mon easy 4.7 | Tue easy 4.5 | Wed tempo 5.5 | Fri easy 4.5 | Sun long 8.3
+w03 base   29.7 km: Mon easy 5.1 | Tue easy 4.9 | Wed tempo 5.9 | Fri easy 4.9 | Sun long 8.9
+w04 base   26.1 km: Mon easy 4.5 | Tue easy 4.3 | Wed tempo 5.2 | Fri easy 4.3 | Sun long 7.8
+w05 build  29.7 km: Mon easy 5.4 | Tue easy 5.3 | Wed tempo 5.9 | Fri intervals 2x1000 4.2 | Sun long prog 8.9
+w06 build  32.1 km: Mon easy 5.9 | Tue easy 5.8 | Wed tempo 6.4 | Fri intervals 2x1000 4.4 | Sun long prog 9.6
+w07 build  34.7 km: Mon easy 6.3 | Tue easy 6.3 | Wed tempo 6.9 | Fri intervals 2x1200 4.8 | Sun long prog 10.4
+w08 build  30.5 km: Mon easy 5.3 | Tue easy 5.3 | Wed tempo 6.1 | Fri intervals 2x1200 4.6 | Sun long prog 9.2
+w09 build  34.7 km: Mon easy 6.3 | Tue easy 6.3 | Wed tempo 6.9 | Fri intervals 2x1200 4.8 | Sun long prog 10.4
+w10 build  37.5 km: Mon easy 6.9 | Tue easy 6.8 | Wed tempo 7.5 | Fri intervals 2x1200 5.0 | Sun long prog 11.3
+w11 peak   40.5 km: Mon easy 7.1 | Tue easy 7.1 | Wed tempo 8.1 | Fri intervals 2x1600 6.0 | Sun long prog 12.2
+w12 peak   35.6 km: Mon easy 6.0 | Tue easy 6.0 | Wed tempo 7.1 | Fri intervals 2x1600 5.8 | Sun long prog 10.7
+w13 taper  32.4 km: Mon easy 5.4 | Tue easy 5.4 | Wed tempo 6.5 | Fri easy 5.4 | Sun long 9.7
+w14 taper  24.3 km: Mon easy 4.1 | Tue easy 4.0 | Wed tempo 4.9 | Fri easy 4.0 | Sun long 7.3"
+`;
+
+exports[`base variants (design 6.2): 3 presets x 3 runs a week x 3 tiers x strength on or off > half_marathon / 5 runs / intermediate / with strength 1`] = `
+"half_marathon v0.2.0: 14 weeks from 2026-11-02
+assumptions: plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   25.5 km: Mon easy 4.3 | Mon strength(5x2, 15m) | Tue easy 4.2 | Wed tempo 5.1 | Fri easy 4.2 | Sun long 7.7
+w02 base   27.5 km: Mon easy 4.7 | Mon strength(5x2, 15m) | Tue easy 4.5 | Wed tempo 5.5 | Fri easy 4.5 | Sun long 8.3
+w03 base   29.7 km: Mon easy 5.1 | Mon strength(5x2, 15m) | Tue easy 4.9 | Wed tempo 5.9 | Fri easy 4.9 | Sun long 8.9
+w04 base   26.1 km: Mon easy 4.5 | Mon strength(5x2, 15m) | Tue easy 4.3 | Wed tempo 5.2 | Fri easy 4.3 | Sun long 7.8
+w05 build  29.7 km: Mon easy 5.4 | Mon strength(5x3, 20m) | Tue easy 5.3 | Wed tempo 5.9 | Fri intervals 2x1000 4.2 | Sun long prog 8.9
+w06 build  32.1 km: Mon easy 5.9 | Mon strength(5x3, 20m) | Tue easy 5.8 | Wed tempo 6.4 | Fri intervals 2x1000 4.4 | Sun long prog 9.6
+w07 build  34.7 km: Mon easy 6.3 | Mon strength(5x3, 20m) | Tue easy 6.3 | Wed tempo 6.9 | Fri intervals 2x1200 4.8 | Sun long prog 10.4
+w08 build  30.5 km: Mon easy 5.3 | Mon strength(5x3, 20m) | Tue easy 5.3 | Wed tempo 6.1 | Fri intervals 2x1200 4.6 | Sun long prog 9.2
+w09 build  34.7 km: Mon easy 6.3 | Mon strength(5x3, 20m) | Tue easy 6.3 | Wed tempo 6.9 | Fri intervals 2x1200 4.8 | Sun long prog 10.4
+w10 build  37.5 km: Mon easy 6.9 | Mon strength(5x3, 20m) | Tue easy 6.8 | Wed tempo 7.5 | Fri intervals 2x1200 5.0 | Sun long prog 11.3
+w11 peak   40.5 km: Mon easy 7.1 | Mon strength(5x3, 20m) | Tue easy 7.1 | Wed tempo 8.1 | Fri intervals 2x1600 6.0 | Sun long prog 12.2
+w12 peak   35.6 km: Mon easy 6.0 | Mon strength(5x3, 20m) | Tue easy 6.0 | Wed tempo 7.1 | Fri intervals 2x1600 5.8 | Sun long prog 10.7
+w13 taper  32.4 km: Mon easy 5.4 | Mon strength(5x2, 15m) | Tue easy 5.4 | Wed tempo 6.5 | Fri easy 5.4 | Sun long 9.7
+w14 taper  24.3 km: Mon easy 4.1 | Mon strength(5x2, 15m) | Tue easy 4.0 | Wed tempo 4.9 | Fri easy 4.0 | Sun long 7.3"
+`;
+
+exports[`boundary cases: plan length and day constraints > 5k with a recent race (paces) and heart rate 1`] = `
+"5k v0.2.0: 10 weeks from 2026-11-02
+assumptions: baseline_default, plan_length_default, long_run_day_default, paces_derived
+warnings: none
+w01 base   17.0 km: Mon easy 3.6 | Wed tempo 4.3 | Fri easy 3.5 | Sun long 5.6
+w02 base   18.4 km: Mon easy 3.9 | Wed tempo 4.6 | Fri easy 3.8 | Sun long 6.1
+w03 build  19.9 km: Mon easy 4.2 | Wed intervals 5x400 5.0 | Fri easy 4.1 | Sun long 6.6
+w04 build  17.5 km: Mon easy 3.7 | Wed tempo 4.4 | Fri easy 3.6 | Sun long 5.8
+w05 build  19.9 km: Mon easy 4.1 | Wed intervals 4x600 5.2 | Fri easy 4.0 | Sun long 6.6
+w06 build  21.5 km: Mon easy 4.5 | Wed tempo 5.4 | Fri easy 4.5 | Sun long 7.1
+w07 peak   23.2 km: Mon easy 5.0 | Wed intervals 4x600 5.6 | Fri easy 4.9 | Sun long 7.7
+w08 peak   20.4 km: Mon easy 4.4 | Wed intervals 3x800 5.0 | Fri easy 4.3 | Sun long 6.7
+w09 taper  18.6 km: Mon easy 3.9 | Wed tempo 4.7 | Fri easy 3.9 | Sun long 6.1
+w10 taper  13.9 km: Mon easy 2.9 | Wed tempo 3.5 | Fri easy 2.9 | Sun long 4.6"
+`;
+
+exports[`boundary cases: plan length and day constraints > 5k, goal date 3 days over 15 weeks (starts later, base weeks) 1`] = `
+"5k v0.2.0: 15 weeks from 2026-11-05 to 2027-02-17
+assumptions: tier_default, baseline_default, start_date_aligned, long_run_day_default, paces_effort_only
+warnings: base_phase_added
+w01 base    8.5 km: Thu tempo 2.3 | Sun long 3.2 | Tue easy 3.0
+w02 base    8.5 km: Thu tempo 2.3 | Sun long 3.2 | Tue easy 3.0
+w03 base    8.5 km: Thu tempo 2.3 | Sun long 3.2 | Tue easy 3.0
+w04 base    8.5 km: Thu tempo 2.3 | Sun long 3.2 | Tue easy 3.0
+w05 base    9.1 km: Thu tempo 2.5 | Sun long 3.5 | Tue easy 3.1
+w06 base    9.7 km: Thu tempo 2.6 | Sun long 3.7 | Tue easy 3.4
+w07 build   8.5 km: Thu intervals 2x400 2.2 | Sun long 3.2 | Tue easy 3.1
+w08 build   9.7 km: Thu tempo 2.6 | Sun long 3.7 | Tue easy 3.4
+w09 build  10.4 km: Thu intervals 2x600 2.8 | Sun long 4.0 | Tue easy 3.6
+w10 build  11.1 km: Thu tempo 3.0 | Sun long 4.2 | Tue easy 3.9
+w11 build   9.8 km: Thu intervals 2x600 2.6 | Sun long 3.7 | Tue easy 3.5
+w12 peak   11.1 km: Thu intervals 2x800 3.2 | Sun long 4.2 | Tue easy 3.7
+w13 peak   11.9 km: Thu intervals 2x800 3.2 | Sun long 4.5 | Tue easy 4.2
+w14 taper   9.5 km: Thu tempo 2.6 | Sun long 3.6 | Tue easy 3.3
+w15 taper   7.1 km: Thu tempo 1.9 | Sun long 2.7 | Tue easy 2.5"
+`;
+
+exports[`boundary cases: plan length and day constraints > 5k, goal date exactly 8 weeks away 1`] = `
+"5k v0.2.0: 8 weeks from 2026-11-02 to 2026-12-27
+assumptions: tier_default, baseline_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base    8.5 km: Mon easy 1.8 | Wed tempo 2.1 | Fri easy 1.8 | Sun long 2.8
+w02 base    9.1 km: Mon easy 1.9 | Wed tempo 2.3 | Fri easy 1.9 | Sun long 3.0
+w03 build   9.7 km: Mon easy 2.2 | Wed intervals 2x400 2.2 | Fri easy 2.1 | Sun long 3.2
+w04 build   8.5 km: Mon easy 1.8 | Wed tempo 2.1 | Fri easy 1.8 | Sun long 2.8
+w05 build   9.7 km: Mon easy 2.0 | Wed intervals 2x600 2.6 | Fri easy 1.9 | Sun long 3.2
+w06 peak   10.4 km: Mon easy 2.0 | Wed intervals 2x800 3.0 | Fri easy 2.0 | Sun long 3.4
+w07 taper   8.3 km: Mon easy 1.8 | Wed tempo 2.1 | Fri easy 1.7 | Sun long 2.7
+w08 taper   6.2 km: Mon easy 1.3 | Wed tempo 1.6 | Fri easy 1.3 | Sun long 2.0"
+`;
+
+exports[`boundary cases: plan length and day constraints > 5k, three free days only (Mon, Thu, Sat), long run Sat 1`] = `
+"5k v0.2.0: 12 weeks from 2026-11-02
+assumptions: tier_default, baseline_default, plan_length_default, runs_reduced, paces_effort_only
+warnings: none
+w01 base    8.5 km: Mon tempo 2.3 | Thu easy 3.0 | Sat long 3.2
+w02 base    9.1 km: Mon tempo 2.5 | Thu easy 3.1 | Sat long 3.5
+w03 base    9.7 km: Mon tempo 2.6 | Thu easy 3.4 | Sat long 3.7
+w04 build   8.5 km: Mon intervals 2x400 2.2 | Thu easy 3.1 | Sat long 3.2
+w05 build   9.7 km: Mon tempo 2.6 | Thu easy 3.4 | Sat long 3.7
+w06 build  10.4 km: Mon intervals 2x600 2.8 | Thu easy 3.6 | Sat long 4.0
+w07 build  11.1 km: Mon tempo 3.0 | Thu easy 3.9 | Sat long 4.2
+w08 build   9.8 km: Mon intervals 2x600 2.6 | Thu easy 3.5 | Sat long 3.7
+w09 peak   11.1 km: Mon intervals 2x800 3.2 | Thu easy 3.7 | Sat long 4.2
+w10 peak   11.9 km: Mon intervals 2x800 3.2 | Thu easy 4.2 | Sat long 4.5
+w11 taper   9.5 km: Mon tempo 2.6 | Thu easy 3.3 | Sat long 3.6
+w12 taper   7.1 km: Mon tempo 1.9 | Thu easy 2.5 | Sat long 2.7"
+`;
+
+exports[`boundary cases: plan length and day constraints > 10k with pain (cautious variant) 1`] = `
+"10k v0.2.0: 10 weeks from 2026-11-02
+assumptions: cautious_variant, baseline_default, plan_length_default, long_run_day_default, paces_effort_only, strength_equipment_default
+warnings: pain_flag
+w01 base   17.5 km: Mon easy 3.7 | Wed tempo 4.4 | Thu strength(5x2, 15m) | Fri easy 3.6 | Sun long 5.8
+w02 base   18.4 km: Mon easy 3.9 | Wed tempo 4.6 | Thu strength(5x2, 15m) | Fri easy 3.8 | Sun long 6.1
+w03 build  16.2 km: Mon easy 3.4 | Wed tempo 4.1 | Thu strength(5x2, 15m) | Fri easy 3.4 | Sun long 5.3
+w04 build  18.4 km: Mon easy 3.9 | Wed tempo 4.6 | Thu strength(5x2, 15m) | Fri easy 3.8 | Sun long 6.1
+w05 build  19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Thu strength(5x2, 15m) | Fri easy 4.0 | Sun long 6.4
+w06 build  17.0 km: Mon easy 3.6 | Wed tempo 4.3 | Thu strength(5x2, 15m) | Fri easy 3.5 | Sun long 5.6
+w07 peak   19.3 km: Mon easy 4.1 | Wed tempo 4.8 | Thu strength(5x2, 15m) | Fri easy 4.0 | Sun long 6.4
+w08 peak   20.3 km: Mon easy 4.3 | Wed tempo 5.1 | Thu strength(5x2, 15m) | Fri easy 4.2 | Sun long 6.7
+w09 taper  16.2 km: Mon easy 3.4 | Wed tempo 4.1 | Thu strength(5x2, 15m) | Fri easy 3.4 | Sun long 5.3
+w10 taper  12.2 km: Mon easy 2.6 | Wed tempo 3.1 | Thu strength(5x2, 15m) | Fri easy 2.5 | Sun long 4.0"
+`;
+
+exports[`boundary cases: plan length and day constraints > 10k, goal date 14 weeks away 1`] = `
+"10k v0.2.0: 14 weeks from 2026-11-02 to 2027-02-07
+assumptions: baseline_default, long_run_day_default, paces_effort_only
+warnings: none
+w01 base   21.3 km: Mon easy 4.5 | Wed tempo 5.3 | Fri easy 4.5 | Sun long 7.0
+w02 base   23.0 km: Mon easy 4.8 | Wed tempo 5.8 | Fri easy 4.8 | Sun long 7.6
+w03 base   24.8 km: Mon easy 5.2 | Wed tempo 6.2 | Fri easy 5.2 | Sun long 8.2
+w04 base   21.8 km: Mon easy 4.6 | Wed tempo 5.5 | Fri easy 4.5 | Sun long 7.2
+w05 build  24.8 km: Mon easy 5.1 | Wed intervals 4x800 6.4 | Fri easy 5.1 | Sun long 8.2
+w06 build  26.8 km: Mon easy 5.7 | Wed tempo 6.7 | Fri easy 5.6 | Sun long 8.8
+w07 build  28.9 km: Mon easy 5.9 | Wed intervals 4x1000 7.6 | Fri easy 5.9 | Sun long 9.5
+w08 build  25.4 km: Mon easy 5.3 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w09 build  28.9 km: Mon easy 5.9 | Wed intervals 4x1000 7.6 | Fri easy 5.9 | Sun long 9.5
+w10 build  31.2 km: Mon easy 6.6 | Wed tempo 7.8 | Fri easy 6.5 | Sun long 10.3
+w11 peak   33.7 km: Mon easy 6.8 | Wed intervals 4x1200 9.0 | Fri easy 6.8 | Sun long 11.1
+w12 peak   29.7 km: Mon easy 6.4 | Wed intervals 3x1200 7.2 | Fri easy 6.3 | Sun long 9.8
+w13 taper  27.0 km: Mon easy 5.7 | Wed tempo 6.8 | Fri easy 5.6 | Sun long 8.9
+w14 taper  20.2 km: Mon easy 4.2 | Wed tempo 5.1 | Fri easy 4.2 | Sun long 6.7"
+`;
+
+exports[`boundary cases: plan length and day constraints > 10k, goal date too soon (keeps 8 weeks) 1`] = `
+"10k v0.2.0: 8 weeks from 2026-11-02 to 2026-11-30
+assumptions: tier_default, baseline_default, long_run_day_default, paces_effort_only
+warnings: later_goal_date, no_taper@5
+w01 base   10.2 km: Mon easy 2.1 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.4
+w02 base   10.9 km: Mon easy 2.3 | Wed tempo 2.7 | Fri easy 2.3 | Sun long 3.6
+w03 build  11.7 km: Mon easy 2.3 | Wed intervals 2x800 3.2 | Fri easy 2.3 | Sun long 3.9
+w04 build  10.3 km: Mon easy 2.2 | Wed tempo 2.6 | Fri easy 2.1 | Sun long 3.4
+w05 build  11.7 km: Mon easy 2.1 | Wed intervals 2x1000 3.6 | Fri easy 2.1 | Sun long 3.9
+w06 peak   12.5 km: Mon easy 2.2 | Wed intervals 2x1200 4.0 | Fri easy 2.2 | Sun long 4.1
+w07 taper  10.0 km: Mon easy 2.1 | Wed tempo 2.5 | Fri easy 2.1 | Sun long 3.3
+w08 taper   7.5 km: Mon easy 1.6 | Wed tempo 1.9 | Fri easy 1.5 | Sun long 2.5"
+`;
+
+exports[`boundary cases: plan length and day constraints > 10k, long run on an unavailable day (falls back) 1`] = `
+"10k v0.2.0: 12 weeks from 2026-11-02
+assumptions: tier_default, baseline_default, plan_length_default, long_run_day_changed, paces_effort_only
+warnings: none
+w01 base   10.2 km: Mon easy 2.1 | Tue tempo 2.6 | Wed strength(5x2, 15m) | Thu easy 2.1 | Sat long 3.4
+w02 base   10.9 km: Mon easy 2.3 | Tue tempo 2.7 | Wed strength(5x2, 15m) | Thu easy 2.3 | Sat long 3.6
+w03 base   11.7 km: Mon easy 2.5 | Tue tempo 2.9 | Wed strength(5x2, 15m) | Thu easy 2.4 | Sat long 3.9
+w04 build  10.3 km: Mon easy 2.0 | Tue intervals 2x800 3.0 | Wed strength(5x3, 20m) | Thu easy 1.9 | Sat long 3.4
+w05 build  11.7 km: Mon easy 2.5 | Tue tempo 2.9 | Wed strength(5x3, 20m) | Thu easy 2.4 | Sat long 3.9
+w06 build  12.5 km: Mon easy 2.4 | Tue intervals 2x1000 3.6 | Wed strength(5x3, 20m) | Thu easy 2.4 | Sat long 4.1
+w07 build  13.4 km: Mon easy 2.8 | Tue tempo 3.4 | Wed strength(5x3, 20m) | Thu easy 2.8 | Sat long 4.4
+w08 build  11.8 km: Mon easy 2.2 | Tue intervals 2x1000 3.6 | Wed strength(5x3, 20m) | Thu easy 2.1 | Sat long 3.9
+w09 peak   13.4 km: Mon easy 2.4 | Tue intervals 2x1200 4.2 | Wed strength(5x3, 20m) | Thu easy 2.4 | Sat long 4.4
+w10 peak   14.3 km: Mon easy 2.7 | Tue intervals 2x1200 4.2 | Wed strength(5x3, 20m) | Thu easy 2.7 | Sat long 4.7
+w11 taper  11.4 km: Mon easy 2.4 | Tue tempo 2.9 | Wed strength(5x2, 15m) | Thu easy 2.3 | Sat long 3.8
+w12 taper   8.6 km: Mon easy 1.8 | Tue tempo 2.2 | Wed strength(5x2, 15m) | Thu easy 1.8 | Sat long 2.8"
+`;
+
+exports[`boundary cases: plan length and day constraints > half marathon, a baseline far below the goal 1`] = `
+"half_marathon v0.2.0: 16 weeks from 2026-11-02
+assumptions: tier_default, plan_length_default, long_run_day_default, paces_effort_only
+warnings: baseline_far_below_goal
+w01 base    5.4 km: Wed tempo 1.5 | Fri easy 1.8 | Sun long 2.1
+w02 base    5.8 km: Wed tempo 1.6 | Fri easy 2.0 | Sun long 2.2
+w03 base    6.2 km: Wed tempo 1.7 | Fri easy 2.1 | Sun long 2.4
+w04 base    5.5 km: Wed tempo 1.5 | Fri easy 1.9 | Sun long 2.1
+w05 build   6.2 km: Wed tempo 1.7 | Fri easy 2.1 | Sun long prog 2.4
+w06 build   6.6 km: Wed tempo 1.8 | Fri easy 2.3 | Sun long prog 2.5
+w07 build   7.1 km: Wed tempo 1.9 | Fri easy 2.5 | Sun long prog 2.7
+w08 build   6.2 km: Wed tempo 1.7 | Fri easy 2.1 | Sun long prog 2.4
+w09 build   7.1 km: Wed tempo 1.9 | Fri easy 2.5 | Sun long prog 2.7
+w10 build   7.6 km: Wed tempo 2.1 | Fri easy 2.6 | Sun long prog 2.9
+w11 build   8.1 km: Wed tempo 2.2 | Fri easy 2.8 | Sun long prog 3.1
+w12 peak    7.1 km: Wed tempo 1.9 | Fri easy 2.5 | Sun long prog 2.7
+w13 peak    8.1 km: Wed tempo 2.2 | Fri easy 2.8 | Sun long prog 3.1
+w14 peak    8.7 km: Wed tempo 2.3 | Fri easy 3.1 | Sun long prog 3.3
+w15 taper   7.0 km: Wed tempo 1.9 | Fri easy 2.4 | Sun long 2.7
+w16 taper   5.2 km: Wed tempo 1.4 | Fri easy 1.8 | Sun long 2.0"
+`;
+
+exports[`boundary cases: plan length and day constraints > half marathon, five runs, two unavailable days, strength 1`] = `
+"half_marathon v0.2.0: 12 weeks from 2026-11-02
+assumptions: baseline_default, plan_length_default, long_run_day_default, paces_effort_only, strength_no_room
+warnings: none
+w01 base   38.3 km: Tue easy 6.5 | Wed tempo 7.7 | Thu easy 6.3 | Thu strength(5x2, 15m) | Sat easy 6.3 | Sun long 11.5
+w02 base   41.4 km: Tue easy 6.9 | Wed tempo 8.3 | Thu easy 6.9 | Thu strength(5x2, 15m) | Sat easy 6.9 | Sun long 12.4
+w03 base   44.7 km: Tue easy 7.6 | Wed tempo 8.9 | Thu easy 7.4 | Thu strength(5x2, 15m) | Sat easy 7.4 | Sun long 13.4
+w04 build  39.3 km: Tue easy 6.6 | Wed tempo 7.9 | Thu easy 6.5 | Thu strength(5x3, 20m) | Sat easy 6.5 | Sun long prog 11.8
+w05 build  44.7 km: Tue easy 7.6 | Wed tempo 8.9 | Thu easy 7.4 | Thu strength(5x3, 20m) | Sat easy 7.4 | Sun long prog 13.4
+w06 build  48.3 km: Tue easy 8.1 | Wed tempo 9.7 | Thu easy 8.0 | Thu strength(5x3, 20m) | Sat easy 8.0 | Sun long prog 14.5
+w07 build  52.2 km: Tue easy 8.7 | Wed tempo 10.4 | Thu easy 8.7 | Thu strength(5x3, 20m) | Sat easy 8.7 | Sun long prog 15.7
+w08 build  45.9 km: Tue easy 7.7 | Wed tempo 9.2 | Thu easy 7.6 | Thu strength(5x3, 20m) | Sat easy 7.6 | Sun long prog 13.8
+w09 peak   52.2 km: Tue easy 8.7 | Wed tempo 10.4 | Thu easy 8.7 | Thu strength(5x3, 20m) | Sat easy 8.7 | Sun long prog 15.7
+w10 peak   56.4 km: Tue easy 9.4 | Wed tempo 11.3 | Thu easy 9.4 | Thu strength(5x3, 20m) | Sat easy 9.4 | Sun long prog 16.9
+w11 taper  45.1 km: Tue easy 7.6 | Wed tempo 9.0 | Thu easy 7.5 | Thu strength(5x2, 15m) | Sat easy 7.5 | Sun long 13.5
+w12 taper  33.8 km: Tue easy 5.7 | Wed tempo 6.8 | Thu easy 5.6 | Thu strength(5x2, 15m) | Sat easy 5.6 | Sun long 10.1"
+`;
+
+exports[`boundary cases: plan length and day constraints > half marathon, goal date 22 weeks away (16 weeks, starts later) 1`] = `
+"half_marathon v0.2.0: 20 weeks from 2026-11-16 to 2027-04-04
+assumptions: baseline_default, long_run_day_default, paces_effort_only
+warnings: goal_date_far
+w01 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w02 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w03 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w04 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w05 base   25.5 km: Mon easy 5.4 | Wed tempo 6.4 | Fri easy 5.3 | Sun long 8.4
+w06 base   27.5 km: Mon easy 5.8 | Wed tempo 6.9 | Fri easy 5.7 | Sun long 9.1
+w07 base   29.7 km: Mon easy 6.3 | Wed tempo 7.4 | Fri easy 6.2 | Sun long 9.8
+w08 base   26.1 km: Mon easy 5.5 | Wed tempo 6.5 | Fri easy 5.5 | Sun long 8.6
+w09 build  29.7 km: Mon easy 6.3 | Wed tempo 7.4 | Fri easy 6.2 | Sun long prog 9.8
+w10 build  32.1 km: Mon easy 6.8 | Wed tempo 8.0 | Fri easy 6.7 | Sun long prog 10.6
+w11 build  34.7 km: Mon easy 7.3 | Wed tempo 8.7 | Fri easy 7.2 | Sun long prog 11.5
+w12 build  30.5 km: Mon easy 6.4 | Wed tempo 7.6 | Fri easy 6.4 | Sun long prog 10.1
+w13 build  34.7 km: Mon easy 7.3 | Wed tempo 8.7 | Fri easy 7.2 | Sun long prog 11.5
+w14 build  37.5 km: Mon easy 7.9 | Wed tempo 9.4 | Fri easy 7.8 | Sun long prog 12.4
+w15 build  40.5 km: Mon easy 8.5 | Wed tempo 10.1 | Fri easy 8.5 | Sun long prog 13.4
+w16 peak   35.6 km: Mon easy 7.5 | Wed tempo 8.9 | Fri easy 7.5 | Sun long prog 11.7
+w17 peak   40.5 km: Mon easy 8.5 | Wed tempo 10.1 | Fri easy 8.5 | Sun long prog 13.4
+w18 peak   43.7 km: Mon easy 9.2 | Wed tempo 10.9 | Fri easy 9.2 | Sun long prog 14.4
+w19 taper  35.0 km: Mon easy 7.3 | Wed tempo 8.8 | Fri easy 7.3 | Sun long 11.6
+w20 taper  26.2 km: Mon easy 5.5 | Wed tempo 6.6 | Fri easy 5.5 | Sun long 8.6"
+`;
+
+exports[`boundary cases: plan length and day constraints > half marathon, goal date too soon (keeps 10 weeks) 1`] = `
+"half_marathon v0.2.0: 10 weeks from 2026-11-02 to 2026-12-06
+assumptions: tier_default, baseline_default, long_run_day_default, paces_effort_only
+warnings: later_goal_date, no_taper@5
+w01 base   12.8 km: Mon easy 2.7 | Wed tempo 3.2 | Fri easy 2.7 | Sun long 4.2
+w02 base   13.7 km: Mon easy 2.9 | Wed tempo 3.4 | Fri easy 2.9 | Sun long 4.5
+w03 build  14.7 km: Mon easy 3.1 | Wed tempo 3.7 | Fri easy 3.0 | Sun long prog 4.9
+w04 build  12.9 km: Mon easy 2.7 | Wed tempo 3.2 | Fri easy 2.7 | Sun long prog 4.3
+w05 build  14.7 km: Mon easy 3.1 | Wed tempo 3.7 | Fri easy 3.0 | Sun long prog 4.9
+w06 build  15.7 km: Mon easy 3.3 | Wed tempo 3.9 | Fri easy 3.3 | Sun long prog 5.2
+w07 peak   16.8 km: Mon easy 3.6 | Wed tempo 4.2 | Fri easy 3.5 | Sun long prog 5.5
+w08 peak   14.8 km: Mon easy 3.1 | Wed tempo 3.7 | Fri easy 3.1 | Sun long prog 4.9
+w09 taper  13.4 km: Mon easy 2.8 | Wed tempo 3.4 | Fri easy 2.8 | Sun long 4.4
+w10 taper  10.1 km: Mon easy 2.2 | Wed tempo 2.5 | Fri easy 2.1 | Sun long 3.3"
+`;

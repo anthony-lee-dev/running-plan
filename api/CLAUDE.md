@@ -37,7 +37,12 @@ entry file, not a rewrite.
   to 5K pace) and the heart-rate bands are starting values awaiting the coach review (backlog H.1).
 - Rule engine (`src/domain/engine.ts`, task 2.1): `generatePlan({ answers, today })` returns a draft with the
   assumptions it made and warnings (its own notices plus the validators' findings; session ids are not in a draft, so
-  validator warnings carry only the week). 5K preset only until 2.2. Week 1 is 85% of the baseline (70% when pain is
+  validator warnings carry only the week). Presets live in `src/domain/presets.ts` (5K 8 to 12 weeks, 10K 8 to 14, half
+  marathon 10 to 16, each with its own tier caps, run limits and quality sessions); strength sessions come from the
+  curated library in `src/domain/strength.ts` (one or two short sessions a week, never on or before a hard day, always
+  leaving a rest day). `test/engine-variants.test.ts` snapshots the 54 base variants of design 6.2 plus boundary cases:
+  review its diff when a plan changes, update it with `npx vitest -u`, and bump `ENGINE_VERSION`. The generate
+  route (2.3) must reject an unknown `presetId` with a 400: the engine throws a plain Error for one. Week 1 is 85% of the baseline (70% when pain is
   flagged), growth 7 to 8% a week, a down week (x0.88, then back to the earlier level) every 4th week (3rd when
   cautious), a two-week taper. No run passes its limit (long 14 km, quality 12 km, easy 10 km), which also bounds the
   weekly volume. The plan always ends on the goal date; the second hard session of a 5-run week is dropped to an easy
