@@ -57,7 +57,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [x] 2.8 Plan validators (§6.4): conservative first week, capped week-to-week growth with down weeks, easy or rest
       day between hard sessions, one protected rest day, long-run share cap, taper, strength placement. Warn, never
       block; hard errors only for invalid data. Runs on generated, edited and blank plans
-- [ ] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
+- [x] 2.9 `ask first` Pace and target derivation (§6.3): propose the race-equivalence model (open question §12.2);
       ranges in min/km starting on the slow side; effort targets when there is no recent result; heart rate only
       when the user gives max HR or zones
 - [ ] 2.1 Rule engine: 5K preset, table-driven tests over interview answers (runs per week, tier, plan length, day
