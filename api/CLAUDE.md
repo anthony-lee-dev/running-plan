@@ -45,5 +45,13 @@ entry file, not a rewrite.
   Every number is a starting value for the coach review (H.1); bump `ENGINE_VERSION` when one changes.
   A goal date that is too soon keeps 8 weeks and suggests a later date; one that is too far starts the plan later;
   the proper edge cases are task 2.10. Add property tests (fast-check) for each new invariant.
+- Proposal engine (`src/domain/proposals.ts`, task 2.13): `proposeAdjustments({ plan, checkIns, matches, today })`
+  returns proposal drafts and never edits the plan. Rules: a missed key session (last 14 days, not done, no confirmed
+  match) is dropped, one proposal each and urgent; pain in the last 7 days makes next week 30% lighter with hard
+  sessions turned easy (urgent, and the only load proposal); two of the last three after-session check-ins "much
+  harder" (effort 8+ or feel 1) ease next week by 15%; three easy ones in a row add 5% to next week's easy and long
+  runs. User-owned sessions are included but flagged `userOwned` (locked unless the user opts in); blank plans are
+  off unless `adaptive`. Each draft has a stable `key` so a dismissed proposal is not made again; the API task
+  (2.14) adds ids, the plan revision and the status. Numbers are starting values for the coach review (H.1).
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.
