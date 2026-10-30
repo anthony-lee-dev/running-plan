@@ -71,11 +71,20 @@ enum DeviceIdentity {
 }
 
 enum APIConfiguration {
-    /// Local development server by default. Override with the `API_BASE_URL` environment variable or the
-    /// `apiBaseURL` default. The production URL is set once the API is deployed.
+    /// The deployed API. A phone cannot reach a dev server on the Mac at `localhost`, so this is the default.
+    static let deployedURL = URL(string: "https://running-plan-api.anthonyhklee.workers.dev")!
+
+    /// The deployed API by default. For a local server, set the `API_BASE_URL` environment variable in the scheme
+    /// (for example `http://localhost:8787` in the simulator) or the `apiBaseURL` user default.
     static var baseURL: URL {
-        let text = ProcessInfo.processInfo.environment["API_BASE_URL"] ?? UserDefaults.standard.string(forKey: "apiBaseURL") ?? "http://localhost:8787"
-        return URL(string: text) ?? URL(string: "http://localhost:8787")!
+        baseURL(environment: ProcessInfo.processInfo.environment, override: UserDefaults.standard.string(forKey: "apiBaseURL"))
+    }
+
+    static func baseURL(environment: [String: String], override: String?) -> URL {
+        for text in [environment["API_BASE_URL"], override] {
+            if let text, let url = URL(string: text), url.scheme != nil, url.host != nil { return url }
+        }
+        return deployedURL
     }
 
     static func liveGenerator() -> PlanGenerating {
