@@ -72,6 +72,7 @@ enum DeviceIdentity {
 
 enum APIConfiguration {
     /// The deployed API. A phone cannot reach a dev server on the Mac at `localhost`, so this is the default.
+    /// `npm run smoke -w api` checks the same URL; change both together.
     static let deployedURL = URL(string: "https://running-plan-api.anthonyhklee.workers.dev")!
 
     /// The deployed API by default. For a local server, set the `API_BASE_URL` environment variable in the scheme

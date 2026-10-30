@@ -20,6 +20,7 @@ phase order and Gates B and C are replaced by the slices below: every slice adds
 2. An iOS UI test runs the slice's flow in the simulator against the local Node API (in memory, no network).
 3. The slice's last PR lists a device check against the deployed API as an unticked `## Manual gates` box for the
    human; WorkoutKit and HealthKit checks are Gate D items. Agents never tick these boxes.
+4. After each deploy, `npm run smoke -w api` passes against the deployed API (task 2.22).
 
 Every screen task also needs 0.5 for its snapshot test.
 
@@ -124,6 +125,10 @@ the human confirmed it in a session on 2026-10-30).
       the app at it with `API_BASE_URL`; port the interview-to-preview UI test to it. Signing in from a UI test needs
       a known code: an email sender for the Node entry that only runs in tests, never in the Workers entry. The CI
       change in `scripts/` or `.github/` needs the human to merge. needs: 3.3
+
+- [x] 2.22 Smoke test for the deployed API (`npm run smoke -w api`, any URL with `SMOKE_URL`): health, a generate
+      from the engine version on `main`, and every built signed-in operation answering 401 rather than 404. Read-only,
+      no account. Also runs in-process in verify so it stays correct. needs: 2.7
 
 **Done when:** both run in CI, and the interview-to-preview UI test passes against the local API.
 
