@@ -26,8 +26,8 @@ private actor StubGenerator: PlanGenerating {
 
 private final class MemoryStore: PreviewDraftStoring {
     var saved: SavedPreview?
-    func save(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, now: Date) {
-        saved = SavedPreview(answers: answers, draft: draft, savedAt: now)
+    func save(_ preview: SavedPreview) {
+        saved = preview
     }
     func load(now: Date) -> SavedPreview? {
         guard let saved, now.timeIntervalSince(saved.savedAt) < PreviewDraftStore.lifetime else { return nil }
@@ -107,6 +107,18 @@ struct PreviewViewModelTests {
         await vm.load()
         guard case .loaded = vm.state else { Issue.record("not loaded: \(vm.state)"); return }
         #expect(await generator.calls.isEmpty)
+    }
+
+    @Test func theShownPreviewCarriesTheStoredIdsSoASaveCanBeRepeated() async throws {
+        let store = MemoryStore()
+        let generated = model(StubGenerator(.success(try DraftFixture.draft())), store: store)
+        #expect(generated.current == nil)
+        await generated.load()
+        #expect(generated.current == store.saved)
+
+        let reopened = model(StubGenerator(.failure(PreviewError.server)), store: store, at: now.addingTimeInterval(3600))
+        await reopened.load()
+        #expect(reopened.current?.ids == store.saved?.ids)
     }
 
     @Test func asksAgainWhenTheSavedDraftIsOlderThanADay() async throws {

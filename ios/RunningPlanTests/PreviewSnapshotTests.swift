@@ -11,7 +11,7 @@ private final class OneShotGenerator: PlanGenerating {
 }
 
 private final class NoStore: PreviewDraftStoring {
-    func save(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, now: Date) {}
+    func save(_ preview: SavedPreview) {}
     func load(now: Date) -> SavedPreview? { nil }
     func clear() {}
 }

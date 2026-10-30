@@ -7,13 +7,42 @@ struct SavedPreview: Codable, Equatable {
     var answers: InterviewAnswers
     var draft: Components.Schemas.PlanDraft
     var savedAt: Date
+    /// Made once per draft and kept with it, so saving it again (after a lost answer or a relaunch) sends the same
+    /// ids and the server replays the create instead of storing a second plan.
+    var ids: PlanIDs
+
+    init(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, savedAt: Date, ids: PlanIDs? = nil) {
+        self.answers = answers
+        self.draft = draft
+        self.savedAt = savedAt
+        self.ids = ids ?? .random(sessionCount: draft.sessions.count)
+    }
+}
+
+/// The client-assigned ids for a saved plan and its sessions, in the draft's session order.
+struct PlanIDs: Codable, Equatable {
+    var plan: String
+    var sessions: [String]
+
+    static func random(sessionCount: Int) -> PlanIDs {
+        PlanIDs(plan: newID(), sessions: (0..<sessionCount).map { _ in newID() })
+    }
+
+    private static func newID() -> String { UUID().uuidString.lowercased() }
 }
 
 protocol PreviewDraftStoring {
-    func save(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, now: Date)
+    func save(_ preview: SavedPreview)
     /// The saved preview while it is younger than 24 hours; an older one is deleted and nil comes back.
     func load(now: Date) -> SavedPreview?
     func clear()
+}
+
+extension PreviewDraftStoring {
+    /// Keeps a new draft, with new ids.
+    func save(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, now: Date) {
+        save(SavedPreview(answers: answers, draft: draft, savedAt: now))
+    }
 }
 
 struct PreviewDraftStore: PreviewDraftStoring {
@@ -25,8 +54,8 @@ struct PreviewDraftStore: PreviewDraftStoring {
         self.defaults = defaults
     }
 
-    func save(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, now: Date) {
-        guard let data = try? JSONEncoder().encode(SavedPreview(answers: answers, draft: draft, savedAt: now)) else { return }
+    func save(_ preview: SavedPreview) {
+        guard let data = try? JSONEncoder().encode(preview) else { return }
         defaults.set(data, forKey: Self.key)
     }
 
