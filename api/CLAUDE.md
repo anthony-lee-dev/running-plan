@@ -32,6 +32,13 @@ entry file, not a rewrite.
   `migrations/` are applied to the test database automatically.
 - D1 is SQLite: keep SQL to portable basics (no SQLite-only JSON tricks) so a later move to Postgres stays a
   dialect change, not a redesign. Use integer seconds for durations and `TEXT` `YYYY-MM-DD` for local dates.
+- Auth (task 2.4): email one-time code, HS256 access tokens (15 min), rotating refresh tokens (60 days, reuse of a
+  rotated token revokes its family), scopes by client type. Codes and refresh tokens are stored only as HMAC
+  hashes. The Workers entry needs the secrets `JWT_SECRET` (32+ characters; the entry refuses to run without it),
+  the `EMAIL` send binding and `MAIL_FROM`; without them it refuses to run unless `ALLOW_LOG_EMAIL=1` (local dev only: codes
+  are printed). Put local values in `api/.dev.vars` (gitignored). Only `cf-connecting-ip` is trusted for rate limits.
+  Access tokens stay valid until they expire (15 minutes) after their refresh family is revoked; account delete
+  takes effect at once because each request checks the user still exists. Production secrets are set by the human with `npx wrangler secret put <NAME>`.
 - Pace derivation (`src/domain/paces.ts`) uses the Riegel race-equivalence model, exponent 1.06 (design §12.2 decided
   for backlog 2.9). Its zone anchors (easy 1.20 to 1.35 of 5K pace, long 1.15 to 1.30, tempo 10K pace ±3%, interval 3K
   to 5K pace) and the heart-rate bands are starting values awaiting the coach review (backlog H.1).
@@ -45,5 +52,18 @@ entry file, not a rewrite.
   Every number is a starting value for the coach review (H.1); bump `ENGINE_VERSION` when one changes.
   A goal date that is too soon keeps 8 weeks and suggests a later date; one that is too far starts the plan later;
   the proper edge cases are task 2.10. Add property tests (fast-check) for each new invariant.
+- Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
+  `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after
+  its day is over (so due can exceed done + skipped + missed by what is left today); actual volume comes from the
+  confirmed activity, or the plan when a session was marked done by hand; strength and cross-training count toward
+  time only. On track means 70% or more of the judged sessions done (at least 3 judged). A review looks back at a finished
+  week: its review day is the first chosen weekday on or after the week's last day (the last day itself by default),
+  and it is due for seven days from then; after an import it is also due once the week has something done. Thresholds are for the coach review (H.1).
+- Plans and sessions (task 2.5): every query is scoped to the signed-in user, so another user's id is a 404. Writes
+  compare the base revision (`If-Match`) atomically; a session write also moves the plan's `contentRevision` in the
+  same D1 batch (a transaction), with later statements guarded by SQLite's `changes()` so a lost race writes
+  nothing. Deletes are tombstones. Creates are idempotent: the request's canonical hash is stored, so a repeat is a
+  200 and the same id with another body a 409. The D1 SQL in `adapters/cloudflare/` may use SQLite features; only
+  the migrations stay portable.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.

@@ -8,3 +8,7 @@ database_name = "running-plan"
 # Created with: npx wrangler d1 create running-plan  (a fork creates its own and pastes its id here)
 database_id = "de6e398f-66f1-4b78-9822-b37db7178773"
 migrations_dir = "migrations"
+
+# Cloudflare Email Sending (public beta, Workers Paid). Onboard the sender domain in the dashboard first.
+[[send_email]]
+name = "EMAIL"
