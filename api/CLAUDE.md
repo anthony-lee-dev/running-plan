@@ -95,5 +95,8 @@ entry file, not a rewrite.
   runs. User-owned sessions are included but flagged `userOwned` (locked unless the user opts in); blank plans are
   off unless `adaptive`. Each draft has a stable `key` so a dismissed proposal is not made again; the API task
   (2.14) adds ids, the plan revision and the status. Numbers are starting values for the coach review (H.1).
+- UI-test server (task 3.9, `test/ui-server/`): the app with in-memory stores plus `/__test/stats` (requests answered)
+  and `/__test/codes/latest?email=` (the last sign-in code), on `127.0.0.1:8790` only. `npm run ui-test-server -w api`;
+  `scripts/verify.sh ios` starts it for the iOS UI tests. It stays under `test/` so nothing of it reaches the Workers entry.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.

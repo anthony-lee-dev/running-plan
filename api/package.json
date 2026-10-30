@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "dev:node": "tsx src/node.ts",
+    "ui-test-server": "tsx test/ui-server/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "deploy": "wrangler deploy"

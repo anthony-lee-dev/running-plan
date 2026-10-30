@@ -90,6 +90,52 @@ pick_ios_sim() {
   '
 }
 
+UI_TEST_API_PORT=8790
+UI_TEST_API_URL="http://127.0.0.1:${UI_TEST_API_PORT}"
+UI_TEST_API_PID=""
+
+# The in-memory API the iOS UI tests run against (api/test/ui-server). Refuses a port already in use, so the
+# tests never talk to a stale server from an earlier run.
+start_ui_test_api() {
+  if lsof -nP -iTCP:"$UI_TEST_API_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "== ios: port $UI_TEST_API_PORT is in use; stop that server before running the UI tests" >&2
+    return 1
+  fi
+  echo "== ios: start the UI-test API on $UI_TEST_API_URL"
+  (cd api && exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"${TMPDIR:-/tmp}/ui-test-api.log" 2>&1 &
+  UI_TEST_API_PID=$!
+  trap stop_ui_test_api EXIT
+  for _ in $(seq 1 60); do
+    if curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then return 0; fi
+    sleep 0.5
+  done
+  echo "== ios: the UI-test API did not start; see ${TMPDIR:-/tmp}/ui-test-api.log" >&2
+  return 1
+}
+
+stop_ui_test_api() {
+  [[ -n "$UI_TEST_API_PID" ]] || return 0
+  # tsx runs the server in a child node process, which holds the port.
+  pkill -P "$UI_TEST_API_PID" 2>/dev/null || true
+  kill "$UI_TEST_API_PID" 2>/dev/null || true
+  UI_TEST_API_PID=""
+}
+
+# Reads the UI-test API's /__test/stats on stdin; succeeds when it generated at least one plan.
+stats_show_generate() {
+  grep -qE '"POST /v1/plans/generate": ?[1-9]'
+}
+
+# Fails when no UI test asked the local API for a plan: the app fell back to the deployed API, or the test skipped.
+check_ui_tests_used_local_api() {
+  local stats
+  stats="$(curl -sf "$UI_TEST_API_URL/__test/stats")" || { echo "== ios: could not read the UI-test API stats" >&2; return 1; }
+  if ! stats_show_generate <<<"$stats"; then
+    echo "== ios: no UI test reached the local API ($stats)" >&2
+    return 1
+  fi
+}
+
 verify_ios() {
   if [[ "$(uname)" != "Darwin" ]]; then
     echo "== ios: skipped (needs macOS with Xcode)"; return 0
@@ -112,8 +158,13 @@ verify_ios() {
     fi
     dest="platform=iOS Simulator,id=${id}"
   fi
+  start_ui_test_api
   echo "== ios: test on ${dest}"
-  xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" -quiet
+  # TEST_RUNNER_ variables reach the UI test process without the prefix.
+  TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
+    xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" -quiet
+  check_ui_tests_used_local_api
+  stop_ui_test_api
 }
 
 main() {
