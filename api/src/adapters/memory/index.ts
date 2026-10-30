@@ -1,6 +1,9 @@
 import type { Profile, ProfileFields } from "../../domain/profile";
 import type { SessionContent } from "../../domain/plan-input";
+import type { StoredActivity } from "../../domain/activities";
 import type {
+  ActivityQuery,
+  ActivityStore,
   AuthStore,
   Clock,
   CodeRecord,
@@ -276,6 +279,45 @@ export class MemoryPlanStore implements PlanStore {
   }
 }
 
+/** Newest first: local date, then start, then id. Negative when `a` comes first. */
+const newestFirst = (a: { localDate: string; startedAt: string; id: string }, b: { localDate: string; startedAt: string; id: string }) =>
+  b.localDate.localeCompare(a.localDate) || b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id);
+
+export class MemoryActivityStore implements ActivityStore {
+  private rows = new Map<string, { userId: string; activity: StoredActivity }>();
+
+  /** Takes the auth store so activities disappear with their account, as the database cascade does. */
+  constructor(private readonly auth: AuthStore) {}
+
+  private async mine(userId: string): Promise<StoredActivity[]> {
+    if (!(await this.auth.userExists(userId))) return [];
+    return [...this.rows.values()].filter((r) => r.userId === userId).map((r) => structuredClone(r.activity));
+  }
+
+  async inDateRange(userId: string, from: string, to: string) {
+    return (await this.mine(userId)).filter((a) => a.localDate >= from && a.localDate <= to);
+  }
+
+  async applyImport(userId: string, creates: StoredActivity[], updates: StoredActivity[]) {
+    if (!(await this.auth.userExists(userId))) return;
+    const taken = (a: StoredActivity) => [...this.rows.values()].some((r) => r.userId === userId && r.activity.source === a.source && r.activity.externalId === a.externalId && r.activity.id !== a.id);
+    for (const a of creates) if (!this.rows.has(a.id) && !taken(a)) this.rows.set(a.id, { userId, activity: structuredClone(a) });
+    for (const a of updates) {
+      const row = this.rows.get(a.id);
+      if (row && row.userId === userId && !taken(a)) row.activity = structuredClone(a);
+    }
+  }
+
+  async list(userId: string, query: ActivityQuery) {
+    const { from, to, inbox, limit, after } = query;
+    return (await this.mine(userId))
+      .filter((a) => (from === undefined || a.localDate >= from) && (to === undefined || a.localDate <= to) && (!inbox || a.disposition === "inbox"))
+      .filter((a) => !after || newestFirst(after, a) < 0)
+      .sort(newestFirst)
+      .slice(0, limit);
+  }
+}
+
 export class MemoryRateLimiter implements RateLimiter {
   private windows = new Map<string, { start: number; count: number }>();
 
@@ -298,6 +340,7 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
     auth,
     profiles: new MemoryProfileStore(auth),
     plans: new MemoryPlanStore(auth),
+    activities: new MemoryActivityStore(auth),
     email: new MemoryEmailSender(),
     rateLimiter: new MemoryRateLimiter(),
     ids: webIdSource,

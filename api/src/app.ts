@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Deps } from "./ports";
 import type { generatePlan } from "./domain/engine";
+import { activityRoutes } from "./http/activities";
 import { authRoutes } from "./http/auth";
 import { generateRoutes } from "./http/generate";
 import { healthRoutes } from "./http/health";
@@ -17,6 +18,7 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   // Before the plan routes: generate is public, and they guard /v1/plans/* with a token.
   app.route("/", generateRoutes(deps, options.generate));
   app.route("/", planRoutes(deps));
+  app.route("/", activityRoutes(deps));
   app.notFound((c) => c.json({ error: "not_found" }, 404));
   app.onError((error, c) => {
     // Name and message only: adapters keep addresses and codes out of their error messages.

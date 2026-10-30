@@ -62,6 +62,11 @@ entry file, not a rewrite.
   Rate limits (per IP 300 an hour, per `X-Device-Id` 120 an hour) are counted before the body is read; the body is
   capped at 16 KB and the response at 256 KB; `src/domain/generate-input.ts` validates strictly. Never log the
   answers: an engine error is replaced by a generic one before `onError` sees it.
+- Activities (task 2.11, `src/domain/activities.ts`): an upload dedupes on `source` + `externalId` (unchanged is
+  `duplicate`, changed is `updated`) and, for Garmin re-writes with a new id, on the same type with the start within
+  2 minutes and duration and distance within 3% (60 s, 100 m floors); a match adopts the new record but keeps the
+  disposition. The D1 store does one windowed read (a day either side of the batch) and one `db.batch` write. Keep
+  every request to a few queries: Workers Free allows 50 D1 queries per request, and a batch counts as one.
 - Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
   `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after
   its day is over (so due can exceed done + skipped + missed by what is left today); actual volume comes from the
