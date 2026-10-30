@@ -3,6 +3,7 @@ import type { Profile, ProfileFields } from "../domain/profile";
 import type { PlanFieldsInput, SessionContent } from "../domain/plan-input";
 import type { StoredActivity } from "../domain/activities";
 import type { MatchEffects, MatchRow, MatchState } from "../domain/matches";
+import type { CheckInFields } from "../domain/checkins";
 
 export interface Clock {
   now(): Date;
@@ -181,6 +182,23 @@ export interface MatchStore {
   forActivities(userId: string, activityIds: string[]): Promise<MatchRow[]>;
 }
 
+export interface StoredCheckIn extends CheckInFields {
+  id: string;
+  sessionId: string;
+  revision: number;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+/** Before- and after-session check-ins, on the user's live sessions. */
+export interface CheckInStore {
+  /** Idempotent on the id: an existing id is reported with the stored check-in when it is this user's. */
+  create(
+    userId: string,
+    checkIn: StoredCheckIn,
+  ): Promise<{ status: "created"; checkIn: StoredCheckIn } | { status: "exists"; mine: true; checkIn: StoredCheckIn } | { status: "exists"; mine: false } | { status: "no_session" }>;
+}
+
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */
 export interface EmailSender {
   sendCode(to: string, code: string): Promise<void>;
@@ -213,6 +231,7 @@ export interface Deps {
   plans: PlanStore;
   activities: ActivityStore;
   matches: MatchStore;
+  checkIns: CheckInStore;
   email: EmailSender;
   rateLimiter: RateLimiter;
   ids: IdSource;

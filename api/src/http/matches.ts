@@ -1,6 +1,7 @@
-// Matches and dispositions (task 2.12): link an imported activity to a session, unlink it, or mark an activity as
+// Matches, dispositions and check-ins (task 2.12): link an imported activity to a session, unlink it, or mark an activity as
 // an extra run or ignored. The rules are in domain/matches.ts; the store writes each change in one transaction.
 import { Hono, type Context } from "hono";
+import { parseCheckInCreate, sameCheckIn } from "../domain/checkins";
 import { planMatchChange, type MatchChange, type MatchState } from "../domain/matches";
 import { MatchConflictError, type Deps } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
@@ -67,6 +68,21 @@ export function matchRoutes(deps: Deps) {
     const effects = await run(userId, { sessionId }, { kind: "delete", sessionId }, (s) => s.sessions.some((x) => x.id === sessionId) && s.matches.some((m) => m.sessionId === sessionId));
     const result = effects && (await sessionResult(userId, sessionId));
     return result ? c.json(result) : notFound(c);
+  });
+
+  app.post("/v1/sessions/:sessionId/checkins", auth, async (c) => {
+    const sessionId = c.req.param("sessionId");
+    const parsed = parseCheckInCreate(await readBody(c.req.raw) ?? null);
+    if (!parsed.ok) return problem(c, 400, "validation_failed", "Some fields are invalid", {}, { errors: parsed.errors });
+    if (!UUID.test(sessionId)) return notFound(c);
+    const { id, ...fields } = parsed.value;
+    const now = deps.clock.now().toISOString();
+    // The pain flag's urgent proposal (Weekly plus urgent) comes with the proposals API, task 2.14.
+    const result = await deps.checkIns.create(c.get("userId"), { ...fields, id, sessionId, revision: 1, updatedAt: now, deletedAt: null });
+    if (result.status === "created") return c.json(result.checkIn, 201);
+    if (result.status === "no_session") return notFound(c);
+    if (result.mine && sameCheckIn(result.checkIn, { ...fields, sessionId })) return c.json(result.checkIn, 200);
+    return problem(c, 409, "conflict", "That id is already in use");
   });
 
   app.patch("/v1/activities/:activityId", auth, async (c) => {

@@ -5,6 +5,8 @@ import type { MatchEffects, MatchRow, MatchState } from "../../domain/matches";
 import type {
   ActivityQuery,
   ActivityStore,
+  CheckInStore,
+  StoredCheckIn,
   MatchStore,
   AuthStore,
   Clock,
@@ -421,6 +423,27 @@ export class MemoryMatchStore implements MatchStore {
   }
 }
 
+export class MemoryCheckInStore implements CheckInStore {
+  private rows = new Map<string, { userId: string; checkIn: StoredCheckIn }>();
+
+  constructor(
+    private readonly auth: AuthStore,
+    private readonly plans: MemoryPlanStore,
+  ) {}
+
+  async create(userId: string, checkIn: StoredCheckIn) {
+    if (!(await this.auth.userExists(userId))) return { status: "no_session" as const };
+    // The session first: one that is not the user's is simply not found, whatever the id.
+    if (!this.plans.sessionRef(userId, checkIn.sessionId)) return { status: "no_session" as const };
+    const existing = this.rows.get(checkIn.id);
+    if (existing) return existing.userId === userId ? { status: "exists" as const, mine: true as const, checkIn: structuredClone(existing.checkIn) } : { status: "exists" as const, mine: false as const };
+    // The database stores an absent pain flag as no pain.
+    const stored: StoredCheckIn = { ...structuredClone(checkIn), pain: checkIn.pain ?? false };
+    this.rows.set(checkIn.id, { userId, checkIn: stored });
+    return { status: "created" as const, checkIn: structuredClone(stored) };
+  }
+}
+
 export class MemoryRateLimiter implements RateLimiter {
   private windows = new Map<string, { start: number; count: number }>();
 
@@ -447,6 +470,7 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
     plans,
     activities,
     matches: new MemoryMatchStore(auth, plans, activities),
+    checkIns: new MemoryCheckInStore(auth, plans),
     email: new MemoryEmailSender(),
     rateLimiter: new MemoryRateLimiter(),
     ids: webIdSource,
