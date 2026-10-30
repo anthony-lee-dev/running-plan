@@ -105,7 +105,7 @@ struct AuthMiddlewareTests {
         #expect(store.load() == nil)
     }
 
-    @Test func aRefreshThatCannotReachTheServerThrowsAndKeepsTheTokens() async throws {
+    @Test func aServerErrorOnRefreshThrowsAndKeepsTheTokens() async throws {
         let (auth, store) = session(tokens: signedIn, refresh: .internalServerError)
         let downstream = Downstream([.unauthorized])
 

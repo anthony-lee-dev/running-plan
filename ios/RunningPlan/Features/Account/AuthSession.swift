@@ -49,7 +49,7 @@ actor AuthSession {
         switch output {
         case .ok(let ok):
             let pair = try ok.body.json
-            try keep(StoredTokens(accessToken: pair.accessToken, refreshToken: pair.refreshToken, userId: pair.userId))
+            keep(StoredTokens(accessToken: pair.accessToken, refreshToken: pair.refreshToken, userId: pair.userId))
         case .badRequest, .unauthorized: throw SignInError.wrongCode
         case .tooManyRequests: throw SignInError.tooManyRequests
         case .undocumented: throw SignInError.server
@@ -69,7 +69,8 @@ actor AuthSession {
         if current.accessToken != rejected, refreshing == nil { return current.accessToken }
         if let refreshing { return try await refreshing.value?.accessToken }
 
-        // Every change to the tokens happens inside this task, before any waiting caller resumes.
+        // Every change to the tokens happens inside this task, before any waiting caller resumes. The task is isolated
+        // to this actor (never make it detached), so `refreshing` is set below before its body runs.
         let task = Task { () throws -> StoredTokens? in
             defer { self.refreshing = nil }
             let fresh = try await self.requestRefresh(current.refreshToken)
@@ -79,14 +80,7 @@ actor AuthSession {
                 self.signOut()
                 return nil
             }
-            self.tokens = fresh
-            do {
-                try self.store.save(fresh)
-            } catch {
-                // The stored refresh token no longer works, and reusing it would revoke every token: drop it, so the
-                // next launch asks to sign in again. This run keeps working from memory.
-                self.store.clear()
-            }
+            self.keep(fresh)
             return fresh
         }
         refreshing = task
@@ -105,9 +99,16 @@ actor AuthSession {
         }
     }
 
-    private func keep(_ fresh: StoredTokens) throws {
+    /// Uses the new pair from now on. If the Keychain refuses it, the stored item is dropped rather than left holding
+    /// a refresh token that no longer works (reusing one revokes every token): this run keeps working from memory and
+    /// the next launch asks to sign in again.
+    private func keep(_ fresh: StoredTokens) {
         tokens = fresh
-        try store.save(fresh)
+        do {
+            try store.save(fresh)
+        } catch {
+            store.clear()
+        }
     }
 
     /// Runs a call, turning transport failures into `SignInError` (cancellation passes through).
