@@ -1,5 +1,5 @@
 // Contract tests: each call goes through a real entry and its response must match `spec/openapi.yaml` (status,
-// content type, body schema). Run against the Node app and the Workers entry so both stay on the contract.
+// documented headers, content type, body schema). Run against the Node app and the Workers entry so both stay on the contract.
 // A new endpoint gets a case here; until it is built it stays in `NOT_BUILT`, and the last test fails otherwise.
 import { beforeEach, describe, expect, it } from "vitest";
 import { placeholderPath, requestErrors, responseErrors, specOperations } from "./openapi";
@@ -126,7 +126,9 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       const parent = keys.slice(0, -1).reduce((node: Json, k) => node[k], without);
       delete parent[keys.at(-1)!];
       expect(requestErrors(op, without)).toEqual([]);
-      expect((await call(op, path, { ...c, body: without })).status).not.toBe(400);
+      const control = await call(op, path, { ...c, body: without });
+      expect(control.status).not.toBe(400);
+      return control;
     }
 
     async function signIn(email = EMAIL, clientType = "ios") {
@@ -232,6 +234,7 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       const S = `/v1/plans/${id(101)}/sessions`;
       const added = await ok("POST /v1/plans/{planId}/sessions", S, 201, { token, body: easy(1, "2026-11-07") });
       await ok("POST /v1/plans/{planId}/sessions", S, 200, { token, body: easy(1, "2026-11-07") });
+      await ok("POST /v1/plans/{planId}/sessions", S, 409, { token, body: easy(1, "2026-11-08") });
       await rejected("POST /v1/plans/{planId}/sessions", S, { token, body: easy(2, "2026-11-08", { extra: 1 }) }, "/extra");
       const nested = easy(3, "2026-11-09", { steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, extra: 1 }] });
       await rejected("POST /v1/plans/{planId}/sessions", S, { token, body: nested }, "/steps/0/extra");
@@ -239,9 +242,10 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       const one = `/v1/sessions/${id(201)}`;
       const patched = await ok("PATCH /v1/sessions/{sessionId}", one, 200, { token, body: { title: "Easy jog" }, headers: sessionTag(added) });
       await ok("PATCH /v1/sessions/{sessionId}", one, 409, { token, body: { title: "Again" }, headers: sessionTag(added) });
-      await rejected("PATCH /v1/sessions/{sessionId}", one, { token, body: { title: "Jog", extra: 1 }, headers: sessionTag(patched) }, "/extra");
+      const saved = await rejected("PATCH /v1/sessions/{sessionId}", one, { token, body: { title: "Jog", extra: 1 }, headers: sessionTag(patched) }, "/extra");
       await ok("PATCH /v1/sessions/{sessionId}", `/v1/sessions/${id(299)}`, 404, { token, body: { title: "x" }, headers: { "if-match": '"1"' } });
-      const latest = await ok("PATCH /v1/sessions/{sessionId}", one, 200, { token, body: { title: "Last" }, headers: { "if-match": '"3"' } });
+      const latest = await ok("PATCH /v1/sessions/{sessionId}", one, 200, { token, body: { title: "Last" }, headers: sessionTag(saved) });
+      await ok("DELETE /v1/sessions/{sessionId}", one, 409, { token, headers: sessionTag(saved) });
       await ok("DELETE /v1/sessions/{sessionId}", one, 200, { token, headers: sessionTag(latest) });
       await ok("DELETE /v1/sessions/{sessionId}", one, 404, { token, headers: sessionTag(latest) });
     });
@@ -251,6 +255,8 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(1) });
       const batch = "/v1/activities:batch";
       await ok("POST /v1/activities:batch", batch, 401, { body: { activities: [run(1, "2026-11-03")] } });
+      const web = await signIn("web@example.com", "web"); // a web token cannot write activities
+      await ok("POST /v1/activities:batch", batch, 403, { token: web.accessToken, body: { activities: [run(1, "2026-11-03")] } });
       const up = await ok("POST /v1/activities:batch", batch, 200, { token, body: { activities: [run(1, "2026-11-03"), run(2, "2026-11-04")] } });
       await rejected("POST /v1/activities:batch", batch, { token, body: { activities: [run(3, "2026-11-04", { extra: 1 })] } }, "/activities/0/extra");
       await rejected("POST /v1/activities:batch", batch, { token, body: { activities: [run(4, "2026-11-05")], extra: 1 } }, "/extra");

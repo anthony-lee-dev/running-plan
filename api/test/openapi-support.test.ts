@@ -29,10 +29,17 @@ describe("contract checker", () => {
     expect(await responseErrors("POST /v1/auth/email/start", json({ ok: true }, 202))).toHaveLength(1);
   });
 
-  it("fails a response without its documented ETag, or with a malformed one", async () => {
-    const detail = (etag?: string) => new Response("{}", { status: 200, headers: { "content-type": "application/json", ...(etag ? { etag } : {}) } });
-    expect((await responseErrors("GET /v1/plans/{planId}", detail())).join()).toContain("missing header ETag");
-    expect((await responseErrors("GET /v1/plans/{planId}", detail("7"))).join()).toContain("header ETag");
+  it("fails a malformed documented header; one the spec does not require may be left out", async () => {
+    const tooMany = (retry?: string) =>
+      new Response(JSON.stringify({ type: "rate_limited", title: "Slow down", status: 429 }), {
+        status: 429,
+        headers: { "content-type": "application/problem+json", ...(retry ? { "retry-after": retry } : {}) },
+      });
+    expect(await responseErrors("POST /v1/plans/generate", tooMany("30"))).toEqual([]);
+    expect(await responseErrors("POST /v1/plans/generate", tooMany())).toEqual([]);
+    const bad = (await responseErrors("POST /v1/plans/generate", tooMany("soon"))).join();
+    expect(bad).toContain("header Retry-After");
+    expect(bad).not.toContain("missing");
   });
 
   it("rejects unknown fields in requests, including inside allOf compositions", () => {
