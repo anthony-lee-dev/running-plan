@@ -221,6 +221,47 @@ struct AuthSessionRefreshTests {
         #expect(store.load() == old)
     }
 
+    @Test func aFailedKeychainSaveLeavesNoUsedRefreshTokenBehind() async throws {
+        // The old refresh token no longer works; on the next launch it would be reused and revoke every token.
+        final class FailingStore: TokenStoring, @unchecked Sendable {
+            let inner = MemoryTokenStore(old)
+            func load() -> StoredTokens? { inner.load() }
+            func save(_ tokens: StoredTokens) throws { throw KeychainError(status: -25300) }
+            func clear() { inner.clear() }
+        }
+        let store = FailingStore()
+        let auth = session(ScriptedTransport { _ in (.ok, pair("a2", "r2")) }, store)
+
+        #expect(try await auth.tokenAfterRejecting("a1") == "a2", "this run keeps working from memory")
+        #expect(store.load() == nil)
+    }
+
+    @Test func aMalformedRefreshAnswerIsAServerError() async {
+        let transport = ScriptedTransport { _ in (.ok, #"{"accessToken":"a2"}"#) }
+        await #expect(throws: SignInError.server) { try await session(transport, MemoryTokenStore(old)).tokenAfterRejecting("a1") }
+    }
+
+    @Test func aSignInDuringARefreshIsNotUndone() async throws {
+        let gate = AsyncStream<Void>.makeStream()
+        let transport = ScriptedTransport { operation in
+            if operation == "refreshToken" {
+                for await _ in gate.stream { break }
+                return (.unauthorized, problem(401))
+            }
+            return (.ok, pair("b1", "s1"))
+        }
+        let store = MemoryTokenStore(old)
+        let auth = session(transport, store)
+
+        async let refreshed = auth.tokenAfterRejecting("a1")
+        while !transport.operations.contains("refreshToken") { await Task.yield() }
+        try await auth.verify(email: "runner@example.com", code: "123456")
+        gate.continuation.yield()
+
+        #expect(try await refreshed == "b1")
+        #expect(store.load()?.refreshToken == "s1", "the refused old refresh token must not sign out the new session")
+    }
+
     @Test func signedOutHasNothingToRefresh() async throws {
         let transport = ScriptedTransport { _ in (.ok, pair("a2", "r2")) }
         #expect(try await session(transport, MemoryTokenStore()).tokenAfterRejecting("a1") == nil)

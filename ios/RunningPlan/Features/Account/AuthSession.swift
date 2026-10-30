@@ -69,16 +69,28 @@ actor AuthSession {
         if current.accessToken != rejected, refreshing == nil { return current.accessToken }
         if let refreshing { return try await refreshing.value?.accessToken }
 
-        let task = Task { try await self.requestRefresh(current.refreshToken) }
-        refreshing = task
-        defer { refreshing = nil }
-        guard let fresh = try await task.value else {
-            signOut()
-            return nil
+        // Every change to the tokens happens inside this task, before any waiting caller resumes.
+        let task = Task { () throws -> StoredTokens? in
+            defer { self.refreshing = nil }
+            let fresh = try await self.requestRefresh(current.refreshToken)
+            // A sign-in or sign-out while the refresh was in flight wins over it.
+            guard self.tokens?.refreshToken == current.refreshToken else { return self.tokens }
+            guard let fresh else {
+                self.signOut()
+                return nil
+            }
+            self.tokens = fresh
+            do {
+                try self.store.save(fresh)
+            } catch {
+                // The stored refresh token no longer works, and reusing it would revoke every token: drop it, so the
+                // next launch asks to sign in again. This run keeps working from memory.
+                self.store.clear()
+            }
+            return fresh
         }
-        // Saved before anyone uses it: the old refresh token no longer works.
-        try? keep(fresh)
-        return fresh.accessToken
+        refreshing = task
+        return try await task.value?.accessToken
     }
 
     /// A new pair, or nil when the server refuses the refresh token.
