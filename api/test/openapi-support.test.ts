@@ -29,6 +29,12 @@ describe("contract checker", () => {
     expect(await responseErrors("POST /v1/auth/email/start", json({ ok: true }, 202))).toHaveLength(1);
   });
 
+  it("fails a response without its documented ETag, or with a malformed one", async () => {
+    const detail = (etag?: string) => new Response("{}", { status: 200, headers: { "content-type": "application/json", ...(etag ? { etag } : {}) } });
+    expect((await responseErrors("GET /v1/plans/{planId}", detail())).join()).toContain("missing header ETag");
+    expect((await responseErrors("GET /v1/plans/{planId}", detail("7"))).join()).toContain("header ETag");
+  });
+
   it("rejects unknown fields in requests, including inside allOf compositions", () => {
     expect(requestErrors("POST /v1/auth/email/start", { email: "a@example.com" })).toEqual([]);
     expect(requestErrors("POST /v1/auth/email/start", { email: "a@example.com", extra: 1 })).not.toEqual([]);

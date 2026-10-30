@@ -23,24 +23,6 @@ export const NOT_BUILT = new Set([
   "GET /v1/plans/{planId}/reviews/{weekIndex}",
 ]);
 
-/** Built, but their cases come in the next PR (backlog 2.7, part 2). */
-export const NOT_COVERED_YET = new Set([
-  "GET /v1/plans",
-  "POST /v1/plans",
-  "GET /v1/plans/{planId}",
-  "PATCH /v1/plans/{planId}",
-  "DELETE /v1/plans/{planId}",
-  "POST /v1/plans/{planId}/sessions",
-  "PATCH /v1/sessions/{sessionId}",
-  "DELETE /v1/sessions/{sessionId}",
-  "PUT /v1/sessions/{sessionId}/match",
-  "DELETE /v1/sessions/{sessionId}/match",
-  "POST /v1/sessions/{sessionId}/checkins",
-  "POST /v1/activities:batch",
-  "GET /v1/activities",
-  "PATCH /v1/activities/{activityId}",
-]);
-
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export interface Call {
@@ -50,6 +32,40 @@ export interface Call {
 }
 
 export const EMAIL = "runner@example.com";
+const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const easy = (n: number, date: string, over: Json = {}) => ({
+  id: id(200 + n),
+  date,
+  type: "easy",
+  steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, target: { type: "effort", effort: "easy" } }],
+  ...over,
+});
+const planBody = (n: number, over: Json = {}) => ({
+  id: id(100 + n),
+  goal: { type: "5k", date: "2027-01-10" },
+  startDate: "2026-11-02",
+  weekCount: 8,
+  source: "rules",
+  engine: { presetId: "5k", version: "1.0.0" },
+  adaptive: true,
+  weeks: [{ index: 0, phase: "base" }],
+  sessions: [easy(10 * n + 1, "2026-11-03"), easy(10 * n + 2, "2026-11-05")],
+  ...over,
+});
+const run = (n: number, localDate: string, over: Json = {}) => ({
+  source: "apple_health",
+  externalId: `HK-${n}`,
+  workoutType: "running",
+  startedAt: `${localDate}T07:00:00-04:00`,
+  localDate,
+  durationSec: 1800,
+  distanceM: 5000,
+  ...over,
+});
+const etag = (res: { headers: Headers }) => ({ "if-match": res.headers.get("etag")! });
+/** `If-Match` for a session write result, which carries the revision in its body. */
+const sessionTag = (res: { json: Json }) => ({ "if-match": `"${res.json.session.revision}"` });
+
 export const GENERATE_BODY = {
   answers: { goal: { distance: "5k", date: "2027-01-10" }, weeklyDistanceM: 15000, runsPerWeek: 3 },
   today: "2026-11-02",
@@ -187,6 +203,81 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       );
     });
 
+    it("plans: create, read, list, update, delete", async () => {
+      const { accessToken: token } = await signIn();
+      const P = `/v1/plans/${id(101)}`;
+      await ok("GET /v1/plans", "/v1/plans", 401);
+      const created = await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(1) });
+      await ok("POST /v1/plans", "/v1/plans", 200, { token, body: planBody(1) }); // the same create again
+      await ok("POST /v1/plans", "/v1/plans", 409, { token, body: planBody(1, { weekCount: 9 }) });
+      await rejected("POST /v1/plans", "/v1/plans", { token, body: planBody(2, { extra: 1 }) }, "/extra");
+      await rejected("POST /v1/plans", "/v1/plans", { token, body: planBody(3, { sessions: [easy(31, "2026-11-03", { extra: 1 })] }) }, "/sessions/0/extra");
+
+      await ok("GET /v1/plans", "/v1/plans", 200, { token });
+      await ok("GET /v1/plans/{planId}", P, 200, { token });
+      await ok("GET /v1/plans/{planId}", `/v1/plans/${id(199)}`, 404, { token });
+
+      const updated = await ok("PATCH /v1/plans/{planId}", P, 200, { token, body: { adaptive: false }, headers: etag(created) });
+      await ok("PATCH /v1/plans/{planId}", P, 409, { token, body: { adaptive: true }, headers: etag(created) });
+      await rejected("PATCH /v1/plans/{planId}", P, { token, body: { adaptive: true, extra: 1 }, headers: etag(updated) }, "/extra");
+      const latest = await ok("GET /v1/plans/{planId}", P, 200, { token });
+      await ok("DELETE /v1/plans/{planId}", P, 409, { token, headers: etag(created) });
+      await ok("DELETE /v1/plans/{planId}", P, 204, { token, headers: etag(latest) });
+      await ok("DELETE /v1/plans/{planId}", P, 404, { token, headers: etag(latest) });
+    });
+
+    it("sessions: add, update, delete", async () => {
+      const { accessToken: token } = await signIn();
+      await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(1) });
+      const S = `/v1/plans/${id(101)}/sessions`;
+      const added = await ok("POST /v1/plans/{planId}/sessions", S, 201, { token, body: easy(1, "2026-11-07") });
+      await ok("POST /v1/plans/{planId}/sessions", S, 200, { token, body: easy(1, "2026-11-07") });
+      await rejected("POST /v1/plans/{planId}/sessions", S, { token, body: easy(2, "2026-11-08", { extra: 1 }) }, "/extra");
+      const nested = easy(3, "2026-11-09", { steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, extra: 1 }] });
+      await rejected("POST /v1/plans/{planId}/sessions", S, { token, body: nested }, "/steps/0/extra");
+
+      const one = `/v1/sessions/${id(201)}`;
+      const patched = await ok("PATCH /v1/sessions/{sessionId}", one, 200, { token, body: { title: "Easy jog" }, headers: sessionTag(added) });
+      await ok("PATCH /v1/sessions/{sessionId}", one, 409, { token, body: { title: "Again" }, headers: sessionTag(added) });
+      await rejected("PATCH /v1/sessions/{sessionId}", one, { token, body: { title: "Jog", extra: 1 }, headers: sessionTag(patched) }, "/extra");
+      await ok("PATCH /v1/sessions/{sessionId}", `/v1/sessions/${id(299)}`, 404, { token, body: { title: "x" }, headers: { "if-match": '"1"' } });
+      const latest = await ok("PATCH /v1/sessions/{sessionId}", one, 200, { token, body: { title: "Last" }, headers: { "if-match": '"3"' } });
+      await ok("DELETE /v1/sessions/{sessionId}", one, 200, { token, headers: sessionTag(latest) });
+      await ok("DELETE /v1/sessions/{sessionId}", one, 404, { token, headers: sessionTag(latest) });
+    });
+
+    it("activities, matches and check-ins", async () => {
+      const { accessToken: token } = await signIn();
+      await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(1) });
+      const batch = "/v1/activities:batch";
+      await ok("POST /v1/activities:batch", batch, 401, { body: { activities: [run(1, "2026-11-03")] } });
+      const up = await ok("POST /v1/activities:batch", batch, 200, { token, body: { activities: [run(1, "2026-11-03"), run(2, "2026-11-04")] } });
+      await rejected("POST /v1/activities:batch", batch, { token, body: { activities: [run(3, "2026-11-04", { extra: 1 })] } }, "/activities/0/extra");
+      await rejected("POST /v1/activities:batch", batch, { token, body: { activities: [run(4, "2026-11-05")], extra: 1 } }, "/extra");
+      await ok("GET /v1/activities", "/v1/activities?from=2026-11-01&to=2026-11-30", 200, { token });
+      await ok("GET /v1/activities", "/v1/activities?inbox=true", 200, { token });
+
+      const [a1, a2] = (up.json.results as { activityId: string }[]).map((r) => r.activityId);
+      const A2 = `/v1/activities/${a2}`;
+      await ok("PATCH /v1/activities/{activityId}", A2, 200, { token, body: { disposition: "extra" } });
+      await ok("PATCH /v1/activities/{activityId}", `/v1/activities/${id(999)}`, 404, { token, body: { disposition: "extra" } });
+      await rejected("PATCH /v1/activities/{activityId}", A2, { token, body: { disposition: "ignored", extra: 1 } }, "/extra");
+
+      const M = `/v1/sessions/${id(211)}/match`;
+      await ok("PUT /v1/sessions/{sessionId}/match", M, 200, { token, body: { activityId: a1, status: "confirmed" } });
+      await ok("PUT /v1/sessions/{sessionId}/match", `/v1/sessions/${id(299)}/match`, 404, { token, body: { activityId: a1, status: "confirmed" } });
+      await rejected("PUT /v1/sessions/{sessionId}/match", M, { token, body: { activityId: a1, status: "suggested", extra: 1 } }, "/extra");
+      await ok("DELETE /v1/sessions/{sessionId}/match", M, 200, { token });
+      await ok("DELETE /v1/sessions/{sessionId}/match", M, 404, { token });
+
+      const C = `/v1/sessions/${id(211)}/checkins`;
+      const checkIn = { id: id(301), when: "after", feel: 4, effortFelt: 6 };
+      await ok("POST /v1/sessions/{sessionId}/checkins", C, 201, { token, body: checkIn });
+      await ok("POST /v1/sessions/{sessionId}/checkins", C, 200, { token, body: checkIn });
+      await rejected("POST /v1/sessions/{sessionId}/checkins", C, { token, body: { id: id(302), when: "after", feel: 3, extra: 1 } }, "/extra");
+      await ok("POST /v1/sessions/{sessionId}/checkins", `/v1/sessions/${id(299)}/checkins`, 404, { token, body: { id: id(303), when: "after", feel: 3 } });
+    });
+
     it("operations listed as not built have no route yet", async () => {
       const { accessToken } = await signIn();
       for (const op of NOT_BUILT) {
@@ -201,7 +292,7 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
     // Keep this last: it reads what the cases above covered (vitest runs a file's tests in order), so running
     // a single case with `-t` makes it report the rest as missing.
     it("every built operation in the spec has a contract case", () => {
-      const missing = specOperations().filter((op) => !NOT_BUILT.has(op) && !NOT_COVERED_YET.has(op) && !covered.has(op));
+      const missing = specOperations().filter((op) => !NOT_BUILT.has(op) && !covered.has(op));
       expect(missing).toEqual([]);
     });
   });

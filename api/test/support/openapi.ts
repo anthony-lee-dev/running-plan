@@ -58,7 +58,10 @@ export function requestErrors(op: string, body: unknown): string[] {
 export const placeholderPath = (path: string) =>
   path.replace(/\{(\w+)\}/g, (_, name: string) => (name.endsWith("Index") ? "0" : "00000000-0000-4000-8000-00000000abcd"));
 
-/** What is wrong with a response: an undocumented status, the wrong content type, or a body off its schema. */
+/**
+ * What is wrong with a response: an undocumented status, a documented header missing or malformed, the wrong
+ * content type, or a body off its schema.
+ */
 export async function responseErrors(op: string, res: Response): Promise<string[]> {
   const [method, path] = op.split(" ") as [string, string];
   const responses = operation(op).responses as Json;
@@ -67,6 +70,14 @@ export async function responseErrors(op: string, res: Response): Promise<string[
   const key = status in responses ? status : undefined;
   const text = await res.text();
   if (!key) return [`${op}: status ${status} is not documented (body: ${text.slice(0, 200)})`];
+  // Documented headers must be sent and fit their schema (the plan reads' `ETag`, say).
+  const headerErrors = Object.entries((resolve(responses[key]).headers ?? {}) as Json).flatMap(([name, h]) => {
+    const value = res.headers.get(name);
+    const ptr = h.$ref ? pointer("components", "headers", String(h.$ref).split("/").pop()!, "schema") : undefined;
+    if (value === null) return [`${op} ${status}: missing header ${name}`];
+    return ptr ? errorsOf(ptr, value).map((e) => `${op} ${status}: header ${name} ${e}`) : [];
+  });
+  if (headerErrors.length) return headerErrors;
   const content = resolve(responses[key]).content as Json | undefined;
   if (!content) return text === "" ? [] : [`${op} ${status}: the spec has no body but got ${text.slice(0, 200)}`];
   const type = (res.headers.get("content-type") ?? "").split(";")[0]!.trim();
