@@ -20,6 +20,17 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Look and feel from `../designs/dark/DK-*.dc.html` and `../docs/design-notes.md`: Bricolage Grotesque for
   headings, Inter for body, the dark palette there, 44 pt minimum touch targets.
 
+## Preview (DK-Preview, task 3.3)
+
+- `Features/Preview/`: `PlanPreview` works out everything the screen shows from the API's `PlanDraft`; `PreviewViewModel`
+  loads a draft saved less than 24 hours ago for the same answers, else calls `PlanGenerating` (the generated client's
+  `generatePlan`, with a random per-install `X-Device-Id` used only for rate limiting); `PreviewDraftStore` keeps the
+  draft in UserDefaults for 24 hours; `OnboardingFlow` goes interview, then preview, and "Change an answer" returns to
+  the interview prefilled. The server needs `POST /v1/plans/generate` (backlog 2.3); until it is deployed the screen
+  shows an error with Retry. The API base URL comes from `API_BASE_URL` or the `apiBaseURL` default (local server by
+  default). The app target links the runtime packages itself (see `project.yml`).
+- Saving the plan (sign-in, `createPlan`) is task 3.4: the Save button does nothing yet.
+
 ## Snapshot tests
 
 - A screen's snapshot test hosts the real view in a `UIHostingController` (not `ImageRenderer`, which leaves out

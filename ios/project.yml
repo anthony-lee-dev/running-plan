@@ -14,7 +14,10 @@ settings:
 packages:
   APIClient:
     path: APIClient
-  # Declared here too because the unit tests name the runtime's transport and HTTP types directly.
+  # Declared here too because the app and the unit tests link and name the runtime's transport and HTTP types directly.
+  swift-openapi-urlsession:
+    url: https://github.com/apple/swift-openapi-urlsession
+    from: 1.1.0
   swift-openapi-runtime:
     url: https://github.com/apple/swift-openapi-runtime
     from: 1.13.0
@@ -28,6 +31,13 @@ targets:
     sources: [RunningPlan]
     dependencies:
       - package: APIClient
+        product: APIClient
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+      - package: swift-openapi-urlsession
+        product: OpenAPIURLSession
+      - package: swift-http-types
+        product: HTTPTypes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ca.anthonylee.runningplan$(BUNDLE_ID_SUFFIX)

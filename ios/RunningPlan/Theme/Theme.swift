@@ -38,6 +38,16 @@ enum Palette {
     static let accentSoft = RGB(red: 0x4A, green: 0x24, blue: 0x18)
     static let green = RGB(red: 0x4F, green: 0xC7, blue: 0x9A)
     static let tabBar = RGB(red: 0x14, green: 0x13, blue: 0x10)
+    /// Notice cards ("What we assumed", warnings): fill and the three text colours the boards use on it.
+    static let amberSoft = RGB(red: 0x3B, green: 0x31, blue: 0x15)
+    static let amberTitle = RGB(red: 0xF7, green: 0xE3, blue: 0xA6)
+    static let amberText = RGB(red: 0xE5, green: 0xD2, blue: 0x9B)
+    static let amberLink = RGB(red: 0xFF, green: 0xC3, blue: 0x8A)
+    /// Bar chart colours by plan phase.
+    static let phaseBase = RGB(red: 0x4C, green: 0x9C, blue: 0x80)
+    static let phaseBuild = RGB(red: 0xE9, green: 0xB9, blue: 0x49)
+    static let phasePeak = RGB(red: 0xF0, green: 0x64, blue: 0x3A)
+    static let phaseTaper = RGB(red: 0x8C, green: 0x9F, blue: 0xD8)
 }
 
 enum Metrics {

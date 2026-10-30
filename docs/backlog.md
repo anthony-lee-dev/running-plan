@@ -115,7 +115,7 @@ Logic is tested with Swift Testing; each screen gets a snapshot test against `de
       Xcode and `xcodebuild` skips that only with a safety flag). `verify.sh ios` fails if it is stale. needs: 1.3
 - [x] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
       needs: 1.3, 0.5
-- [ ] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
+- [x] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
       changing an answer regenerates; draft kept on the device for 24 hours (unit test for expiry).
       needs: 3.1, 3.2, 0.5
 - [ ] 3.4 Email sign-in and save plan. needs: 3.3
@@ -125,6 +125,9 @@ Logic is tested with Swift Testing; each screen gets a snapshot test against `de
 - [ ] 3.7 `ask first` Goal and settings: goal, re-run interview, review frequency and day, target display, account,
       privacy, data export. There is no DK board for it, so the plan proposes a layout from the existing tokens.
       needs: 3.4, 2.17
+- [ ] 3.8 Dynamic Type: the interview and preview screens use fixed system font sizes (`.font(.system(size:))`), which
+      do not scale (docs/design-notes.md asks for `Font.custom(_, size:, relativeTo:)`). Bundle the fonts, scale every
+      size, let rows wrap instead of clipping, and re-run the snapshot tests at a large size. needs: 3.3
 
 **Gate C:** snapshot tests match the dark boards; the interview-to-preview UI test passes with no account.
 
