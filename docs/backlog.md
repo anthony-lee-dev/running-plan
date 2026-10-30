@@ -77,7 +77,8 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [x] 2.5 Plans and sessions CRUD, including blank plans and user-owned custom sessions; edits carry the base
       revision. needs: 2.4
 - [ ] 2.6 `POST /v1/sync` for the offline edit queue: idempotency keys, cursor, per-session revision conflicts,
-      tombstones. needs: 2.5
+      tombstones. The server processes as many operations as fit its per-request query budget (50 D1 queries on
+      Workers Free) and the client resends the rest (spec PR `agent/sync-partial-batches`, human merge). needs: 2.5
 - [x] 2.11 Activities: `POST /v1/activities:batch` (native clients only, by token scope; App Attest is L.2) and
       `GET /v1/activities`; dedupe on start time, duration and distance, not only the external id. needs: 2.4
 - [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Matches and check-ins

@@ -165,6 +165,11 @@ public protocol APIProtocol: Sendable {
     /// returned so the user can keep theirs (resend with the new base revision) or take the other.
     /// Deletes are tombstones and come back in `changes` with `deletedAt` set.
     ///
+    /// The server does a bounded amount of work per call (the hosting platform caps database queries per
+    /// request), so it may stop before the end of `operations`. `results` then covers only the first
+    /// operations, in order; the rest were not looked at and the client resends them in its next call.
+    /// A client keeps calling while operations remain unanswered or `hasMore` is true.
+    ///
     ///
     /// - Remark: HTTP `POST /v1/sync`.
     /// - Remark: Generated from `#/paths//v1/sync/post(sync)`.
@@ -540,6 +545,11 @@ extension APIProtocol {
     /// revision differs from `baseRevision`, the operation is not applied and the server version is
     /// returned so the user can keep theirs (resend with the new base revision) or take the other.
     /// Deletes are tombstones and come back in `changes` with `deletedAt` set.
+    ///
+    /// The server does a bounded amount of work per call (the hosting platform caps database queries per
+    /// request), so it may stop before the end of `operations`. `results` then covers only the first
+    /// operations, in order; the rest were not looked at and the client resends them in its next call.
+    /// A client keeps calling while operations remain unanswered or `hasMore` is true.
     ///
     ///
     /// - Remark: HTTP `POST /v1/sync`.
@@ -4901,6 +4911,10 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/SyncResponse`.
         public struct SyncResponse: Codable, Hashable, Sendable {
+            /// One result per processed operation, in request order. Fewer results than operations means the
+            /// server stopped early: the operations after the last result were not processed and must be resent.
+            ///
+            ///
             /// - Remark: Generated from `#/components/schemas/SyncResponse/results`.
             public var results: [Components.Schemas.SyncResult]
             /// Everything changed since the cursor, including tombstones, after applying this batch.
@@ -4955,7 +4969,7 @@ public enum Components {
             /// Creates a new `SyncResponse`.
             ///
             /// - Parameters:
-            ///   - results:
+            ///   - results: One result per processed operation, in request order. Fewer results than operations means the
             ///   - changes: Everything changed since the cursor, including tombstones, after applying this batch.
             ///   - cursor:
             ///   - hasMore: More changes are waiting; call again with the new cursor and no operations.
@@ -10252,6 +10266,11 @@ public enum Operations {
     /// revision differs from `baseRevision`, the operation is not applied and the server version is
     /// returned so the user can keep theirs (resend with the new base revision) or take the other.
     /// Deletes are tombstones and come back in `changes` with `deletedAt` set.
+    ///
+    /// The server does a bounded amount of work per call (the hosting platform caps database queries per
+    /// request), so it may stop before the end of `operations`. `results` then covers only the first
+    /// operations, in order; the rest were not looked at and the client resends them in its next call.
+    /// A client keeps calling while operations remain unanswered or `hasMore` is true.
     ///
     ///
     /// - Remark: HTTP `POST /v1/sync`.
