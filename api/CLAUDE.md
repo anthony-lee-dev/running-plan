@@ -97,7 +97,7 @@ entry file, not a rewrite.
   (2.14) adds ids, the plan revision and the status. Numbers are starting values for the coach review (H.1).
 - Contract tests (task 2.7): `test/support/api-contract.ts` runs the same cases against the Node app
   (`test/api-contract.test.ts`) and the Workers entry with a local D1 (`test/adapters/cloudflare/api-contract.test.ts`).
-  Each response must match `spec/openapi.yaml` (documented status, content type, body schema); request bodies are checked
+  Each response must match `spec/openapi.yaml` (documented status, documented headers such as `ETag`, content type, body schema); request bodies are checked
   against the spec too, and a body the spec forbids (an unknown field, also inside an `allOf`) must get a 400. The
   checker (`test/support/openapi.ts`) uses `@cfworker/json-schema` because workerd blocks Ajv's `new Function`. A new
   endpoint adds its cases there and leaves `NOT_BUILT`; the last test fails for a built operation with no case.
