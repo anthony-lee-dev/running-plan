@@ -14,6 +14,10 @@ export function createApp(deps: Deps) {
   app.route("/", profileRoutes(deps));
   app.route("/", planRoutes(deps));
   app.notFound((c) => c.json({ error: "not_found" }, 404));
-  app.onError((_error, c) => problem(c, 500, "internal_error", "Something went wrong"));
+  app.onError((error, c) => {
+    // Name and message only: adapters keep addresses and codes out of their error messages.
+    console.error(`unhandled error: ${error.name}: ${error.message}`);
+    return problem(c, 500, "internal_error", "Something went wrong");
+  });
   return app;
 }

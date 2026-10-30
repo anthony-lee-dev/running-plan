@@ -30,9 +30,11 @@ export class CloudflareEmailSender implements EmailSender {
         subject: `Your Running Plan code is ${code}`,
         text: `Your sign-in code is ${code}. It expires in 10 minutes. If you did not ask for it, you can ignore this email.`,
       });
-    } catch {
-      // Binding errors can echo the address; neither it nor the code belongs in an error.
-      throw new Error("Cloudflare Email Sending refused the email");
+    } catch (error) {
+      // Binding messages can echo the address, so only the error code (like E_SENDER_NOT_VERIFIED) is kept.
+      const code = (error as { code?: unknown } | null)?.code;
+      const safe = typeof code === "string" && /^[A-Z0-9_]{1,64}$/.test(code) ? ` (${code})` : "";
+      throw new Error(`Cloudflare Email Sending refused the email${safe}`);
     }
   }
 }
