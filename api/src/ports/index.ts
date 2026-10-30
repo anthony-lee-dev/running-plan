@@ -1,6 +1,7 @@
 // Interfaces the app depends on. Adapters in src/adapters/* implement them.
 import type { Profile, ProfileFields } from "../domain/profile";
 import type { PlanFieldsInput, SessionContent } from "../domain/plan-input";
+import type { StoredActivity } from "../domain/activities";
 
 export interface Clock {
   now(): Date;
@@ -134,6 +135,32 @@ export interface PlanStore {
   deleteSession(userId: string, sessionId: string, baseRevision: number, now: string): Promise<{ ok: true; session: StoredSession; contentRevision: number } | WriteFailure>;
 }
 
+export interface ActivityQuery {
+  from?: string;
+  to?: string;
+  /** Only activities still waiting for review. */
+  inbox?: boolean;
+  limit: number;
+  /** The last activity of the previous page. */
+  after?: { localDate: string; startedAt: string; id: string };
+}
+
+/** Imported activities, scoped to the user. Kept to a few queries per call: Workers Free allows 50 a request. */
+export interface ActivityStore {
+  /**
+   * What an upload is deduped against: the user's activities whose local date is in [from, to], plus any with one of
+   * these source ids whatever its date (deleted ones included, so an id is never reused).
+   */
+  candidates(userId: string, from: string, to: string, keys: { source: string; externalId: string }[]): Promise<StoredActivity[]>;
+  /**
+   * Inserts and updates in one transaction. An insert that clashes with a stored source id fails the whole import
+   * (throws) rather than being dropped. Updates name ids just read for this user; another user's row is never changed.
+   */
+  applyImport(userId: string, creates: StoredActivity[], updates: StoredActivity[]): Promise<void>;
+  /** Newest first: local date, then start, then id, all descending. */
+  list(userId: string, query: ActivityQuery): Promise<StoredActivity[]>;
+}
+
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */
 export interface EmailSender {
   sendCode(to: string, code: string): Promise<void>;
@@ -164,6 +191,7 @@ export interface Deps {
   auth: AuthStore;
   profiles: ProfileStore;
   plans: PlanStore;
+  activities: ActivityStore;
   email: EmailSender;
   rateLimiter: RateLimiter;
   ids: IdSource;
