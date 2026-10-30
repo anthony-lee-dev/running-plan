@@ -80,9 +80,9 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       tombstones. needs: 2.5
 - [x] 2.11 Activities: `POST /v1/activities:batch` (native clients only, by token scope; App Attest is L.2) and
       `GET /v1/activities`; dedupe on start time, duration and distance, not only the external id. needs: 2.4
-- [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Matches are done
-      (PUT and DELETE match, `PATCH /v1/activities/{id}`, `match` on listed activities). Left: check-ins (the pain
-      flag's urgent proposal waits for 2.14), `suggestedSessionId` in the upload results, and unlinking an activity
+- [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Matches and check-ins
+      are done (PUT and DELETE match, `PATCH /v1/activities/{id}`, `match` on listed activities, check-ins; the pain
+      flag's urgent proposal comes with 2.14). Left: `suggestedSessionId` in the upload results, and unlinking an activity
       when its session or plan is deleted (today the match is hidden and the activity stays `matched`, out of the
       inbox, until it is matched again or given a disposition, which clears the old match). needs: 2.5, 2.11
 - [x] 2.13 Proposal engine `propose_adjustments` (§6.6): missed key session is dropped not rescheduled, harder than
@@ -90,7 +90,8 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       user-owned sessions locked; off for blank plans unless opted in. needs: 2.1
 - [ ] 2.14 Proposals API: generate, accept, dismiss; stale when the plan revision moves; re-running the interview
       regenerates future weeks only (property test: keeps past and user-owned sessions) and is delivered as a
-      proposal. needs: 2.12, 2.13
+      proposal. A pain flag in a check-in triggers an urgent proposal when
+      the review setting is Weekly plus urgent (left from 2.12). needs: 2.12, 2.13
 - [ ] 2.15 `GET /v1/plans/{id}/progress`: adherence, volume trend, key and strength sessions completed, goal
       countdown. The computation is done (`api/src/domain/insights.ts`, `computeProgress`); the route and its store
       reads are left. needs: 2.12
@@ -99,7 +100,9 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       frequency and day (§5, §6.6a). needs: 2.4
 - [ ] 2.20 Spec clarification for `PATCH /v1/profile` (own PR, found by the 2.17 review): say that `heartRate`,
       `scheduling` and `review` replace their whole section (the only way to clear a field), and decide whether
-      ranges may be equal and sub-objects reject unknown keys, as the API does today. needs: 2.17
+      ranges may be equal and sub-objects reject unknown keys, as the API does today. Also give
+      `POST /v1/sessions/{id}/checkins` a 409 for an id reused with another body (as plan create has; the API answers
+      400 `id_in_use` until then), and say in the schema that `effortFelt` is for after-session check-ins only. needs: 2.17
 - [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
       feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. needs: 2.12, 2.17
 - [ ] 2.19 Prune expired rows: `email_codes`, `rate_limits` windows and expired or rotated `refresh_tokens` (a scheduled
