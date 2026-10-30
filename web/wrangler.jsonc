@@ -1,0 +1,6 @@
+{
+  // Static assets on Cloudflare Workers. Not deployed by agents (backlog 5.1 lists the deploy as a human step).
+  "name": "running-plan-web",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" }
+}
