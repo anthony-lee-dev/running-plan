@@ -122,7 +122,17 @@ struct PlanPreviewTests {
     @Test func strengthCountsForNoRunningDistance() throws {
         let draft = try decode(#"{"date":"2026-11-03","type":"strength","steps":[{"kind":"exercise","exerciseId":"plank","sets":3,"durationSec":60}]}"#)
         #expect(PlanPreview.metres(of: draft.sessions[0]) == 0)
-        #expect(PlanPreview(draft: draft).days[1].text == "Strength · 3 min")
+        #expect(PlanPreview(draft: draft).days[1].text == "Strength · 5 min") // rounded like the API's notes, at least 5
+    }
+
+    /// The API's base-week bodyweight session: reps take about 3 s each and rests count, so it is about 15 minutes
+    /// (the same as the session's "About 15 minutes." note), not the 1 minute its plank holds add up to.
+    @Test func strengthTimeCountsRepsAndRests() throws {
+        let steps = [("bodyweight-squat", "\"reps\":12"), ("glute-bridge", "\"reps\":12"), ("reverse-lunge", "\"reps\":10"), ("calf-raise", "\"reps\":12"), ("plank", "\"durationSec\":30")]
+            .map { #"{"kind":"exercise","exerciseId":"\#($0.0)","sets":2,\#($0.1),"restSec":45}"# }
+            .joined(separator: ",")
+        let draft = try decode(#"{"date":"2026-11-03","type":"strength","title":"Strength","steps":[\#(steps)]}"#)
+        #expect(PlanPreview(draft: draft).days[1].text == "Strength · 15 min")
     }
 
     @Test func twoSessionsOnOneDayAreBothShown() throws {
