@@ -1,4 +1,23 @@
-import type { Clock, Deps, HealthProbe } from "../../ports";
+import type { Profile, ProfileFields } from "../../domain/profile";
+import type { SessionContent } from "../../domain/plan-input";
+import type {
+  AuthStore,
+  Clock,
+  CodeRecord,
+  Deps,
+  EmailSender,
+  HealthProbe,
+  IdSource,
+  ProfileStore,
+  PlanStore,
+  PlanWriteFields,
+  RateLimiter,
+  RefreshRecord,
+  StoredPlan,
+  StoredSession,
+  UserRecord,
+  WriteFailure,
+} from "../../ports";
 
 export const systemClock: Clock = { now: () => new Date() };
 
@@ -15,6 +34,274 @@ export class MemoryHealthProbe implements HealthProbe {
   }
 }
 
+/** Randomness from Web Crypto, which Workers and Node both have. */
+export const webIdSource: IdSource = {
+  uuid: () => crypto.randomUUID(),
+  code() {
+    const limit = 4_294_000_000; // largest multiple of 1,000,000 below 2^32, so every code is equally likely
+    const word = new Uint32Array(1);
+    do crypto.getRandomValues(word);
+    while (word[0]! >= limit);
+    return String(word[0]! % 1_000_000).padStart(6, "0");
+  },
+  token() {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  },
+};
+
+/** Keeps what it was asked to send, for tests. */
+export class MemoryEmailSender implements EmailSender {
+  readonly sent: { to: string; code: string }[] = [];
+  async sendCode(to: string, code: string): Promise<void> {
+    this.sent.push({ to, code });
+  }
+}
+
+/** Development sender: prints the code instead of emailing it. Never use it in production. */
+export class LogEmailSender implements EmailSender {
+  async sendCode(to: string, code: string): Promise<void> {
+    console.log(`[dev] sign-in code for ${to}: ${code}`);
+  }
+}
+
+export class MemoryAuthStore implements AuthStore {
+  private users = new Map<string, UserRecord>();
+  private codes = new Map<string, CodeRecord>();
+  private refresh = new Map<string, RefreshRecord>();
+
+  async saveCode(email: string, codeHash: string, expiresAt: string): Promise<void> {
+    this.codes.set(email, { codeHash, expiresAt, attempts: 0 });
+  }
+  async getCode(email: string): Promise<CodeRecord | undefined> {
+    const code = this.codes.get(email);
+    return code && { ...code };
+  }
+  async useCodeAttempt(email: string, max: number): Promise<boolean> {
+    const code = this.codes.get(email);
+    if (!code || code.attempts >= max) return false;
+    code.attempts += 1;
+    return true;
+  }
+  async deleteCode(email: string): Promise<boolean> {
+    return this.codes.delete(email);
+  }
+  async findOrCreateUser(email: string, newId: string, now: string) {
+    const existing = [...this.users.values()].find((u) => u.email === email);
+    if (existing) return { user: { ...existing }, created: false };
+    const user = { id: newId, email, createdAt: now };
+    this.users.set(newId, user);
+    return { user: { ...user }, created: true };
+  }
+  async userExists(id: string): Promise<boolean> {
+    return this.users.has(id);
+  }
+  async saveRefresh(record: RefreshRecord): Promise<void> {
+    this.refresh.set(record.id, { ...record, scopes: [...record.scopes] });
+  }
+  async findRefresh(tokenHash: string): Promise<RefreshRecord | undefined> {
+    const found = [...this.refresh.values()].find((r) => r.tokenHash === tokenHash);
+    return found && { ...found, scopes: [...found.scopes] };
+  }
+  async markRefreshRotated(id: string, at: string): Promise<boolean> {
+    const record = this.refresh.get(id);
+    if (!record || record.rotatedAt !== null || record.revokedAt !== null) return false;
+    record.rotatedAt = at;
+    return true;
+  }
+  async revokeFamily(familyId: string, at: string): Promise<void> {
+    for (const record of this.refresh.values()) {
+      if (record.familyId === familyId && record.revokedAt === null) record.revokedAt = at;
+    }
+  }
+  async deleteUser(id: string): Promise<void> {
+    this.users.delete(id);
+    for (const [key, record] of this.refresh) if (record.userId === id) this.refresh.delete(key);
+  }
+}
+
+export class MemoryProfileStore implements ProfileStore {
+  private profiles = new Map<string, Profile>();
+
+  /** Takes the auth store so a profile disappears with its account, as the database cascade does. */
+  constructor(private readonly auth: AuthStore) {}
+
+  async get(userId: string): Promise<Profile | undefined> {
+    if (!(await this.auth.userExists(userId))) return undefined;
+    const profile = this.profiles.get(userId);
+    return profile && structuredClone(profile);
+  }
+
+  async save(userId: string, baseRevision: number, fields: ProfileFields, now: string) {
+    if (!(await this.auth.userExists(userId))) return { ok: false as const, currentRevision: 1 };
+    // From here to the set there is no await, so two racing saves cannot both pass the check.
+    const current = this.profiles.get(userId)?.revision ?? 1;
+    if (current !== baseRevision) return { ok: false as const, currentRevision: current };
+    const profile: Profile = { ...structuredClone(fields), revision: baseRevision + 1, updatedAt: now };
+    this.profiles.set(userId, profile);
+    return { ok: true as const, profile: structuredClone(profile) };
+  }
+}
+
+interface PlanEntry {
+  userId: string;
+  plan: StoredPlan;
+  createHash: string;
+  sessions: Map<string, { session: StoredSession; createHash: string }>;
+}
+
+/**
+ * Plans in memory. Every method checks and writes with no await in between, so racing writes behave like the
+ * database's atomic compare-and-set.
+ */
+export class MemoryPlanStore implements PlanStore {
+  private plans = new Map<string, PlanEntry>();
+
+  /** Takes the auth store so plans disappear with their account, as the database cascade does. */
+  constructor(private readonly auth: AuthStore) {}
+
+  private live(userId: string, planId: string): PlanEntry | undefined {
+    const entry = this.plans.get(planId);
+    return entry && entry.userId === userId && entry.plan.deletedAt === null ? entry : undefined;
+  }
+
+  private findSession(userId: string, sessionId: string) {
+    for (const entry of this.plans.values()) {
+      if (entry.userId !== userId || entry.plan.deletedAt !== null) continue;
+      const found = entry.sessions.get(sessionId);
+      if (found && found.session.deletedAt === null) return { entry, ...found };
+    }
+    return undefined;
+  }
+
+  private sessionIdTaken(sessionId: string): { entry: PlanEntry; session: StoredSession; createHash: string } | undefined {
+    for (const entry of this.plans.values()) {
+      const found = entry.sessions.get(sessionId);
+      if (found) return { entry, ...found };
+    }
+    return undefined;
+  }
+
+  private async userGone(userId: string): Promise<boolean> {
+    return !(await this.auth.userExists(userId));
+  }
+
+  async createPlan(userId: string, plan: StoredPlan, sessions: StoredSession[], createHash: string) {
+    if (await this.userGone(userId)) throw new Error("user does not exist");
+    const existing = this.plans.get(plan.id);
+    if (existing) return { status: "exists" as const, mine: existing.userId === userId, createHash: existing.userId === userId ? existing.createHash : null };
+    if (sessions.some((s) => this.sessionIdTaken(s.id))) return { status: "conflict" as const };
+    this.plans.set(plan.id, {
+      userId,
+      plan: structuredClone(plan),
+      createHash,
+      sessions: new Map(sessions.map((s) => [s.id, { session: structuredClone(s), createHash }])),
+    });
+    return { status: "created" as const };
+  }
+
+  async getPlan(userId: string, planId: string) {
+    if (await this.userGone(userId)) return undefined;
+    const entry = this.live(userId, planId);
+    if (!entry) return undefined;
+    const sessions = [...entry.sessions.values()].map((x) => x.session).filter((s) => s.deletedAt === null);
+    return structuredClone({ plan: entry.plan, sessions, createHash: entry.createHash as string | null });
+  }
+
+  async listPlans(userId: string, limit: number, after?: { startDate: string; id: string }) {
+    if (await this.userGone(userId)) return [];
+    return [...this.plans.values()]
+      .filter((e) => e.userId === userId && e.plan.deletedAt === null)
+      .map((e) => structuredClone({ ...e.plan, weeks: [] }))
+      .sort((a, b) => (a.startDate === b.startDate ? (a.id < b.id ? 1 : -1) : a.startDate < b.startDate ? 1 : -1))
+      .filter((p) => !after || p.startDate < after.startDate || (p.startDate === after.startDate && p.id < after.id))
+      .slice(0, limit);
+  }
+
+  async writePlan(userId: string, planId: string, baseRevision: number, fields: PlanWriteFields, now: string): Promise<{ ok: true; plan: StoredPlan } | WriteFailure> {
+    const entry = this.live(userId, planId);
+    if (!entry || (await this.userGone(userId))) return { ok: false, reason: "not_found" };
+    if (entry.plan.revision !== baseRevision) return { ok: false, reason: "conflict", currentRevision: entry.plan.revision };
+    entry.plan = { ...entry.plan, ...structuredClone(fields), revision: baseRevision + 1, contentRevision: entry.plan.contentRevision + 1, updatedAt: now };
+    return { ok: true, plan: structuredClone(entry.plan) };
+  }
+
+  async deletePlan(userId: string, planId: string, baseRevision: number, now: string): Promise<{ ok: true } | WriteFailure> {
+    const entry = this.live(userId, planId);
+    if (!entry || (await this.userGone(userId))) return { ok: false, reason: "not_found" };
+    if (entry.plan.revision !== baseRevision) return { ok: false, reason: "conflict", currentRevision: entry.plan.revision };
+    entry.plan = { ...entry.plan, revision: baseRevision + 1, contentRevision: entry.plan.contentRevision + 1, updatedAt: now, deletedAt: now };
+    return { ok: true };
+  }
+
+  async createSession(userId: string, session: StoredSession, createHash: string) {
+    const entry = this.live(userId, session.planId);
+    if (!entry || (await this.userGone(userId))) return { status: "no_plan" as const };
+    const taken = this.sessionIdTaken(session.id);
+    if (taken) {
+      const mine = taken.entry.userId === userId;
+      return mine
+        ? { status: "exists" as const, mine, createHash: taken.createHash, session: structuredClone(taken.session), contentRevision: taken.entry.plan.contentRevision }
+        : { status: "exists" as const, mine, createHash: null };
+    }
+    entry.sessions.set(session.id, { session: structuredClone(session), createHash });
+    entry.plan = { ...entry.plan, contentRevision: entry.plan.contentRevision + 1 };
+    return { status: "created" as const, contentRevision: entry.plan.contentRevision };
+  }
+
+  async getSession(userId: string, sessionId: string) {
+    if (await this.userGone(userId)) return undefined;
+    const found = this.findSession(userId, sessionId);
+    return found && structuredClone({ session: found.session, plan: { ...found.entry.plan, weeks: [] }, createHash: found.createHash as string | null });
+  }
+
+  private change(userId: string, sessionId: string, baseRevision: number, apply: (s: StoredSession) => StoredSession) {
+    const found = this.findSession(userId, sessionId);
+    if (!found) return { ok: false as const, reason: "not_found" as const };
+    if (found.session.revision !== baseRevision) return { ok: false as const, reason: "conflict" as const, currentRevision: found.session.revision };
+    const session = apply(found.session);
+    found.entry.sessions.set(sessionId, { session, createHash: found.createHash });
+    found.entry.plan = { ...found.entry.plan, contentRevision: found.entry.plan.contentRevision + 1 };
+    return { ok: true as const, session: structuredClone(session), contentRevision: found.entry.plan.contentRevision };
+  }
+
+  async writeSession(userId: string, sessionId: string, baseRevision: number, next: SessionContent, now: string) {
+    if (await this.userGone(userId)) return { ok: false as const, reason: "not_found" as const };
+    return this.change(userId, sessionId, baseRevision, (s) => ({ ...structuredClone(next), id: s.id, planId: s.planId, revision: baseRevision + 1, updatedAt: now, deletedAt: null }));
+  }
+
+  async deleteSession(userId: string, sessionId: string, baseRevision: number, now: string) {
+    if (await this.userGone(userId)) return { ok: false as const, reason: "not_found" as const };
+    return this.change(userId, sessionId, baseRevision, (s) => ({ ...s, revision: baseRevision + 1, updatedAt: now, deletedAt: now }));
+  }
+}
+
+export class MemoryRateLimiter implements RateLimiter {
+  private windows = new Map<string, { start: number; count: number }>();
+
+  async hit(key: string, limit: number, windowSec: number, now: Date) {
+    const nowSec = Math.floor(now.getTime() / 1000);
+    const start = nowSec - (nowSec % windowSec);
+    const current = this.windows.get(key);
+    const window = current && current.start === start ? current : { start, count: 0 };
+    window.count += 1;
+    this.windows.set(key, window);
+    return { allowed: window.count <= limit, retryAfterSec: Math.max(1, start + windowSec - nowSec) };
+  }
+}
+
 export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
-  return { clock: systemClock, health: new MemoryHealthProbe(), ...overrides };
+  const auth = overrides.auth ?? new MemoryAuthStore();
+  return {
+    clock: systemClock,
+    health: new MemoryHealthProbe(),
+    auth,
+    profiles: new MemoryProfileStore(auth),
+    plans: new MemoryPlanStore(auth),
+    email: new MemoryEmailSender(),
+    rateLimiter: new MemoryRateLimiter(),
+    ids: webIdSource,
+    authConfig: { jwtSecret: "dev-only-secret-change-me-dev-only-secret" },
+    ...overrides,
+  };
 }
