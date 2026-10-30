@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
 import { memoryDeps } from "../src/adapters/memory";
 import { GENERATE_PER_DEVICE, GENERATE_PER_IP, MAX_GENERATE_BODY_BYTES, MAX_GENERATE_RESPONSE_BYTES } from "../src/http/generate";
-import { generatePlan, type PlanDraft } from "../src/domain/engine";
+import { generatePlan, NoPlanFitsError, type PlanDraft } from "../src/domain/engine";
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -85,6 +85,7 @@ describe("POST /v1/plans/generate", () => {
   it("answers 413 to a body over the limit, by header or by size", async () => {
     const padded = JSON.stringify(body).replace("}", `,"pad":"${"x".repeat(MAX_GENERATE_BODY_BYTES)}"}`);
     expect((await post(padded)).status).toBe(413);
+    vi.spyOn(console, "error").mockImplementation(() => {});
     expect((await post(body, { "content-length": String(MAX_GENERATE_BODY_BYTES + 1) })).status).toBe(413);
   });
 
@@ -122,10 +123,25 @@ describe("POST /v1/plans/generate", () => {
 
   it("answers 422 when no plan fits the answers", async () => {
     const res = await post(body, {}, createAppWith(() => {
-      throw new RangeError("at least 3 days a week must be available to run");
+      throw new NoPlanFitsError("at least 3 days a week must be available to run");
     }));
     expect(res.status).toBe(422);
     expect(((await res.json()) as Json).type).toBe("no_plan_fits");
+  });
+
+  it("treats any other engine RangeError as a server fault, not a 422", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await post(body, {}, createAppWith(() => {
+      throw new RangeError("not a calendar date");
+    }));
+    expect(res.status).toBe(500);
+  });
+
+  it("answers 413 to a streamed body with no Content-Length", async () => {
+    const chunk = new TextEncoder().encode("x".repeat(MAX_GENERATE_BODY_BYTES + 1));
+    const stream = new ReadableStream({ start(controller) { controller.enqueue(chunk); controller.close(); } });
+    const res = await app.request("/v1/plans/generate", { method: "POST", headers: { "content-type": "application/json" }, body: stream, duplex: "half" } as RequestInit);
+    expect(res.status).toBe(413);
   });
 
   it("keeps the largest plan under the response cap", async () => {

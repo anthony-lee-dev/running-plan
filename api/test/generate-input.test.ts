@@ -37,6 +37,8 @@ describe("parseGenerateRequest", () => {
     ["no answers", { today: "2026-11-02" }, "/answers"],
     ["no today", { answers: minimal.answers }, "/today"],
     ["today not a calendar date", { ...minimal, today: "2026-02-30" }, "/today"],
+    ["today past 2099", { ...minimal, today: "9999-12-20" }, "/today"],
+    ["goal date before 2000", withAnswers({ goal: { distance: "5k", date: "1999-12-31" } }), "/answers/goal/date"],
     ["today with a time", { ...minimal, today: "2026-11-02T10:00:00Z" }, "/today"],
     ["unknown top-level field", { ...minimal, extra: 1 }, "/extra"],
     ["no goal", { ...minimal, answers: {} }, "/answers/goal"],

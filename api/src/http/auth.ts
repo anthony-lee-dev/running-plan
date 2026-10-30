@@ -12,7 +12,7 @@ import {
 import { signJwt, verifyJwt } from "../domain/jwt";
 import type { ClientType, Deps, Scope } from "../ports";
 import { problem } from "./problem";
-import { isClientType, isCode, isEmail, onlyKeys, readBody } from "./validate";
+import { clientIp, isClientType, isCode, isEmail, onlyKeys, readBody } from "./validate";
 
 const HOUR = 3600;
 // Per email, per IP. Tunable; the spec says "rate limited per email and per IP".
@@ -25,7 +25,6 @@ const VERIFY_PER_IP = 30;
  * spoofable. Off Cloudflare (the Node dev entry) it is whatever the caller sends; without it all callers share one
  * bucket.
  */
-const clientIp = (request: Request): string => request.headers.get("cf-connecting-ip") ?? "unknown";
 
 export type AuthVariables = { userId: string };
 

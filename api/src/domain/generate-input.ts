@@ -20,8 +20,9 @@ const isInt = (v: unknown, min: number, max: number): v is number => Number.isIn
 const isWeekday = (v: unknown): v is Weekday => typeof v === "string" && (WEEKDAYS as readonly string[]).includes(v);
 const isOneOf = (v: unknown, values: readonly string[]): v is string => typeof v === "string" && values.includes(v);
 
+/** A real calendar date in 2000 to 2099, so plan dates stay four-digit years. */
 function isLocalDate(v: unknown): v is string {
-  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  if (typeof v !== "string" || !/^20\d{2}-\d{2}-\d{2}$/.test(v)) return false;
   const ms = Date.parse(`${v}T00:00:00Z`);
   return !Number.isNaN(ms) && new Date(ms).toISOString().slice(0, 10) === v;
 }
@@ -49,7 +50,7 @@ function parseGoal(raw: unknown, errors: FieldError[]): InterviewAnswers["goal"]
   const out: Obj = {};
   if (isOneOf(raw.distance, DISTANCES)) out.distance = raw.distance;
   else errors.push({ path: `${base}/distance`, message: "Use 5k, 10k or half_marathon" });
-  optional(raw, "date", base, errors, isLocalDate, "A date, YYYY-MM-DD", out);
+  optional(raw, "date", base, errors, isLocalDate, "A date in 2000 to 2099, YYYY-MM-DD", out);
   optional(raw, "targetTimeSec", base, errors, (v): v is number => isInt(v, 600, 21600), "Whole seconds, 600 to 21600", out);
   return out as InterviewAnswers["goal"];
 }
@@ -66,7 +67,7 @@ function parseRecentResult(raw: unknown, errors: FieldError[]): InterviewAnswers
   else errors.push({ path: `${base}/distanceM`, message: "Whole metres, 1000 to 42195" });
   if (isInt(raw.timeSec, 120, 28800)) out.timeSec = raw.timeSec;
   else errors.push({ path: `${base}/timeSec`, message: "Whole seconds, 120 to 28800" });
-  optional(raw, "date", base, errors, isLocalDate, "A date, YYYY-MM-DD", out);
+  optional(raw, "date", base, errors, isLocalDate, "A date in 2000 to 2099, YYYY-MM-DD", out);
   return out as InterviewAnswers["recentResult"];
 }
 
@@ -155,7 +156,7 @@ export function parseGenerateRequest(body: unknown): Result {
   const errors: FieldError[] = [];
   unknownKeys(body, ["answers", "today", "presetId"], "", errors);
   const answers = parseAnswers(body.answers, errors);
-  if (!isLocalDate(body.today)) errors.push({ path: "/today", message: "Today's local date, YYYY-MM-DD" });
+  if (!isLocalDate(body.today)) errors.push({ path: "/today", message: "Today's local date in 2000 to 2099, YYYY-MM-DD" });
   const hasPreset = "presetId" in body;
   // An own key only, so names like "toString" are not taken for a preset.
   if (hasPreset && !(typeof body.presetId === "string" && body.presetId.length <= 64 && Object.hasOwn(PRESETS, body.presetId))) {

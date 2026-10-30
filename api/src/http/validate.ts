@@ -4,6 +4,9 @@ import type { ClientType } from "../ports";
 
 export type Body = Record<string, unknown>;
 
+/** The caller's address for rate limits. Only Cloudflare's `cf-connecting-ip` is trusted. */
+export const clientIp = (request: Request): string => request.headers.get("cf-connecting-ip") ?? "unknown";
+
 export async function readBody(request: Request): Promise<Body | undefined> {
   try {
     const value: unknown = await request.json();
