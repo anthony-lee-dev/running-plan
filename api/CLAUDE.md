@@ -35,9 +35,19 @@ entry file, not a rewrite.
 - Auth (task 2.4): email one-time code, HS256 access tokens (15 min), rotating refresh tokens (60 days, reuse of a
   rotated token revokes its family), scopes by client type. Codes and refresh tokens are stored only as HMAC
   hashes. The Workers entry needs the secrets `JWT_SECRET` (32+ characters; the entry refuses to run without it),
-  `RESEND_API_KEY` and `MAIL_FROM`; without them it refuses to run unless `ALLOW_LOG_EMAIL=1` (local dev only: codes
+  the `EMAIL` send binding and `MAIL_FROM`; without them it refuses to run unless `ALLOW_LOG_EMAIL=1` (local dev only: codes
   are printed). Put local values in `api/.dev.vars` (gitignored). Only `cf-connecting-ip` is trusted for rate limits.
   Access tokens stay valid until they expire (15 minutes) after their refresh family is revoked; account delete
   takes effect at once because each request checks the user still exists. Production secrets are set by the human with `npx wrangler secret put <NAME>`.
+- Pace derivation (`src/domain/paces.ts`) uses the Riegel race-equivalence model, exponent 1.06 (design §12.2 decided
+  for backlog 2.9). Its zone anchors (easy 1.20 to 1.35 of 5K pace, long 1.15 to 1.30, tempo 10K pace ±3%, interval 3K
+  to 5K pace) and the heart-rate bands are starting values awaiting the coach review (backlog H.1).
+- Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
+  `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after
+  its day is over (so due can exceed done + skipped + missed by what is left today); actual volume comes from the
+  confirmed activity, or the plan when a session was marked done by hand; strength and cross-training count toward
+  time only. On track means 70% or more of the judged sessions done (at least 3 judged). A review looks back at a finished
+  week: its review day is the first chosen weekday on or after the week's last day (the last day itself by default),
+  and it is due for seven days from then; after an import it is also due once the week has something done. Thresholds are for the coach review (H.1).
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.

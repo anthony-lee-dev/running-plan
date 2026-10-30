@@ -13,6 +13,7 @@ DerivedData/
 build/
 *.xcuserstate
 ios/Local.xcconfig
+ios/*/.build/
 
 # Claude Code
 .claude/worktrees/
