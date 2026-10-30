@@ -26,9 +26,10 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   loads a draft saved less than 24 hours ago for the same answers, else calls `PlanGenerating` (the generated client's
   `generatePlan`, with a random per-install `X-Device-Id` used only for rate limiting); `PreviewDraftStore` keeps the
   draft in UserDefaults for 24 hours; `OnboardingFlow` goes interview, then preview, and "Change an answer" returns to
-  the interview prefilled. The server needs `POST /v1/plans/generate` (backlog 2.3); until it is deployed the screen
-  shows an error with Retry. The API base URL comes from `API_BASE_URL` or the `apiBaseURL` default (local server by
-  default). The app target links the runtime packages itself (see `project.yml`).
+  the interview prefilled. The API base URL is the deployed Worker (`APIConfiguration.deployedURL`) unless the `API_BASE_URL`
+  environment variable or the `apiBaseURL` user default names another (for example `http://localhost:8787` in the
+  simulator; always include the scheme: a value without one falls back to the deployed API); a real iPhone cannot
+  reach `localhost` on the Mac. The app target links the runtime packages itself (see `project.yml`).
 - Saving the plan (sign-in, `createPlan`) is task 3.4: the Save button does nothing yet.
 
 ## Snapshot tests
