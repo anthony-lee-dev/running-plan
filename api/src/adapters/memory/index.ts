@@ -353,10 +353,9 @@ export class MemoryMatchStore implements MatchStore {
   ) {}
 
   private snapshot(userId: string, ref: { sessionId?: string; activityId?: string }): MatchState {
-    const matches = this.rows
-      .filter((r) => r.userId === userId && (r.sessionId === ref.sessionId || r.activityId === ref.activityId))
-      .filter((r) => this.plans.sessionRef(userId, r.sessionId));
-    const sessionIds = new Set([...(ref.sessionId ? [ref.sessionId] : []), ...matches.map((r) => r.sessionId)]);
+    // Every match, also one whose session was deleted: the change then removes it.
+    const matches = this.rows.filter((r) => r.userId === userId && (r.sessionId === ref.sessionId || r.activityId === ref.activityId));
+    const sessionIds = new Set([...(ref.sessionId ? [ref.sessionId] : []), ...matches.map((r) => r.sessionId)].filter((id) => this.plans.sessionRef(userId, id)));
     const activityIds = new Set([...(ref.activityId ? [ref.activityId] : []), ...matches.map((r) => r.activityId)]);
     const sessions = [...sessionIds].flatMap((id) => {
       const s = this.plans.sessionRef(userId, id)?.session;
@@ -387,14 +386,18 @@ export class MemoryMatchStore implements MatchStore {
       }),
       matches: this.rows
         .filter((r) => r.userId === userId && (state.sessions.some((s) => s.id === r.sessionId) || state.activities.some((a) => a.id === r.activityId)))
-        .filter((r) => this.plans.sessionRef(userId, r.sessionId))
         .map(({ userId: _u, ...m }) => ({ ...m })),
     };
     const key = (s: MatchState) => JSON.stringify([s.sessions, s.activities, [...s.matches].sort((a, b) => (a.sessionId < b.sessionId ? -1 : 1))]);
     if (key(fresh) !== key(state)) throw new MatchConflictError("changed since it was read");
 
     this.rows = this.rows.filter((r) => !(r.userId === userId && effects.removeMatches.includes(r.sessionId)));
-    if (effects.putMatch) this.rows.push({ ...effects.putMatch, userId });
+    if (effects.putMatch) {
+      const { sessionId, activityId } = effects.putMatch;
+      // The table's UNIQUE (session_id) and UNIQUE (activity_id).
+      if (this.rows.some((r) => r.sessionId === sessionId || r.activityId === activityId)) throw new Error("match already exists");
+      this.rows.push({ ...effects.putMatch, userId });
+    }
     for (const s of effects.sessions) {
       const found = this.plans.sessionRef(userId, s.id)!;
       found.session.status = s.status;

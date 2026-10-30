@@ -84,6 +84,37 @@ export function matchStoreContract(name: string, make: () => Promise<Made>) {
       expect(await m.store.forActivities(U1, [A1, A2])).toEqual([{ sessionId: S1, activityId: A2, status: "confirmed", updatedAt: NOW }]);
     });
 
+    it("refuses a write when a suggestion landed in between, which moves no revision", async () => {
+      const stale = await m.store.load(U1, { sessionId: S1, activityId: A1 });
+      const between = await m.store.load(U1, { sessionId: S1, activityId: A2 });
+      await m.store.apply(U1, between, planMatchChange(between, { kind: "put", sessionId: S1, activityId: A2, status: "suggested" }, NOW), NOW);
+      await expect(m.store.apply(U1, stale, planMatchChange(stale, { kind: "put", sessionId: S1, activityId: A1, status: "confirmed" }, LATER), LATER)).rejects.toBeInstanceOf(MatchConflictError);
+    });
+
+    it("refuses a write when a match changed only its time", async () => {
+      const suggest = async (at: string) => {
+        const s = await m.store.load(U1, { sessionId: S1, activityId: A1 });
+        await m.store.apply(U1, s, planMatchChange(s, { kind: "put", sessionId: S1, activityId: A1, status: "suggested" }, at), at);
+      };
+      await suggest(NOW);
+      const stale = await m.store.load(U1, { sessionId: S1, activityId: A1 });
+      await suggest(LATER);
+      await expect(m.store.apply(U1, stale, planMatchChange(stale, { kind: "delete", sessionId: S1 }, LATER), LATER)).rejects.toBeInstanceOf(MatchConflictError);
+    });
+
+    it.each(["session", "plan"])("frees an activity whose matched %s was deleted", async (what) => {
+      await confirm(S1, A1);
+      if (what === "session") await m.plans.deleteSession(U1, S1, 2, LATER);
+      else {
+        await m.plans.createPlan(U1, { ...plan, id: "00000000-0000-4000-8000-000000000102" }, [{ ...session("00000000-0000-4000-8000-000000000203", "2026-10-29"), planId: "00000000-0000-4000-8000-000000000102" }], "h2");
+        await m.plans.deletePlan(U1, P1, 1, LATER);
+      }
+      const target = what === "session" ? S2 : "00000000-0000-4000-8000-000000000203";
+      const state = await m.store.load(U1, { sessionId: target, activityId: A1 });
+      await m.store.apply(U1, state, planMatchChange(state, { kind: "put", sessionId: target, activityId: A1, status: "confirmed" }, LATER), LATER);
+      expect(await m.store.forActivities(U1, [A1])).toEqual([{ sessionId: target, activityId: A1, status: "confirmed", updatedAt: LATER }]);
+    });
+
     it("keeps users apart", async () => {
       expect(await m.store.load(U2, { sessionId: S1, activityId: A1 })).toEqual({ sessions: [], activities: [], matches: [] });
       await confirm(S1, A1);

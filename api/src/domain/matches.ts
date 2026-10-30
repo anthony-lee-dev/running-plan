@@ -44,7 +44,8 @@ export function planMatchChange(state: MatchState, change: MatchChange, now: str
   const unlink = (m: MatchRow) => {
     removeMatches.push(m.sessionId);
     matches.splice(matches.indexOf(m), 1);
-    // Only what the match itself did is undone: a session skipped or planned by hand stays as it is.
+    // A confirmed match leaves a done session planned. A session skipped or planned by hand stays as it is (one marked
+    // done by hand before the match was confirmed is reset too: the match does not remember the earlier status).
     if (m.status === "confirmed" && sessionStatus.get(m.sessionId) === "done") sessionStatus.set(m.sessionId, "planned");
     if (disposition.get(m.activityId) === "matched") disposition.set(m.activityId, "inbox");
   };

@@ -16,8 +16,10 @@ export class D1MatchStore implements MatchStore {
   async load(userId: string, ref: { sessionId?: string; activityId?: string }): Promise<MatchState> {
     const sid = ref.sessionId ?? "";
     const aid = ref.activityId ?? "";
+    // Every match, also one whose session (or plan) was deleted: the change then removes it, and the guard's count
+    // in apply sees the same rows.
     const matchesSql = `SELECT session_id, activity_id, status, updated_at FROM matches
-      WHERE user_id = ?1 AND (session_id = ?2 OR activity_id = ?3) AND session_id IN (${LIVE_SESSION}) ORDER BY session_id`;
+      WHERE user_id = ?1 AND (session_id = ?2 OR activity_id = ?3) ORDER BY session_id`;
     const [sessions, activities, matches] = await this.db.batch([
       this.db
         .prepare(
@@ -49,8 +51,9 @@ export class D1MatchStore implements MatchStore {
     const conditions: string[] = [];
     const binds: unknown[] = [];
     for (const s of state.sessions) {
-      conditions.push(`(SELECT revision FROM sessions WHERE id = ? AND deleted_at IS NULL) IS ?`);
-      binds.push(s.id, s.revision);
+      conditions.push(`(SELECT s.revision FROM sessions s JOIN plans p ON p.id = s.plan_id
+        WHERE s.id = ? AND s.deleted_at IS NULL AND p.deleted_at IS NULL AND p.user_id = ?) IS ?`);
+      binds.push(s.id, userId, s.revision);
     }
     for (const a of state.activities) {
       conditions.push(`(SELECT revision FROM activities WHERE id = ? AND user_id = ? AND deleted_at IS NULL) IS ?`);
