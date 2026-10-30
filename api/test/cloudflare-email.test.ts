@@ -29,4 +29,20 @@ describe("CloudflareEmailSender", () => {
     expect((error as Error).message).not.toContain("654321");
     expect((error as Error).message).not.toContain("runner@example.com");
   });
+
+  it("reports only the binding's error code so a refused send can be diagnosed", async () => {
+    const refused = Object.assign(new Error("E_SENDER_NOT_VERIFIED for runner@example.com 654321"), { code: "E_SENDER_NOT_VERIFIED" });
+    const binding: SendBinding = { send: async () => Promise.reject(refused) };
+    const error = await new CloudflareEmailSender({ binding, from: "a@example.com" }).sendCode("runner@example.com", "654321").catch((e: Error) => e);
+    expect((error as Error).message).toContain("E_SENDER_NOT_VERIFIED");
+    expect((error as Error).message).not.toContain("654321");
+    expect((error as Error).message).not.toContain("runner@example.com");
+  });
+
+  it("ignores an error code that is not a plain identifier", async () => {
+    const binding: SendBinding = { send: async () => Promise.reject(Object.assign(new Error("x"), { code: "runner@example.com 654321" })) };
+    const error = await new CloudflareEmailSender({ binding, from: "a@example.com" }).sendCode("runner@example.com", "654321").catch((e: Error) => e);
+    expect((error as Error).message).not.toContain("654321");
+    expect((error as Error).message).not.toContain("runner@example.com");
+  });
 });
