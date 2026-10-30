@@ -102,18 +102,25 @@ struct PlanPreview: Equatable {
         let title = session.title ?? typeName(session._type)
         let distance = metres(of: session)
         if distance > 0 { return "\(title) · \(kilometres(distance / 1000)) km" }
-        let minutes = Int((seconds(of: session) / 60).rounded())
+        let time = seconds(of: session)
+        guard time > 0 else { return title }
+        // Strength is rounded to 5 minutes (at least 5), like the "About 20 minutes." note the API writes for it.
+        let minutes = session._type == .strength ? max(5, Int((time / 300).rounded()) * 5) : Int((time / 60).rounded())
         return minutes > 0 ? "\(title) · \(minutes) min" : title
     }
 
-    /// Time goals in a session, in seconds: time steps, and sets of timed exercises.
+    /// Reps take about 3 seconds each: keep in step with `SECONDS_PER_REP` in `api/src/domain/strength.ts`.
+    static let secondsPerRep = 3.0
+
+    /// Time in a session, in seconds: time steps, and each exercise set's reps or hold plus its rest.
     static func seconds(of session: Components.Schemas.SessionContent) -> Double {
         func time(_ step: Components.Schemas.RunStep) -> Double { step.goal._type == .time ? Double(step.goal.value ?? 0) : 0 }
         return (session.steps ?? []).reduce(0) { total, step in
             switch step {
             case .warmup(let s), .work(let s), .recovery(let s), .cooldown(let s): total + time(s)
             case ._repeat(let r): total + Double(r.count) * r.steps.reduce(0) { $0 + time($1) }
-            case .exercise(let e): total + Double(e.sets) * Double(e.durationSec ?? 0)
+            case .exercise(let e):
+                total + Double(e.sets) * ((e.durationSec.map(Double.init) ?? Double(e.reps ?? 0) * secondsPerRep) + Double(e.restSec ?? 0))
             }
         }
     }
