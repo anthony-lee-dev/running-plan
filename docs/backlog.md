@@ -116,7 +116,7 @@ the human confirmed it in a session on 2026-10-30).
 
 ## Slice 1: End-to-end test setup
 
-- [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry, for every
+- [x] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry, for every
       endpoint that exists today (generate, auth, profile, plans and sessions, activities, matches, check-ins).
       Request validation must enforce `unevaluatedProperties: false` (Swift's generator ignores it). Later slices
       add their endpoints to it. needs: 2.3, 2.4, 2.5, 2.11, 2.17

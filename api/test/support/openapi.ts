@@ -58,7 +58,10 @@ export function requestErrors(op: string, body: unknown): string[] {
 export const placeholderPath = (path: string) =>
   path.replace(/\{(\w+)\}/g, (_, name: string) => (name.endsWith("Index") ? "0" : "00000000-0000-4000-8000-00000000abcd"));
 
-/** What is wrong with a response: an undocumented status, the wrong content type, or a body off its schema. */
+/**
+ * What is wrong with a response: an undocumented status, a documented header malformed (or missing when required), the wrong
+ * content type, or a body off its schema.
+ */
 export async function responseErrors(op: string, res: Response): Promise<string[]> {
   const [method, path] = op.split(" ") as [string, string];
   const responses = operation(op).responses as Json;
@@ -67,18 +70,33 @@ export async function responseErrors(op: string, res: Response): Promise<string[
   const key = status in responses ? status : undefined;
   const text = await res.text();
   if (!key) return [`${op}: status ${status} is not documented (body: ${text.slice(0, 200)})`];
+  // Where this response is written in the spec: shared (`#/components/responses/...`) or on the operation.
+  const at = responses[key].$ref
+    ? ["components", "responses", String(responses[key].$ref).split("/").pop()!]
+    : ["paths", path, method.toLowerCase(), "responses", key];
+  // A documented header must fit its schema when sent, and be sent when the spec marks it `required`.
+  const headerErrors = Object.entries((resolve(responses[key]).headers ?? {}) as Json).flatMap(([name, h]) => {
+    const value = res.headers.get(name);
+    const ref = h.$ref ? String(h.$ref).split("/").pop()! : undefined;
+    const header = ref ? (spec.components.headers as Json)[ref] : h;
+    if (value === null) return header.required ? [`${op} ${status}: missing header ${name}`] : [];
+    const ptr = ref
+      ? pointer("components", "headers", ref, "schema")
+      : pointer(...at, "headers", name, "schema");
+    // Header values are text: an integer header is checked as a number.
+    const typed = header.schema?.type === "integer" && /^-?\d+$/.test(value) ? Number(value) : value;
+    return errorsOf(ptr, typed).map((e) => `${op} ${status}: header ${name} ${e}`);
+  });
   const content = resolve(responses[key]).content as Json | undefined;
-  if (!content) return text === "" ? [] : [`${op} ${status}: the spec has no body but got ${text.slice(0, 200)}`];
+  if (!content) return text === "" ? headerErrors : [...headerErrors, `${op} ${status}: the spec has no body but got ${text.slice(0, 200)}`];
   const type = (res.headers.get("content-type") ?? "").split(";")[0]!.trim();
-  if (!(type in content)) return [`${op} ${status}: content type ${type || "(none)"}, expected ${Object.keys(content).join(" or ")}`];
+  if (!(type in content)) return [...headerErrors, `${op} ${status}: content type ${type || "(none)"}, expected ${Object.keys(content).join(" or ")}`];
   let body: unknown;
   try {
     body = JSON.parse(text);
   } catch {
-    return [`${op} ${status}: body is not JSON: ${text.slice(0, 200)}`];
+    return [...headerErrors, `${op} ${status}: body is not JSON: ${text.slice(0, 200)}`];
   }
-  const ptr = responses[key].$ref
-    ? pointer("components", "responses", String(responses[key].$ref).split("/").pop()!, "content", type, "schema")
-    : pointer("paths", path, method.toLowerCase(), "responses", key, "content", type, "schema");
-  return errorsOf(ptr, body).map((e) => `${op} ${status}: ${e}`);
+  const ptr = pointer(...at, "content", type, "schema");
+  return [...headerErrors, ...errorsOf(ptr, body).map((e) => `${op} ${status}: ${e}`)];
 }
