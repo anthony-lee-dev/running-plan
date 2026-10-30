@@ -14,9 +14,12 @@
     "hono": "^4.6.0"
   },
   "devDependencies": {
+    "@cfworker/json-schema": "4.1.1",
     "@cloudflare/vitest-plugin": "^1.4.10",
     "@cloudflare/workers-types": "^5.20261025.1",
+    "@types/js-yaml": "^4.0.9",
     "fast-check": "^4.10.2",
+    "js-yaml": "^4.3.2",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^4.1.12",
