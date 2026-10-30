@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { ENGINE_VERSION, generatePlan, type PlanDraft } from "../src/domain/engine";
 import type { InterviewAnswers, Weekday } from "../src/domain/interview";
 import { sessionDistanceM } from "../src/domain/validators";
+import { exerciseById } from "../src/domain/strength";
+import { PRESETS } from "../src/domain/presets";
 
 const TODAY = "2026-11-02"; // a Monday
 const WEEKDAYS: Weekday[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -41,8 +43,11 @@ describe("generatePlan: shape", () => {
     expect(a).toEqual(copy);
   });
 
-  it("only knows the 5K preset for now", () => {
-    expect(() => generatePlan({ answers: { goal: { distance: "10k" } }, today: TODAY })).toThrow(/preset/i);
+  it("picks the preset from the goal distance, or from an explicit preset id, and refuses an unknown one", () => {
+    expect(generatePlan({ answers: { goal: { distance: "10k" } }, today: TODAY }).engine.presetId).toBe("10k");
+    expect(generatePlan({ answers: { goal: { distance: "half_marathon" } }, today: TODAY }).goal.type).toBe("half_marathon");
+    expect(generatePlan({ answers: { goal: { distance: "5k" } }, today: TODAY, presetId: "10k" }).engine.presetId).toBe("10k");
+    expect(() => generatePlan({ answers: answers(), today: TODAY, presetId: "marathon" })).toThrow(/preset/i);
   });
 
   it("rejects an invalid today", () => {
@@ -244,7 +249,7 @@ describe("generatePlan: the cautious variant for pain", () => {
 describe("generatePlan: targets and paces", () => {
   const firstWith = (draft: PlanDraft, type: string) => draft.sessions.find((s) => s.type === type)!;
   const targetsOf = (s: PlanDraft["sessions"][number]) =>
-    s.steps.flatMap((step) => (step.kind === "repeat" ? step.steps : [step])).map((step) => step.target.type);
+    s.steps.flatMap((step) => (step.kind === "repeat" ? step.steps : step.kind === "exercise" ? [] : [step])).map((step) => step.target.type);
 
   it("uses effort targets and prompts calibration when there is no recent result", () => {
     const draft = gen({ runsPerWeek: 4 });
@@ -310,7 +315,7 @@ describe("generatePlan: goal date, guards and limits", () => {
     const draft = gen({ recentResult });
     expect(codes(draft.assumptions)).toContain("result_ignored");
     expect(codes(draft.assumptions)).toContain("paces_effort_only");
-    for (const s of draft.sessions) for (const step of s.steps) expect((step.kind === "repeat" ? step.steps[0]! : step).target.type).toBe("effort");
+    for (const s of draft.sessions.filter((x) => x.type !== "strength")) for (const step of s.steps) expect((step.kind === "repeat" ? step.steps[0]! : (step as Exclude<typeof step, { kind: "exercise" }>)).target.type).toBe("effort");
   });
 
   it("refuses a week with fewer than three days to run on, rather than producing nonsense", () => {
@@ -349,11 +354,191 @@ describe("generatePlan: goal date, guards and limits", () => {
   });
 });
 
-describe("generatePlan: what it leaves out for now", () => {
-  it("says strength sessions are not in this version yet when the user asked for them", () => {
-    const draft = gen({ strength: { enabled: true, equipment: "dumbbells" } });
-    expect(draft.sessions.some((s) => (s.type as string) === "strength")).toBe(false);
-    expect(codes(draft.assumptions)).toContain("strength_not_available");
+describe("generatePlan: the 10K and half marathon presets (design 6.2)", () => {
+  const ten = (over: Partial<InterviewAnswers> = {}) => gen({ goal: { distance: "10k" }, ...over });
+  const half = (over: Partial<InterviewAnswers> = {}) => gen({ goal: { distance: "half_marathon" }, ...over });
+
+  it.each([
+    ["10K", "10k", { beginner: 12, intermediate: 10, experienced: 8 }],
+    ["half marathon", "half_marathon", { beginner: 16, intermediate: 14, experienced: 12 }],
+  ] as const)("%s: the usual length by tier", (_name, distance, lengths) => {
+    expect(gen({ goal: { distance }, runningHistory: "new_or_returning" }).weekCount).toBe(lengths.beginner);
+    expect(gen({ goal: { distance }, runningHistory: "1_to_3_years" }).weekCount).toBe(lengths.intermediate);
+    expect(gen({ goal: { distance }, runningHistory: "over_3_years" }).weekCount).toBe(lengths.experienced);
+  });
+
+  it("fits a goal date inside each preset's range, and keeps the minimum for one that is too soon", () => {
+    expect(ten({ goal: { distance: "10k", date: "2027-02-07" } }).weekCount).toBe(14); // 14 weeks away
+    expect(half({ goal: { distance: "half_marathon", date: "2027-02-21" } }).weekCount).toBe(16);
+    const soon = half({ goal: { distance: "half_marathon", date: "2026-12-06" } });
+    expect(soon.weekCount).toBe(10);
+    expect(soon.warnings.find((w) => w.code === "later_goal_date")?.message).toContain("half marathon");
+  });
+
+  it("adds base weeks for a far goal date beyond each preset's own maximum", () => {
+    const draft = half({ goal: { distance: "half_marathon", date: "2027-03-14" } }); // 19 weeks
+    expect(draft.weekCount).toBe(19);
+    expect(codes(draft.warnings)).toContain("base_phase_added");
+    expect(codes(draft.warnings)).not.toContain("goal_date_far");
+  });
+
+  it("lets a high-mileage runner build a larger peak week for a longer race, within each preset's own limits", () => {
+    // A baseline high enough that each preset's own cap is what limits the week.
+    const base = { runningHistory: "1_to_3_years" as const, weeklyDistanceM: 60_000, runsPerWeek: 5 as const };
+    const peak = (d: PlanDraft) => Math.max(...volumes(d));
+    const five = gen(base);
+    const tenK = ten(base);
+    const halfM = half(base);
+    expect(peak(five)).toBeLessThanOrEqual(36_000);
+    expect(peak(tenK)).toBeGreaterThan(peak(five));
+    expect(peak(tenK)).toBeLessThanOrEqual(45_000);
+    expect(peak(halfM)).toBeGreaterThan(peak(tenK));
+    expect(peak(halfM)).toBeLessThanOrEqual(55_000);
+    for (const [draft, long] of [[five, 14_000], [tenK, 18_000], [halfM, 24_000]] as const) {
+      for (const s of draft.sessions.filter((x) => x.type === "long")) expect(sessionDistanceM(s as never)).toBeLessThanOrEqual(long);
+    }
+  });
+
+  it("uses longer interval reps for the 10K, and tempo as the main quality session for the half", () => {
+    const tenK = ten({ runningHistory: "1_to_3_years", weeklyDistanceM: 25_000 });
+    const reps = tenK.sessions.flatMap((s) => s.steps).flatMap((step) => (step.kind === "repeat" ? [step.steps[0]!.goal.value] : []));
+    expect(Math.min(...reps)).toBeGreaterThanOrEqual(800);
+    const halfM = half({ runningHistory: "1_to_3_years", weeklyDistanceM: 30_000, runsPerWeek: 4 });
+    expect(halfM.sessions.some((s) => s.type === "intervals")).toBe(false);
+    expect(halfM.sessions.filter((s) => s.type === "tempo").length).toBeGreaterThanOrEqual(halfM.weekCount - 2);
+  });
+
+  it("offers intervals in the half marathon only as the second quality session of a five-run week, never when cautious", () => {
+    const five = half({ runningHistory: "over_3_years", weeklyDistanceM: 40_000, runsPerWeek: 5 });
+    expect(five.sessions.some((s) => s.type === "intervals")).toBe(true);
+    expect(half({ runningHistory: "over_3_years", weeklyDistanceM: 40_000, runsPerWeek: 5, pain: true }).sessions.some((s) => s.type === "intervals")).toBe(false);
+  });
+
+  it("finishes the half marathon long run at a steadier effort in the build and peak, but not in the base or taper", () => {
+    const draft = half({ runningHistory: "1_to_3_years", weeklyDistanceM: 30_000 });
+    const longs = draft.sessions.filter((s) => s.type === "long");
+    longs.forEach((s, w) => {
+      const phase = draft.weeks[w]!.phase;
+      const progressive = s.steps.length === 2;
+      expect(progressive, `week ${w + 1} (${phase})`).toBe(phase === "build" || phase === "peak");
+      if (progressive) expect(s.title).toBe("Progressive long run");
+    });
+    expect(codes(draft.warnings)).not.toContain("weekly_growth_too_high");
+  });
+
+  it("warns about a baseline that is far below the goal at each preset's own threshold", () => {
+    expect(codes(ten({ weeklyDistanceM: 7000 }).warnings)).toContain("baseline_far_below_goal");
+    expect(codes(ten({ weeklyDistanceM: 8000 }).warnings)).not.toContain("baseline_far_below_goal");
+    expect(codes(half({ weeklyDistanceM: 11_000 }).warnings)).toContain("baseline_far_below_goal");
+    expect(codes(half({ weeklyDistanceM: 12_000 }).warnings)).not.toContain("baseline_far_below_goal");
+  });
+
+  it("assumes a baseline by tier for the preset, and says which", () => {
+    const draft = half({ runningHistory: "over_3_years" });
+    expect(draft.assumptions.find((a) => a.code === "baseline_default")?.message).toContain("45 km");
+  });
+});
+
+describe("generatePlan: strength sessions (design 6.4)", () => {
+  const withStrength = (over: Partial<InterviewAnswers> = {}) => gen({ strength: { enabled: true, equipment: "dumbbells" }, ...over });
+  const strengthOf = (d: PlanDraft, week: number) => d.sessions.filter((s) => s.type === "strength" && weekIndex(d, s.date) === week);
+
+  it("adds none unless the user asked for them", () => {
+    expect(gen().sessions.some((s) => s.type === "strength")).toBe(false);
+    expect(gen({ strength: { enabled: false } }).sessions.some((s) => s.type === "strength")).toBe(false);
+  });
+
+  it("adds one or two short sessions a week: one for three runs, a beginner or pain, two otherwise", () => {
+    expect(strengthOf(withStrength({ runsPerWeek: 3 }), 2)).toHaveLength(1);
+    expect(strengthOf(withStrength({ runsPerWeek: 4, runningHistory: "1_to_3_years" }), 2)).toHaveLength(2);
+    // Five runs with three hard days leave room for one: strength never goes on or before a hard day.
+    const five = strengthOf(withStrength({ runsPerWeek: 5, runningHistory: "over_3_years" }), 2).length;
+    expect(five).toBeGreaterThanOrEqual(1);
+    expect(five).toBeLessThanOrEqual(2);
+    expect(strengthOf(withStrength({ runsPerWeek: 4, runningHistory: "new_or_returning" }), 2)).toHaveLength(1);
+    expect(strengthOf(withStrength({ runsPerWeek: 4, runningHistory: "over_3_years", pain: true }), 2)).toHaveLength(1);
+  });
+
+  it("keeps strength away from the hard runs and the day before them, and keeps a rest day", () => {
+    for (const runs of [3, 4, 5] as const) {
+      for (const history of ["new_or_returning", "1_to_3_years", "over_3_years"] as const) {
+        const draft = withStrength({ runsPerWeek: runs, runningHistory: history });
+        expect(codes(draft.warnings), `${runs} runs, ${history}`).not.toContain("strength_near_key_session");
+        expect(codes(draft.warnings)).not.toContain("no_rest_day");
+        expect(codes(draft.warnings)).not.toContain("hard_days_back_to_back");
+      }
+    }
+  });
+
+  it("never uses an unavailable day", () => {
+    const draft = withStrength({ runsPerWeek: 4, runningHistory: "1_to_3_years", unavailableDays: ["tue", "thu"] });
+    for (const s of draft.sessions) expect(["tue", "thu"]).not.toContain(weekdayOf(s.date));
+  });
+
+  it("uses only exercises from the curated library, matching the equipment, with a dose that fits the phase", () => {
+    const bodyweight = gen({ strength: { enabled: true, equipment: "bodyweight" }, runningHistory: "1_to_3_years" });
+    for (const s of bodyweight.sessions.filter((x) => x.type === "strength")) {
+      expect(s.steps.length).toBeGreaterThanOrEqual(4);
+      expect(s.steps.length).toBeLessThanOrEqual(6);
+      for (const step of s.steps) {
+        if (step.kind !== "exercise") throw new Error("a strength session has exercise steps only");
+        const exercise = exerciseById(step.exerciseId)!;
+        expect(exercise, step.exerciseId).toBeDefined();
+        expect(exercise.equipment).toBe("bodyweight");
+        expect(step.reps === undefined).toBe(step.durationSec !== undefined); // reps or a hold, never both or neither
+        expect(step.loadNote).toBeUndefined();
+      }
+    }
+    const dumbbells = withStrength({ runningHistory: "1_to_3_years" });
+    const exercises = dumbbells.sessions.filter((x) => x.type === "strength").flatMap((s) => s.steps.flatMap((st) => (st.kind === "exercise" ? [st] : [])));
+    expect(exercises.some((e) => exerciseById(e.exerciseId)!.equipment === "dumbbells" && e.loadNote !== undefined)).toBe(true);
+    const sets = (week: number) => (strengthOf(dumbbells, week)[0]!.steps[0] as { sets: number }).sets;
+    const phases = dumbbells.weeks.map((w) => w.phase);
+    expect(sets(phases.indexOf("base"))).toBe(2);
+    expect(sets(phases.indexOf("build"))).toBe(3);
+    expect(sets(phases.lastIndexOf("taper"))).toBe(2);
+  });
+
+  it("is short, says how long, and counts for no running distance", () => {
+    const draft = withStrength();
+    const s = strengthOf(draft, 0)[0]!;
+    expect(s.notes).toMatch(/^About \d+ minutes\. Stop any movement that hurts\.$/);
+    const minutes = Number(/\d+/.exec(s.notes!)![0]);
+    expect(minutes).toBeGreaterThanOrEqual(10);
+    expect(minutes).toBeLessThanOrEqual(35);
+    expect(sessionDistanceM(s as never)).toBe(0);
+    expect(s.key).toBe(false);
+    expect(volumes(draft)[0]!).toBeGreaterThan(0);
+  });
+
+  it("alternates routines from week to week", () => {
+    const draft = withStrength({ runsPerWeek: 3 });
+    const first = JSON.stringify(strengthOf(draft, 0)[0]!.steps.map((s) => (s as { exerciseId: string }).exerciseId));
+    const second = JSON.stringify(strengthOf(draft, 1)[0]!.steps.map((s) => (s as { exerciseId: string }).exerciseId));
+    expect(first).not.toBe(second);
+  });
+
+  it("assumes bodyweight when no equipment is given, and says so", () => {
+    const draft = gen({ strength: { enabled: true } });
+    expect(codes(draft.assumptions)).toContain("strength_equipment_default");
+    expect(draft.sessions.filter((s) => s.type === "strength").length).toBeGreaterThan(0);
+  });
+
+  it("says so, once, when no day is left for a strength session away from the hard runs", () => {
+    // Five runs on six free days (Monday unavailable): the hard days and the days before them take every other day.
+    const draft = gen({ goal: { distance: "10k" }, runsPerWeek: 5, longRunDay: "sun", runningHistory: "1_to_3_years", unavailableDays: ["mon"], strength: { enabled: true, equipment: "dumbbells" } });
+    expect(draft.sessions.filter((s) => s.type === "strength")).toHaveLength(0);
+    expect(draft.assumptions.filter((x) => x.code === "strength_no_room")).toHaveLength(1);
+    expect(codes(draft.warnings)).not.toContain("strength_near_key_session");
+  });
+
+  it("matches the dumbbell load advice to the effort, and keeps a pain-flagged plan gentle", () => {
+    const notes = (d: PlanDraft) => [...new Set(d.sessions.filter((s) => s.type === "strength").flatMap((s) => s.steps.flatMap((st) => (st.kind === "exercise" && st.loadNote ? [st.loadNote] : []))))];
+    const normal = notes(withStrength({ runningHistory: "1_to_3_years" }));
+    expect(normal).toHaveLength(2);
+    expect(normal.some((n) => n.includes("3 or 4 reps in reserve"))).toBe(true); // easy sets
+    expect(normal.some((n) => n.includes("about 2 reps in reserve"))).toBe(true); // moderate sets
+    expect(notes(withStrength({ runningHistory: "1_to_3_years", pain: true }))).toEqual(["Pick a weight that leaves 3 or 4 reps in reserve on every set."]);
   });
 });
 
@@ -375,42 +560,73 @@ const answersArb = fc
       pain: fc.boolean(),
       targetDisplay: fc.constantFrom("pace" as const, "heart_rate" as const, "effort" as const),
       heartRate: fc.record({ maxBpm: fc.integer({ min: 100, max: 230 }) }),
+      strength: fc.record({ enabled: fc.boolean(), equipment: fc.option(fc.constantFrom("bodyweight" as const, "dumbbells" as const), { nil: undefined }) }, { requiredKeys: ["enabled"] }),
       recentResult: fc.record({ distanceM: fc.integer({ min: 1000, max: 42_195 }), timeSec: fc.integer({ min: 120, max: 28_800 }), date: fc.option(fc.integer({ min: -90, max: 30 }).map((d) => addDays(TODAY, d)), { nil: undefined }) }, { requiredKeys: ["distanceM", "timeSec"] }),
     },
     { requiredKeys: [] },
   )
-  .map((a): InterviewAnswers => ({ goal: { distance: "5k" }, ...a }));
+  .chain((a) => fc.constantFrom("5k" as const, "10k" as const, "half_marathon" as const).map((distance): InterviewAnswers => ({ goal: { distance }, ...a })));
 const todayArb = fc.integer({ min: 0, max: 400 }).map((d) => addDays("2026-01-01", d));
 /** A goal date from 30 days ago to 400 days ahead, or none. */
 const goalOffsetArb = fc.option(fc.integer({ min: -30, max: 400 }), { nil: undefined });
 
 describe("generatePlan: properties over random interview answers", () => {
   const run = (a: InterviewAnswers, today: string, goalOffset?: number) =>
-    generatePlan({ answers: goalOffset === undefined ? a : { ...a, goal: { distance: "5k", date: addDays(today, goalOffset) } }, today });
+    generatePlan({ answers: goalOffset === undefined ? a : { ...a, goal: { distance: a.goal.distance, date: addDays(today, goalOffset) } }, today });
 
-  it("always yields a valid plan: 8 to 12 weeks, one session a day, inside the plan, unavailable days free, no run past its limit", () => {
+  it("always yields a valid plan: the preset's length, one run a day, inside the plan, unavailable days free, no run past its limit", () => {
     fc.assert(
       fc.property(answersArb, todayArb, goalOffsetArb, (a, today, goalOffset) => {
+        const preset = PRESETS[a.goal.distance];
         const draft = run(a, today, goalOffset);
-        expect(draft.weekCount).toBeGreaterThanOrEqual(8);
-        expect(draft.weekCount).toBeLessThanOrEqual(16);
-        if (goalOffset === undefined) expect(draft.weekCount).toBeLessThanOrEqual(12);
-        if (goalOffset !== undefined && goalOffset >= 55) expect(draft.weekCount).toBeGreaterThanOrEqual(8);
+        expect(draft.engine.presetId).toBe(preset.id);
+        expect(draft.weekCount).toBeGreaterThanOrEqual(preset.minWeeks);
+        expect(draft.weekCount).toBeLessThanOrEqual(preset.maxWeeks + preset.extraBaseWeeksMax);
+        if (goalOffset === undefined) expect(draft.weekCount).toBeLessThanOrEqual(preset.maxWeeks);
         expect(draft.assumptions.length).toBeLessThanOrEqual(50);
         expect(draft.warnings.length).toBeLessThanOrEqual(100);
-        const days = new Set<string>();
+        const byDay = new Map<string, typeof draft.sessions>();
         for (const s of draft.sessions) {
           const w = weekIndex(draft, s.date);
           expect(w).toBeGreaterThanOrEqual(0);
           expect(w).toBeLessThan(draft.weekCount);
-          expect(days.has(s.date)).toBe(false);
-          days.add(s.date);
+          byDay.set(s.date, [...(byDay.get(s.date) ?? []), s]);
           expect(a.unavailableDays ?? []).not.toContain(weekdayOf(s.date));
-          expect(sessionDistanceM(s as never)).toBeLessThanOrEqual(s.type === "long" ? 14_000 : s.type === "easy" ? 10_000 : 12_000);
+          const limit = s.type === "long" ? preset.longRunMaxM : s.type === "easy" ? preset.easyRunMaxM : preset.qualityMaxM;
+          expect(sessionDistanceM(s as never)).toBeLessThanOrEqual(limit);
         }
+        // One run a day; a strength session may share a day with an easy run, never with a hard one.
+        for (const [date, list] of byDay) {
+          expect(list.length, date).toBeLessThanOrEqual(2);
+          if (list.length === 2) {
+            expect(list.filter((x) => x.type === "strength")).toHaveLength(1);
+            expect(list.every((x) => !x.key)).toBe(true);
+          }
+        }
+        if (a.strength?.enabled !== true) expect(draft.sessions.some((s) => s.type === "strength")).toBe(false);
         for (const text of [...draft.assumptions, ...draft.warnings]) expect(text.message.length).toBeLessThanOrEqual(500);
       }),
       { numRuns: 300 },
+    );
+  });
+
+  it("keeps strength off the hard days and the day before them, with a rest day left, for every preset", () => {
+    fc.assert(
+      fc.property(answersArb, todayArb, goalOffsetArb, (a, today, goalOffset) => {
+        const draft = run({ ...a, strength: { enabled: true, equipment: "dumbbells" } }, today, goalOffset);
+        expect(codes(draft.warnings)).not.toContain("strength_near_key_session");
+        expect(codes(draft.warnings)).not.toContain("no_rest_day");
+        const perWeek = new Map<number, number>();
+        for (const s of draft.sessions.filter((x) => x.type === "strength")) {
+          perWeek.set(weekIndex(draft, s.date), (perWeek.get(weekIndex(draft, s.date)) ?? 0) + 1);
+          for (const step of s.steps) {
+            if (step.kind !== "exercise") throw new Error("exercise steps only");
+            expect(exerciseById(step.exerciseId)).toBeDefined();
+          }
+        }
+        for (const count of perWeek.values()) expect(count).toBeLessThanOrEqual(2);
+      }),
+      { numRuns: 200 },
     );
   });
 
@@ -418,7 +634,7 @@ describe("generatePlan: properties over random interview answers", () => {
     fc.assert(
       fc.property(answersArb, todayArb, (a, today) => {
         const draft = run(a, today);
-        const runs = draft.sessions.filter((s) => weekIndex(draft, s.date) === 0).length;
+        const runs = draft.sessions.filter((s) => weekIndex(draft, s.date) === 0 && s.type !== "strength").length;
         const floor = Math.max(5000, runs * 1800);
         fc.pre(a.weeklyDistanceM !== undefined && a.weeklyDistanceM * (a.pain ? 0.7 : 0.85) >= floor);
         expect(volumes(draft)[0]!).toBeLessThanOrEqual(a.weeklyDistanceM!);
@@ -433,10 +649,11 @@ describe("generatePlan: properties over random interview answers", () => {
       fc.property(answersArb, todayArb, goalOffsetArb, (a, today, goalOffset) => {
         const draft = run(a, today, goalOffset);
         const v = volumes(draft);
+        const preset = PRESETS[a.goal.distance];
         const history = a.runningHistory;
-        const tierCap = history === "over_3_years" ? 48_000 : history === "1_to_3_years" ? 36_000 : 24_000;
+        const tierCap = preset.tiers[history === "over_3_years" ? "experienced" : history === "1_to_3_years" ? "intermediate" : "beginner"].capM;
         const downEvery = a.pain ? 3 : 4;
-        const extra = Math.max(0, draft.weekCount - 12); // extra base weeks hold the start volume
+        const extra = Math.max(0, draft.weekCount - preset.maxWeeks); // extra base weeks hold the start volume
         for (let w = 1; w < v.length - 2; w++) {
           // A step is at most one growth step (8%) or the return from a down week (1 / 0.88), plus rounding.
           expect(v[w]!, `week ${w + 1}: ${v[w - 1]} to ${v[w]}`).toBeLessThanOrEqual(v[w - 1]! * 1.14 + 300);
@@ -451,7 +668,7 @@ describe("generatePlan: properties over random interview answers", () => {
         expect(codes(draft.warnings)).not.toContain("weekly_growth_too_high");
         expect(codes(draft.warnings)).not.toContain("no_down_week");
         // A goal date inside a too-short plan is before the taper, which the validators rightly flag.
-        if (goalOffset === undefined || goalOffset >= 55) expect(codes(draft.warnings)).not.toContain("no_taper");
+        if (goalOffset === undefined || goalOffset >= preset.minWeeks * 7 - 1) expect(codes(draft.warnings)).not.toContain("no_taper");
       }),
       { numRuns: 300 },
     );
@@ -472,9 +689,9 @@ describe("generatePlan: properties over random interview answers", () => {
 
   it("ends the plan on the goal date, with nothing scheduled after it, when the date is far enough away", () => {
     fc.assert(
-      fc.property(answersArb, todayArb, fc.integer({ min: 55, max: 400 }), (a, today, offset) => {
+      fc.property(answersArb, todayArb, fc.integer({ min: 69, max: 400 }), (a, today, offset) => {
         const goal = addDays(today, offset);
-        const draft = generatePlan({ answers: { ...a, goal: { distance: "5k", date: goal } }, today });
+        const draft = generatePlan({ answers: { ...a, goal: { distance: a.goal.distance, date: goal } }, today });
         expect(draft.goal.date).toBe(goal);
         expect(dayNum(draft.startDate)).toBeGreaterThanOrEqual(dayNum(today));
         expect(dayNum(draft.startDate) + draft.weekCount * 7 - 1).toBe(dayNum(goal));

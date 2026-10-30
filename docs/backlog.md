@@ -63,7 +63,7 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
 - [x] 2.1 Rule engine: 5K preset, table-driven tests over interview answers (runs per week, tier, plan length, day
       constraints), property tests for conservative start and bounded weekly growth; response carries assumptions
       and warnings. needs: 2.8, 2.9
-- [ ] 2.2 Rule engine: 10K and half-marathon presets, strength sessions from a small curated exercise library,
+- [x] 2.2 Rule engine: 10K and half-marathon presets, strength sessions from a small curated exercise library,
       snapshot tests over the 54 base variants (§6.2). needs: 2.1
 - [x] 2.10 Rule engine edge cases (§6.5): goal date too soon (shorten to a minimum, else propose a later date),
       goal date far away (base phase), baseline far below the goal, pain flag selects the cautious variant. needs: 2.1
