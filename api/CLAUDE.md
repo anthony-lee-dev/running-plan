@@ -49,5 +49,11 @@ entry file, not a rewrite.
   time only. On track means 70% or more of the judged sessions done (at least 3 judged). A review looks back at a finished
   week: its review day is the first chosen weekday on or after the week's last day (the last day itself by default),
   and it is due for seven days from then; after an import it is also due once the week has something done. Thresholds are for the coach review (H.1).
+- Plans and sessions (task 2.5): every query is scoped to the signed-in user, so another user's id is a 404. Writes
+  compare the base revision (`If-Match`) atomically; a session write also moves the plan's `contentRevision` in the
+  same D1 batch (a transaction), with later statements guarded by SQLite's `changes()` so a lost race writes
+  nothing. Deletes are tombstones. Creates are idempotent: the request's canonical hash is stored, so a repeat is a
+  200 and the same id with another body a 409. The D1 SQL in `adapters/cloudflare/` may use SQLite features; only
+  the migrations stay portable.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.

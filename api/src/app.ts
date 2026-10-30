@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Deps } from "./ports";
 import { authRoutes } from "./http/auth";
 import { healthRoutes } from "./http/health";
+import { planRoutes } from "./http/plans";
 import { problem } from "./http/problem";
 import { profileRoutes } from "./http/profile";
 
@@ -11,6 +12,7 @@ export function createApp(deps: Deps) {
   app.route("/", healthRoutes(deps));
   app.route("/", authRoutes(deps));
   app.route("/", profileRoutes(deps));
+  app.route("/", planRoutes(deps));
   app.notFound((c) => c.json({ error: "not_found" }, 404));
   app.onError((_error, c) => problem(c, 500, "internal_error", "Something went wrong"));
   return app;
