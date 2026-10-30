@@ -1,6 +1,6 @@
 name: ios-ci
 # Required check "ios" on main. Runs on every PR (see api-ci for why) but only builds
-# when ios/, spec/ or the verify script changed, so other PRs pass in seconds.
+# when ios/, spec/, the API its UI tests run against, or the verify script changed, so other PRs pass in seconds.
 on:
   pull_request:
   push:
@@ -25,7 +25,7 @@ jobs:
           if [[ ! -f ios/project.yml ]]; then
             echo "No iOS project yet; nothing to build."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if git diff --quiet "$BASE" HEAD -- ios spec scripts/verify.sh 2>/dev/null; then
+          if git diff --quiet "$BASE" HEAD -- ios spec api package-lock.json scripts/verify.sh 2>/dev/null; then
             echo "iOS untouched."; echo "run=false" >> "$GITHUB_OUTPUT"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
@@ -36,6 +36,15 @@ jobs:
           xc="$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)"
           if [[ -n "$xc" ]]; then sudo xcode-select -s "$xc"; fi
           xcodebuild -version
+      # The UI tests run against the API on Node (api/test/ui-server), started by verify.sh.
+      - uses: actions/setup-node@v7
+        if: steps.changes.outputs.run == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install npm packages
+        if: steps.changes.outputs.run == 'true'
+        run: npm ci
       - name: Install XcodeGen
         if: steps.changes.outputs.run == 'true'
         run: brew install xcodegen

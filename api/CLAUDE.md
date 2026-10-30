@@ -101,5 +101,8 @@ entry file, not a rewrite.
   against the spec too, and a body the spec forbids (an unknown field, also inside an `allOf`) must get a 400. The
   checker (`test/support/openapi.ts`) uses `@cfworker/json-schema` because workerd blocks Ajv's `new Function`. A new
   endpoint adds its cases there and leaves `NOT_BUILT`; the last test fails for a built operation with no case.
+- UI-test server (task 3.9, `test/ui-server/`): the app with in-memory stores plus `/__test/stats` (successful requests)
+  and `/__test/codes/latest?email=` (the last sign-in code), on `127.0.0.1:8790` only. `npm run ui-test-server -w api`;
+  `scripts/verify.sh ios` starts it for the iOS UI tests. It stays under `test/` so nothing of it reaches the Workers entry.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.

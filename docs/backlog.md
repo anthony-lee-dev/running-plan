@@ -120,7 +120,7 @@ the human confirmed it in a session on 2026-10-30).
       endpoint that exists today (generate, auth, profile, plans and sessions, activities, matches, check-ins).
       Request validation must enforce `unevaluatedProperties: false` (Swift's generator ignores it). Later slices
       add their endpoints to it. needs: 2.3, 2.4, 2.5, 2.11, 2.17
-- [ ] 3.9 iOS UI tests against a local API: start the Node entry (in-memory stores) for the UI test target and point
+- [x] 3.9 iOS UI tests against a local API: start the Node entry (in-memory stores) for the UI test target and point
       the app at it with `API_BASE_URL`; port the interview-to-preview UI test to it. Signing in from a UI test needs
       a known code: an email sender for the Node entry that only runs in tests, never in the Workers entry. The CI
       change in `scripts/` or `.github/` needs the human to merge. needs: 3.3
