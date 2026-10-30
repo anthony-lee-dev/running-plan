@@ -14,6 +14,8 @@ final class PreviewViewModel {
 
     private(set) var state: State = .loading
     private(set) var answers: InterviewAnswers
+    /// The draft on screen with its stored ids; what Save sends.
+    private(set) var current: SavedPreview?
 
     private let generator: PlanGenerating
     private let store: PreviewDraftStoring
@@ -45,6 +47,7 @@ final class PreviewViewModel {
     /// Shows the saved draft when it is for these answers and under 24 hours old; otherwise asks for a new one.
     func load() async {
         if let saved = store.load(now: now()), saved.answers == answers {
+            current = saved
             state = .loaded(PlanPreview(draft: saved.draft))
             return
         }
@@ -65,10 +68,13 @@ final class PreviewViewModel {
         generation += 1
         let mine = generation
         state = .loading
+        current = nil
         do {
             let draft = try await generator.generate(answers: answers, today: today())
             guard mine == generation else { return }
-            store.save(answers: answers, draft: draft, now: now())
+            let preview = SavedPreview(answers: answers, draft: draft, savedAt: now())
+            store.save(preview)
+            current = preview
             state = .loaded(PlanPreview(draft: draft))
         } catch is CancellationError {
             return // the screen went away; nothing to show
