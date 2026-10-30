@@ -43,18 +43,25 @@ struct PreviewView: View {
 
     private func header(subtitle: String?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: Metrics.minTouchTarget, height: Metrics.minTouchTarget)
-            }
-            .foregroundStyle(Palette.ink.color)
-            .accessibilityLabel("Close")
-            .padding(.leading, -12)
             Text("PREVIEW · NOT SAVED YET")
                 .font(.system(size: 12, weight: .semibold))
                 .tracking(0.96)
                 .foregroundStyle(Palette.accentText.color)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // An overlay, so the board's layout (which has no close control) keeps its spacing.
+                .overlay(alignment: .trailing) {
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 18, weight: .semibold))
+                            .frame(width: Metrics.minTouchTarget, height: Metrics.minTouchTarget)
+                            .contentShape(Rectangle())
+                    }
+                    .foregroundStyle(Palette.ink.color)
+                    .accessibilityLabel("Close")
+                    // Closing mid-save would lose the "saved" hand-off for a plan the server already has.
+                    .disabled(saving)
+                    .padding(.trailing, -12)
+                }
             Text("Your suggested plan")
                 .font(.system(size: 34, weight: .bold))
                 .tracking(-0.7)

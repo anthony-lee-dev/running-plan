@@ -78,7 +78,7 @@ final class SaveFlowModel {
 
     func verify(code raw: String) async {
         guard case .code(let email) = step else { return }
-        let code = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let code = raw.filter(\.isNumber) // a pasted "123 456" has a space
         let mine = attempt
         guard await run({ try await self.signIn.verify(email: email, code: code) }), mine == attempt else { return }
         await attemptSave()
