@@ -18,7 +18,7 @@ apiContract("Workers, D1", async () => {
   const EMAIL = { send: async (m: { to: string; subject: string }) => void sent.push(m) };
   return {
     fetch: (request) => worker.fetch(request, { DB: env.DB, JWT_SECRET: SECRET, EMAIL, MAIL_FROM: "plans@example.com" }, ctx),
-    lastCode: (to) => /(\d{6})/.exec(sent.filter((m) => m.to === to).at(-1)!.subject)![1]!,
+    lastCode: (to) => /code is (\d{6})$/.exec(sent.filter((m) => m.to === to).at(-1)!.subject)![1]!,
     reset: async () => {
       await env.DB.batch([env.DB.prepare("DELETE FROM users"), env.DB.prepare("DELETE FROM rate_limits"), env.DB.prepare("DELETE FROM email_codes")]);
     },

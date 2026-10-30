@@ -47,19 +47,24 @@ function operation(op: string): Json {
 /** Follows a `$ref` to `#/components/responses/...`. */
 const resolve = (node: Json): Json => (node.$ref ? (spec.components.responses as Json)[String(node.$ref).split("/").pop()!] : node);
 
-/** Schema errors for a request body (empty when it is valid). */
+/** Schema errors for a request body (empty when it is valid), as `<instance pointer> <message>`. */
 export function requestErrors(op: string, body: unknown): string[] {
   const [method, path] = op.split(" ") as [string, string];
   if (!operation(op).requestBody) throw new Error(`${op} takes no body`);
   return errorsOf(pointer("paths", path, method.toLowerCase(), "requestBody", "content", "application/json", "schema"), body);
 }
 
+/** Fills a spec path's `{params}` with placeholders: a uuid, or 0 for an index. */
+export const placeholderPath = (path: string) =>
+  path.replace(/\{(\w+)\}/g, (_, name: string) => (name.endsWith("Index") ? "0" : "00000000-0000-4000-8000-00000000abcd"));
+
 /** What is wrong with a response: an undocumented status, the wrong content type, or a body off its schema. */
 export async function responseErrors(op: string, res: Response): Promise<string[]> {
   const [method, path] = op.split(" ") as [string, string];
   const responses = operation(op).responses as Json;
   const status = String(res.status);
-  const key = status in responses ? status : "default" in responses ? "default" : undefined;
+  // No `default` responses: the validator does not index sub-schemas under a `default` key.
+  const key = status in responses ? status : undefined;
   const text = await res.text();
   if (!key) return [`${op}: status ${status} is not documented (body: ${text.slice(0, 200)})`];
   const content = resolve(responses[key]).content as Json | undefined;
