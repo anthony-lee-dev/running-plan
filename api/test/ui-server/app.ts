@@ -7,7 +7,7 @@ import { MemoryEmailSender, memoryDeps } from "../../src/adapters/memory";
 
 export interface UiTestServer {
   app: Hono;
-  /** Requests the app answered, by `METHOD /path`. */
+  /** Requests the app answered successfully (status below 400), by `METHOD /path`. */
   counts: Map<string, number>;
 }
 
@@ -24,9 +24,12 @@ export function buildUiTestServer(): UiTestServer {
     return code ? c.json({ code }) : c.json({ error: "no_code" }, 404);
   });
   app.all("*", async (c) => {
-    const key = `${c.req.method} ${new URL(c.req.url).pathname}`;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-    return api.fetch(c.req.raw);
+    const res = await api.fetch(c.req.raw);
+    if (res.status < 400) {
+      const key = `${c.req.method} ${new URL(c.req.url).pathname}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return res;
   });
   return { app, counts };
 }

@@ -3,7 +3,7 @@
 import { serve } from "@hono/node-server";
 import { buildUiTestServer } from "./app";
 
-export const UI_TEST_PORT = 8790;
+const UI_TEST_PORT = 8790; // UI_TEST_API_PORT in scripts/verify.sh
 const { app } = buildUiTestServer();
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: UI_TEST_PORT });
 console.log(`ui-test api (in-memory) on http://127.0.0.1:${UI_TEST_PORT}`);

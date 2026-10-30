@@ -90,7 +90,7 @@ pick_ios_sim() {
   '
 }
 
-UI_TEST_API_PORT=8790
+UI_TEST_API_PORT=8790 # UI_TEST_PORT in api/test/ui-server/main.ts
 UI_TEST_API_URL="http://127.0.0.1:${UI_TEST_API_PORT}"
 UI_TEST_API_PID=""
 
@@ -104,7 +104,7 @@ start_ui_test_api() {
   echo "== ios: start the UI-test API on $UI_TEST_API_URL"
   (cd api && exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"${TMPDIR:-/tmp}/ui-test-api.log" 2>&1 &
   UI_TEST_API_PID=$!
-  trap stop_ui_test_api EXIT
+  trap stop_ui_test_api EXIT # the only EXIT trap in this script; chain it if another is added
   for _ in $(seq 1 60); do
     if curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then return 0; fi
     sleep 0.5

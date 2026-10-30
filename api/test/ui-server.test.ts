@@ -10,6 +10,10 @@ describe("UI-test API server", () => {
     expect((await app.request("/v1/plans/generate", { method: "POST", headers: json, body: JSON.stringify(body) })).status).toBe(200);
     const stats = (await (await app.request("/__test/stats")).json()) as { requests: Record<string, number> };
     expect(stats.requests["POST /v1/plans/generate"]).toBe(1);
+    // A failed generate does not count: verify.sh reads this to know a plan really came from here.
+    await app.request("/v1/plans/generate", { method: "POST", headers: json, body: JSON.stringify({ ...body, extra: 1 }) });
+    const after = (await (await app.request("/__test/stats")).json()) as { requests: Record<string, number> };
+    expect(after.requests["POST /v1/plans/generate"]).toBe(1);
   });
 
   it("gives a test the last sign-in code for an address, which signs in", async () => {
