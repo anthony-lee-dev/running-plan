@@ -2,7 +2,8 @@
   "name": "running-plan",
   "private": true,
   "workspaces": [
-    "api"
+    "api",
+    "web"
   ],
   "scripts": {
     "verify": "bash scripts/verify.sh all"

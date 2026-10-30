@@ -27,8 +27,7 @@ struct PlaceholderScreen: View {
         .toolbarBackground(Palette.tabBar.color, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .fullScreenCover(isPresented: $showInterview) {
-            // The preview (task 3.3) takes the answers; until then finishing just closes the interview.
-            InterviewView(onFinish: { _, _ in showInterview = false }, onClose: { showInterview = false })
+            OnboardingFlow(dependencies: .live, onClose: { showInterview = false })
         }
     }
 }

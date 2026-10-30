@@ -54,9 +54,34 @@ final class InterviewFlow {
     private var answered: Set<InterviewQuestion> = []
     /// Kept apart from `answers` so two inputs on one screen can be set in either order.
     private(set) var recentDistance: GoalDistance?
-    private(set) var recentMinutes: Int?
+    /// Kept in seconds so a time like 28:30 survives "Change an answer"; `recentMinutes` is what the stepper shows.
+    private(set) var recentSeconds: Int?
+    var recentMinutes: Int? { recentSeconds.map { $0 / 60 } }
 
     static let maxUnavailableDays = 4
+
+    init() {}
+
+    /// Starts from earlier answers, so "Change an answer" shows what the user already said.
+    init(prefilledWith earlier: InterviewAnswers) {
+        answers = earlier
+        answered.insert(.goalDistance)
+        if earlier.goal.date != nil || earlier.goal.targetTimeSec != nil { answered.insert(.goalDateAndTime) }
+        if let result = earlier.recentResult {
+            recentDistance = GoalDistance.allCases.first { $0.metres == result.distanceM }
+            recentSeconds = result.timeSec
+            answered.insert(.recentResult)
+        }
+        if earlier.weeklyDistanceM != nil { answered.insert(.weeklyDistance) }
+        if earlier.longestRunM != nil { answered.insert(.longestRun) }
+        if earlier.runningHistory != nil { answered.insert(.history) }
+        if earlier.runsPerWeek != nil || earlier.unavailableDays != nil { answered.insert(.runsAndDays) }
+        if earlier.longRunDay != nil { answered.insert(.longRunDay) }
+        if earlier.pain != nil { answered.insert(.pain) }
+        if earlier.strength != nil { answered.insert(.strength) }
+        if earlier.targetDisplay != nil { answered.insert(.targetDisplay) }
+        if earlier.heartRate != nil { answered.insert(.heartRate) }
+    }
 
     var question: InterviewQuestion { InterviewQuestion.allCases[index] }
     var progress: Double { Double(index + 1) / Double(InterviewQuestion.allCases.count) }
@@ -110,9 +135,9 @@ final class InterviewFlow {
 
     func setRecentResult(distance: GoalDistance? = nil, minutes: Int? = nil) {
         if let distance { recentDistance = distance }
-        if let minutes { recentMinutes = max(minutes, 2) }
-        if let d = recentDistance, let m = recentMinutes {
-            answers.recentResult = .init(distanceM: d.metres, timeSec: min(m * 60, 28_800))
+        if let minutes { recentSeconds = max(minutes, 2) * 60 }
+        if let d = recentDistance, let seconds = recentSeconds {
+            answers.recentResult = .init(distanceM: d.metres, timeSec: min(seconds, 28_800))
             answered.insert(.recentResult)
         }
     }
@@ -204,7 +229,7 @@ final class InterviewFlow {
         switch question {
         case .goalDistance: answers.goal.distance = .fiveK
         case .goalDateAndTime: answers.goal.date = nil; answers.goal.targetTimeSec = nil
-        case .recentResult: answers.recentResult = nil; recentDistance = nil; recentMinutes = nil
+        case .recentResult: answers.recentResult = nil; recentDistance = nil; recentSeconds = nil
         case .weeklyDistance: answers.weeklyDistanceM = nil
         case .longestRun: answers.longestRunM = nil
         case .history: answers.runningHistory = nil

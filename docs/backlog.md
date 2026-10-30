@@ -71,10 +71,10 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       strict schema bounds, no persistence, no logging of interview answers, bounded compute and response size.
       Rate limiting goes through a `RateLimiter` port; the Workers implementation lives in `adapters/cloudflare/`.
       needs: 2.1
-- [ ] 2.4 `ask first` Auth: email sign-in with a one-time code, refresh tokens with client-type scopes, account
+- [x] 2.4 `ask first` Auth: email sign-in with a one-time code, refresh tokens with client-type scopes, account
       delete. Sending email goes through an `EmailSender` port; the dev adapter logs the code, and the task
       proposes a provider. needs: 1.5
-- [ ] 2.5 Plans and sessions CRUD, including blank plans and user-owned custom sessions; edits carry the base
+- [x] 2.5 Plans and sessions CRUD, including blank plans and user-owned custom sessions; edits carry the base
       revision. needs: 2.4
 - [ ] 2.6 `POST /v1/sync` for the offline edit queue: idempotency keys, cursor, per-session revision conflicts,
       tombstones. needs: 2.5
@@ -88,12 +88,18 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       regenerates future weeks only (property test: keeps past and user-owned sessions) and is delivered as a
       proposal. needs: 2.12, 2.13
 - [ ] 2.15 `GET /v1/plans/{id}/progress`: adherence, volume trend, key and strength sessions completed, goal
-      countdown. needs: 2.12
+      countdown. The computation is done (`api/src/domain/insights.ts`, `computeProgress`); the route and its store
+      reads are left. needs: 2.12
 - [ ] 2.16 Account data export (§10). needs: 2.12
-- [ ] 2.17 Profile API: target display, derived pace ranges and their provenance, scheduling preferences, review
+- [x] 2.17 Profile API: target display, derived pace ranges and their provenance, scheduling preferences, review
       frequency and day (§5, §6.6a). needs: 2.4
+- [ ] 2.20 Spec clarification for `PATCH /v1/profile` (own PR, found by the 2.17 review): say that `heartRate`,
+      `scheduling` and `review` replace their whole section (the only way to clear a field), and decide whether
+      ranges may be equal and sub-objects reject unknown keys, as the API does today. needs: 2.17
 - [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
       feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. needs: 2.12, 2.17
+- [ ] 2.19 Prune expired rows: `email_codes`, `rate_limits` windows and expired or rotated `refresh_tokens` (a scheduled
+      Worker or on write), found by the 2.4 review. needs: 2.4
 - [ ] 2.7 Contract tests from `spec/openapi.yaml`, run against both the Workers and the Node entry. Request
       validation must enforce `unevaluatedProperties: false` (Swift's generator ignores it). needs: every
       other phase 2 task
@@ -109,7 +115,7 @@ Logic is tested with Swift Testing; each screen gets a snapshot test against `de
       Xcode and `xcodebuild` skips that only with a safety flag). `verify.sh ios` fails if it is stale. needs: 1.3
 - [x] 3.2 Interview screen (DK-Interview): Appendix B questions, one per screen, skippable with defaults.
       needs: 1.3, 0.5
-- [ ] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
+- [x] 3.3 Preview with no account (DK-Preview): whole plan, week 1, a sample session, assumptions and warnings;
       changing an answer regenerates; draft kept on the device for 24 hours (unit test for expiry).
       needs: 3.1, 3.2, 0.5
 - [ ] 3.4 Email sign-in and save plan. needs: 3.3
@@ -119,6 +125,9 @@ Logic is tested with Swift Testing; each screen gets a snapshot test against `de
 - [ ] 3.7 `ask first` Goal and settings: goal, re-run interview, review frequency and day, target display, account,
       privacy, data export. There is no DK board for it, so the plan proposes a layout from the existing tokens.
       needs: 3.4, 2.17
+- [ ] 3.8 Dynamic Type: the interview and preview screens use fixed system font sizes (`.font(.system(size:))`), which
+      do not scale (docs/design-notes.md asks for `Font.custom(_, size:, relativeTo:)`). Bundle the fonts, scale every
+      size, let rows wrap instead of clipping, and re-run the snapshot tests at a large size. needs: 3.3
 
 **Gate C:** snapshot tests match the dark boards; the interview-to-preview UI test passes with no account.
 
