@@ -2695,6 +2695,11 @@ public struct Client: APIProtocol {
     /// returned so the user can keep theirs (resend with the new base revision) or take the other.
     /// Deletes are tombstones and come back in `changes` with `deletedAt` set.
     ///
+    /// The server does a bounded amount of work per call (the hosting platform caps database queries per
+    /// request), so it may stop before the end of `operations`. `results` then covers only the first
+    /// operations, in order; the rest were not looked at and the client resends them in its next call.
+    /// A client keeps calling while operations remain unanswered or `hasMore` is true.
+    ///
     ///
     /// - Remark: HTTP `POST /v1/sync`.
     /// - Remark: Generated from `#/paths//v1/sync/post(sync)`.
