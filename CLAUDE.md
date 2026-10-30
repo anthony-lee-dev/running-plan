@@ -46,6 +46,8 @@ set up each session on their watch by hand, then import results and review. Live
 ## Working style
 
 - One PR = one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
+- Build in vertical slices: `docs/backlog.md` groups tasks by feature, each with only the API and iOS work it needs
+  and an end-to-end check (contract tests, a UI test against the local API, a device check) before the next slice.
 - Pick work from `docs/backlog.md` (`/next-task`). Never report a backlog task as done without ticking it in
   `docs/backlog.md` in the same change, including work done outside `/next-task` (a check run in a normal
   session, say). When the work has no PR of its own, tick it, say in your reply that the tick is uncommitted,
