@@ -52,34 +52,41 @@ const values = (a: StoredActivity) => [
 
 const ORDER = "ORDER BY local_date DESC, started_at DESC, id DESC";
 
-/** Activities in D1. An import is one read and one batch, so even 200 activities stay well inside the query limit. */
+/** Activities in D1. An import is one read and one batch, so even 200 activities stay well inside the query limit.
+ * The D1 SQL here may use SQLite features (json_each); only the migrations stay portable. */
 export class D1ActivityStore implements ActivityStore {
   constructor(private readonly db: D1Database) {}
 
-  async inDateRange(userId: string, from: string, to: string) {
+  async candidates(userId: string, from: string, to: string, keys: { source: string; externalId: string }[]) {
+    // The keys go in as one JSON parameter: a statement may bind at most 100 values.
     const { results } = await this.db
-      .prepare(`SELECT * FROM activities WHERE user_id = ? AND deleted_at IS NULL AND local_date BETWEEN ? AND ? ${ORDER}`)
-      .bind(userId, from, to)
+      .prepare(
+        `SELECT * FROM activities WHERE user_id = ? AND (local_date BETWEEN ? AND ?
+           OR EXISTS (SELECT 1 FROM json_each(?) AS k WHERE json_extract(k.value, '$[0]') = source AND json_extract(k.value, '$[1]') = external_id))
+         ${ORDER}`,
+      )
+      .bind(userId, from, to, JSON.stringify(keys.map((k) => [k.source, k.externalId])))
       .all<Row>();
     return results.map(toActivity);
   }
 
   async applyImport(userId: string, creates: StoredActivity[], updates: StoredActivity[]) {
     const statements = [
-      // A source id seen outside the read window would hit the unique key; skipping it keeps the batch whole.
+      // No OR IGNORE: a racing insert of the same source id fails the whole batch, so no result claims a row that
+      // was not written. The client retries and then sees a duplicate.
       ...creates.map((a) =>
         this.db
           .prepare(
             `INSERT INTO activities (source, external_id, source_app, workout_type, started_at, local_date, duration_sec, distance_m,
                avg_heart_rate, max_heart_rate, avg_cadence, elevation_gain_m, disposition, revision, updated_at, id, user_id, imported_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .bind(...values(a), a.id, userId, a.importedAt),
       ),
       ...updates.map((a) =>
         this.db
           .prepare(
-            `UPDATE OR IGNORE activities SET source = ?, external_id = ?, source_app = ?, workout_type = ?, started_at = ?, local_date = ?,
+            `UPDATE activities SET source = ?, external_id = ?, source_app = ?, workout_type = ?, started_at = ?, local_date = ?,
                duration_sec = ?, distance_m = ?, avg_heart_rate = ?, max_heart_rate = ?, avg_cadence = ?, elevation_gain_m = ?,
                disposition = ?, revision = ?, updated_at = ?
              WHERE id = ? AND user_id = ?`,

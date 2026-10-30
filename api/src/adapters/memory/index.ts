@@ -280,8 +280,10 @@ export class MemoryPlanStore implements PlanStore {
 }
 
 /** Newest first: local date, then start, then id. Negative when `a` comes first. */
+// Plain code-unit comparison, as SQLite's default (binary) collation orders TEXT.
+const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const newestFirst = (a: { localDate: string; startedAt: string; id: string }, b: { localDate: string; startedAt: string; id: string }) =>
-  b.localDate.localeCompare(a.localDate) || b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id);
+  cmp(b.localDate, a.localDate) || cmp(b.startedAt, a.startedAt) || cmp(b.id, a.id);
 
 export class MemoryActivityStore implements ActivityStore {
   private rows = new Map<string, { userId: string; activity: StoredActivity }>();
@@ -294,18 +296,22 @@ export class MemoryActivityStore implements ActivityStore {
     return [...this.rows.values()].filter((r) => r.userId === userId).map((r) => structuredClone(r.activity));
   }
 
-  async inDateRange(userId: string, from: string, to: string) {
-    return (await this.mine(userId)).filter((a) => a.localDate >= from && a.localDate <= to);
+  async candidates(userId: string, from: string, to: string, keys: { source: string; externalId: string }[]) {
+    const wanted = new Set(keys.map((k) => `${k.source}\u0000${k.externalId}`));
+    return (await this.mine(userId)).filter((a) => (a.localDate >= from && a.localDate <= to) || wanted.has(`${a.source}\u0000${a.externalId}`));
   }
 
   async applyImport(userId: string, creates: StoredActivity[], updates: StoredActivity[]) {
-    if (!(await this.auth.userExists(userId))) return;
+    if (!(await this.auth.userExists(userId))) throw new Error("user does not exist");
     const taken = (a: StoredActivity) => [...this.rows.values()].some((r) => r.userId === userId && r.activity.source === a.source && r.activity.externalId === a.externalId && r.activity.id !== a.id);
-    for (const a of creates) if (!this.rows.has(a.id) && !taken(a)) this.rows.set(a.id, { userId, activity: structuredClone(a) });
+    // Check everything first, as the database's transaction would roll back on the first failure.
+    for (const a of creates) if (this.rows.has(a.id) || taken(a)) throw new Error("activity already exists");
     for (const a of updates) {
       const row = this.rows.get(a.id);
-      if (row && row.userId === userId && !taken(a)) row.activity = structuredClone(a);
+      if (!row || row.userId !== userId || taken(a)) throw new Error("activity update failed");
     }
+    for (const a of creates) this.rows.set(a.id, { userId, activity: structuredClone(a) });
+    for (const a of updates) this.rows.get(a.id)!.activity = structuredClone(a);
   }
 
   async list(userId: string, query: ActivityQuery) {

@@ -83,10 +83,13 @@ export function planImport(existing: StoredActivity[], inputs: ActivityFields[],
       created.add(activity.id);
       return { externalId: input.externalId, status: "created" as const, activityId: activity.id };
     }
-    if (exact && sameFields(hit, input)) return { externalId: input.externalId, status: "duplicate" as const, activityId: hit.id };
-    // The newer record wins; what the user decided about the activity stays.
+    // An exact hit takes the newer values (a missing field never erases one). A re-write under another id only fills
+    // in what the stored record lacks: it keeps its own id and values, so two copies of one run in Health settle
+    // instead of swapping on every sync.
+    const merged: ActivityFields = exact ? { ...fieldsOf(hit), ...fieldsOf(input) } : { ...fieldsOf(input), ...fieldsOf(hit) };
+    if (sameFields(hit, merged)) return { externalId: input.externalId, status: exact ? ("duplicate" as const) : ("updated" as const), activityId: hit.id };
     const next: StoredActivity = {
-      ...fieldsOf(input),
+      ...merged,
       id: hit.id,
       disposition: hit.disposition,
       importedAt: hit.importedAt,
@@ -111,7 +114,7 @@ const isObject = (v: unknown): v is Obj => v !== null && typeof v === "object" &
 const isInt = (v: unknown, min: number, max: number): v is number => Number.isInteger(v) && (v as number) >= min && (v as number) <= max;
 const SOURCES: readonly string[] = ["apple_health", "manual"];
 const TYPES: readonly string[] = ["running", "strength", "cycling", "swimming", "walking", "other"];
-const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/;
+const DATE_TIME = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/i;
 
 export function isLocalDate(v: unknown): v is string {
   if (typeof v !== "string" || !/^20\d{2}-\d{2}-\d{2}$/.test(v)) return false;
@@ -141,7 +144,9 @@ function parseActivity(raw: unknown, base: string, errors: FieldError[]): Activi
   if (!(typeof raw.externalId === "string" && raw.externalId.length >= 1 && raw.externalId.length <= 128)) errors.push({ path: `${base}/externalId`, message: "The source record id, 1 to 128 characters" });
   if ("sourceApp" in raw && !(typeof raw.sourceApp === "string" && raw.sourceApp.length <= 64)) errors.push({ path: `${base}/sourceApp`, message: "Up to 64 characters" });
   if (!(typeof raw.workoutType === "string" && TYPES.includes(raw.workoutType))) errors.push({ path: `${base}/workoutType`, message: `Use ${TYPES.join(", ")}` });
-  if (!(typeof raw.startedAt === "string" && DATE_TIME.test(raw.startedAt) && !Number.isNaN(Date.parse(raw.startedAt)))) {
+  const start = typeof raw.startedAt === "string" ? DATE_TIME.exec(raw.startedAt) : null;
+  // The date part is checked as a calendar date: Date.parse would roll 30 February over to March.
+  if (!(start && isLocalDate(start[1]) && !Number.isNaN(Date.parse(raw.startedAt as string)))) {
     errors.push({ path: `${base}/startedAt`, message: "A date and time with its UTC offset, like 2026-10-28T07:00:00-04:00" });
   }
   if (!isLocalDate(raw.localDate)) errors.push({ path: `${base}/localDate`, message: "The local date it started, YYYY-MM-DD" });

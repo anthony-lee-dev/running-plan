@@ -53,7 +53,8 @@ export function activityRoutes(deps: Deps) {
       const userId = c.get("userId");
       const dates = parsed.value.map((a) => a.localDate).sort();
       // A day either side, so a record whose local date moved with a time zone still dedupes.
-      const existing = await deps.activities.inDateRange(userId, shiftDate(dates[0]!, -1), shiftDate(dates.at(-1)!, 1));
+      const keys = parsed.value.map((a) => ({ source: a.source, externalId: a.externalId }));
+      const existing = await deps.activities.candidates(userId, shiftDate(dates[0]!, -1), shiftDate(dates.at(-1)!, 1), keys);
       const plan = planImport(existing, parsed.value, deps.clock.now().toISOString(), () => deps.ids.uuid());
       await deps.activities.applyImport(userId, plan.creates, plan.updates);
       return c.json({ results: plan.results });

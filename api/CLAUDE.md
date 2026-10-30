@@ -64,8 +64,10 @@ entry file, not a rewrite.
   answers: an engine error is replaced by a generic one before `onError` sees it.
 - Activities (task 2.11, `src/domain/activities.ts`): an upload dedupes on `source` + `externalId` (unchanged is
   `duplicate`, changed is `updated`) and, for Garmin re-writes with a new id, on the same type with the start within
-  2 minutes and duration and distance within 3% (60 s, 100 m floors); a match adopts the new record but keeps the
-  disposition. The D1 store does one windowed read (a day either side of the batch) and one `db.batch` write. Keep
+  2 minutes and duration and distance within 3% (60 s, 100 m floors). Such a re-write keeps the stored id and values
+  and only fills gaps, so two copies of one run in Health settle; the disposition always stays. The D1 store does one
+  read (a day either side of the batch, plus the batch's source ids at any date) and one `db.batch` write, which fails
+  whole on a clashing insert rather than dropping it. Keep
   every request to a few queries: Workers Free allows 50 D1 queries per request, and a batch counts as one.
 - Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
   `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after

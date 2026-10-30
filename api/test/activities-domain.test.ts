@@ -45,11 +45,22 @@ describe("planImport", () => {
     expect(plan.updates[0]).toMatchObject({ id: stored().id, avgHeartRate: 150, disposition: "extra", revision: 2 });
   });
 
-  it("maps a re-written record (new id, start a little later, same run) to the existing activity", () => {
-    const rewrite = run({ externalId: "HK-2", sourceApp: "Garmin Connect", startedAt: "2026-10-28T07:01:00-04:00", durationSec: 1810, distanceM: 5040 });
+  it("maps a re-written record (new id, start a little later, same run) to the existing activity, filling only gaps", () => {
+    const rewrite = run({ externalId: "HK-2", sourceApp: "Garmin Connect", startedAt: "2026-10-28T07:01:00-04:00", durationSec: 1810, distanceM: 5040, avgHeartRate: 148 });
     const plan = planImport([stored()], [rewrite], NOW, ids);
     expect(plan.results[0]).toEqual({ externalId: "HK-2", status: "updated", activityId: stored().id });
-    expect(plan.updates[0]).toMatchObject({ id: stored().id, externalId: "HK-2", sourceApp: "Garmin Connect" });
+    expect(plan.updates[0]).toEqual({ ...stored(), sourceApp: "Garmin Connect", avgHeartRate: 148, revision: 2, updatedAt: NOW });
+  });
+
+  it("settles when two copies of one run stay in Health: no id swapping, no revision churn", () => {
+    const copy = run({ externalId: "HK-2", sourceApp: "Garmin Connect", durationSec: 1810 });
+    const first = planImport([], [run(), copy], NOW, ids);
+    const after = first.creates;
+    const second = planImport(after, [run(), copy], NOW, ids);
+    expect(second.results.map((r) => r.status)).toEqual(["duplicate", "updated"]);
+    expect(second.creates).toEqual([]);
+    expect(second.updates).toEqual([]);
+    expect(planImport(after, [copy, run()], NOW, ids).updates).toEqual([]);
   });
 
   it("compares start times across UTC offsets", () => {
@@ -77,7 +88,7 @@ describe("planImport", () => {
     expect(plan.results.map((r) => r.status)).toEqual(["created", "duplicate", "updated"]);
     expect(new Set(plan.results.map((r) => r.activityId)).size).toBe(1);
     expect(plan.creates).toHaveLength(1);
-    expect(plan.creates[0]!.externalId).toBe("HK-2");
+    expect(plan.creates[0]!.externalId).toBe("HK-1");
     expect(plan.updates).toEqual([]);
   });
 
@@ -107,6 +118,8 @@ describe("parseActivityBatch", () => {
     ["an unknown workout type", { activities: [run({ workoutType: "yoga" as never })] }, "/activities/0/workoutType"],
     ["a start without an offset", { activities: [run({ startedAt: "2026-10-28T07:00:00" })] }, "/activities/0/startedAt"],
     ["a start that is not a time", { activities: [run({ startedAt: "yesterday" })] }, "/activities/0/startedAt"],
+    ["a start on 30 February", { activities: [run({ startedAt: "2026-02-30T07:00:00Z" })] }, "/activities/0/startedAt"],
+    ["a start at hour 24", { activities: [run({ startedAt: "2026-10-28T24:00:00Z" })] }, "/activities/0/startedAt"],
     ["a local date that is not a date", { activities: [run({ localDate: "2026-02-30" })] }, "/activities/0/localDate"],
     ["a zero duration", { activities: [run({ durationSec: 0 })] }, "/activities/0/durationSec"],
     ["a distance over 400 km", { activities: [run({ distanceM: 400001 })] }, "/activities/0/distanceM"],
