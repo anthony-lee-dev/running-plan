@@ -135,7 +135,7 @@ the human confirmed it in a session on 2026-10-30).
 
 ## Slice 2: Sign in and save my plan
 
-- [ ] 3.4 Email sign-in and save plan: the Save button on the preview signs in with a one-time code, then creates the
+- [x] 3.4 Email sign-in and save plan: the Save button on the preview signs in with a one-time code, then creates the
       plan; tokens in the Keychain, refresh on 401; a way to close the preview. needs: 3.3, 3.9
 
 **Done when:** a UI test goes interview, preview, sign in, saved plan; device check: sign in with a real email code

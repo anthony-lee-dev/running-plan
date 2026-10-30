@@ -30,7 +30,15 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   environment variable or the `apiBaseURL` user default names another (for example `http://localhost:8787` in the
   simulator; always include the scheme: a value without one falls back to the deployed API); a real iPhone cannot
   reach `localhost` on the Mac. The app target links the runtime packages itself (see `project.yml`).
-- Saving the plan (sign-in, `createPlan`) is task 3.4: the Save button does nothing yet.
+- Save (task 3.4): `SaveFlowModel` signs in with an emailed code when needed (`SignInView` sheet), then `APIPlanSaver`
+  creates the plan from the stored draft. The draft keeps client-assigned plan and session ids (`PlanIDs`), so a
+  repeated save replays instead of duplicating; a saved draft is cleared, and a draft over 24 hours old is refused.
+  Stored tokens the server rejects lead back to sign-in without an error. The preview's close button keeps the draft.
+- Build every client with `APIConfiguration.client(...)`: the server's timestamps carry milliseconds, which the
+  OpenAPI runtime's default date format rejects (a save then fails after the server stored the plan).
+- SwiftUI: an `.accessibilityIdentifier` on a container is copied to every child unless the container is marked
+  `.accessibilityElement(children: .contain)` first; and read observable state in `body`, not only inside a
+  `Binding(get:)` closure, or the view does not redraw when it changes.
 
 ## Signing in (task 3.4)
 
@@ -44,6 +52,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Tokens live in the Keychain (`KeychainTokenStore`), one item per API host and port, so deployed tokens never go to
   a local server. Never log them or put them in UserDefaults. Keychain items survive a reinstall: UI tests pass
   `-auth.reset YES` to start signed out.
+- The save UI test signs in with a fresh address each run and reads the code from `/__test/codes/latest`.
 
 ## UI tests against a local API (task 3.9)
 

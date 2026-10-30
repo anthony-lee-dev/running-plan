@@ -4,6 +4,8 @@ import SwiftUI
 struct PlaceholderScreen: View {
     let tab: AppTab
     @State private var showInterview = false
+    /// Set once a plan is saved, until the Next screen (task 3.5) shows the plan itself.
+    @State private var savedPlan = false
 
     var body: some View {
         ZStack {
@@ -13,7 +15,12 @@ struct PlaceholderScreen: View {
                     .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(Palette.ink.color)
                     .accessibilityIdentifier(tab.screenIdentifier)
-                if tab == .next {
+                if tab == .next && savedPlan {
+                    Text("Your plan is saved")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Palette.accentText.color)
+                        .accessibilityIdentifier("plan.saved")
+                } else if tab == .next {
                     // Empty state of Next (docs/design-notes.md): a way into the interview until the preview lands.
                     Button("Set a goal") { showInterview = true }
                         .font(.system(size: 17, weight: .semibold))
@@ -27,7 +34,10 @@ struct PlaceholderScreen: View {
         .toolbarBackground(Palette.tabBar.color, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .fullScreenCover(isPresented: $showInterview) {
-            OnboardingFlow(dependencies: .live, onClose: { showInterview = false })
+            OnboardingFlow(dependencies: .live, onClose: { showInterview = false }, onSaved: { _ in
+                savedPlan = true
+                showInterview = false
+            })
         }
     }
 }

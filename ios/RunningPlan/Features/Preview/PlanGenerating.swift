@@ -89,6 +89,27 @@ enum APIConfiguration {
     }
 
     static func liveGenerator() -> PlanGenerating {
-        APIPlanGenerator(client: Client(serverURL: baseURL, transport: URLSessionTransport()), deviceID: DeviceIdentity.current())
+        APIPlanGenerator(client: client(serverURL: baseURL, transport: URLSessionTransport()), deviceID: DeviceIdentity.current())
+    }
+
+    /// Every client the app makes. The server writes timestamps with milliseconds (JavaScript's `toISOString`), which
+    /// the runtime's default date format rejects, so dates are read with or without them.
+    static func client(serverURL: URL, transport: ClientTransport, middlewares: [ClientMiddleware] = []) -> Client {
+        Client(serverURL: serverURL, configuration: Configuration(dateTranscoder: dateTranscoder), transport: transport, middlewares: middlewares)
+    }
+
+    static let dateTranscoder: DateTranscoder = FlexibleISO8601()
+}
+
+/// ISO 8601 dates, written with milliseconds and read with or without them.
+struct FlexibleISO8601: DateTranscoder {
+    func encode(_ date: Date) throws -> String {
+        date.formatted(.iso8601.year().month().day().time(includingFractionalSeconds: true).timeZone(separator: .omitted))
+    }
+
+    func decode(_ text: String) throws -> Date {
+        if let date = try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(text) { return date }
+        if let date = try? Date.ISO8601FormatStyle().parse(text) { return date }
+        throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Not an ISO 8601 date: \(text)"))
     }
 }

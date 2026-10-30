@@ -1,3 +1,4 @@
+import APIClient
 import Foundation
 import Testing
 @testable import RunningPlan
@@ -20,5 +21,12 @@ struct APIConfigurationTests {
 
     @Test func anUnusableValueFallsBackToTheDeployedAPI() {
         #expect(APIConfiguration.baseURL(environment: ["API_BASE_URL": ""], override: nil) == APIConfiguration.deployedURL)
+    }
+
+    @Test(arguments: ["2026-10-30T19:56:28.041Z", "2026-10-30T19:56:28Z"])
+    func datesFromTheServerAreReadWithOrWithoutMilliseconds(text: String) throws {
+        let date = try APIConfiguration.dateTranscoder.decode(text)
+        #expect(abs(date.timeIntervalSince1970 - 1_793_390_188) < 1)
+        #expect(try APIConfiguration.dateTranscoder.decode(APIConfiguration.dateTranscoder.encode(date)) == date)
     }
 }
