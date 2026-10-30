@@ -32,6 +32,19 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   reach `localhost` on the Mac. The app target links the runtime packages itself (see `project.yml`).
 - Saving the plan (sign-in, `createPlan`) is task 3.4: the Save button does nothing yet.
 
+## Signing in (task 3.4)
+
+- `Features/Account/`: `AuthSession` (an actor) signs in with an emailed code (`clientType: ios`) and refreshes the
+  access token. The server revokes the whole token family when a rotated refresh token is reused, so refreshes run
+  one at a time and there is exactly one session per run (`APIConfiguration.liveSession`); never build a second.
+  Only a 400 or 401 from refresh signs out; offline or a server error keeps the tokens.
+- `AuthMiddleware` adds `Authorization: Bearer` to every operation except the public ones (health, auth, generate),
+  and on a 401 retries once with the session's fresh token. Use `APIConfiguration.liveSignedInClient()` for
+  signed-in calls.
+- Tokens live in the Keychain (`KeychainTokenStore`), one item per API host and port, so deployed tokens never go to
+  a local server. Never log them or put them in UserDefaults. Keychain items survive a reinstall: UI tests pass
+  `-auth.reset YES` to start signed out.
+
 ## UI tests against a local API (task 3.9)
 
 - UI tests that need the API run against the in-memory UI-test server (`api/test/ui-server`, `127.0.0.1:8790`),
