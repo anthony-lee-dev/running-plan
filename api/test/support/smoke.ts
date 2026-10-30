@@ -1,4 +1,4 @@
-// Smoke checks safe to run against the deployed API: nothing is stored and no account is needed. They catch a
+// Smoke checks safe to run against the deployed API: no account, and nothing stored but the rate limiter's counters. They catch a
 // deploy that has fallen behind `main` (an endpoint missing, an older engine) or is misconfigured (a missing secret
 // or binding answers 500). `test/smoke-local.test.ts` runs them against the app in-process so they stay correct;
 // `npm run smoke -w api` runs them against a URL.
@@ -37,6 +37,14 @@ export function smokeSuite(name: string, fetch: Fetch, base = "http://localhost"
       expect(await responseErrors("POST /v1/plans/generate", res.clone())).toEqual([]);
       expect(res.status).toBe(200);
       expect(((await res.json()) as { engine: { version: string } }).engine.version).toBe(ENGINE_VERSION);
+    });
+
+    // The 401 sweep below only means "deployed" if an unknown path answers 404 rather than 401 without a token,
+    // so the token check must sit on each route, not on a whole prefix.
+    it("an unknown path under a signed-in prefix answers 404 without a token", async () => {
+      const prefixes = ["/v1/plans/x", "/v1/sessions/x", "/v1/activities/x", "/v1/profile", "/v1/account"];
+      const statuses = await Promise.all(prefixes.map(async (p) => `${p}/not-a-route ${(await send("GET", `${p}/not-a-route`)).status}`));
+      expect(statuses).toEqual(prefixes.map((p) => `${p}/not-a-route 404`));
     });
 
     it("every built operation that needs a token is deployed: it answers 401, not 404", async () => {

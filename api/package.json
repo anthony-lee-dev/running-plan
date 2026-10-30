@@ -8,7 +8,7 @@
     "ui-test-server": "tsx test/ui-server/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "smoke": "SMOKE_URL=\"${SMOKE_URL:-https://running-plan-api.anthonyhklee.workers.dev}\" vitest run --project smoke",
+    "smoke": "SMOKE=1 vitest run --project smoke",
     "deploy": "wrangler deploy"
   },
   "dependencies": {

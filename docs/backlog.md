@@ -127,7 +127,8 @@ the human confirmed it in a session on 2026-10-30).
       change in `scripts/` or `.github/` needs the human to merge. needs: 3.3
 
 - [x] 2.22 Smoke test for the deployed API (`npm run smoke -w api`, any URL with `SMOKE_URL`): health, a generate
-      from the engine version on `main`, and every built signed-in operation answering 401 rather than 404. Read-only,
+      from the engine version on `main`, every built signed-in operation answering 401 rather than 404, and an unknown
+      path under a signed-in prefix answering 404 (so plan and session routes check their token per route). Read-only,
       no account. Also runs in-process in verify so it stays correct. needs: 2.7
 
 **Done when:** both run in CI, and the interview-to-preview UI test passes against the local API.

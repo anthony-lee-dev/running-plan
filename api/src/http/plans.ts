@@ -73,10 +73,8 @@ function decodeCursor(text: string): { startDate: string; id: string } | undefin
 
 export function planRoutes(deps: Deps) {
   const app = new Hono<{ Variables: AuthVariables }>();
+  // On each route, not a whole prefix, so a path that is not a route is a 404 even without a token.
   const auth = requireScope(deps, "app");
-  app.use("/v1/plans", auth);
-  app.use("/v1/plans/*", auth);
-  app.use("/v1/sessions/*", auth);
 
   const now = () => deps.clock.now().toISOString();
   const notFound = (c: Context) => problem(c, 404, "not_found", "Not found");
@@ -105,7 +103,7 @@ export function planRoutes(deps: Deps) {
     return c.json(body, status);
   }
 
-  app.get("/v1/plans", async (c) => {
+  app.get("/v1/plans", auth, async (c) => {
     const limitText = c.req.query("limit");
     const limit = limitText === undefined ? 50 : /^\d{1,3}$/.test(limitText) ? Number(limitText) : 0;
     if (limit < 1 || limit > 200) return problem(c, 400, "bad_request", "limit is 1 to 200");
@@ -121,7 +119,7 @@ export function planRoutes(deps: Deps) {
     });
   });
 
-  app.post("/v1/plans", async (c) => {
+  app.post("/v1/plans", auth, async (c) => {
     const read = await readJson(c);
     if ("response" in read) return read.response;
     const parsed = parsePlanCreate(read.body);
@@ -152,13 +150,13 @@ export function planRoutes(deps: Deps) {
     return UUID.test(id) ? id : undefined;
   };
 
-  app.get("/v1/plans/:planId", async (c) => {
+  app.get("/v1/plans/:planId", auth, async (c) => {
     const id = planId(c);
     const got = id && (await deps.plans.getPlan(c.get("userId"), id));
     return got ? withEtag(planDetail(got.plan, got.sessions), 200, got.plan.revision) : notFound(c);
   });
 
-  app.patch("/v1/plans/:planId", async (c) => {
+  app.patch("/v1/plans/:planId", auth, async (c) => {
     const base = parseIfMatch(c.req.header("if-match"));
     if (base === undefined) return needIfMatch(c);
     const id = planId(c);
@@ -188,7 +186,7 @@ export function planRoutes(deps: Deps) {
     return fresh ? withEtag(planDetail(fresh.plan, fresh.sessions), 200, fresh.plan.revision) : notFound(c);
   });
 
-  app.delete("/v1/plans/:planId", async (c) => {
+  app.delete("/v1/plans/:planId", auth, async (c) => {
     const base = parseIfMatch(c.req.header("if-match"));
     if (base === undefined) return needIfMatch(c);
     const id = planId(c);
@@ -198,7 +196,7 @@ export function planRoutes(deps: Deps) {
     return result.reason === "conflict" ? conflict(c, result.currentRevision) : notFound(c);
   });
 
-  app.post("/v1/plans/:planId/sessions", async (c) => {
+  app.post("/v1/plans/:planId/sessions", auth, async (c) => {
     const id = planId(c);
     const userId = c.get("userId");
     const got = id ? await deps.plans.getPlan(userId, id) : undefined;
@@ -224,7 +222,7 @@ export function planRoutes(deps: Deps) {
     return UUID.test(id) ? id : undefined;
   };
 
-  app.patch("/v1/sessions/:sessionId", async (c) => {
+  app.patch("/v1/sessions/:sessionId", auth, async (c) => {
     const base = parseIfMatch(c.req.header("if-match"));
     if (base === undefined) return needIfMatch(c);
     const id = sessionId(c);
@@ -244,7 +242,7 @@ export function planRoutes(deps: Deps) {
     return sessionResult(c, userId, got.session.planId, result.session, result.contentRevision, 200);
   });
 
-  app.delete("/v1/sessions/:sessionId", async (c) => {
+  app.delete("/v1/sessions/:sessionId", auth, async (c) => {
     const base = parseIfMatch(c.req.header("if-match"));
     if (base === undefined) return needIfMatch(c);
     const id = sessionId(c);

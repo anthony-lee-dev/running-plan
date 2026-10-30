@@ -16,9 +16,8 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   app.route("/", healthRoutes(deps));
   app.route("/", authRoutes(deps));
   app.route("/", profileRoutes(deps));
-  // Before the plan routes: generate is public, and they guard /v1/plans/* with a token.
+  // Each route checks its own token, so the order here does not decide who may call what.
   app.route("/", generateRoutes(deps, options.generate));
-  // Before the plan routes too, so their token check on /v1/sessions/* does not run twice.
   app.route("/", matchRoutes(deps));
   app.route("/", planRoutes(deps));
   app.route("/", activityRoutes(deps));

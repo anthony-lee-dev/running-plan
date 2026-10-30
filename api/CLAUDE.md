@@ -105,10 +105,12 @@ entry file, not a rewrite.
   and `/__test/codes/latest?email=` (the last sign-in code), on `127.0.0.1:8790` only. `npm run ui-test-server -w api`;
   `scripts/verify.sh ios` starts it for the iOS UI tests. It stays under `test/` so nothing of it reaches the Workers entry.
 - Smoke test (task 2.22, `test/support/smoke.ts`): `npm run smoke -w api` checks the deployed Worker (or `SMOKE_URL`):
-  health with storage, a generate whose engine version matches `ENGINE_VERSION` on `main`, and a spec-shaped 401 (not
-  404) from every built operation that needs a token. Read-only and no account, so it is safe against production;
-  run it after every deploy. The `smoke` vitest project exists only when `SMOKE_URL` is set, so verify never needs the
-  network; `test/smoke-local.test.ts` runs the same checks in-process. The default URL repeats
-  `APIConfiguration.deployedURL` in the iOS app; change both together.
+  health with storage, a generate whose engine version matches `ENGINE_VERSION`, a spec-shaped 401 (not 404) from every
+  built operation that needs a token, and a 404 for an unknown path under each signed-in prefix (that is what makes the
+  401s mean "deployed", so routes check their token themselves rather than guarding a whole prefix). No account, and
+  nothing stored but the rate limiter's counters, so it is safe against production; run it after every deploy, from an
+  up-to-date `main` (it compares the deploy with the checkout). The `smoke` vitest project exists only with `SMOKE=1`,
+  so verify never needs the network; `test/smoke-local.test.ts` runs the same checks in-process. The default URL
+  repeats `APIConfiguration.deployedURL` in the iOS app; change both together.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.
