@@ -70,6 +70,11 @@ export class D1ActivityStore implements ActivityStore {
     return results.map(toActivity);
   }
 
+  async get(userId: string, id: string) {
+    const row = await this.db.prepare("SELECT * FROM activities WHERE id = ? AND user_id = ? AND deleted_at IS NULL").bind(id, userId).first<Row>();
+    return row ? toActivity(row) : undefined;
+  }
+
   async applyImport(userId: string, creates: StoredActivity[], updates: StoredActivity[]) {
     const statements = [
       // No OR IGNORE: a racing insert of the same source id fails the whole batch, so no result claims a row that

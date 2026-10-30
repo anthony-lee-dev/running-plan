@@ -18,7 +18,7 @@ const syncMeta = (e: { id: string; revision: number; updatedAt: string; deletedA
   deletedAt: e.deletedAt,
 });
 
-const sessionView = (s: StoredSession) => ({
+export const sessionView = (s: StoredSession) => ({
   ...syncMeta(s),
   planId: s.planId,
   date: s.date,
@@ -42,7 +42,7 @@ const planFields = (p: StoredPlan) => ({
 });
 
 /** The validators' findings for a plan, in the spec's Warning shape. They warn and never block. */
-function warningsFor(plan: StoredPlan, sessions: StoredSession[]) {
+export function warningsFor(plan: StoredPlan, sessions: StoredSession[]) {
   const baseline = plan.engine?.interview?.weeklyDistanceM;
   const { warnings } = validatePlan(
     { startDate: plan.startDate, weekCount: plan.weekCount, sessions, ...(plan.goal.date ? { goalDate: plan.goal.date } : {}) },

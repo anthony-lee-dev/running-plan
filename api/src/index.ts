@@ -2,6 +2,7 @@
 import { createApp } from "./app";
 import { CloudflareEmailSender, type SendBinding } from "./adapters/cloudflare/cloudflare-email";
 import { D1ActivityStore } from "./adapters/cloudflare/d1-activity-store";
+import { D1MatchStore } from "./adapters/cloudflare/d1-match-store";
 import { D1AuthStore } from "./adapters/cloudflare/d1-auth-store";
 import { D1HealthProbe } from "./adapters/cloudflare/d1-health";
 import { D1ProfileStore } from "./adapters/cloudflare/d1-profile-store";
@@ -40,6 +41,7 @@ export default {
       profiles: new D1ProfileStore(env.DB),
       plans: new D1PlanStore(env.DB),
       activities: new D1ActivityStore(env.DB),
+      matches: new D1MatchStore(env.DB),
       rateLimiter: new D1RateLimiter(env.DB),
       email:
         env.EMAIL && env.MAIL_FROM

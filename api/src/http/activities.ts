@@ -1,8 +1,9 @@
 // Imported activities (task 2.11): the native clients upload workout summaries from Apple Health; any signed-in
-// client lists them. Matches, dispositions and suggested sessions come with task 2.12.
+// client lists them, each with its match. Matches and dispositions are in matches.ts.
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { isLocalDate, parseActivityBatch, planImport, type StoredActivity } from "../domain/activities";
+import type { MatchRow } from "../domain/matches";
 import type { Deps } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
 import { problem } from "./problem";
@@ -12,10 +13,10 @@ const DAY_MS = 86_400_000;
 
 const shiftDate = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 
-/** The spec's Activity: the imported fields plus id, import time and disposition. Revision stays internal. */
-const activityView = (a: StoredActivity) => {
+/** The spec's Activity: the imported fields plus id, import time, disposition and match. Revision stays internal. */
+export const activityView = (a: StoredActivity, match?: MatchRow) => {
   const { revision: _revision, updatedAt: _updatedAt, ...view } = a;
-  return view;
+  return { ...view, ...(match ? { match } : {}) };
 };
 
 type After = { localDate: string; startedAt: string; id: string };
@@ -85,8 +86,9 @@ export function activityRoutes(deps: Deps) {
     });
     const page = rows.slice(0, limit);
     const last = page.at(-1);
+    const matches = new Map((await deps.matches.forActivities(c.get("userId"), page.map((a) => a.id))).map((m) => [m.activityId, m]));
     return c.json({
-      activities: page.map(activityView),
+      activities: page.map((a) => activityView(a, matches.get(a.id))),
       ...(rows.length > limit && last ? { nextCursor: encodeCursor(last) } : {}),
     });
   });

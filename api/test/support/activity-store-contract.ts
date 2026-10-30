@@ -60,6 +60,12 @@ export function activityStoreContract(name: string, make: () => Promise<{ store:
       expect((await store.candidates(U1, "2026-10-28", "2026-10-28", []))[0]!.durationSec).toBe(1800);
     });
 
+    it("gets one activity by id, for its owner only", async () => {
+      await store.applyImport(U1, [activity(1, "2026-10-28")], []);
+      expect(await store.get(U1, aid(1))).toEqual(activity(1, "2026-10-28"));
+      expect(await store.get(U2, aid(1))).toBeUndefined();
+    });
+
     it("finds activities by source id whatever their date", async () => {
       await store.applyImport(U1, [activity(1, "2026-01-05"), activity(2, "2026-10-28")], []);
       const found = await store.candidates(U1, "2026-10-28", "2026-10-28", [{ source: "apple_health", externalId: "HK-1" }, { source: "manual", externalId: "HK-2" }]);
