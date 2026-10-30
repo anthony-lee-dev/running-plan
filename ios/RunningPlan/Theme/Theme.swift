@@ -32,6 +32,8 @@ enum Palette {
     static let muted = RGB(red: 0xAB, green: 0xA5, blue: 0x97)
     static let line = RGB(red: 0x3A, green: 0x36, blue: 0x2B)
     static let accent = RGB(red: 0xC9, green: 0x41, blue: 0x1B)
+    /// Border of a selected option and the progress fill, a raw value the boards use without a token name.
+    static let accentBorder = RGB(red: 0xF0, green: 0x64, blue: 0x3A)
     static let accentText = RGB(red: 0xFF, green: 0x8A, blue: 0x63)
     static let accentSoft = RGB(red: 0x4A, green: 0x24, blue: 0x18)
     static let green = RGB(red: 0x4F, green: 0xC7, blue: 0x9A)

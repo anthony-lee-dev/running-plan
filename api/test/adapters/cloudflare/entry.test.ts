@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import worker, { type Env } from "../../../src/index";
 
 const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
+const fakeEmail = { send: async () => ({}) };
 const SECRET = "worker-test-secret-worker-test-secret";
 
 beforeAll(async () => {
@@ -20,7 +21,7 @@ const call = (overrides: Partial<Env>, path = "/v1/auth/email/start", body: unkn
 describe("Workers entry configuration", () => {
   it("refuses to run without a signing secret, or with a short one", async () => {
     for (const JWT_SECRET of [undefined, "", "too-short"]) {
-      const res = await call({ JWT_SECRET, RESEND_API_KEY: "re_x", MAIL_FROM: "a@example.com" });
+      const res = await call({ JWT_SECRET, EMAIL: fakeEmail, MAIL_FROM: "a@example.com" });
       expect(res.status).toBe(500);
       expect((await res.json()) as { type: string }).toMatchObject({ type: "misconfigured" });
     }
@@ -28,7 +29,7 @@ describe("Workers entry configuration", () => {
 
   it("refuses to run without email configured, so codes are never logged by accident", async () => {
     expect((await call({ JWT_SECRET: SECRET })).status).toBe(500);
-    expect((await call({ JWT_SECRET: SECRET, RESEND_API_KEY: "re_x" })).status).toBe(500);
+    expect((await call({ JWT_SECRET: SECRET, EMAIL: fakeEmail })).status).toBe(500);
     expect((await call({ JWT_SECRET: SECRET, ALLOW_LOG_EMAIL: "yes" })).status).toBe(500);
   });
 

@@ -1,13 +1,13 @@
 # Autonomy level
 
-Current level: **0** (set in `autonomy.json`). Agents stop at a ready PR with green checks; the human merges.
+Current level: **2** (set in `autonomy.json`). Agents request auto-merge for `docs/**`, `api/**` and `ios/**` PRs with green checks; everything else waits for the human.
 
 | Level | Auto-merge allowed for | Notes |
 | --- | --- | --- |
 | 0 | Nothing | The human merges every PR |
 | 1 | `docs/**`, `api/test/**`, `api/src/domain/**` | Suggested after about 10 merged agent PRs that needed no rework |
-| 2 | `docs/**`, `api/**` | After contract tests have caught a real drift |
-| 3 | Level 2 plus `ios/**`, `designs/**` | Unticked manual-gate boxes still block |
+| 2 | `docs/**`, `api/**`, `ios/**` | After contract tests have caught a real drift |
+| 3 | Level 2 plus `designs/**` | Unticked manual-gate boxes still block |
 
 Never auto-merged at any level: `spec/**`, `autonomy.json`, `.claude/**`, `.github/**`, and the merge and setup scripts.
 
