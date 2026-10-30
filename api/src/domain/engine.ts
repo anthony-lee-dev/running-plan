@@ -92,6 +92,11 @@ const SHARES: Record<number, { long: number; q1: number; q2: number; easy: numbe
 };
 const MIN_RUN_M = 1000;
 
+/** No plan fits the answers (for example fewer than three days a week to run on). The generate route answers 422. */
+export class NoPlanFitsError extends RangeError {
+  override name = "NoPlanFitsError";
+}
+
 // ---- Dates ----
 
 function dayNumber(date: string): number {
@@ -145,7 +150,7 @@ type Role = "long" | "q1" | "q2" | "easy";
 
 function placeRuns(startWeekday: number, unavailable: Set<number>, runsWanted: number, preferredLong: number) {
   const available = [0, 1, 2, 3, 4, 5, 6].filter((k) => !unavailable.has((startWeekday + k) % 7));
-  if (available.length < 3) throw new RangeError("at least 3 days a week must be available to run");
+  if (available.length < 3) throw new NoPlanFitsError("at least 3 days a week must be available to run");
   const runs = Math.min(runsWanted, available.length);
   const weekdayOf = (k: number) => (startWeekday + k) % 7;
 

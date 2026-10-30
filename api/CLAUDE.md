@@ -49,15 +49,19 @@ entry file, not a rewrite.
   curated library in `src/domain/strength.ts` (one or two short sessions a week, never on or before a hard day, always
   leaving a rest day). `test/engine-variants.test.ts` snapshots the 54 base variants of design 6.2 plus boundary cases:
   review its diff when a plan changes, update it with `npx vitest -u`, and bump `ENGINE_VERSION`. The generate
-  route (2.3) must reject an unknown `presetId` with a 400: the engine throws a plain Error for one. Week 1 is 85% of the baseline (70% when pain is
+  route rejects an unknown `presetId` with a 400 before the engine runs (the engine throws a plain Error for one). Week 1 is 85% of the baseline (70% when pain is
   flagged), growth 7 to 8% a week, a down week (x0.88, then back to the earlier level) every 4th week (3rd when
   cautious), a two-week taper. No run passes its limit (long 14 km, quality 12 km, easy 10 km), which also bounds the
   weekly volume. The plan always ends on the goal date; the second hard session of a 5-run week is dropped to an easy
-  run when no day has an easy or rest day on each side. Fewer than 3 free days is an error (the route returns 400).
+  run when no day has an easy or rest day on each side. Fewer than 3 free days is a `RangeError` (the route returns 422 `no_plan_fits`; the schema's four unavailable days keep it out of reach today).
   Every number is a starting value for the coach review (H.1); bump `ENGINE_VERSION` when one changes.
   Goal dates (design 6.5): too soon keeps 8 weeks and suggests a later date; 13 to 16 weeks away adds extra base weeks
   that hold the conservative start; further away starts the plan later with 16 weeks; a past date is dropped. A weekly
   distance under 4 km gets a `baseline_far_below_goal` notice with a later date and a run-walk suggestion. Add property tests (fast-check) for each new invariant.
+- Generate route (task 2.3, `src/http/generate.ts`): public, mounted before the plan routes that require a token.
+  Rate limits (per IP 300 an hour, per `X-Device-Id` 120 an hour) are counted before the body is read; the body is
+  capped at 16 KB and the response at 256 KB; `src/domain/generate-input.ts` validates strictly. Never log the
+  answers: an engine error is replaced by a generic one before `onError` sees it.
 - Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
   `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after
   its day is over (so due can exceed done + skipped + missed by what is left today); actual volume comes from the
