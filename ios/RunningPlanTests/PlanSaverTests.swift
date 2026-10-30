@@ -108,8 +108,10 @@ struct PlanSaverTests {
         await #expect(throws: expected) { try await saver(StubTransport(status: status)).save(p) }
     }
 
-    @Test func noNetworkIsOffline() async throws {
+    @Test(arguments: [URLError(.notConnectedToInternet) as Error, SignInError.offline])
+    func noNetworkIsOffline(error: Error) async throws {
+        // `SignInError.offline` is what the auth middleware throws when it cannot refresh the token.
         let p = try preview()
-        await #expect(throws: SaveError.offline) { try await saver(StubTransport(error: URLError(.notConnectedToInternet))).save(p) }
+        await #expect(throws: SaveError.offline) { try await saver(StubTransport(error: error)).save(p) }
     }
 }

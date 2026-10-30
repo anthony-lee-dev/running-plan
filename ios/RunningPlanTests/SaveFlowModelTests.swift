@@ -28,6 +28,29 @@ private actor FakeSignIn: SignInService {
     func signOut() { isSignedIn = false }
 }
 
+/// Each call waits until `release()`, so a test can act while a request is in flight.
+private actor GatedSignIn: SignInService {
+    var isSignedIn = false
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+    private(set) var calls = 0
+
+    func startEmailSignIn(email: String) async throws { await wait() }
+    func verify(email: String, code: String) async throws {
+        await wait()
+        isSignedIn = true
+    }
+
+    private func wait() async {
+        calls += 1
+        await withCheckedContinuation { waiting.append($0) }
+    }
+
+    func release() {
+        waiting.forEach { $0.resume() }
+        waiting = []
+    }
+}
+
 private actor FakeSaver: PlanSaving {
     private(set) var saved: [SavedPreview] = []
     private var results: [Result<String, SaveError>]
@@ -156,6 +179,67 @@ struct SaveFlowModelTests {
         model.cancelSignIn()
         #expect(model.step == .idle)
         #expect(!model.showsSignIn)
+    }
+
+    @Test func cancellingWhileTheCodeIsCheckedSavesNothing() async throws {
+        let signIn = GatedSignIn()
+        let saver = FakeSaver()
+        let model = SaveFlowModel(signIn: signIn, saver: saver, store: MemoryStore(nil))
+        await model.save(try preview())
+        let sent = Task { await model.sendCode(email: "runner@example.com") }
+        while await signIn.calls < 1 { await Task.yield() }
+        await signIn.release()
+        await sent.value
+
+        let verifying = Task { await model.verify(code: "123456") }
+        while await signIn.calls < 2 { await Task.yield() }
+        model.cancelSignIn()
+        await signIn.release()
+        await verifying.value
+
+        #expect(model.step == .idle)
+        #expect(await saver.saved.isEmpty, "the user cancelled: no plan may be saved")
+    }
+
+    @Test func cancellingWhileTheCodeIsSentDoesNotReopenSignIn() async throws {
+        let signIn = GatedSignIn()
+        let model = SaveFlowModel(signIn: signIn, saver: FakeSaver(), store: MemoryStore(nil))
+        await model.save(try preview())
+
+        let sending = Task { await model.sendCode(email: "runner@example.com") }
+        while await signIn.calls < 1 { await Task.yield() }
+        model.cancelSignIn()
+        await signIn.release()
+        await sending.value
+
+        #expect(model.step == .idle)
+        #expect(!model.showsSignIn)
+    }
+
+    @Test func aSaveClearsOnlyTheDraftItSaved() async throws {
+        let p = try preview()
+        let newer = try preview()
+        let store = MemoryStore(newer)
+        let model = SaveFlowModel(signIn: FakeSignIn(signedIn: true), saver: FakeSaver(), store: store)
+
+        await model.save(p)
+
+        #expect(store.saved == newer)
+    }
+
+    @Test func aDraftOlderThanADayIsNotSaved() async throws {
+        let p = try preview()
+        let saver = FakeSaver()
+        let model = SaveFlowModel(
+            signIn: FakeSignIn(signedIn: true), saver: saver, store: MemoryStore(p),
+            now: { p.savedAt.addingTimeInterval(PreviewDraftStore.lifetime + 1) }
+        )
+
+        await model.save(p)
+
+        #expect(model.step == .idle)
+        #expect(model.error?.contains("more than a day old") == true)
+        #expect(await saver.saved.isEmpty)
     }
 
     @Test func tooManyTriesIsExplained() async throws {
