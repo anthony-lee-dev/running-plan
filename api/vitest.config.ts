@@ -3,7 +3,8 @@ import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
 
 // Two projects: plain Node for domain, HTTP and config tests; the Workers runtime (workerd with a local D1)
-// for adapter tests under test/adapters/cloudflare/.
+// for adapter tests under test/adapters/cloudflare/. A third, `smoke`, exists only when SMOKE=1
+// (set by `npm run smoke`): it checks a deployed API over the network, so verify never runs it.
 export default defineConfig({
   test: {
     projects: [
@@ -21,6 +22,7 @@ export default defineConfig({
         ],
         test: { name: "d1", include: ["test/adapters/cloudflare/**/*.test.ts"] },
       },
+      ...(process.env.SMOKE === "1" ? [{ test: { name: "smoke", include: ["test/smoke/**/*.smoke.ts"], testTimeout: 30_000 } }] : []),
     ],
   },
 });
