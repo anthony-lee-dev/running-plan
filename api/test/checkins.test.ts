@@ -75,11 +75,21 @@ describe("POST /v1/sessions/{id}/checkins", () => {
     expect(first.pain).toBe(false);
   });
 
-  it("answers the same id with another body, or another user's id, with 409", async () => {
+  it("answers the same id with another body, or another user's id on their own session, with 400 id_in_use", async () => {
     await post({ id: C1, when: "before", feel: 3 });
-    expect((await post({ id: C1, when: "before", feel: 4 })).status).toBe(409);
+    const changed = await post({ id: C1, when: "before", feel: 4 });
+    expect(changed.status).toBe(400);
+    expect(((await changed.json()) as Json).type).toBe("id_in_use");
     const other = await signIn("other@example.com");
+    // Not their session: simply not found.
     expect((await post({ id: C1, when: "before", feel: 3 }, S1, other)).status).toBe(404);
+    const P2 = id(102);
+    const S2 = id(202);
+    await call("POST", "/v1/plans", {
+      id: P2, goal: { type: "5k" }, startDate: "2026-10-26", weekCount: 8, source: "blank", adaptive: false, weeks: [],
+      sessions: [{ id: S2, date: "2026-10-28", type: "easy", steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, target: { type: "effort", effort: "easy" } }] }],
+    }, other);
+    expect((await post({ id: C1, when: "before", feel: 3 }, S2, other)).status).toBe(400);
   });
 
   it("answers 404 for an unknown or deleted session", async () => {

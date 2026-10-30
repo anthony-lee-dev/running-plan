@@ -82,7 +82,8 @@ export function matchRoutes(deps: Deps) {
     if (result.status === "created") return c.json(result.checkIn, 201);
     if (result.status === "no_session") return notFound(c);
     if (result.mine && sameCheckIn(result.checkIn, { ...fields, sessionId })) return c.json(result.checkIn, 200);
-    return problem(c, 409, "conflict", "That id is already in use");
+    // The spec lists no 409 here yet (backlog 2.20), so a reused id is a bad request for now.
+    return problem(c, 400, "id_in_use", "That id is already in use");
   });
 
   app.patch("/v1/activities/:activityId", auth, async (c) => {
