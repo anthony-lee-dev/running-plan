@@ -2,6 +2,7 @@
 import type { Profile, ProfileFields } from "../domain/profile";
 import type { PlanFieldsInput, SessionContent } from "../domain/plan-input";
 import type { StoredActivity } from "../domain/activities";
+import type { MatchEffects, MatchRow, MatchState } from "../domain/matches";
 
 export interface Clock {
   now(): Date;
@@ -157,8 +158,27 @@ export interface ActivityStore {
    * (throws) rather than being dropped. Updates name ids just read for this user; another user's row is never changed.
    */
   applyImport(userId: string, creates: StoredActivity[], updates: StoredActivity[]): Promise<void>;
+  get(userId: string, id: string): Promise<StoredActivity | undefined>;
   /** Newest first: local date, then start, then id, all descending. */
   list(userId: string, query: ActivityQuery): Promise<StoredActivity[]>;
+}
+
+/** Thrown by `MatchStore.apply` when something it read has changed since; nothing was written. */
+export class MatchConflictError extends Error {
+  override name = "MatchConflictError";
+}
+
+/** Matches between activities and sessions, written together with the session status and activity disposition. */
+export interface MatchStore {
+  /**
+   * The state a match change looks at: the user's live session and activity named (when they exist), their current
+   * matches, and the session or activity on the other end of those matches.
+   */
+  load(userId: string, ref: { sessionId?: string; activityId?: string }): Promise<MatchState>;
+  /** Writes the effects in one transaction, or throws MatchConflictError if anything in `state` has changed. */
+  apply(userId: string, state: MatchState, effects: MatchEffects, now: string): Promise<void>;
+  /** The matches of these activities whose session is still live. */
+  forActivities(userId: string, activityIds: string[]): Promise<MatchRow[]>;
 }
 
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */
@@ -192,6 +212,7 @@ export interface Deps {
   profiles: ProfileStore;
   plans: PlanStore;
   activities: ActivityStore;
+  matches: MatchStore;
   email: EmailSender;
   rateLimiter: RateLimiter;
   ids: IdSource;

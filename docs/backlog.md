@@ -80,9 +80,10 @@ first hand-offs. 2.8 is free to start at once; 2.9 is `ask first`, and 2.1 waits
       tombstones. needs: 2.5
 - [x] 2.11 Activities: `POST /v1/activities:batch` (native clients only, by token scope; App Attest is L.2) and
       `GET /v1/activities`; dedupe on start time, duration and distance, not only the external id. needs: 2.4
-- [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Also left from 2.11:
-      `PATCH /v1/activities/{id}` (disposition), `suggestedSessionId` in the upload results and `match` on listed
-      activities. needs: 2.5, 2.11
+- [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Matches are done
+      (PUT and DELETE match, `PATCH /v1/activities/{id}`, `match` on listed activities). Left: check-ins (the pain
+      flag's urgent proposal waits for 2.14), `suggestedSessionId` in the upload results, and unlinking an activity
+      when its session is deleted (today the match is hidden but the activity stays `matched`). needs: 2.5, 2.11
 - [x] 2.13 Proposal engine `propose_adjustments` (§6.6): missed key session is dropped not rescheduled, harder than
       planned eases next week, pain flag reduces load, consistently easy progresses; never edits the plan;
       user-owned sessions locked; off for blank plans unless opted in. needs: 2.1
