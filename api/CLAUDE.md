@@ -106,8 +106,8 @@ entry file, not a rewrite.
   checker (`test/support/openapi.ts`) uses `@cfworker/json-schema` because workerd blocks Ajv's `new Function`. A new
   endpoint adds its cases there and leaves `NOT_BUILT`; the last test fails for a built operation with no case.
 - UI-test server (task 3.9, `test/ui-server/`): the app with in-memory stores plus `/__test/stats` (successful requests)
-  and `/__test/codes/latest?email=` (the last sign-in code), on `127.0.0.1:8790` only. `npm run ui-test-server -w api`;
-  `scripts/verify.sh ios` starts it for the iOS UI tests. It stays under `test/` so nothing of it reaches the Workers entry.
+  and `/__test/codes/latest?email=` (the last sign-in code), on `127.0.0.1` only (port 8790, or `UI_TEST_PORT`; 0 picks a free one). `npm run ui-test-server -w api`;
+  `scripts/verify.sh ios` starts it on a free port for the iOS UI tests. It stays under `test/` so nothing of it reaches the Workers entry.
 - Smoke test (task 2.22, `test/support/smoke.ts`): `npm run smoke -w api` checks the deployed Worker (or `SMOKE_URL`):
   health with storage, a generate whose engine version matches `ENGINE_VERSION`, a spec-shaped 401 (not 404) from every
   built operation that needs a token, and a 404 for an unknown path under each signed-in prefix (that is what makes the

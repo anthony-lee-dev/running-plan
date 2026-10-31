@@ -90,26 +90,31 @@ pick_ios_sim() {
   '
 }
 
-UI_TEST_API_PORT=8790 # UI_TEST_PORT in api/test/ui-server/main.ts
-UI_TEST_API_URL="http://127.0.0.1:${UI_TEST_API_PORT}"
+UI_TEST_API_URL=""
 UI_TEST_API_PID=""
 
-# The in-memory API the iOS UI tests run against (api/test/ui-server). Refuses a port already in use, so the
-# tests never talk to a stale server from an earlier run.
+# Reads the UI-test API's log on stdin and prints the URL it announced (nothing until it has started).
+ui_test_api_url_from_log() {
+  sed -n 's/^ui-test api (in-memory) on //p' | head -n 1
+}
+
+# The in-memory API the iOS UI tests run against (api/test/ui-server), on any free port the OS picks, so a
+# second run (the Stop hook's, say) never collides with this one or talks to a stale server.
 start_ui_test_api() {
-  if lsof -nP -iTCP:"$UI_TEST_API_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "== ios: port $UI_TEST_API_PORT is in use; stop that server before running the UI tests" >&2
-    return 1
-  fi
-  echo "== ios: start the UI-test API on $UI_TEST_API_URL"
-  (cd api && exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"${TMPDIR:-/tmp}/ui-test-api.log" 2>&1 &
+  local log
+  log="$(mktemp "${TMPDIR:-/tmp}/ui-test-api.XXXXXX")"
+  (cd api && UI_TEST_PORT=0 exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"$log" 2>&1 &
   UI_TEST_API_PID=$!
   trap stop_ui_test_api EXIT # the only EXIT trap in this script; chain it if another is added
   for _ in $(seq 1 60); do
-    if curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then return 0; fi
+    UI_TEST_API_URL="$(ui_test_api_url_from_log <"$log")"
+    if [[ -n "$UI_TEST_API_URL" ]] && curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then
+      echo "== ios: UI-test API on $UI_TEST_API_URL"
+      return 0
+    fi
     sleep 0.5
   done
-  echo "== ios: the UI-test API did not start; see ${TMPDIR:-/tmp}/ui-test-api.log" >&2
+  echo "== ios: the UI-test API did not start; see $log" >&2
   return 1
 }
 
