@@ -27,6 +27,9 @@ struct ThemeTests {
         #expect(Palette.accentSoft == RGB(hex: "#4A2418"))
         #expect(Palette.green == RGB(hex: "#4FC79A"))
         #expect(Palette.tabBar == RGB(hex: "#141310"))
+        #expect(Palette.greenInk == RGB(hex: "#0F2A20"))
+        #expect(Palette.restRing == RGB(hex: "#7C7667"))
+        #expect(Palette.chipText == RGB(hex: "#FFB59B"))
     }
 
     @Test func minimumTouchTargetIs44() {

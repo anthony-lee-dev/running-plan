@@ -11,7 +11,7 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $selection) {
             ForEach(AppTab.allCases) { tab in
-                PlaceholderScreen(tab: tab, plans: plans, onSetGoal: { showOnboarding = true })
+                screen(tab)
                     .tabItem { Label(tab.title, systemImage: tab.systemImage) }
                     .tag(tab)
             }
@@ -24,6 +24,16 @@ struct RootView: View {
                 showOnboarding = false
                 Task { await plans.show(planId: id) }
             })
+        }
+    }
+}
+
+@MainActor
+extension RootView {
+    @ViewBuilder func screen(_ tab: AppTab) -> some View {
+        switch tab {
+        case .next: NextScreen(plans: plans, onSetGoal: { showOnboarding = true })
+        default: PlaceholderScreen(tab: tab)
         }
     }
 }
