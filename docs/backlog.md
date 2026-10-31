@@ -152,7 +152,7 @@ and save a plan against the deployed API.
 
 - [x] 2.21 Unlink an activity when its session or plan is deleted (left from 2.12; today the match is hidden and the
       activity stays `matched`, out of the inbox, until it is matched again or given a disposition). needs: 2.5
-- [ ] 4.1 Session spec sheet and editor (DK-Session, DK-Editor): steps in watch-builder order with repeat groups,
+- [x] 4.1 Session spec sheet and editor (DK-Session, DK-Editor): steps in watch-builder order with repeat groups,
       strength exercise checklist, copy or share as text, custom sessions, build a plan from blank, quick
       adjustments (shorter, easier, swap, skip) that mark the session user-owned, optional before-session check-in.
       Edits go straight to the API while online (offline edits are slice 5). needs: 3.5, 0.5

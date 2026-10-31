@@ -1,10 +1,16 @@
 import SwiftUI
 
-/// DK-Next: today's session (or the next one), this week day by day, and what comes after. The review card, the inbox
-/// card, Open workout, Make it easier and Move or skip arrive with their own tasks. System fonts until the font task.
+/// DK-Next: today's session (or the next one) with Open workout, Make it easier and Move or skip, this week day by day,
+/// and what comes after. The review card and the inbox card arrive with their own tasks. System fonts until the font task.
 struct NextView: View {
     let model: NextModel
     let onSetGoal: () -> Void
+    var onOpen: (String) -> Void = { _ in }
+    var onEasier: (String) -> Void = { _ in }
+    var onMove: (String) -> Void = { _ in }
+    /// A quick adjustment is on its way to the server.
+    var busy = false
+    var error: String?
 
     var body: some View {
         ScrollView {
@@ -22,7 +28,7 @@ struct NextView: View {
                         .accessibilityIdentifier(AppTab.next.screenIdentifier)
                 }
                 if let focus = model.focus {
-                    FocusCard(focus: focus)
+                    FocusCard(focus: focus, busy: busy, error: error, onOpen: onOpen, onEasier: onEasier, onMove: onMove)
                 } else if let nothing = model.nothingToDo {
                     nothingCard(nothing)
                 }
@@ -93,8 +99,43 @@ struct NextView: View {
 
 private struct FocusCard: View {
     let focus: NextModel.Focus
+    let busy: Bool
+    let error: String?
+    let onOpen: (String) -> Void
+    let onEasier: (String) -> Void
+    let onMove: (String) -> Void
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            summary
+            Button { onOpen(focus.sessionId) } label: {
+                Text("Open workout")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 16))
+                    .foregroundStyle(.white)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("next.open")
+            if focus.canAdjust {
+                HStack(spacing: 10) {
+                    SecondaryButton(title: "Make it easier") { onEasier(focus.sessionId) }
+                    SecondaryButton(title: "Move or skip") { onMove(focus.sessionId) }
+                }
+                .disabled(busy)
+                .opacity(busy ? 0.4 : 1)
+            }
+            if let error {
+                Text(error).font(.system(size: 13)).foregroundStyle(Palette.accentText.color)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
+        .accessibilityElement(children: .contain)
+    }
+
+    private var summary: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(focus.label).font(.system(size: 12, weight: .semibold)).tracking(0.96).foregroundStyle(Palette.accentText.color)
@@ -115,11 +156,27 @@ private struct FocusCard: View {
             }
             Text(focus.why).font(.system(size: 14)).lineSpacing(3).foregroundStyle(Palette.muted.color)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(focus.label.capitalized): \(focus.title), \(focus.effort). \(PaceFormat.spoken(focus.detail)). \(focus.why)")
+    }
+}
+
+/// A bordered button (design notes: secondary button), full width of its share of the row.
+struct SecondaryButton: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .foregroundStyle(Palette.ink.color)
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Palette.goalTrack.color, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
     }
 }
 

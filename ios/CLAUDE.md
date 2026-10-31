@@ -67,9 +67,30 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - UI tests that touch the API pass `-auth.reset YES`, so an earlier test's sign-in (and plan) never replaces "Set a goal".
 - Screens: `NextModel`, `WeekModel` and `WholeModel` are pure (built from `PlanSchedule`) and pinned by unit tests;
   `NextView`, `WeekView` and `WholeView` only draw them. Snapshot tests render the views with `PlanFixture` (the boards'
-  plan, today Wed 2026-10-28) through `BoardSnapshot`. Left for later tasks: the review and inbox cards, Open workout,
-  Make it easier, Move or skip, Add a session (4.1), and distance run and "On track" (progress endpoint, 2.15).
+  plan, today Wed 2026-10-28) through `BoardSnapshot`. Left for later tasks: the review and inbox cards, and distance
+  run and "On track" (progress endpoint, 2.15).
 - VoiceOver reads paces in words through `PaceFormat.spoken` ("6 minutes 25 to 7 minutes 10 per kilometre").
+
+## Session sheet and editor (task 4.1)
+
+- `Features/Session/`: `SessionSheetModel` (DK-Session: steps in watch-builder order with repeats grouped, the strength
+  checklist, the copy-as-text string) and `SessionDraft` (DK-Editor's working copy, keeping the server's step rules
+  from `parseSteps`) are pure and unit-tested; `SessionView` and `SessionEditorView` only draw them. Exercise names
+  mirror `api/src/domain/strength.ts` in `ExerciseLibrary`; change both together.
+- Edits go straight to the API through `PlanStore.apply/create/delete` (`APISessionWriter`, `If-Match: "<revision>"`),
+  and the server's copy of the session replaces ours, so the next edit sends the new revision. A 409 reloads the plan
+  and says so; offline is an inline error (the queue is slice 5).
+- Quick adjustments (`QuickAdjustment`): Shorter, Easier, Swap (move to another day of the week; what is there takes
+  its place) and Skip. The server keeps `owner: system` for a status-only edit, so Skip also sends the unchanged
+  `date` to make the session the user's. The amounts are starting values for the coach review (H.1).
+- Before-session check-in: Fresh, Okay, Tired send `feel` 5, 3, 2 (`when: before`).
+- "I'd rather build my own plan" creates a blank plan (`BlankPlan`: this week's Monday, `source: blank`, not
+  adaptive, no sessions) through `SaveFlowModel.saveBlank`; sessions are added with Week's "Add a session".
+- `RootView` presents the sheet (`SessionScreen`, full screen) and the editor or move sheet (`SessionRoute`). Week
+  rows are buttons with the identifier `week.session`, each labelled with its day.
+- UI tests share `LocalAPI` (launch, preview, sign in). A relaunch that must stay signed in leaves out `-auth.reset`.
+- The OpenAPI runtime percent-encodes header parameters (`If-Match: "3"` went out as `%223%22`, which the API refuses);
+  `EntityTagMiddleware`, added by `APIConfiguration.client(...)`, decodes it again.
 
 ## UI tests against a local API (task 3.9)
 

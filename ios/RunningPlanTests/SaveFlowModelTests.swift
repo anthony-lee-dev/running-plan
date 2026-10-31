@@ -62,6 +62,14 @@ private actor FakeSaver: PlanSaving {
         if !results.isEmpty { return try results.removeFirst().get() }
         return preview.ids.plan
     }
+
+    private(set) var blanks: [Components.Schemas.PlanCreate] = []
+
+    func createBlank(_ plan: Components.Schemas.PlanCreate) async throws -> String {
+        blanks.append(plan)
+        if !results.isEmpty { return try results.removeFirst().get() }
+        return plan.value2.id
+    }
 }
 
 private final class MemoryStore: PreviewDraftStoring {
@@ -91,6 +99,24 @@ struct SaveFlowModelTests {
         #expect(model.step == .saved(planId: p.ids.plan))
         #expect(await saver.saved.map(\.ids) == [p.ids])
         #expect(store.saved == nil, "a saved plan must not reopen as a preview")
+    }
+
+    @Test func aBlankPlanSignsInThenSavesAndLeavesTheDraftAlone() async throws {
+        let p = try preview()
+        let saver = FakeSaver()
+        let store = MemoryStore(p)
+        let model = SaveFlowModel(signIn: FakeSignIn(signedIn: false), saver: saver, store: store)
+        let blank = BlankPlan.body(goal: nil, today: "2026-10-28", weeks: 6, id: "44444444-4444-4444-8444-444444444444")
+
+        await model.saveBlank(blank)
+        #expect(model.step == .email)
+        await model.sendCode(email: "runner@example.com")
+        await model.verify(code: "123456")
+
+        #expect(model.step == .saved(planId: "44444444-4444-4444-8444-444444444444"))
+        #expect(await saver.blanks == [blank])
+        #expect(await saver.saved.isEmpty)
+        #expect(store.saved == p, "a blank plan is not the preview")
     }
 
     @Test func signedOutAsksForAnEmailThenACodeThenSaves() async throws {

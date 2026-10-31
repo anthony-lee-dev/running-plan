@@ -4,6 +4,8 @@ import SwiftUI
 struct PlanScreen: View {
     let plans: PlanStore
     let onSetGoal: () -> Void
+    var onOpen: (String) -> Void = { _ in }
+    var onAdd: (String) -> Void = { _ in }
     /// The week on screen; nil until the user moves, so it follows today.
     @State private var week: Int?
     @State private var mode: PlanMode = .week
@@ -16,7 +18,7 @@ struct PlanScreen: View {
                 let shown = min(max(week ?? WeekModel.initialWeek(schedule), 0), max(schedule.weekCount - 1, 0))
                 switch mode {
                 case .week:
-                    WeekView(model: WeekModel(schedule: schedule, week: shown), onMode: { mode = $0 }, onWeek: { week = $0 })
+                    WeekView(model: WeekModel(schedule: schedule, week: shown), onMode: { mode = $0 }, onWeek: { week = $0 }, onOpen: onOpen, onAdd: onAdd)
                 case .whole:
                     WholeView(model: WholeModel(schedule: schedule), onMode: { mode = $0 }, onWeek: {
                         week = $0

@@ -111,7 +111,7 @@ private actor Account: SignInService {
 struct PlanStoreTests {
     @Test func signedOutShowsTheEmptyStateWithoutAsking() async throws {
         let loader = FakeLoader(.success(try PlanFixture.detail()))
-        let store = PlanStore(loader: loader, account: Account(false))
+        let store = PlanStore(loader: loader, account: Account(false), writer: FakeWriter())
         await store.load()
         #expect(store.state == .empty)
         #expect(await loader.calls.isEmpty)
@@ -119,7 +119,7 @@ struct PlanStoreTests {
 
     @Test func signedInLoadsTheActivePlan() async throws {
         let plan = try PlanFixture.detail()
-        let store = PlanStore(loader: FakeLoader(.success(plan)), account: Account(true))
+        let store = PlanStore(loader: FakeLoader(.success(plan)), account: Account(true), writer: FakeWriter())
         #expect(store.state == .loading)
         await store.load()
         #expect(store.state == .loaded(plan))
@@ -127,13 +127,13 @@ struct PlanStoreTests {
 
     @Test(arguments: [Result<Components.Schemas.PlanDetail?, PlanLoadError>.success(nil), .failure(.signedOut)])
     func noPlanOrTokensTheServerRejectsShowTheEmptyState(result: Result<Components.Schemas.PlanDetail?, PlanLoadError>) async {
-        let store = PlanStore(loader: FakeLoader(result), account: Account(true))
+        let store = PlanStore(loader: FakeLoader(result), account: Account(true), writer: FakeWriter())
         await store.load()
         #expect(store.state == .empty)
     }
 
     @Test func aFailureCanBeRetried() async throws {
-        let store = PlanStore(loader: FakeLoader(.failure(.offline)), account: Account(true))
+        let store = PlanStore(loader: FakeLoader(.failure(.offline)), account: Account(true), writer: FakeWriter())
         await store.load()
         guard case .failed(let message) = store.state else { Issue.record("expected a failure, got \(store.state)"); return }
         #expect(message.contains("connection"))
@@ -141,10 +141,106 @@ struct PlanStoreTests {
 
     @Test func aJustSavedPlanIsLoadedById() async throws {
         let loader = FakeLoader(.success(nil))
-        let store = PlanStore(loader: loader, account: Account(true))
+        let store = PlanStore(loader: loader, account: Account(true), writer: FakeWriter())
         await store.show(planId: "22222222-2222-4222-8222-222222222222")
         #expect(await loader.calls == ["plan 22222222-2222-4222-8222-222222222222"])
         guard case .loaded(let plan) = store.state else { Issue.record("not loaded: \(store.state)"); return }
         #expect(plan.value1.value1.id == "22222222-2222-4222-8222-222222222222")
+    }
+}
+
+/// Answers session writes from a script, and records them.
+actor FakeWriter: SessionWriting {
+    private(set) var calls: [String] = []
+    var answer: Result<String, SessionWriteError> = .success(writeResultJSON())
+
+    init(_ answer: Result<String, SessionWriteError> = .success(writeResultJSON())) { self.answer = answer }
+
+    private func result() throws -> Components.Schemas.SessionWriteResult {
+        try APIConfiguration.decoder.decode(Components.Schemas.SessionWriteResult.self, from: Data(answer.get().utf8))
+    }
+
+    func update(id: String, revision: Int, _ body: Components.Schemas.SessionUpdate) async throws -> Components.Schemas.SessionWriteResult {
+        calls.append("update \(id) @\(revision)")
+        return try result()
+    }
+
+    func create(planId: String, _ body: Components.Schemas.SessionCreate) async throws -> Components.Schemas.SessionWriteResult {
+        calls.append("create \(body.value2.id)")
+        return try result()
+    }
+
+    func delete(id: String, revision: Int) async throws -> Components.Schemas.SessionWriteResult {
+        calls.append("delete \(id) @\(revision)")
+        return try result()
+    }
+
+    func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws {
+        calls.append("checkin \(sessionId) \(feeling.feel)")
+        _ = try answer.get()
+    }
+}
+
+@MainActor
+struct PlanStoreEditTests {
+    private let intervals = "00000000-0000-4000-8000-000000000017"
+
+    private func loaded(_ writer: FakeWriter, loader: FakeLoader? = nil) async throws -> PlanStore {
+        let fallback = FakeLoader(.success(try PlanFixture.detail()))
+        let store = PlanStore(loader: loader ?? fallback, account: Account(true), writer: writer)
+        await store.load()
+        return store
+    }
+
+    private func session(_ store: PlanStore, _ id: String) -> Components.Schemas.Session? {
+        store.plan?.value2.sessions.first { $0.value1.id == id }
+    }
+
+    @Test func anEditReplacesTheSessionWithTheServersCopy() async throws {
+        let writer = FakeWriter(.success(writeResultJSON(title: "Mine", revision: 2)))
+        let store = try await loaded(writer)
+        let error = await store.apply([SessionEdit(sessionId: intervals, revision: 1, update: .init(title: "Mine"))])
+        #expect(error == nil)
+        #expect(session(store, intervals)?.value2.title == "Mine")
+        #expect(session(store, intervals)?.value1.revision == 2, "the next edit must send the new revision")
+        #expect(session(store, intervals)?.value2.owner == .user)
+        #expect(store.plan?.value1.value3.contentRevision == 4)
+        #expect(store.plan?.value2.warnings.map(\.code) == ["no_rest_day"])
+        #expect(store.plan?.value2.sessions.count == 51)
+        #expect(await writer.calls == ["update \(intervals) @1"])
+    }
+
+    @Test func aNewSessionIsAddedAndADeletedOneLeavesTheSchedule() async throws {
+        let store = try await loaded(FakeWriter(.success(writeResultJSON(deleted: true))))
+        #expect(await store.delete(sessionId: intervals, revision: 1) == nil)
+        let schedule = PlanSchedule(plan: try #require(store.plan), today: PlanFixture.today)
+        #expect(!schedule.sessions.contains { $0.value1.id == intervals })
+
+        let fresh = try await loaded(FakeWriter(.success(writeResultJSON().replacingOccurrences(of: intervals, with: "33333333-3333-4333-8333-333333333333"))))
+        #expect(await fresh.create(SessionDraft.new(date: "2026-10-29").create(id: "33333333-3333-4333-8333-333333333333")) == nil)
+        #expect(fresh.plan?.value2.sessions.count == 52)
+    }
+
+    @Test func aConflictReloadsThePlanAndSaysSo() async throws {
+        let loader = FakeLoader(.success(try PlanFixture.detail()))
+        let store = try await loaded(FakeWriter(.failure(.conflict)), loader: loader)
+        let error = await store.apply([SessionEdit(sessionId: intervals, revision: 1, update: .init(title: "Mine"))])
+        #expect(error?.contains("changed") == true)
+        #expect(await loader.calls == ["active", "plan \(PlanFixture.planID)"])
+        #expect(session(store, intervals)?.value2.title == "Intervals: 5 × 600 m")
+    }
+
+    @Test func offlineKeepsThePlanAndExplains() async throws {
+        let store = try await loaded(FakeWriter(.failure(.offline)))
+        let error = await store.apply([SessionEdit(sessionId: intervals, revision: 1, update: .init(title: "Mine"))])
+        #expect(error?.contains("connection") == true)
+        #expect(session(store, intervals)?.value2.title == "Intervals: 5 × 600 m")
+    }
+
+    @Test func aBeforeSessionCheckInIsSent() async throws {
+        let writer = FakeWriter()
+        let store = try await loaded(writer)
+        #expect(await store.checkIn(sessionId: intervals, feeling: .tired) == nil)
+        #expect(await writer.calls.first == "checkin \(intervals) 2")
     }
 }

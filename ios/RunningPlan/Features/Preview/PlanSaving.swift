@@ -14,6 +14,8 @@ enum SaveError: Error, Equatable {
 protocol PlanSaving: Sendable {
     /// Creates the plan and returns its id. Repeating it for the same preview is safe: the server replays the create.
     func save(_ preview: SavedPreview) async throws -> String
+    /// Creates a blank plan ("I'd rather build my own plan") and returns its id. A repeat with the same id replays.
+    func createBlank(_ plan: Components.Schemas.PlanCreate) async throws -> String
 }
 
 /// Calls `POST /v1/plans` through a client that carries the user's token (`AuthMiddleware`).
@@ -21,7 +23,14 @@ struct APIPlanSaver: PlanSaving {
     let client: Client
 
     func save(_ preview: SavedPreview) async throws -> String {
-        let body = try Self.body(for: preview)
+        try await create(Self.body(for: preview))
+    }
+
+    func createBlank(_ plan: Components.Schemas.PlanCreate) async throws -> String {
+        try await create(plan)
+    }
+
+    private func create(_ body: Components.Schemas.PlanCreate) async throws -> String {
         let output: Operations.createPlan.Output
         do {
             output = try await client.createPlan(body: .json(body))
@@ -33,7 +42,7 @@ struct APIPlanSaver: PlanSaving {
             throw offline ? SaveError.offline : SaveError.server
         }
         switch output {
-        case .created, .ok: return preview.ids.plan
+        case .created, .ok: return body.value2.id
         case .unauthorized: throw SaveError.signedOut
         case .conflict: throw SaveError.conflict
         case .badRequest, .contentTooLarge, .undocumented: throw SaveError.server

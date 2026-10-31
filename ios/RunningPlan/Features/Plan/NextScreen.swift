@@ -4,12 +4,19 @@ import SwiftUI
 struct NextScreen: View {
     let plans: PlanStore
     let onSetGoal: () -> Void
+    var onOpen: (String) -> Void = { _ in }
+    var onMove: (String) -> Void = { _ in }
+    @State private var busy = false
+    @State private var error: String?
 
     var body: some View {
         Group {
             switch plans.state {
             case .loaded(let plan):
-                NextView(model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday())), onSetGoal: onSetGoal)
+                NextView(
+                    model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday())), onSetGoal: onSetGoal,
+                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, busy: busy, error: error
+                )
             case .loading:
                 centred { ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your plan") }
             case .empty:
@@ -41,6 +48,18 @@ struct NextScreen: View {
         }
         .toolbarBackground(Palette.tabBar.color, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+    }
+
+    /// Make it easier: the Easier quick adjustment, straight to the API.
+    private func makeEasier(_ id: String) {
+        guard let session = plans.plan?.value2.sessions.first(where: { $0.value1.id == id }),
+              let update = QuickAdjustment.easier.update(for: session.value2) else { return }
+        busy = true
+        error = nil
+        Task {
+            error = await plans.apply([SessionEdit(sessionId: id, revision: session.value1.revision, update: update)])
+            busy = false
+        }
     }
 
     private func centred<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
