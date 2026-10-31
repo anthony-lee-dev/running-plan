@@ -9,7 +9,7 @@ final class InterviewUITests: XCTestCase {
     func testSetAGoalOpensTheInterviewAndContinueAdvances() {
         let app = XCUIApplication()
         // A preview draft saved by an earlier run would open the preview instead of the interview.
-        app.launchArguments += ["-preview.draft", ""]
+        app.launchArguments += ["-preview.draft", "", "-auth.reset", "YES"]
         app.launch()
 
         app.buttons["Set a goal"].tap()

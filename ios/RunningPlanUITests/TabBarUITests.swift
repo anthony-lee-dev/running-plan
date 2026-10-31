@@ -9,6 +9,7 @@ final class TabBarUITests: XCTestCase {
     @MainActor
     func testFourTabsAndSwitching() {
         let app = XCUIApplication()
+        app.launchArguments += ["-auth.reset", "YES"]
         app.launch()
 
         XCTAssertTrue(app.staticTexts["screen.next"].waitForExistence(timeout: 10),
