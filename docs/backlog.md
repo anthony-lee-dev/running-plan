@@ -7,8 +7,9 @@ Tasks marked `any time` may be picked when the current slice is waiting on the h
 `Later` sections come after slice 12.
 
 One task = one PR. `ask first` = post the plan and wait for the human before writing code. Task numbers are stable
-IDs, not order (2.x started as API tasks, 3.x and 4.x as iOS tasks). Tasks in one slice without a shared `needs` can
-run side by side, one worktree each (`claude --worktree <name>`); two or three at once is a sensible limit.
+IDs, not order (2.x started as API tasks, 3.x and 4.x as iOS tasks). `/next-task` gives each PR to a worker subagent
+in its own worktree. Tasks in one slice without a shared `needs` can run side by side, two at most, and only one of
+them may touch `ios/` (the UI tests share port 8790 and the simulator).
 
 Sources: § points to `designs/Running Planner — System Design v1.0.md` (what to build). The test approach per layer
 and manual-gate rules come from `designs/Running Planner Agent Build Workflow.md` (how to build). That document's
