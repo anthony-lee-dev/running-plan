@@ -59,6 +59,9 @@ and of the other blocks:
 - Never `pkill` or `kill` a process you didn't start: it may be another worker's tests or the Stop hook's
   `verify.sh`. If a test run hangs, rerun it with the Bash tool's `timeout` parameter
   (macOS has no `timeout` command).
+- Wait on your own log line or process ID, never on `pgrep -f "<command text>"`: it also matches the Stop hook's
+  `verify.sh` and other workers' runs, so the wait never ends. Write the command's output to a log that ends with
+  an `exit <code>` line, and wait for that (`until grep -q "^exit " <log>`), or use the PID the Bash tool gave you.
 - Don't call the app's task-list or wrap-up tools (`mcp__ccd_turn__update_plan`, `mcp__ccd_turn__wrap_up`).
   Only the main session shows them.
 

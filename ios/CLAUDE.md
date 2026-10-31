@@ -98,11 +98,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 
 ## UI tests against a local API (task 3.9)
 
-- UI tests that need the API run against the in-memory UI-test server (`api/test/ui-server`, `127.0.0.1:8790`),
+- UI tests that need the API run against the in-memory UI-test server (`api/test/ui-server`, on a free port per run),
   never the deployed one: they set `API_BASE_URL` in `launchEnvironment` and pass `-preview.draft ""` so a draft saved
-  by an earlier run is not reused. `scripts/verify.sh ios` starts the server, passes `LOCAL_API_URL` to the test runner
+  by an earlier run is not reused. `scripts/verify.sh ios` starts the server on a free port, passes `LOCAL_API_URL` to the test runner
   (`TEST_RUNNER_LOCAL_API_URL`), and fails if no UI test generated a plan on it. To run one from Xcode, start the server
-  (`npm run ui-test-server -w api`) and add `LOCAL_API_URL=http://127.0.0.1:8790` to the scheme's test environment;
+  (`npm run ui-test-server -w api`, port 8790) and add `LOCAL_API_URL=http://127.0.0.1:8790` to the scheme's test environment;
   without it the test skips. Sign-in codes come from `GET /__test/codes/latest?email=` on that server.
 - Plain `http://127.0.0.1` works in the simulator without an App Transport Security exception.
 

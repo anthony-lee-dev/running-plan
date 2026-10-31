@@ -42,7 +42,7 @@ Name the branch in the brief: `agent/<task id>-<few words>`. For the code PR aft
 
 Every worker gets its own worktree, even when only one runs. The main checkout has to stay clean on `main`:
 whenever this session ends a turn, the repo's Stop hook runs `verify.sh` on whatever is checked out. If a worker
-were editing the main checkout, the hook would verify its half-done work and fight it for port 8790.
+were editing the main checkout, the hook would verify its half-done work and run the same iOS tests as the worker.
 
 **One worker per backlog task.** The worker builds the whole task, end to end, in one PR of any size. Splitting a
 task across workers would make each new worker learn the same code again. The one exception is the repo's
@@ -60,7 +60,7 @@ Run workers one at a time by default. A second may run alongside the first only 
 
 - the second task is in the current slice or marked `any time`, its `needs` are ticked, and neither task needs
   the other or the other's PR;
-- at most one of them touches `ios/`, because the iOS UI tests need port 8790 and the simulator;
+- at most one of them touches `ios/`, because the iOS UI tests share the simulator, and a second iOS run slows both;
 - they don't change the same files, apart from their own lines in `docs/backlog.md`.
 
 The PR that merges second may conflict on `docs/backlog.md`. Step 4 spots this and sends it back to its worker,
