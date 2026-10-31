@@ -143,7 +143,7 @@ and save a plan against the deployed API.
 
 ## Slice 3: See my plan
 
-- [ ] 3.5 Next (DK-Next), Plan week (DK-Week), whole plan (DK-Whole); paces shown as `6:30/km`. needs: 3.4, 0.5
+- [x] 3.5 Next (DK-Next), Plan week (DK-Week), whole plan (DK-Whole); paces shown as `6:30/km`. needs: 3.4, 0.5
 
 **Done when:** a UI test shows the saved plan on all three screens, with snapshot tests against the dark boards.
 

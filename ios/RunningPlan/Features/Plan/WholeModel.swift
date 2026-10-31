@@ -17,14 +17,72 @@ struct WholeModel: Equatable {
         let spoken: String
     }
 
+    /// The goal card. "On track" waits for the progress endpoint (backlog 2.15).
+    struct Goal: Equatable {
+        let title: String
+        let subtitle: String
+        let progress: Double
+        let weekLabel: String
+        let doneLabel: String
+    }
+
+    struct Bar: Equatable {
+        let week: Int
+        let kilometres: Double
+        let phase: PlanPreview.Phase?
+        let isCurrent: Bool
+        /// Weeks still to come are drawn faded.
+        let isAhead: Bool
+    }
+
     let rows: [Row]
+    let goal: Goal
+    let bars: [Bar]
+    let chartSpoken: String
 
     init(schedule: PlanSchedule) {
-        let goal = schedule.plan.value1.value2.goal
+        let planGoal = schedule.plan.value1.value2.goal
         // Only a plan towards a dated race has a race week.
-        let hasRace = goal._type != .none && goal.date != nil
+        let hasRace = planGoal._type != .none && planGoal.date != nil
         let current: Int? = if case .week(let index) = schedule.position { index } else { nil }
-        let km = (0..<schedule.weekCount).map { Int((schedule.plannedMetres(week: $0) / 1000).rounded()) }
+        let metres = (0..<schedule.weekCount).map { schedule.plannedMetres(week: $0) }
+        let km = metres.map { Int(($0 / 1000).rounded()) }
+        let weeksDone: Int
+        let weekLabel: String
+        switch schedule.position {
+        case .notStarted(let start):
+            weeksDone = 0
+            weekLabel = "Starts \(PlanPreview.shortDate(start))"
+        case .week(let index):
+            weeksDone = index
+            weekLabel = "Week \(index + 1) of \(schedule.weekCount)"
+        case .finished:
+            weeksDone = schedule.weekCount
+            weekLabel = "Plan finished"
+        }
+        goal = Goal(
+            title: Self.title(planGoal),
+            subtitle: Self.subtitle(planGoal, schedule: schedule),
+            progress: schedule.weekCount > 0 ? Double(weeksDone) / Double(schedule.weekCount) : 0,
+            weekLabel: weekLabel,
+            doneLabel: weeksDone == 1 ? "1 week done" : "\(weeksDone) weeks done"
+        )
+        bars = (0..<schedule.weekCount).map { week in
+            Bar(
+                week: week,
+                kilometres: (metres[week] / 100).rounded() / 10,
+                phase: schedule.phase(ofWeek: week),
+                isCurrent: week == current,
+                isAhead: week >= weeksDone && week != current
+            )
+        }
+        var spoken = ["Weekly distance for the \(schedule.weekCount)-week plan."]
+        var progressParts: [String] = []
+        if weeksDone == 1 { progressParts.append("Week 1 done") } else if weeksDone > 1 { progressParts.append("Weeks 1 to \(weeksDone) done") }
+        if let current { progressParts.append("week \(current + 1) this week") }
+        if let longest = km.max() { progressParts.append("longest week \(longest) km") }
+        if !progressParts.isEmpty { spoken.append(progressParts.joined(separator: ", ") + ".") }
+        chartSpoken = spoken.joined(separator: " ")
         rows = (0..<schedule.weekCount).map { week in
             let phase = schedule.phase(ofWeek: week)
             let date = PlanPreview.shortDate(schedule.weekRange(week).first)
@@ -51,5 +109,32 @@ struct WholeModel: Equatable {
                 spoken: spokenParts.compactMap { $0 }.joined(separator: ", ")
             )
         }
+    }
+
+    /// "10K in 55:00", "Half marathon in 1:45:00", or the goal's name alone.
+    private static func title(_ goal: Components.Schemas.Goal) -> String {
+        let name = PlanPreview.goalName(goal)
+        guard goal._type != .none, let seconds = goal.targetTimeSec else { return name }
+        let time = seconds >= 3600
+            ? String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+            : String(format: "%d:%02d", seconds / 60, seconds % 60)
+        return "\(name) in \(time)"
+    }
+
+    /// "Race day Sunday, Dec 13 · 46 days to go", or when the plan ends if there is no race date.
+    private static func subtitle(_ goal: Components.Schemas.Goal, schedule: PlanSchedule) -> String {
+        guard goal._type != .none, let date = goal.date else {
+            let end = schedule.weekRange(max(schedule.weekCount - 1, 0)).last
+            return "Ends \(NextModel.weekday(end)), \(PlanPreview.shortDate(end))"
+        }
+        let days = PlanPreview.dayNumber(date) - PlanPreview.dayNumber(schedule.today)
+        let when: String
+        switch days {
+        case ..<0: when = "done"
+        case 0: when = "today"
+        case 1: when = "1 day to go"
+        default: when = "\(days) days to go"
+        }
+        return "Race day \(NextModel.weekday(date)), \(PlanPreview.shortDate(date)) · \(when)"
     }
 }

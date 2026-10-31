@@ -23,6 +23,7 @@ accessibility rules, and which endpoints each screen calls. Sizes are in pt (1 C
 | yours-text | `#D8D2C2` | "Yours" badge text, on `line` |
 | rest-border | `#5C5748` | Dashed border of a rest day's card (Week) |
 | segment-track / segment-selected | `#2D2A22` / `#443F33` | Week / Whole plan switch: track and selected segment |
+| goal-card / goal-border / goal-text / goal-track | `#33291F` / `#4A3C2B` / `#CFC8B8` / `#4A4638` | Goal card on Whole plan |
 | green-soft / green-soft-text | `#1D3A2E` / `#8EE0BF` | Easy badge, goal card |
 | amber-soft | `#3B3115` | Notices (review ready, assumptions) |
 | blue-soft / blue-text | `#1F2A4D` / `#B7C7F5` | Long-run badge, import icon |

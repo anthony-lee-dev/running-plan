@@ -14,11 +14,14 @@ final class PreviewUITests: XCTestCase {
         return url
     }
 
-    /// How many successful requests the local API has served for `operation` (`METHOD /path`).
+    /// How many successful requests the local API has served for `operation` (`METHOD /path`); a key ending in `*`
+    /// counts every path that starts with what comes before it.
     private func requestCount(_ api: URL, _ operation: String) async throws -> Int {
         let (data, _) = try await URLSession.shared.data(from: api.appending(path: "__test/stats"))
         let stats = try JSONDecoder().decode([String: [String: Int]].self, from: data)
-        return stats["requests"]?[operation] ?? 0
+        let requests = stats["requests"] ?? [:]
+        guard operation.hasSuffix("*") else { return requests[operation] ?? 0 }
+        return requests.filter { $0.key.hasPrefix(operation.dropLast()) }.values.reduce(0, +)
     }
 
     /// The last sign-in code the local API sent to `email`, waiting a little for it to arrive.
@@ -82,9 +85,10 @@ final class PreviewUITests: XCTestCase {
     }
 
     @MainActor
-    func testSaveSignsInWithAnEmailCodeAndSavesThePlan() async throws {
+    func testSaveSignsInWithAnEmailCodeAndShowsThePlanOnAllThreeScreens() async throws {
         let api = try localAPI()
         let before = try await requestCount(api, "POST /v1/plans")
+        let loadsBefore = try await requestCount(api, "GET /v1/plans/*")
         // A new address each run, so no earlier code or rate limit gets in the way.
         let email = "ui-\(UUID().uuidString.prefix(8).lowercased())@example.com"
 
@@ -109,6 +113,22 @@ final class PreviewUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Set a goal"].exists)
         let after = try await requestCount(api, "POST /v1/plans")
         XCTAssertEqual(after, before + 1, "Exactly one plan should have been created on the local API")
+        let loadsAfter = try await requestCount(api, "GET /v1/plans/*")
+        XCTAssertGreaterThan(loadsAfter, loadsBefore, "The saved plan was not loaded back from the local API")
+
+        // Plan: this week, then the whole plan, then a week opened from it. The plan starts on the real today, so only
+        // the structure is checked here; the content is pinned by the model and snapshot tests.
+        app.buttons["Plan"].firstMatch.tap() // the tab; wide iPhones show tabs in a bar and a rail
+        // The title and the element combining it with its dates both carry the identifier.
+        let weekTitle = app.staticTexts["week.title"].firstMatch
+        XCTAssertTrue(weekTitle.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(weekTitle.label.hasPrefix("Week 1"), "A plan saved today opens on week 1, got \(weekTitle.label)")
+        app.buttons["Whole plan"].tap()
+        let secondWeek = app.buttons["whole.week.2"]
+        XCTAssertTrue(secondWeek.waitForExistence(timeout: 5), app.debugDescription)
+        secondWeek.tap()
+        XCTAssertTrue(weekTitle.waitForExistence(timeout: 5))
+        XCTAssertTrue(weekTitle.label.hasPrefix("Week 2"), "Tapping week 2 should open it, got \(weekTitle.label)")
     }
 
     @MainActor
