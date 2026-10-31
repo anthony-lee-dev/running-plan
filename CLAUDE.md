@@ -45,7 +45,8 @@ set up each session on their watch by hand, then import results and review. Live
 
 ## Working style
 
-- One PR = one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
+- One PR = one backlog task, end to end, with no size limit (the human's call: splitting a task across sessions
+  loses context). The exception is a contract change, which is a `spec/openapi.yaml` PR of its own first.
 - Build in vertical slices: `docs/backlog.md` groups tasks by feature, each with only the API and iOS work it needs
   and an end-to-end check (contract tests, a UI test against the local API, a device check) before the next slice.
 - Pick work from `docs/backlog.md` (`/next-task`). Never report a backlog task as done without ticking it in

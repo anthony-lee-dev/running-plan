@@ -29,25 +29,24 @@ Read the backlog as it is on `main`, not as it is in this checkout: `git fetch o
 
 ## 2. Start a worker
 
-Say in one line which task (and which part, if it's a later PR of a bigger task) you're starting. Then call the
-Agent tool with:
+Say in one line which task you're starting. Then call the Agent tool with:
 
 - `subagent_type: "general-purpose"` and `isolation: "worktree"`;
 - the brief in [references/worker-brief.md](references/worker-brief.md), with its placeholders filled in;
 - no `model` override.
 
-Name the branch in the brief: `agent/<task id>-<few words>`, plus `-2`, `-3` for later PRs of the same task, so two
-workers never pick the same name.
+Name the branch in the brief: `agent/<task id>-<few words>`. For the code PR after a contract PR (below), add
+`-2`, so the two names differ.
 
 Every worker gets its own worktree, even when only one runs. The main checkout has to stay clean on `main`:
 whenever this session ends a turn, the repo's Stop hook runs `verify.sh` on whatever is checked out. If a worker
 were editing the main checkout, the hook would verify its half-done work and fight it for port 8790.
 
-**One worker per PR.** Don't split a task yourself: you haven't read the code, so the worker chooses the part.
-A task too big for about 400 changed lines comes back unticked, with a list of what's left. After that PR merges,
-start a new worker for the same task. Pass it the earlier PR links and that list as the brief's "Done so far"
-(backlog 3.5 took four PRs this way). If a worker reports that the task needs a contract change first, its PR is
-the `spec/openapi.yaml` change, and that PR waits for the human.
+**One worker per backlog task.** The worker builds the whole task, end to end, in one PR of any size. Splitting a
+task across workers would make each new worker learn the same code again. The one exception is the repo's
+contract-first rule: if the task changes an endpoint, the worker's PR is only the `spec/openapi.yaml` change, and
+that PR waits for the human. After it merges, start a worker for the rest of the task, with that PR's link and the
+worker's "Left" list as the brief's "Done so far".
 
 **Pass on what the human said.** Workers can't see this conversation. Put into the brief any correction or choice
 the human made that the task needs. A correction also belongs in the relevant `CLAUDE.md` (repo rule), so ask the
