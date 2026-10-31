@@ -32,6 +32,21 @@ struct PlanScheduleTests {
         #expect(s.nextSession?.value2.date == "2026-10-30")
     }
 
+    @Test func aRestSessionIsShownButNotCountedOrNext() throws {
+        // Like the server's progress (api/src/domain/insights.ts), rest is not a session to do.
+        let s = PlanSchedule(plan: try PlanFixture.detail(extra: [PlanFixture.restThursday]), today: "2026-10-29")
+        #expect(s.sessions(inWeek: 3).count == 7)
+        #expect(s.sessionCount(week: 3) == 6)
+        #expect(s.todaySessions.isEmpty)
+        #expect(s.nextSession?.value2.date == "2026-10-30")
+    }
+
+    @Test func aSessionSkippedInAdvanceIsNotNext() throws {
+        let skipped = #"{"date":"2026-10-29","type":"easy","title":"Easy run","status":"skipped","owner":"user","steps":[{"kind":"work","goal":{"type":"distance","value":3000}}]}"#
+        let s = PlanSchedule(plan: try PlanFixture.detail(extra: [skipped]), today: PlanFixture.today)
+        #expect(s.nextSession?.value2.date == "2026-10-30")
+    }
+
     @Test func beforeTheStartTheFirstSessionIsNext() throws {
         let s = try schedule(today: "2026-10-01")
         #expect(s.position == .notStarted(startsOn: "2026-10-05"))
@@ -52,7 +67,7 @@ struct PlanScheduleTests {
         // Strength and the user's cycling count as sessions but not as running distance.
         #expect(s.plannedMetres(week: 3) == 24_900)
         #expect(s.doneCount(week: 3) == 2)
-        #expect(s.sessions(inWeek: 3).count == 6)
+        #expect(s.sessionCount(week: 3) == 6)
         #expect(s.plannedMetres(week: 0) == 16_000)
     }
 }

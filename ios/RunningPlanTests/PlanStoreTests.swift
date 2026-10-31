@@ -43,9 +43,11 @@ struct PlanLoaderTests {
         APIPlanLoader(client: APIConfiguration.client(serverURL: URL(string: "http://127.0.0.1:8790")!, transport: transport))
     }
 
-    @Test func theActivePlanIsTheMostRecentlyUpdatedOne() async throws {
-        // The list is ordered by start date, so two plans saved the same day tie; the latest save wins.
-        let list = #"{"plans":[\#(summary(older, updatedAt: "2026-10-27T09:00:00.000Z")),\#(summary(newer, updatedAt: "2026-10-28T07:42:00.000Z"))]}"#
+    @Test(arguments: [true, false])
+    func theActivePlanIsTheMostRecentlyUpdatedOne(newerFirst: Bool) async throws {
+        // The list is ordered by start date (then id), not by when a plan was saved; the latest save wins either way.
+        let pair = [summary(older, updatedAt: "2026-10-27T09:00:00.000Z"), summary(newer, updatedAt: "2026-10-28T07:42:00.000Z")]
+        let list = #"{"plans":[\#((newerFirst ? pair.reversed() : pair).joined(separator: ","))]}"#
         let transport = RouteTransport(["listPlans": (.ok, list), "getPlan": (.ok, String(decoding: PlanFixture.json(), as: UTF8.self))])
 
         let plan = try await loader(transport).activePlan()

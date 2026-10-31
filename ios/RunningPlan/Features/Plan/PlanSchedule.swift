@@ -47,11 +47,12 @@ struct PlanSchedule {
         plan.value1.value2.weeks.first { $0.index == index }?.phase.flatMap { PlanPreview.Phase(rawValue: $0.rawValue) }
     }
 
+    /// Every session in the week, rest included (the Week screen shows rest days).
     func sessions(inWeek index: Int) -> [Session] {
         sessions.filter { week(of: $0.value2.date) == index }
     }
 
-    /// The week's seven dates, Monday first (weeks start on the plan's start date, which the engine puts on a Monday).
+    /// The week's seven dates, counted from the plan's start date (a Monday for rule-generated plans).
     func days(ofWeek index: Int) -> [String] {
         (0..<7).map { Self.date(dayNumber: start + index * 7 + $0) }
     }
@@ -64,9 +65,9 @@ struct PlanSchedule {
         sessions.filter { $0.value2.date == today && $0.value2._type != .rest }
     }
 
-    /// The first session after today.
+    /// The first session after today that is still to do (not rest, not skipped in advance).
     var nextSession: Session? {
-        sessions.first { $0.value2.date > today && $0.value2._type != .rest }
+        sessions.first { $0.value2.date > today && $0.value2._type != .rest && $0.value2.status != .skipped }
     }
 
     /// Planned running distance; strength and cross-training count for nothing.
@@ -74,9 +75,14 @@ struct PlanSchedule {
         sessions(inWeek: index).reduce(0) { $0 + PlanPreview.metres(of: $1.value2) }
     }
 
+    /// Sessions to do in the week. Rest is not one, as in the server's progress (`api/src/domain/insights.ts`).
+    func sessionCount(week index: Int) -> Int {
+        sessions(inWeek: index).filter { $0.value2._type != .rest }.count
+    }
+
     /// Sessions marked done. Distance actually run comes from the progress endpoint (backlog 2.15), not from here.
     func doneCount(week index: Int) -> Int {
-        sessions(inWeek: index).filter { $0.value2.status == .done }.count
+        sessions(inWeek: index).filter { $0.value2._type != .rest && $0.value2.status == .done }.count
     }
 
     /// `YYYY-MM-DD` for a day number from `PlanPreview.dayNumber`.

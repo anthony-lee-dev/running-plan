@@ -60,7 +60,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   save, the saved plan by id. Signed out or a 401 that survives the refresh shows the empty state ("Set a goal")
   without an error; offline or a server error shows a retry. Kept in memory only: the on-device store is slice 5.
 - The active plan is the most recently updated one on the first `listPlans` page. The list is ordered by start date
-  then id, so plans saved the same day tie there; `updatedAt` picks the latest save.
+  then id, not by save time, so `updatedAt` picks the latest save. Session edits do not move a plan's `updatedAt`.
 - `PlanSchedule` is pure: it takes `today` as `YYYY-MM-DD` and counts weeks in calendar days from `startDate`, never
   with `Date` intervals. It works out the week, today's sessions, the next session and week totals. Distance actually
   run waits for the progress endpoint (backlog 2.15); only session status (`done`) is used until then.

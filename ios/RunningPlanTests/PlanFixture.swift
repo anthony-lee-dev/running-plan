@@ -67,8 +67,9 @@ enum PlanFixture {
         return sessions
     }
 
-    static func json(id: String = planID) -> Data {
-        let sessions = sessionContents().enumerated().map { index, content in
+    /// `extra` adds sessions (content JSON) to the board's plan, for cases the boards do not show.
+    static func json(id: String = planID, extra: [String] = []) -> Data {
+        let sessions = (sessionContents() + extra).enumerated().map { index, content in
             let meta = #""id":"\#(String(format: "00000000-0000-4000-8000-%012d", index))","planId":"\#(id)","revision":1,"updatedAt":"2026-10-28T07:42:00.000Z","deletedAt":null,"#
             return "{" + meta + content.dropFirst()
         }
@@ -80,7 +81,10 @@ enum PlanFixture {
         """#.utf8)
     }
 
-    static func detail(id: String = planID) throws -> Components.Schemas.PlanDetail {
-        try APIConfiguration.decoder.decode(Components.Schemas.PlanDetail.self, from: json(id: id))
+    static func detail(id: String = planID, extra: [String] = []) throws -> Components.Schemas.PlanDetail {
+        try APIConfiguration.decoder.decode(Components.Schemas.PlanDetail.self, from: json(id: id, extra: extra))
     }
+
+    /// A rest session on Thursday of week 4, which the user may add by hand.
+    static let restThursday = #"{"date":"2026-10-29","type":"rest","title":"Rest day","status":"planned","owner":"user"}"#
 }

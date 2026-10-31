@@ -19,8 +19,8 @@ protocol PlanLoading: Sendable {
 struct APIPlanLoader: PlanLoading {
     let client: Client
 
-    /// The most recently updated plan on the first page. The list is ordered by start date, so plans saved on the
-    /// same day tie there; the latest save is the one the user just made.
+    /// The most recently updated plan on the first page. The list is ordered by start date then id, not by when a plan
+    /// was saved, so the latest save (the one the user just made) is picked by `updatedAt`.
     func activePlan() async throws -> Components.Schemas.PlanDetail? {
         let output = try await call { try await client.listPlans(query: .init(limit: 50)) }
         let plans: [Components.Schemas.PlanSummary]
