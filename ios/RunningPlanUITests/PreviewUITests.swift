@@ -49,6 +49,43 @@ final class PreviewUITests: XCTestCase {
         XCTAssertTrue(weekTitle.label.hasPrefix("Week 2"), "Tapping week 2 should open it, got \(weekTitle.label)")
     }
 
+    /// Issue #97: pick an earlier start date; the plan is rebuilt from it (a second generate call) and still saves.
+    @MainActor
+    func testPickingAnEarlierStartDateRebuildsThePlanAndSavesIt() async throws {
+        let api = try LocalAPI.url()
+        let app = LocalAPI.openPreview(api)
+        let before = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
+
+        let calendar = Calendar.current
+        let today = Date()
+        // Yesterday, or the day before today in the previous month on the 1st: the popup opens on today's month.
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        let picker = app.datePickers["preview.startDate"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
+        for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
+        picker.buttons.firstMatch.tap()
+        if !calendar.isDate(yesterday, equalTo: today, toGranularity: .month) {
+            app.buttons["Previous Month"].tap()
+        }
+        let label = DateFormatter()
+        label.dateFormat = "EEEE, MMMM d"
+        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: yesterday))).firstMatch
+        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        day.tap()
+
+        let deadline = Date().addingTimeInterval(15)
+        var after = before
+        while after <= before, Date() < deadline {
+            try await Task.sleep(for: .milliseconds(300))
+            after = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
+        }
+        XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
+
+        let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
+        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        try await LocalAPI.saveAndSignIn(app, api)
+    }
+
     @MainActor
     func testTheCloseButtonLeavesThePreview() async throws {
         let api = try LocalAPI.url()

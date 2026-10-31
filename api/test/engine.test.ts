@@ -55,6 +55,32 @@ describe("generatePlan: shape", () => {
   });
 });
 
+describe("generatePlan: a start date in the past (issue #97)", () => {
+  const past = "2026-10-20"; // a Tuesday, two weeks before TODAY
+
+  it("starts the plan on the date it is given, with sessions dated from there", () => {
+    const draft = gen({ runsPerWeek: 3 }, past);
+    expect(draft.startDate).toBe(past);
+    expect(draft.sessions.every((s) => s.date >= past)).toBe(true);
+    expect(draft.sessions.some((s) => s.date < TODAY)).toBe(true);
+    expect(draft.sessions.map((s) => s.date).sort()[0]! >= past).toBe(true);
+  });
+
+  it("the first week begins on the start date's weekday and keeps its week count", () => {
+    const back = gen({ runsPerWeek: 3 }, past);
+    const now = gen({ runsPerWeek: 3 }, TODAY);
+    expect(back.weekCount).toBe(now.weekCount);
+    expect(weekdayOf(back.startDate)).toBe("tue");
+    expect(back.sessions.every((s) => weekIndex(back, s.date) >= 0 && weekIndex(back, s.date) < back.weekCount)).toBe(true);
+  });
+
+  it("keeps the goal date alignment: the plan still ends on the goal date", () => {
+    const draft = gen({ goal: { distance: "5k", date: "2026-12-20" }, runsPerWeek: 3 }, past);
+    expect(draft.goal.date).toBe("2026-12-20");
+    expect(dayNum(draft.startDate) + draft.weekCount * 7 - 1).toBe(dayNum("2026-12-20"));
+  });
+});
+
 describe("generatePlan: plan length (5K is 8 to 12 weeks)", () => {
   it.each([
     ["beginner", { runningHistory: "new_or_returning" as const }, 12],

@@ -36,6 +36,8 @@ struct OnboardingFlow: View {
     /// Decided once, when the screen appears, so a parent re-render never re-reads (and expires) the saved draft.
     @State private var stage: Stage?
     @State private var stageID = 0
+    /// The start date picked on the preview, kept while the user changes an answer and comes back.
+    @State private var chosenStart: String?
 
     init(dependencies: PreviewDependencies, onClose: @escaping () -> Void, onSaved: @escaping (String) -> Void = { _ in }) {
         self.dependencies = dependencies
@@ -55,7 +57,7 @@ struct OnboardingFlow: View {
                 let signingIn = save.showsSignIn
                 PreviewView(
                     model: model,
-                    onChangeAnswer: { change(model.answers) },
+                    onChangeAnswer: { change(model.answers, startDate: model.startDate) },
                     onSave: model.current.map { preview in { Task { await save.save(preview) } } },
                     onClose: onClose,
                     saving: save.step == .saving,
@@ -83,16 +85,16 @@ struct OnboardingFlow: View {
         .onAppear {
             guard stage == nil else { return }
             if let saved = dependencies.store.load(now: dependencies.now()) {
-                stage = Self.preview(for: saved.answers, dependencies)
+                stage = Self.preview(for: saved.answers, startDate: saved.startDate, dependencies)
             } else {
                 stage = .interview(InterviewFlow())
             }
         }
     }
 
-    private static func preview(for answers: InterviewAnswers, _ d: PreviewDependencies) -> Stage {
+    private static func preview(for answers: InterviewAnswers, startDate: String? = nil, _ d: PreviewDependencies) -> Stage {
         .preview(
-            PreviewViewModel(answers: answers, generator: d.generator, store: d.store, now: d.now, today: d.today),
+            PreviewViewModel(answers: answers, startDate: startDate, generator: d.generator, store: d.store, now: d.now, today: d.today),
             SaveFlowModel(signIn: d.signIn, saver: d.saver, store: d.store, now: d.now)
         )
     }
@@ -106,11 +108,12 @@ struct OnboardingFlow: View {
             stageID += 1
             return
         }
-        stage = Self.preview(for: answers, dependencies)
+        stage = Self.preview(for: answers, startDate: chosenStart, dependencies)
         stageID += 1
     }
 
-    private func change(_ answers: InterviewAnswers) {
+    private func change(_ answers: InterviewAnswers, startDate: String?) {
+        chosenStart = startDate
         stage = .interview(InterviewFlow(prefilledWith: answers))
         stageID += 1
     }

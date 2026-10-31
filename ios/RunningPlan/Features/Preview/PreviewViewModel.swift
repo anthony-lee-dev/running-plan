@@ -24,13 +24,24 @@ final class PreviewViewModel {
     /// A newer request makes an older one's answer stale, so only the latest may update the screen.
     private var generation = 0
 
+    /// The start date the user picked, or nil for today. Never after today. The engine builds the plan from the date
+    /// it is given (sent as `today`), so a past date back-dates the plan and its earlier sessions show as missed.
+    private(set) var startDate: String?
+
+    /// The date the plan is built from.
+    var effectiveStart: String { startDate ?? today() }
+    /// The latest date the picker offers.
+    var latestStart: String { today() }
+
     init(
         answers: InterviewAnswers,
+        startDate: String? = nil,
         generator: PlanGenerating,
         store: PreviewDraftStoring,
         now: @escaping () -> Date = Date.init,
         today: @escaping () -> String = PreviewViewModel.localToday
     ) {
+        self.startDate = startDate
         self.answers = answers
         self.generator = generator
         self.store = store
@@ -46,7 +57,7 @@ final class PreviewViewModel {
 
     /// Shows the saved draft when it is for these answers and under 24 hours old; otherwise asks for a new one.
     func load() async {
-        if let saved = store.load(now: now()), saved.answers == answers {
+        if let saved = store.load(now: now()), saved.answers == answers, saved.startDate == startDate {
             current = saved
             state = .loaded(PlanPreview(draft: saved.draft))
             return
@@ -60,6 +71,16 @@ final class PreviewViewModel {
         await generate()
     }
 
+    /// Today or an earlier date (string compare is safe for `YYYY-MM-DD`); a later one is ignored. Rebuilds the plan.
+    func setStartDate(_ date: String) async {
+        let todayString = today()
+        guard date <= todayString else { return }
+        let chosen: String? = date == todayString ? nil : date
+        guard chosen != startDate else { return }
+        startDate = chosen
+        await generate()
+    }
+
     func retry() async {
         await generate()
     }
@@ -70,9 +91,9 @@ final class PreviewViewModel {
         state = .loading
         current = nil
         do {
-            let draft = try await generator.generate(answers: answers, today: today())
+            let draft = try await generator.generate(answers: answers, today: effectiveStart)
             guard mine == generation else { return }
-            let preview = SavedPreview(answers: answers, draft: draft, savedAt: now())
+            let preview = SavedPreview(answers: answers, draft: draft, savedAt: now(), startDate: startDate)
             store.save(preview)
             current = preview
             state = .loaded(PlanPreview(draft: draft))

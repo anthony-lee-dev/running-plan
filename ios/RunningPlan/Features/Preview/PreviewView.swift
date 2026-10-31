@@ -19,6 +19,7 @@ struct PreviewView: View {
                 switch model.state {
                 case .loading:
                     header(subtitle: "Making your plan…")
+                    startCard
                     ProgressView().tint(Palette.accentText.color).frame(maxWidth: .infinity).padding(.top, 40).accessibilityLabel("Making your plan")
                 case .failed(let message):
                     header(subtitle: nil)
@@ -27,6 +28,7 @@ struct PreviewView: View {
                     header(subtitle: preview.headline + ". It starts gently, and you can change anything.")
                     chart(preview)
                     weekOne(preview)
+                    startCard
                     notices(preview)
                     footer
                 }
@@ -72,6 +74,43 @@ struct PreviewView: View {
             }
         }
         .padding(.top, 8)
+    }
+
+    /// The start-date picker: today by default, or any earlier day (a back-dated plan shows its past sessions as missed,
+    /// so a run already done can be matched to one).
+    private var startCard: some View {
+        let zone = TimeZone.current
+        let chosen = model.effectiveStart
+        let latest = model.latestStart
+        let aligned = model.current?.draft.startDate
+        return card(spacing: 8) {
+            HStack {
+                Text("Starts on").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink.color)
+                Spacer()
+                DatePicker(
+                    "Starts on",
+                    selection: Binding(
+                        get: { LocalDay.noon(of: chosen, in: zone) },
+                        set: { newValue in
+                            let day = LocalDay.string(from: newValue, in: zone)
+                            Task { await model.setStartDate(day) }
+                        }
+                    ),
+                    in: ...LocalDay.noon(of: latest, in: zone),
+                    displayedComponents: .date
+                )
+                .labelsHidden()
+                .colorScheme(.dark)
+                .accessibilityIdentifier("preview.startDate")
+            }
+            Text("Today, or an earlier day if you've already started. Sessions before today show as missed.")
+                .font(.system(size: 13)).foregroundStyle(Palette.muted.color)
+            if let aligned, aligned != chosen {
+                Text("Your goal date moves the start to \(LocalDay.heading(aligned)), so the plan ends on it.")
+                    .font(.system(size: 13)).foregroundStyle(Palette.amberText.color)
+                    .accessibilityIdentifier("preview.startAligned")
+            }
+        }
     }
 
     private func failure(_ message: String) -> some View {
