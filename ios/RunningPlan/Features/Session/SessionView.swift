@@ -239,6 +239,7 @@ struct SessionView: View {
         case .off: nil
         case .unsupported: "Scheduling workouts needs an iPhone paired with an Apple Watch."
         case .denied: "Allow Running Plan to schedule workouts in Settings to use this."
+        case .synced(0): "Up to 15 upcoming runs stay on your watch."
         case .synced(let count): "Up to 15 upcoming runs stay on your watch. \(count) scheduled."
         }
     }
