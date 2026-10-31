@@ -30,6 +30,14 @@ struct ThemeTests {
         #expect(Palette.greenInk == RGB(hex: "#0F2A20"))
         #expect(Palette.restRing == RGB(hex: "#7C7667"))
         #expect(Palette.chipText == RGB(hex: "#FFB59B"))
+        #expect(Palette.greenSoft == RGB(hex: "#1D3A2E"))
+        #expect(Palette.greenSoftText == RGB(hex: "#8EE0BF"))
+        #expect(Palette.blueSoft == RGB(hex: "#1F2A4D"))
+        #expect(Palette.blueText == RGB(hex: "#B7C7F5"))
+        #expect(Palette.yoursText == RGB(hex: "#D8D2C2"))
+        #expect(Palette.restBorder == RGB(hex: "#5C5748"))
+        #expect(Palette.segmentTrack == RGB(hex: "#2D2A22"))
+        #expect(Palette.segmentSelected == RGB(hex: "#443F33"))
     }
 
     @Test func minimumTouchTargetIs44() {

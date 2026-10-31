@@ -33,6 +33,7 @@ extension RootView {
     @ViewBuilder func screen(_ tab: AppTab) -> some View {
         switch tab {
         case .next: NextScreen(plans: plans, onSetGoal: { showOnboarding = true })
+        case .plan: PlanScreen(plans: plans, onSetGoal: { showOnboarding = true })
         default: PlaceholderScreen(tab: tab)
         }
     }

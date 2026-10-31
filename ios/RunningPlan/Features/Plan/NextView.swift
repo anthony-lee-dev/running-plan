@@ -118,20 +118,22 @@ private struct FocusCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(focus.label.capitalized): \(focus.title), \(focus.effort). \(PaceFormat.spoken(focus.detail)). \(focus.why)")
     }
 }
 
-/// The workout as bars: as wide as each step's time, as tall as its effort.
+/// The workout as bars: as wide as each step's time, as tall as its effort (a share of the height it is given, so
+/// the 60 pt shape on Next and the 28 pt one on Week keep the boards' proportions).
 struct WorkoutShape: View {
     let segments: [SessionSummary.Segment]
 
-    static func height(_ intensity: SessionSummary.Intensity) -> CGFloat {
+    static func heightShare(_ intensity: SessionSummary.Intensity) -> CGFloat {
         switch intensity {
-        case .hard: 56
-        case .steady: 40
-        case .easy: 22
-        case .recovery: 14
+        case .hard: 56.0 / 60
+        case .steady: 40.0 / 60
+        case .easy: 22.0 / 60
+        case .recovery: 14.0 / 60
         }
     }
 
@@ -151,7 +153,7 @@ struct WorkoutShape: View {
                 ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                     RoundedRectangle(cornerRadius: 3)
                         .fill(Self.color(segment.intensity))
-                        .frame(width: max(2, (proxy.size.width - gaps) * segment.seconds / total), height: Self.height(segment.intensity))
+                        .frame(width: max(2, (proxy.size.width - gaps) * segment.seconds / total), height: proxy.size.height * Self.heightShare(segment.intensity))
                 }
             }
             .frame(maxHeight: .infinity, alignment: .bottom)
