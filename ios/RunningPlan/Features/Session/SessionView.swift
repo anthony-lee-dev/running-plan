@@ -214,8 +214,8 @@ struct SessionView: View {
                 }
                 .accessibilityIdentifier("session.addToWatch")
                 .workoutPreview(watchPlan, isPresented: $previewing)
-                if let watchSync { syncRow(watchSync) }
             }
+            if let watchSync, !model.isRest, watchPlan != nil || watchSync.isOn { syncRow(watchSync) }
             copyButton
         }
     }

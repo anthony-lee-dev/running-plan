@@ -150,6 +150,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   `(plan id, local date)`; removals run before additions so the cap holds. `WatchSyncModel` drives a `WatchScheduling`
   (WorkoutKit in `LiveWatchScheduler`, a fake in tests). It asks permission only from the user's tap on "Keep my next
   sessions on my watch"; `RootView` resyncs in the background only when that is on and already allowed.
+- If a free team refuses to sign the HealthKit entitlement, remove the `entitlements:` block and the two
+  `INFOPLIST_KEY_NSHealth*` lines from `project.yml`; the preview still works and scheduling needs a device check.
 - Add to Apple Watch uses `.workoutPreview`, which needs no permission. Watch sends need a paired Apple Watch.
 
 ## Commands

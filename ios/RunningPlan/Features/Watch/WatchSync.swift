@@ -118,7 +118,32 @@ final class WatchSyncModel {
 
     var isEnabled: Bool { defaults.bool(forKey: Self.key) }
 
+    /// One change at a time: a background resync must not interleave with a tap's turn on or off.
+    private var tail: Task<Void, Never>?
+
+    private func serialized(_ op: @escaping @MainActor () async -> Void) async {
+        let previous = tail
+        let task = Task { @MainActor in
+            await previous?.value
+            await op()
+        }
+        tail = task
+        await task.value
+    }
+
     func turnOn(sessions: [Components.Schemas.Session], today: String) async {
+        await serialized { await self.doTurnOn(sessions: sessions, today: today) }
+    }
+
+    func turnOff() async {
+        await serialized { await self.doTurnOff() }
+    }
+
+    func resync(sessions: [Components.Schemas.Session], today: String) async {
+        await serialized { await self.doResync(sessions: sessions, today: today) }
+    }
+
+    private func doTurnOn(sessions: [Components.Schemas.Session], today: String) async {
         guard scheduler.isSupported else { return status = .unsupported }
         var state = await scheduler.authorization()
         if state == .notDetermined { state = await scheduler.requestAuthorization() }
@@ -130,7 +155,7 @@ final class WatchSyncModel {
         await sync(sessions: sessions, today: today)
     }
 
-    func turnOff() async {
+    private func doTurnOff() async {
         defaults.set(false, forKey: Self.key)
         status = .off
         guard scheduler.isSupported, await scheduler.authorization() == .authorized else { return }
@@ -138,7 +163,7 @@ final class WatchSyncModel {
     }
 
     /// Brings the schedule up to date after the plan changes. Does nothing unless switched on and already allowed.
-    func resync(sessions: [Components.Schemas.Session], today: String) async {
+    private func doResync(sessions: [Components.Schemas.Session], today: String) async {
         guard isEnabled, scheduler.isSupported, await scheduler.authorization() == .authorized else { return }
         await sync(sessions: sessions, today: today)
     }
