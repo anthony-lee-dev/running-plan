@@ -37,16 +37,16 @@ final class PreviewUITests: XCTestCase {
         return ""
     }
 
-    /// Launches against the local API with no saved draft (and, when asked, signed out), then answers the interview
-    /// with 10K and skips the rest, waiting for week 1 of the preview.
+    /// Launches against the local API signed out and with no saved draft, then answers the interview with 10K and
+    /// skips the rest, waiting for week 1 of the preview.
     @MainActor
-    private func openPreview(_ api: URL, signedOut: Bool = false) -> XCUIApplication {
+    private func openPreview(_ api: URL) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["API_BASE_URL"] = api.absoluteString
         // Hide any draft saved by an earlier run (a launch argument beats the stored value), so the API is called.
         app.launchArguments += ["-preview.draft", ""]
-        // Keychain tokens outlive a reinstall; start without them.
-        if signedOut { app.launchArguments += ["-auth.reset", "YES"] }
+        // Keychain tokens outlive a reinstall, and an earlier test's plan would replace "Set a goal": start signed out.
+        app.launchArguments += ["-auth.reset", "YES"]
         app.launch()
 
         app.buttons["Set a goal"].tap()
@@ -88,7 +88,7 @@ final class PreviewUITests: XCTestCase {
         // A new address each run, so no earlier code or rate limit gets in the way.
         let email = "ui-\(UUID().uuidString.prefix(8).lowercased())@example.com"
 
-        let app = openPreview(api, signedOut: true)
+        let app = openPreview(api)
         app.buttons["preview.save"].tap()
 
         let emailField = app.textFields["signin.email"]
@@ -104,7 +104,9 @@ final class PreviewUITests: XCTestCase {
         codeField.typeText(code)
         app.buttons["signin.verify"].tap()
 
-        XCTAssertTrue(app.staticTexts["plan.saved"].waitForExistence(timeout: 15), app.debugDescription)
+        // Next now shows the saved plan, loaded back from the server.
+        XCTAssertTrue(app.staticTexts["next.plan"].waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertFalse(app.buttons["Set a goal"].exists)
         let after = try await requestCount(api, "POST /v1/plans")
         XCTAssertEqual(after, before + 1, "Exactly one plan should have been created on the local API")
     }

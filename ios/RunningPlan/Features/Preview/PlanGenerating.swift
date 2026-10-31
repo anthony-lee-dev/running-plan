@@ -99,6 +99,15 @@ enum APIConfiguration {
     }
 
     static let dateTranscoder: DateTranscoder = FlexibleISO8601()
+
+    /// Decodes API JSON outside the client (fixtures, stored copies) the way the client does.
+    static var decoder: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { d in
+            try dateTranscoder.decode(try d.singleValueContainer().decode(String.self))
+        }
+        return decoder
+    }
 }
 
 /// ISO 8601 dates, written with milliseconds and read with or without them.
