@@ -27,7 +27,9 @@ struct WholeModelTests {
 
     @Test func doneWeeksAreTickedAndThisWeekStandsOut() throws {
         let rows = try model().rows
-        #expect(rows.map(\.state) == [.done, .done, .done, .current] + Array(repeating: .upcoming, count: 6))
+        // Built step by step: as one inline expression it is too slow to type-check on the CI runner.
+        let expected: [WholeModel.State] = [.done, .done, .done, .current] + Array(repeating: WholeModel.State.upcoming, count: 6)
+        #expect(rows.map(\.state) == expected)
     }
 
     @Test func noWeekIsCurrentBeforeTheStartOrAfterTheEnd() throws {
