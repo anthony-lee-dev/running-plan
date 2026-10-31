@@ -20,6 +20,9 @@ struct WholeModel: Equatable {
     let rows: [Row]
 
     init(schedule: PlanSchedule) {
+        let goal = schedule.plan.value1.value2.goal
+        // Only a plan towards a dated race has a race week.
+        let hasRace = goal._type != .none && goal.date != nil
         let current: Int? = if case .week(let index) = schedule.position { index } else { nil }
         let km = (0..<schedule.weekCount).map { Int((schedule.plannedMetres(week: $0) / 1000).rounded()) }
         rows = (0..<schedule.weekCount).map { week in
@@ -30,7 +33,7 @@ struct WholeModel: Equatable {
                 parts.append("This week")
             } else {
                 parts.append(date)
-                if week == schedule.weekCount - 1 {
+                if hasRace, week == schedule.weekCount - 1 {
                     parts.append("race week")
                 } else if week > 0, phase != .taper, km[week] < km[week - 1] {
                     parts.append("lighter week")

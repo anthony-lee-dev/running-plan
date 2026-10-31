@@ -68,7 +68,9 @@ enum PlanFixture {
     }
 
     /// `extra` adds sessions (content JSON) to the board's plan, for cases the boards do not show.
-    static func json(id: String = planID, extra: [String] = [], replacing: [String]? = nil) -> Data {
+    static let goal = #"{"type":"10k","date":"2026-12-13","targetTimeSec":3300}"#
+
+    static func json(id: String = planID, extra: [String] = [], replacing: [String]? = nil, goal: String = goal) -> Data {
         let sessions = ((replacing ?? sessionContents()) + extra).enumerated().map { index, content in
             let meta = #""id":"\#(String(format: "00000000-0000-4000-8000-%012d", index))","planId":"\#(id)","revision":1,"updatedAt":"2026-10-28T07:42:00.000Z","deletedAt":null,"#
             return "{" + meta + content.dropFirst()
@@ -76,14 +78,14 @@ enum PlanFixture {
         let weeks = phases.enumerated().map { #"{"index":\#($0.offset),"phase":"\#($0.element)"}"# }.joined(separator: ",")
         return Data(#"""
         {"id":"\#(id)","revision":3,"updatedAt":"2026-10-28T07:42:00.000Z","deletedAt":null,"contentRevision":3,
-         "goal":{"type":"10k","date":"2026-12-13","targetTimeSec":3300},"startDate":"2026-10-05","weekCount":10,"source":"rules",
+         "goal":\#(goal),"startDate":"2026-10-05","weekCount":10,"source":"rules",
          "engine":{"presetId":"10k","version":"0.1.0"},"adaptive":true,"weeks":[\#(weeks)],"sessions":[\#(sessions.joined(separator: ","))],"warnings":[]}
         """#.utf8)
     }
 
     /// `replacing` swaps the board's sessions for others (content JSON); `extra` adds to them.
-    static func detail(id: String = planID, extra: [String] = [], replacing: [String]? = nil) throws -> Components.Schemas.PlanDetail {
-        try APIConfiguration.decoder.decode(Components.Schemas.PlanDetail.self, from: json(id: id, extra: extra, replacing: replacing))
+    static func detail(id: String = planID, extra: [String] = [], replacing: [String]? = nil, goal: String = goal) throws -> Components.Schemas.PlanDetail {
+        try APIConfiguration.decoder.decode(Components.Schemas.PlanDetail.self, from: json(id: id, extra: extra, replacing: replacing, goal: goal))
     }
 
     /// A rest session on Thursday of week 4, which the user may add by hand.

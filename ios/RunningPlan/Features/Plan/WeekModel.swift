@@ -17,6 +17,8 @@ struct WeekModel: Equatable {
         let title: String
         let detail: String
         let trailing: Trailing
+        /// Today's card keeps its border whatever its status.
+        let isToday: Bool
         /// Only today's card shows the workout shape.
         let shape: [SessionSummary.Segment]
     }
@@ -66,10 +68,8 @@ struct WeekModel: Equatable {
         planned = "\(Int((schedule.plannedMetres(week: week) / 1000).rounded())) km planned"
         let count = schedule.sessionCount(week: week)
         let done = schedule.doneCount(week: week)
-        let crossMinutes = sessions.filter { $0.value2._type == .custom }.reduce(0) { total, s in
-            total + (s.value2.custom?.goal?._type == .time ? (s.value2.custom?.goal?.value ?? 0) : 0) / 60
-        }
-        summary = "\(done) of \(count) sessions done" + (crossMinutes > 0 ? " · plus \(crossMinutes) min cross-training" : "")
+        // The board's "5.1 km done · plus 45 min cross-training" needs distance run (progress endpoint, 2.15).
+        summary = "\(done) of \(count) sessions done"
         progress = count > 0 ? Double(done) / Double(count) : 0
 
         days = schedule.days(ofWeek: week).map { date in
@@ -98,6 +98,7 @@ struct WeekModel: Equatable {
                     title: s.title ?? SessionSummary.effort(s),
                     detail: SessionSummary.detail(s, withTime: isToday),
                     trailing: trailing,
+                    isToday: isToday,
                     shape: isToday && trailing == .today ? SessionSummary.shape(s) : []
                 )
             }
@@ -111,7 +112,7 @@ struct WeekModel: Equatable {
                     case .skipped: state = ", skipped"
                     default: state = ""
                     }
-                    return "\(item.title), \(item.detail)\(state)"
+                    return "\(item.title), \(PaceFormat.spoken(item.detail))\(state)"
                 }.joined(separator: "; ")
             return Day(
                 weekday: isToday ? "TODAY" : String(fullWeekday.prefix(3)).uppercased(),

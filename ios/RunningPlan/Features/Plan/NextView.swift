@@ -118,7 +118,8 @@ private struct FocusCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(focus.label.capitalized): \(focus.title), \(focus.effort). \(PaceFormat.spoken(focus.detail)). \(focus.why)")
     }
 }
 

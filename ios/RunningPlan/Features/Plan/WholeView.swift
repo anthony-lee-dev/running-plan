@@ -15,7 +15,7 @@ struct PlanModePicker: View {
             segment("Week", .week)
             segment("Whole plan", .whole)
         }
-        .padding(3)
+        .padding(.horizontal, 3)
         .background(Palette.segmentTrack.color, in: RoundedRectangle(cornerRadius: 12))
     }
 
@@ -26,6 +26,8 @@ struct PlanModePicker: View {
                 .foregroundStyle(selected == mode ? Palette.ink.color : Palette.muted.color)
                 .frame(maxWidth: .infinity, minHeight: 40)
                 .background(selected == mode ? Palette.segmentSelected.color : .clear, in: RoundedRectangle(cornerRadius: 10))
+                // Inside the label, so the whole 46 pt track is the tap area (docs/design-notes.md).
+                .padding(.vertical, 3)
                 .contentShape(Rectangle())
         }
         .accessibilityAddTraits(selected == mode ? .isSelected : [])

@@ -20,7 +20,8 @@ struct WeekModelTests {
         #expect(m.range == "Oct 26 – Nov 1")
         #expect(m.canGoBack && m.canGoForward)
         #expect(m.planned == "25 km planned")
-        #expect(m.summary == "2 of 6 sessions done · plus 45 min cross-training")
+        // Sessions count the user's cycling too; distance done waits for the progress endpoint (2.15).
+        #expect(m.summary == "2 of 6 sessions done")
         #expect(m.progress == 2.0 / 6.0)
     }
 
@@ -37,6 +38,8 @@ struct WeekModelTests {
         #expect(items[1]?.trailing == .done)
         #expect(items[2]?.detail == "About 43 min · 6.9 km · fast reps at 5:15–5:30/km")
         #expect(items[2]?.trailing == .today)
+        #expect(items[2]?.isToday == true)
+        #expect(items[0]?.isToday == false)
         #expect(items[2]?.shape.isEmpty == false)
         #expect(items[4]?.trailing == .badge(.easy))
         #expect(items[4]?.shape.isEmpty == true, "only today's card shows the workout shape")
@@ -66,7 +69,7 @@ struct WeekModelTests {
 
     @Test func voiceOverReadsADayAsOneSentence() throws {
         let days = WeekModel(schedule: try schedule(), week: 3).days
-        #expect(days[0].spoken == "Monday 26: Easy run, 5 km · 6:25–7:10/km, done")
+        #expect(days[0].spoken == "Monday 26: Easy run, 5 km · 6 minutes 25 to 7 minutes 10 per kilometre, done")
         #expect(days[3].spoken == "Thursday 29: rest day")
         #expect(days[2].spoken.hasPrefix("Today, Wednesday 28: Intervals: 5 × 600 m"))
     }

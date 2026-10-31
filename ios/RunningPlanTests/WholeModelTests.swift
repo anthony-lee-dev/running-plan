@@ -18,6 +18,13 @@ struct WholeModelTests {
         #expect(rows.map(\.distance) == ["16 km", "18 km", "21 km", "25 km", "20 km", "28 km", "31 km", "33 km", "24 km", "16 km"])
     }
 
+    @Test func onlyAPlanWithARaceHasARaceWeek() throws {
+        let noRace = WholeModel(schedule: PlanSchedule(plan: try PlanFixture.detail(goal: #"{"type":"none"}"#), today: PlanFixture.today))
+        #expect(noRace.rows[9].detail == "Taper · Dec 7")
+        let undated = WholeModel(schedule: PlanSchedule(plan: try PlanFixture.detail(goal: #"{"type":"10k"}"#), today: PlanFixture.today))
+        #expect(undated.rows[9].detail == "Taper · Dec 7")
+    }
+
     @Test func doneWeeksAreTickedAndThisWeekStandsOut() throws {
         let rows = try model().rows
         #expect(rows.map(\.state) == [.done, .done, .done, .current] + Array(repeating: .upcoming, count: 6))

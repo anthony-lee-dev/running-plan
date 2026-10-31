@@ -49,9 +49,11 @@ struct WeekView: View {
                 .frame(width: Metrics.minTouchTarget, height: Metrics.minTouchTarget)
                 .contentShape(Rectangle())
         }
-        .foregroundStyle(enabled ? Palette.ink.color : Palette.line.color)
+        .foregroundStyle(Palette.ink.color)
+        .opacity(enabled ? 1 : 0.4)
         .disabled(!enabled)
         .accessibilityLabel(label)
+        .accessibilityHidden(!enabled)
     }
 
     private var summary: some View {
@@ -138,7 +140,7 @@ private struct ItemCard: View {
         .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
         .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(item.trailing == .today ? RoundedRectangle(cornerRadius: 16).strokeBorder(Palette.accentBorder.color, lineWidth: 2) : nil)
+        .overlay(item.isToday ? RoundedRectangle(cornerRadius: 16).strokeBorder(Palette.accentBorder.color, lineWidth: 2) : nil)
     }
 
     @ViewBuilder private var trailing: some View {
