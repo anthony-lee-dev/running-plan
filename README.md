@@ -20,8 +20,8 @@ bash scripts/verify.sh all
 ## Daily loop
 
 ```bash
-claude --worktree <task-name>     # one isolated session per task
-# inside Claude:  /next-task        picks, builds and ships the next backlog item
+claude                            # one session runs the backlog
+# inside Claude:  /next-task        picks tasks and hands each PR to a worker subagent in its own worktree
 ```
 
 `/ship` stops at a reviewed, green PR. You merge.

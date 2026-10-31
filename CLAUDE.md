@@ -41,11 +41,12 @@ set up each session on their watch by hand, then import results and review. Live
 2. Work is on a branch named `agent/<short-task>` with a PR opened by `/ship`, marked ready for review.
 3. Manual-gate items (real device, Apple account) are listed as unticked boxes in the PR body, never faked.
 4. **Never run `gh pr merge`.** `/ship` calls `python3 scripts/request-merge.py`, which requests auto-merge only when
-   `autonomy.json` on `main` allows it (level **0** today: the human merges). Never edit `autonomy.json` to get a merge.
+   `autonomy.json` on `main` allows it (see `docs/autonomy.md` for what each level auto-merges). Never edit `autonomy.json` to get a merge.
 
 ## Working style
 
-- One PR = one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
+- One PR = one backlog task, end to end, with no size limit (the human's call: splitting a task across sessions
+  loses context). The exception is a contract change, which is a `spec/openapi.yaml` PR of its own first.
 - Build in vertical slices: `docs/backlog.md` groups tasks by feature, each with only the API and iOS work it needs
   and an end-to-end check (contract tests, a UI test against the local API, a device check) before the next slice.
 - Pick work from `docs/backlog.md` (`/next-task`). Never report a backlog task as done without ticking it in
@@ -56,4 +57,9 @@ set up each session on their watch by hand, then import results and review. Live
 - Human-only items (Phase 0, gates, "Human, not for agents") are ticked only when you did the work yourself in
   the session, the human says they did it, or a read-only check shows it is done; never on inference. Ticking
   a backlog line never ticks the `## Manual gates` boxes in a PR body: those stay for the human.
+- Branch from `origin/main`, never from an unmerged branch. A stacked branch needs a rebase after its base is
+  squash-merged, and that rebase needs a force-push, which is denied. To bring `main` into a pushed branch, merge
+  it in and push.
+- `/next-task` hands each PR to its own worker subagent in a git worktree, so one session can run a whole slice
+  without filling its context. Workers follow `.claude/skills/next-task/references/worker-brief.md`.
 - When the human corrects you, add the correction to the relevant `CLAUDE.md` in the same PR.
