@@ -142,7 +142,9 @@ struct SessionDraftTests {
         #expect(DialValues.secondsPart(3725) == 5)
         #expect(DialValues.time(minutes: 62, seconds: 5) == 3725)
         #expect(DialValues.time(minutes: 0, seconds: 0) == 1, "the API needs at least one second")
-        #expect(DialValues.minutes(600 * 60 + 600) == 600, "the wheel stops at its last minute")
+        // The wheel reaches the API's longest goal, so moving the seconds wheel never shortens a saved one.
+        #expect(DialValues.time(minutes: DialValues.minutes(199_990), seconds: DialValues.secondsPart(199_990)) == 199_990)
+        #expect(DialValues.time(minutes: 3333, seconds: 59) == 200_000, "capped at the API maximum")
     }
 
     @Test func distanceDialsShowASavedDistanceAndKeepWhatTheyDidNotTouch() {
@@ -165,5 +167,6 @@ struct SessionDraftTests {
         #expect(DialValues.pace(minutes: 2, seconds: 0) == 120)
         #expect(DialValues.pace(minutes: 20, seconds: 59) == 1200)
         #expect(DialValues.pace(minutes: 1, seconds: 0) == 120)
+        #expect(DialValues.pace(minutes: 20, seconds: 30) == 1200)
     }
 }

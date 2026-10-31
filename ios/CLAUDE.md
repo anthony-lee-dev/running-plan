@@ -98,7 +98,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 
 ## Scroll dials (issue #99)
 
-- Time, distance and pace are set on two native wheel pickers (`TwoWheelDial`), not typed: time is minutes (0 to 600) and
+- Time, distance and pace are set on two native wheel pickers (`TwoWheelDial`), not typed: time is minutes (0 to 3333) and
   seconds, distance whole km (0 to 200) and hundredths of a km (10 m steps), pace minutes (2 to 20) and seconds.
   `DialValues` (pure, unit-tested) splits and rejoins them within the API's ranges (goal 1 to 200000, pace 120 to 1200).
   The dials read the saved value directly and write only when a wheel moves, so opening a step never changes it, and

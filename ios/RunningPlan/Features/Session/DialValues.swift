@@ -4,7 +4,7 @@ import Foundation
 /// Pure and unit-tested. Ranges follow the API (a goal is 1 to 200000 seconds or metres, a pace 2:00 to 20:00 per km).
 enum DialValues {
     static let maxGoal = 200_000
-    static let maxMinutes = 600
+    static let maxMinutes = maxGoal / 60
     static let maxKm = 200
     static let paceRange = 120...1200
 
