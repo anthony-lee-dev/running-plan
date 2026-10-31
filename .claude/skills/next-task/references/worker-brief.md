@@ -31,6 +31,8 @@ From the human: <corrections or choices from the conversation that apply, or non
      `spec/openapi.yaml` change (repo rule: contract first). Leave the task unticked and list the rest under
      "Left".
    - If the task is marked `ask first`, stop and report your plan instead of building.
+   - Call the advisor tool once your plan is written, before you write code, and again before you start
+     `/ship`. Call it too when the same error comes back twice.
 3. Write failing tests first and run them to see them fail. Then write the code until they pass.
 4. Tick the task in `docs/backlog.md` in this PR, unless it is only the contract change.
 5. If the human corrected something in "From the human", add the correction to the relevant `CLAUDE.md` in
@@ -45,6 +47,18 @@ From the human: <corrections or choices from the conversation that apply, or non
      `git push origin <Branch>`. A bare `git push` is denied. Never rebase a pushed branch or force-push.
    - Never run `gh pr merge`, never edit `autonomy.json`, never tick a `## Manual gates` box, and never
      commit secrets.
+   - If this task is the last unticked one in its slice, put the slice's device check against the deployed API
+     under `## Manual gates` as an unticked box (backlog: "End-to-end check for every slice", item 3).
+
+## Commands that work in a worktree
+Your worktree has a guard that refuses any command it can't prove stays inside the worktree. These keep you clear
+of it, and of the other blocks:
+- Change files with the Edit and Write tools, not Python or `sed` scripts that rewrite them.
+- Keep shell commands plain: spell file paths out, and don't hold them in shell variables.
+- Never `sleep` to wait. Run a long command in the background, or watch with `gh pr checks <n> --watch`.
+- Never `pkill` or `kill` a process you didn't start: it may be another worker's tests or the Stop hook's
+  `verify.sh`. If a test run hangs, rerun it with a timeout.
+- Don't call the task-list or wrap-up tools (`update_plan`, `wrap_up`). Only the main session shows them.
 
 ## Report
 Reply with only this, in at most 10 lines:

@@ -33,7 +33,9 @@ Say in one line which task you're starting. Then call the Agent tool with:
 
 - `subagent_type: "general-purpose"` and `isolation: "worktree"`;
 - the brief in [references/worker-brief.md](references/worker-brief.md), with its placeholders filled in;
-- no `model` override.
+- `model: "sonnet"` and `effort: "medium"`. The worker has the advisor tool for the hard calls, and the brief
+  tells it when to use it. Leave both out (the worker then runs on this session's model) only for a screen
+  task that has to match a DK board closely; say in your one line why.
 
 Name the branch in the brief: `agent/<task id>-<few words>`. For the code PR after a contract PR (below), add
 `-2`, so the two names differ.
