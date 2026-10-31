@@ -44,6 +44,14 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   `.accessibilityElement(children: .contain)` first; and read observable state in `body`, not only inside a
   `Binding(get:)` closure, or the view does not redraw when it changes.
 
+- Start date (issue #97): the preview has a "Starts on" date picker (`preview.startDate`), today by default, today or
+  earlier only. The chosen date goes to `plans/generate` as `today` (the engine builds from it), `PreviewViewModel.startDate`
+  is nil for "today", and `SavedPreview.startDate` (optional) keeps it so a saved draft is reused only for the same date.
+  A goal date can still move the start (engine alignment); the preview then says so. The interview itself is unchanged.
+- Inbox picker (issue #98): "Match to a session" lists every open session of a fitting type in the plan, nearest the
+  run's day first (no 7-day window), and says why when there is none. Deleting a plan returns its runs to the inbox
+  (server `unlink`), and the inbox refreshes when the plan id changes.
+
 ## Signing in (task 3.4)
 
 - `Features/Account/`: `AuthSession` (an actor) signs in with an emailed code (`clientType: ios`) and refreshes the

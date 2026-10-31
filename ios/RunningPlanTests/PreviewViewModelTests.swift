@@ -137,6 +137,59 @@ struct PreviewViewModelTests {
         #expect(await generator.calls == [answers()])
     }
 
+    @Test func startsTodayByDefault() async throws {
+        let vm = model(StubGenerator(.success(try DraftFixture.draft())))
+        #expect(vm.startDate == nil)
+        #expect(vm.effectiveStart == "2026-11-02")
+    }
+
+    @Test func choosingAPastStartDateRegeneratesFromThatDateAndKeepsItWithTheDraft() async throws {
+        let generator = StubGenerator(.success(try DraftFixture.draft()))
+        let store = MemoryStore()
+        let vm = model(generator, store: store)
+        await vm.load()
+        await vm.setStartDate("2026-10-26")
+        #expect(await generator.todays == ["2026-11-02", "2026-10-26"])
+        #expect(vm.effectiveStart == "2026-10-26")
+        #expect(store.saved?.startDate == "2026-10-26")
+    }
+
+    @Test func aDateAfterTodayIsRefused() async throws {
+        let generator = StubGenerator(.success(try DraftFixture.draft()))
+        let vm = model(generator)
+        await vm.load()
+        await vm.setStartDate("2026-11-03")
+        #expect(await generator.calls.count == 1)
+        #expect(vm.startDate == nil)
+    }
+
+    @Test func choosingTodayAgainGoesBackToTheDefault() async throws {
+        let generator = StubGenerator(.success(try DraftFixture.draft()))
+        let vm = model(generator)
+        await vm.load()
+        await vm.setStartDate("2026-10-26")
+        await vm.setStartDate("2026-11-02")
+        #expect(vm.startDate == nil)
+    }
+
+    @Test func asksAgainWhenTheSavedDraftIsForAnotherStartDate() async throws {
+        let generator = StubGenerator(.success(try DraftFixture.draft()))
+        let store = MemoryStore()
+        store.save(SavedPreview(answers: answers(), draft: try DraftFixture.draft(), savedAt: now, startDate: "2026-10-26"))
+        await model(generator, store: store).load()
+        #expect(await generator.calls.count == 1)
+    }
+
+    @Test func reopeningWithTheSameStartDateUsesTheSavedDraft() async throws {
+        let generator = StubGenerator(.failure(PreviewError.server))
+        let store = MemoryStore()
+        store.save(SavedPreview(answers: answers(), draft: try DraftFixture.draft(), savedAt: now, startDate: "2026-10-26"))
+        let vm = PreviewViewModel(answers: answers(), startDate: "2026-10-26", generator: generator, store: store, now: { self.now }, today: { "2026-11-02" })
+        await vm.load()
+        guard case .loaded = vm.state else { Issue.record("not loaded: \(vm.state)"); return }
+        #expect(await generator.calls.isEmpty)
+    }
+
     @Test func changingAnAnswerRegeneratesAndReplacesTheSavedDraft() async throws {
         let generator = StubGenerator(.success(try DraftFixture.draft()))
         let store = MemoryStore()

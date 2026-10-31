@@ -110,6 +110,28 @@ describe("DELETE /v1/sessions/{id}/match", () => {
   });
 });
 
+describe("deleting a plan and building a new one (issue #98)", () => {
+  const P2 = id(102);
+  const S3 = id(203);
+  const S4 = id(204);
+
+  it("returns a matched run to the inbox, and it can be matched to any session of the new plan, whatever its date", async () => {
+    await confirm(S1, A1);
+    const del = await app.request(`/v1/plans/${P}`, { method: "DELETE", headers: { authorization: `Bearer ${token}`, "if-match": '"1"' } });
+    expect(del.status).toBe(204);
+    const inbox = ((await (await call("GET", "/v1/activities?inbox=true")).json()) as Json).activities as Json[];
+    expect(inbox.map((a) => a.id).sort()).toEqual([A1, A2].sort());
+    expect(inbox.find((a) => a.id === A1)!.match).toBeUndefined();
+
+    // The rebuilt plan starts after the run and its sessions are days or weeks from the activity.
+    await call("POST", "/v1/plans", { id: P2, goal: { type: "5k" }, startDate: "2026-10-30", weekCount: 8, source: "blank", adaptive: false, weeks: [], sessions: [easy(S3, "2026-10-30"), easy(S4, "2026-11-20")] });
+    const far = await confirm(S4, A1);
+    expect(far.status).toBe(200);
+    expect(((await far.json()) as Json).session).toMatchObject({ id: S4, status: "done" });
+    expect((await confirm(S3, A2)).status).toBe(200);
+  });
+});
+
 describe("PATCH /v1/activities/{id}", () => {
   it("marks an activity extra, unlinking it from its session first", async () => {
     await confirm(S1, A1);

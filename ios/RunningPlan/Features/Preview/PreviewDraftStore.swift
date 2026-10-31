@@ -10,8 +10,12 @@ struct SavedPreview: Codable, Equatable {
     /// Made once per draft and kept with it, so saving it again (after a lost answer or a relaunch) sends the same
     /// ids and the server replays the create instead of storing a second plan.
     var ids: PlanIDs
+    /// The start date the user chose (`YYYY-MM-DD`, today or earlier), or nil for "today". Optional so drafts saved
+    /// before the picker existed still decode.
+    var startDate: String?
 
-    init(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, savedAt: Date, ids: PlanIDs? = nil) {
+    init(answers: InterviewAnswers, draft: Components.Schemas.PlanDraft, savedAt: Date, ids: PlanIDs? = nil, startDate: String? = nil) {
+        self.startDate = startDate
         self.answers = answers
         self.draft = draft
         self.savedAt = savedAt

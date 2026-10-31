@@ -63,7 +63,7 @@ struct InboxScreen: View {
         .refreshable { await store.refresh() }
         .sheet(isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } })) {
             if let id = picking {
-                SessionPicker(choices: model.choices(for: id), onPick: { choice in
+                SessionPicker(choices: model.choices(for: id), emptyNote: model.emptyChoicesNote(for: id), onPick: { choice in
                     picking = nil
                     Task { await store.confirm(activityId: id, sessionId: choice.id, label: choice.title) }
                 }, onClose: { picking = nil })
@@ -188,14 +188,15 @@ private struct InboxCardView: View {
 
 private struct SessionPicker: View {
     let choices: [InboxModel.Choice]
+    let emptyNote: String?
     let onPick: (InboxModel.Choice) -> Void
     let onClose: () -> Void
 
     var body: some View {
         NavigationStack {
             List {
-                if choices.isEmpty {
-                    Text("No open sessions within a week of this workout.").foregroundStyle(Palette.muted.color)
+                if let emptyNote {
+                    Text(emptyNote).foregroundStyle(Palette.muted.color)
                 }
                 ForEach(choices) { choice in
                     Button { onPick(choice) } label: {

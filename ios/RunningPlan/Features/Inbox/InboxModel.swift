@@ -58,9 +58,6 @@ struct InboxModel {
     typealias Session = Components.Schemas.Session
     typealias Activity = Components.Schemas.Activity
 
-    /// How far from the workout's day the "Match to a session" list reaches.
-    static let pickerDays = 7
-
     enum Kind: Equatable {
         /// A session the workout probably belongs to, with its name for the card.
         case likelyMatch(sessionId: String, label: String)
@@ -133,13 +130,19 @@ struct InboxModel {
             : "\(cards.count) workouts waiting. Confirm where they belong so your plan stays accurate."
     }
 
-    /// Open sessions of a fitting type within `pickerDays` of the workout's day, nearest first. Past ones are missed sessions.
+    /// Why the picker is empty: only when the plan has no open session of a fitting type at all (any date), else nil.
+    func emptyChoicesNote(for activityId: String) -> String? {
+        choices(for: activityId).isEmpty ? "Your plan has no open session of this type left to match it to." : nil
+    }
+
+    /// Every open session of a fitting type in the plan, nearest the workout's day first (a plan rebuilt after the run
+    /// can start days or weeks away, issue #98). Past ones are missed sessions.
     func choices(for activityId: String) -> [Choice] {
         guard let activity = activities.first(where: { $0.value2.id == activityId }) else { return [] }
         let day = PlanPreview.dayNumber(activity.value1.localDate)
         let todayNumber = PlanPreview.dayNumber(today)
         return sessions
-            .filter { InboxMatching.isOpen($0) && InboxMatching.fits(activity.value1.workoutType, $0.value2._type) && abs(PlanPreview.dayNumber($0.value2.date) - day) <= Self.pickerDays }
+            .filter { InboxMatching.isOpen($0) && InboxMatching.fits(activity.value1.workoutType, $0.value2._type) }
             .sorted {
                 let a = abs(PlanPreview.dayNumber($0.value2.date) - day), b = abs(PlanPreview.dayNumber($1.value2.date) - day)
                 return a != b ? a < b : $0.value2.date < $1.value2.date

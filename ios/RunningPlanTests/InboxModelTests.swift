@@ -130,6 +130,26 @@ struct InboxModelTests {
         #expect(choices.allSatisfy { !$0.title.hasPrefix("Strength") })
     }
 
+    @Test func aRunFarFromEveryOpenSessionCanStillBeMatched() throws {
+        // Issue #98: a plan rebuilt after the run's day. Nothing is within a week, but the run must be matchable.
+        let model = try model([activityFixture(id: "a1", date: "2026-09-01")])
+        #expect(model.cards[0].kind == .extraRun)
+        let choices = model.choices(for: "a1")
+        #expect(choices.contains { $0.when == "Mon, Oct 26 · missed" })
+        #expect(choices.allSatisfy { !$0.title.hasPrefix("Strength") })
+        // Nearest first.
+        let sorted = choices.map(\.when)
+        #expect(sorted.first?.hasPrefix("Mon, Oct 26") == true)
+    }
+
+    @Test func aWorkoutWithNoFittingSessionAnywhereSaysWhy() throws {
+        let withSessions = try model([activityFixture(id: "a1", date: "2026-10-28")])
+        #expect(withSessions.emptyChoicesNote(for: "a1") == nil)
+        let none = InboxModel(activities: [try activityFixture(id: "a1", date: "2026-10-28")], sessions: [], today: "2026-10-28")
+        #expect(none.choices(for: "a1").isEmpty)
+        #expect(none.emptyChoicesNote(for: "a1") == "Your plan has no open session of this type left to match it to.")
+    }
+
     @Test func subtitleCountsTheWorkouts() throws {
         let two = try model([activityFixture(id: "a1", date: "2026-10-26"), activityFixture(id: "a2", date: "2026-10-25")])
         #expect(two.subtitle.hasPrefix("2 workouts waiting"))
