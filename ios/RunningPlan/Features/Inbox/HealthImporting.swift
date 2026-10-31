@@ -31,6 +31,7 @@ struct LiveHealthImporter: HealthImporting, @unchecked Sendable {
         try await store.requestAuthorization(toShare: [], read: readTypes)
     }
 
+    /// The newest 200 workouts since `since`; older ones in a very busy month are not read.
     func workouts(since: Date) async throws -> [HealthWorkout] {
         let predicate = HKQuery.predicateForSamples(withStart: since, end: nil, options: .strictStartDate)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)

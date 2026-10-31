@@ -44,8 +44,15 @@ final class InboxStore {
 
     /// Opens the screen: reads Health when the user has already allowed it, then the inbox.
     func load() async {
-        if health.isAvailable, !(await health.needsAccess()) { await importFromHealth() }
+        var importError: String?
+        // Not again within five minutes of the last import: uploads dedupe, but each open need not re-read Health.
+        let recent = lastSynced.map { now().timeIntervalSince($0) < 300 } ?? false
+        if health.isAvailable, !recent, !(await health.needsAccess()) {
+            await importFromHealth()
+            importError = error
+        }
         await refresh()
+        if error == nil { error = importError }
     }
 
     func refresh() async {
@@ -64,7 +71,9 @@ final class InboxStore {
             return
         }
         await importFromHealth()
+        let importError = error
         await refresh()
+        if error == nil { error = importError }
     }
 
     private func importFromHealth() async {
