@@ -32,11 +32,13 @@ jobs:
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Select the newest Xcode on the runner
+        id: xcode
         if: steps.changes.outputs.run == 'true'
         run: |
           xc="$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)"
           if [[ -n "$xc" ]]; then sudo xcode-select -s "$xc"; fi
           xcodebuild -version
+          echo "version=$(xcodebuild -version | tr -s ' \n' '--')" >> "$GITHUB_OUTPUT"
       # The UI tests run against the API on Node (api/test/ui-server), started by verify.sh.
       - uses: actions/setup-node@v7
         if: steps.changes.outputs.run == 'true'
@@ -56,14 +58,21 @@ jobs:
         if: steps.changes.outputs.run == 'true'
         with:
           path: ios/APIClientGenerator/.build
-          key: apiclient-generator-${{ runner.os }}-${{ hashFiles('ios/APIClientGenerator/Package.resolved', 'ios/APIClientGenerator/Package.swift') }}
-      - uses: actions/cache@v4
+          key: apiclient-generator-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/APIClientGenerator/Package.resolved', 'ios/APIClientGenerator/Package.swift') }}
+      # Every run restores the newest DerivedData for this Xcode; only main saves one, so PR runs
+      # don't fill the repo's cache quota.
+      - uses: actions/cache/restore@v4
         if: steps.changes.outputs.run == 'true'
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: deriveddata-${{ runner.os }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
+          key: deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
           restore-keys: |
-            deriveddata-${{ runner.os }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-
+            deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-
       - name: Verify
         if: steps.changes.outputs.run == 'true'
         run: bash scripts/verify.sh ios
+      - uses: actions/cache/save@v4
+        if: github.event_name == 'push' && steps.changes.outputs.run == 'true'
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
