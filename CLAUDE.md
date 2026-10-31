@@ -68,4 +68,6 @@ set up each session on their watch by hand, then import results and review. Live
   it in and push.
 - `/next-task` hands each PR to its own worker subagent in a git worktree, so one session can run a whole slice
   without filling its context. Workers follow `.claude/skills/next-task/references/worker-brief.md`.
+- After a PR merges, `git pull` on main removes its local branch and worktree (`scripts/prune-merged.sh`, run by the
+  post-merge hook; it needs `git config core.hooksPath scripts/githooks`). Run the script by hand if the hook did not.
 - When the human corrects you, add the correction to the relevant `CLAUDE.md` in the same PR.

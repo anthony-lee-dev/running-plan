@@ -122,6 +122,10 @@ git branch -D <named branch> <worktree's original branch>
 The allow list covers `git branch -D agent/*` only, so deleting the worktree's original branch asks the human
 first.
 
+A `git pull` on main also runs `scripts/prune-merged.sh` (post-merge hook), which removes clean worktrees and local
+branches whose remote branch is gone. It never deletes the worktree's original branch (never pushed), so that
+`git branch -D` stays; run the script by hand if the hook did not.
+
 Leave the worktree of an open PR in place: its worker may still be asked to fix something.
 
 ## If workers aren't available
