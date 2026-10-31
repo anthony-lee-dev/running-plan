@@ -18,6 +18,8 @@ accessibility rules, and which endpoints each screen calls. Sizes are in pt (1 C
 | accent-soft | `#4A2418` | Selected option background |
 | green | `#4FC79A` | Done, on track |
 | green-ink | `#0F2A20` | Text and icons on green |
+| rest-ring | `#7C7667` | Dashed ring of a rest day in the week strip |
+| chip-text | `#FFB59B` | Text on an `accent-soft` chip (the effort chip on Next) |
 | green-soft / green-soft-text | `#1D3A2E` / `#8EE0BF` | Easy badge, goal card |
 | amber-soft | `#3B3115` | Notices (review ready, assumptions) |
 | blue-soft / blue-text | `#1F2A4D` / `#B7C7F5` | Long-run badge, import icon |

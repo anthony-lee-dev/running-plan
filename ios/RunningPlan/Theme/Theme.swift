@@ -38,6 +38,10 @@ enum Palette {
     static let accentSoft = RGB(red: 0x4A, green: 0x24, blue: 0x18)
     static let green = RGB(red: 0x4F, green: 0xC7, blue: 0x9A)
     static let tabBar = RGB(red: 0x14, green: 0x13, blue: 0x10)
+    /// The tick on a done day (on `green`), a rest day's dashed ring, and text on an `accentSoft` chip (DK-Next).
+    static let greenInk = RGB(red: 0x0F, green: 0x2A, blue: 0x20)
+    static let restRing = RGB(red: 0x7C, green: 0x76, blue: 0x67)
+    static let chipText = RGB(red: 0xFF, green: 0xB5, blue: 0x9B)
     /// Notice cards ("What we assumed", warnings): fill and the three text colours the boards use on it.
     static let amberSoft = RGB(red: 0x3B, green: 0x31, blue: 0x15)
     static let amberTitle = RGB(red: 0xF7, green: 0xE3, blue: 0xA6)
