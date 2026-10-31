@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 # After switching branches (not after checking out single files): refresh the Xcode project if iOS files differ.
+# Skipped while a rebase runs: post-rewrite handles a finished rebase, and an aborted one restores the old tree.
 [[ "${3:-0}" == "1" ]] || exit 0
+[[ -d "$(git rev-parse --git-path rebase-merge)" || -d "$(git rev-parse --git-path rebase-apply)" ]] && exit 0
 exec bash "$(dirname "$0")/regen-xcodeproj.sh" "$1" "$2"

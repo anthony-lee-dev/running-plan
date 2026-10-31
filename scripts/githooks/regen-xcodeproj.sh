@@ -23,7 +23,9 @@ regen_main() {
   root="$(git rev-parse --show-toplevel)" || return 0
   # Only refresh a project that was generated here before; verify.sh generates it where it's missing.
   [[ -d "$root/ios/RunningPlan.xcodeproj" ]] || return 0
-  git diff --name-status "$old" "$new" -- ios 2>/dev/null | ios_project_stale || return 0
+  # quotepath=off keeps non-ASCII paths unquoted; --no-ext-diff ignores a user's external diff tool.
+  git -c core.quotepath=off diff --no-ext-diff --name-status "$old" "$new" -- ios 2>/dev/null |
+    ios_project_stale || return 0
   if ! command -v xcodegen >/dev/null 2>&1; then
     echo "githooks: iOS files changed; run 'cd ios && xcodegen generate' (xcodegen not found)" >&2
     return 0

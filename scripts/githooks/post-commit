@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# After committing a merge whose conflicts stopped `git pull` or `git merge` (git skips post-merge then): refresh the
+# Xcode project if iOS files were added or removed. A merge with no conflicts is handled by post-merge instead.
+git rev-parse -q --verify HEAD^2 >/dev/null || exit 0
+[[ -f "$(git rev-parse --git-path MERGE_HEAD)" ]] && exit 0 # still inside `git merge`: post-merge will run
+exec bash "$(dirname "$0")/regen-xcodeproj.sh" HEAD^1 HEAD
