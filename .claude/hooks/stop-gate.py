@@ -5,7 +5,10 @@ Reads the hook input JSON on stdin. If the branch changed files under api/, spec
 scripts/verify.sh for those packages. On failure it prints {"decision": "block", "reason": ...}
 so Claude continues and fixes it. After MAX_BLOCKS blocks in one session it lets Claude stop,
 so a problem it cannot fix (for example a missing simulator) never loops forever.
+A green run is remembered by a fingerprint (it does not notice toolchain or node_modules changes) of the changed package files, so later turns that change nothing
+there (chat, docs, a commit of the same content) skip the run.
 """
+import hashlib
 import json
 import os
 import subprocess
@@ -19,7 +22,7 @@ PACKAGES = {"api/": "api", "spec/": "spec", "ios/": "ios", "scripts/": "api",
 
 
 def git(cwd, *args):
-    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    r = subprocess.run(["git", "-c", "core.quotepath=off", *args], cwd=cwd, capture_output=True, text=True)
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
@@ -31,6 +34,25 @@ def changed_packages(cwd):
     if "spec" in pkgs:
         pkgs.add("api")  # contract changes must keep the API green too
     return sorted(pkgs)
+
+
+def state_fingerprint(cwd, pkgs):
+    """Hash of the base commit and the content of every changed or new file under a package path."""
+    base = git(cwd, "merge-base", "HEAD", "origin/main") or git(cwd, "rev-parse", "HEAD")
+    files = set(git(cwd, "diff", "--name-only", base).splitlines())
+    files |= set(git(cwd, "ls-files", "--others", "--exclude-standard").splitlines())
+    h = hashlib.sha256(base.encode())
+    for f in sorted(f for f in files if any(f.startswith(p) for p in PACKAGES)):
+        h.update(f.encode())
+        try:
+            path = os.path.join(cwd, f)
+            h.update(str(os.stat(path).st_mode).encode())  # a chmod changes the state too
+            with open(path, "rb") as fh:
+                h.update(fh.read())
+        except OSError:
+            h.update(b"<gone>")  # a deleted file still changes the state
+    h.update(",".join(pkgs).encode())
+    return h.hexdigest()
 
 
 def main():
@@ -45,6 +67,14 @@ def main():
     if not pkgs:
         return 0
 
+    where = hashlib.sha256(cwd.encode()).hexdigest()[:12]
+    green = os.path.join(tempfile.gettempdir(), f"running-plan-stop-gate-green-{session}-{where}")
+    fingerprint = state_fingerprint(cwd, pkgs)
+    if os.path.exists(green):
+        with open(green) as f:
+            if f.read() == fingerprint:
+                return 0  # this exact state already passed
+
     result = subprocess.run(
         ["bash", "scripts/verify.sh", *pkgs], cwd=cwd, capture_output=True, text=True
     )
@@ -52,6 +82,8 @@ def main():
     if result.returncode == 0:
         if os.path.exists(counter):
             os.remove(counter)
+        with open(green, "w") as f:
+            f.write(fingerprint)
         return 0
 
     count = int(open(counter).read()) if os.path.exists(counter) else 0
