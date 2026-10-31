@@ -4,7 +4,9 @@
 # branch whose upstream is "[gone]" after `git fetch --prune` is done with. Run by the post-merge hook after a
 # `git pull` on main; run it by hand if the hook did not.
 # Never touches: main, the branch checked out in the current worktree, branches without an upstream (never pushed),
-# branches with a live upstream, dirty worktrees, or the remote. Always exits 0 (it must never fail a pull).
+# branches with a live upstream, dirty worktrees, or the remote. A clean worktree is removed even if locked (agent
+# worktrees are), and its ignored files (node_modules, .dev.vars) go with it. A removed branch's tip is printed so
+# it can be restored (a closed-unmerged PR also leaves a gone upstream). Always exits 0 (it must never fail a pull).
 
 # A git hook runs with GIT_DIR (and friends) set; they would point `git -C <worktree>` at this checkout instead.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
@@ -12,7 +14,7 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
 prune_main() {
   # No origin, nothing to learn from: stay silent (also keeps repos without a remote quiet).
   git remote get-url origin >/dev/null 2>&1 || return 0
-  if ! GIT_TERMINAL_PROMPT=0 git fetch --quiet --prune origin >/dev/null 2>&1; then
+  if ! GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=15 fetch --quiet --prune origin >/dev/null 2>&1; then
     echo "prune-merged: could not reach origin, skipping"
     return 0
   fi
@@ -68,8 +70,10 @@ prune_branch() {
     fi || { echo "prune-merged: skipped $branch (could not remove worktree $path)"; return 0; }
     echo "prune-merged: removed worktree $path"
   fi
+  local sha
+  sha="$(git rev-parse --short "refs/heads/$branch" 2>/dev/null)"
   if git branch -D "$branch" >/dev/null 2>&1; then
-    echo "prune-merged: removed branch $branch"
+    echo "prune-merged: removed branch $branch (was $sha; restore with: git branch $branch $sha)"
   else
     echo "prune-merged: skipped $branch (could not delete it)"
   fi

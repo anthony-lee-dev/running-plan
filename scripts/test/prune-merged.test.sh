@@ -50,6 +50,7 @@ out="$(run)"; rc=$?
 expect_no_branch "gone branch is deleted" feat
 [[ $rc -eq 0 ]] && pass "exits 0" || fail "exit code $rc"
 [[ "$out" == *"feat"* ]] && pass "prints a line for the removal" || fail "no output line naming feat: $out"
+[[ "$out" == *"was "* ]] && pass "prints the removed tip" || fail "no tip sha printed: $out"
 
 fresh
 pushed_branch live
