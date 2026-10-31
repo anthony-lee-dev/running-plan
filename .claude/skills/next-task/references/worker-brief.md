@@ -47,18 +47,20 @@ From the human: <corrections or choices from the conversation that apply, or non
      `git push origin <Branch>`. A bare `git push` is denied. Never rebase a pushed branch or force-push.
    - Never run `gh pr merge`, never edit `autonomy.json`, never tick a `## Manual gates` box, and never
      commit secrets.
-   - If this task is the last unticked one in its slice, put the slice's device check against the deployed API
+   - If this PR ticks the last unticked task in its slice (or "From the human" says it is the slice's last), put the slice's device check against the deployed API
      under `## Manual gates` as an unticked box (backlog: "End-to-end check for every slice", item 3).
 
 ## Commands that work in a worktree
-Your worktree has a guard that refuses any command it can't prove stays inside the worktree. These keep you clear
-of it, and of the other blocks:
+In a worktree, a guard refuses any command it can't prove stays inside the worktree. These keep you clear of it,
+and of the other blocks:
 - Change files with the Edit and Write tools, not Python or `sed` scripts that rewrite them.
 - Keep shell commands plain: spell file paths out, and don't hold them in shell variables.
 - Never `sleep` to wait. Run a long command in the background, or watch with `gh pr checks <n> --watch`.
 - Never `pkill` or `kill` a process you didn't start: it may be another worker's tests or the Stop hook's
-  `verify.sh`. If a test run hangs, rerun it with a timeout.
-- Don't call the task-list or wrap-up tools (`update_plan`, `wrap_up`). Only the main session shows them.
+  `verify.sh`. If a test run hangs, rerun it with the Bash tool's `timeout` parameter
+  (macOS has no `timeout` command).
+- Don't call the app's task-list or wrap-up tools (`mcp__ccd_turn__update_plan`, `mcp__ccd_turn__wrap_up`).
+  Only the main session shows them.
 
 ## Report
 Reply with only this, in at most 10 lines:

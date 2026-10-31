@@ -66,6 +66,9 @@ Run workers one at a time by default. A second may run alongside the first only 
 The PR that merges second may conflict on `docs/backlog.md`. Step 4 spots this and sends it back to its worker,
 which merges `origin/main` into its branch and pushes. A rebase would need a force-push, which is denied.
 
+If the two are the last tasks of their slice, each sees the other still unticked. Say in one brief's "From the
+human" that its PR is the slice's last, so that PR lists the slice's device check.
+
 ## 4. Wait for the merge
 
 When a worker reports, check its PR yourself:
