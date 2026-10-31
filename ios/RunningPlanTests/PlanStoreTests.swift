@@ -176,7 +176,7 @@ actor FakeWriter: SessionWriting {
     }
 
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws {
-        calls.append("checkin \(sessionId) \(feeling.feel)")
+        calls.append("checkin \(sessionId) \(feeling.feel) \(id)")
         _ = try answer.get()
     }
 }
@@ -240,7 +240,7 @@ struct PlanStoreEditTests {
     @Test func aBeforeSessionCheckInIsSent() async throws {
         let writer = FakeWriter()
         let store = try await loaded(writer)
-        #expect(await store.checkIn(sessionId: intervals, feeling: .tired) == nil)
-        #expect(await writer.calls.first == "checkin \(intervals) 2")
+        #expect(await store.checkIn(sessionId: intervals, feeling: .tired, id: "55555555-5555-4555-8555-555555555555") == nil)
+        #expect(await writer.calls.first == "checkin \(intervals) 2 55555555-5555-4555-8555-555555555555")
     }
 }

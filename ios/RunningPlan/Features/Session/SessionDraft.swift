@@ -164,12 +164,23 @@ struct SessionDraft: Equatable {
         var found: [String] = []
         if isRun && steps.isEmpty { found.append("Add at least one step.") }
         if isStrength && steps.isEmpty { found.append("Add at least one exercise.") }
+        if isRun && !steps.allSatisfy(Self.hasGoalValues) { found.append("Give every step a time or distance, or make it open.") }
         if isCustom, let goal = custom.goal, goal._type != .open, (goal.value ?? 0) < 1 {
             found.append("Give the session a time or distance.")
         }
         if steps.count > Self.maxSteps { found.append("A session holds at most \(Self.maxSteps) steps.") }
         if title.trimmingCharacters(in: .whitespaces).count > 80 { found.append("Keep the title to 80 characters.") }
         return found
+    }
+
+    /// A time or distance goal needs a value of at least 1 (the API's minimum); an open goal has none.
+    private static func hasGoalValues(_ step: Step) -> Bool {
+        func ok(_ r: Components.Schemas.RunStep) -> Bool { r.goal._type == .open || (r.goal.value ?? 0) >= 1 }
+        switch step {
+        case .warmup(let r), .work(let r), .recovery(let r), .cooldown(let r): return ok(r)
+        case ._repeat(let g): return g.steps.allSatisfy(ok)
+        case .exercise: return true
+        }
     }
 
     /// "Total ~44 min · ~6.9 km" for runs; nil otherwise.

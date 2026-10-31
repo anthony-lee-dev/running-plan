@@ -403,21 +403,26 @@ struct GoalValueField: View {
     static func text(_ goal: Components.Schemas.StepGoal) -> String {
         switch goal._type {
         case .time: StepFormat.clock(goal.value ?? 0)
-        case .distance: PlanPreview.kilometres(Double(goal.value ?? 0) / 1000)
+        // To the metre, so showing a goal never rounds it (1250 m reads 1.25, not 1.3).
+        // "%.3f" always has three decimals, so trimming trailing zeros never eats a whole number's zeros.
+        case .distance: String(format: "%.3f", Double(goal.value ?? 0) / 1000).replacing(/\.?0+$/, with: "")
         case .open: ""
         }
     }
 
+    /// Writes the typed value only when it differs, so opening a step never changes it.
     private func apply(_ text: String) {
+        let value: Int
         switch goal._type {
         case .time:
-            goal = .init(_type: .time, value: StepFormat.parseTime(text) ?? 0)
+            value = StepFormat.parseTime(text) ?? 0
         case .distance:
             let km = Double(text.replacingOccurrences(of: ",", with: ".")) ?? 0
-            goal = .init(_type: .distance, value: min(200_000, Int((km * 1000).rounded())))
+            value = min(200_000, Int((km * 1000).rounded()))
         case .open:
-            break
+            return
         }
+        if value != goal.value { goal = .init(_type: goal._type, value: value) }
     }
 }
 

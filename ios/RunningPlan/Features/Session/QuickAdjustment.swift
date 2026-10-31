@@ -42,11 +42,12 @@ enum QuickAdjustment: CaseIterable {
 
     // MARK: Shorter
 
-    private static func shorter(_ s: Components.Schemas.SessionContent) -> Components.Schemas.SessionUpdate {
+    private static func shorter(_ s: Components.Schemas.SessionContent) -> Components.Schemas.SessionUpdate? {
         switch s._type {
         case .custom:
-            var custom = s.custom ?? .init()
-            custom.goal = custom.goal.map(shrink)
+            // Nothing to shorten without a time or distance.
+            guard var custom = s.custom, let goal = custom.goal, goal.value != nil else { return nil }
+            custom.goal = shrink(goal)
             return .init(custom: custom)
         case .strength:
             return .init(steps: (s.steps ?? []).map { step in
@@ -83,7 +84,8 @@ enum QuickAdjustment: CaseIterable {
         guard let value = goal.value else { return goal }
         let unit = goal._type == .distance ? 100.0 : 60.0
         let shorter = Int((Double(value) * shorterShare / unit).rounded() * unit)
-        return .init(_type: goal._type, value: max(Int(unit), shorter))
+        // Never below one unit, but never longer than it was either (a 30 s step stays 30 s).
+        return .init(_type: goal._type, value: max(min(Int(unit), value), shorter))
     }
 
     // MARK: Easier
@@ -110,7 +112,8 @@ enum QuickAdjustment: CaseIterable {
             let goal: Components.Schemas.StepGoal = metres > 0
                 ? .init(_type: .distance, value: max(100, Int((Double(metres) / 100).rounded()) * 100))
                 : .init(_type: .time, value: max(60, seconds))
-            return .init(_type: .easy, title: "Easy run", steps: [.work(.init(kind: .work, goal: goal, target: easyTarget))])
+            // An easy run is not a key session, so missing it later is not flagged as a missed key session.
+            return .init(_type: .easy, title: "Easy run", key: false, steps: [.work(.init(kind: .work, goal: goal, target: easyTarget))])
         default:
             return .init(steps: (s.steps ?? []).map(slower))
         }

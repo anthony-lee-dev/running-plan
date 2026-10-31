@@ -52,7 +52,7 @@ struct NextScreen: View {
 
     /// Make it easier: the Easier quick adjustment, straight to the API.
     private func makeEasier(_ id: String) {
-        guard let session = plans.plan?.value2.sessions.first(where: { $0.value1.id == id }),
+        guard let session = plans.plan?.value2.sessions.first(where: { $0.value1.id == id && $0.value1.deletedAt == nil }),
               let update = QuickAdjustment.easier.update(for: session.value2) else { return }
         busy = true
         error = nil

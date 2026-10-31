@@ -42,10 +42,24 @@ struct QuickAdjustmentTests {
         #expect(cycling.custom?.activityLabel == "cycling")
     }
 
+    @Test func shorterNeverLengthensAStepAndSkipsAnOpenCrossTraining() throws {
+        var short = try content(on: "2026-10-30")
+        let step: Components.Schemas.Step = .work(.init(kind: .work, goal: .init(_type: .time, value: 30)))
+        short.steps = [step]
+        let update = try #require(QuickAdjustment.shorter.update(for: short))
+        let expected: [Components.Schemas.Step] = [step]
+        #expect(update.steps == expected, "a 30 s step stays 30 s rather than growing to a minute")
+
+        var open = try content(on: "2026-11-01")
+        open.custom?.goal = .init(_type: .open)
+        #expect(QuickAdjustment.shorter.update(for: open) == nil)
+    }
+
     @Test func easierTurnsIntervalsIntoAnEasyRunOfTheSameDistance() throws {
         let update = try #require(QuickAdjustment.easier.update(for: try content(on: "2026-10-28")))
         #expect(update._type == .easy)
         #expect(update.title == "Easy run")
+        #expect(update.key == false, "an easy run is not a key session")
         let expected: [Components.Schemas.Step] = [.work(run(.work, metres: 6900, pace(385, 430)))]
         #expect(update.steps == expected)
     }

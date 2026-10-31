@@ -28,6 +28,8 @@ struct SessionScreen: View {
     @State private var busy = false
     @State private var error: String?
     @State private var checkedIn: BeforeFeeling?
+    /// One before-session check-in per visit; a retry after a lost answer reuses the id.
+    @State private var checkInID = UUID().uuidString.lowercased()
 
     var body: some View {
         if let plan = plans.plan, let session = plan.value2.sessions.first(where: { $0.value1.id == sessionId && $0.value1.deletedAt == nil }) {
@@ -67,7 +69,7 @@ struct SessionScreen: View {
 
     private func checkIn(_ feeling: BeforeFeeling) {
         run {
-            let failed = await plans.checkIn(sessionId: sessionId, feeling: feeling)
+            let failed = await plans.checkIn(sessionId: sessionId, feeling: feeling, id: checkInID)
             if failed == nil { checkedIn = feeling }
             return failed
         }
@@ -90,6 +92,7 @@ struct SessionEditor: View {
     var date: String?
     /// Called with true when the session was deleted.
     let onClose: (Bool) -> Void
+    @State private var newID = UUID().uuidString.lowercased()
 
     var body: some View {
         if let plan = plans.plan {
@@ -122,7 +125,8 @@ struct SessionEditor: View {
                     mode: .create, span: span,
                     onCancel: { onClose(false) },
                     onSave: { draft in
-                        let failed = await plans.create(draft.create(id: UUID().uuidString.lowercased()))
+                        // One id per editor, so a retry after a lost answer replays rather than adding a second session.
+                        let failed = await plans.create(draft.create(id: newID))
                         if failed == nil { onClose(false) }
                         return failed
                     },
@@ -146,7 +150,7 @@ struct MoveSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                if let plan = plans.plan, let session = plan.value2.sessions.first(where: { $0.value1.id == sessionId }) {
+                if let plan = plans.plan, let session = plan.value2.sessions.first(where: { $0.value1.id == sessionId && $0.value1.deletedAt == nil }) {
                     let schedule = PlanSchedule(plan: plan, today: PreviewViewModel.localToday())
                     Section {
                         ForEach(QuickAdjustment.moveOptions(session, in: schedule), id: \.date) { option in

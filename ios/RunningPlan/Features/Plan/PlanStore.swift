@@ -79,9 +79,10 @@ final class PlanStore {
         await write { try await self.writer.delete(id: sessionId, revision: revision) }
     }
 
-    func checkIn(sessionId: String, feeling: BeforeFeeling) async -> String? {
+    /// `id` is made once by the caller and reused for a retry, so a check-in the server already stored is not doubled.
+    func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async -> String? {
         do {
-            try await writer.checkIn(sessionId: sessionId, feeling: feeling, id: UUID().uuidString.lowercased())
+            try await writer.checkIn(sessionId: sessionId, feeling: feeling, id: id)
             return nil
         } catch {
             return Self.message(for: error)
@@ -106,6 +107,7 @@ final class PlanStore {
         case SessionWriteError.offline: "We couldn't reach the server. Check your connection and try again."
         case SessionWriteError.signedOut: "You've been signed out. Sign in again to change your plan."
         case SessionWriteError.notFound: "That session is no longer in your plan."
+        case SessionWriteError.invalid: "The server didn't accept this session. Check each step's time, distance and pace, then try again."
         default: "Something went wrong saving your change. Please try again."
         }
     }

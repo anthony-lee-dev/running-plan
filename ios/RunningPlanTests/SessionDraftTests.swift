@@ -105,6 +105,18 @@ struct SessionDraftTests {
         #expect(draft.problems.isEmpty)
     }
 
+    @Test func aStepWithoutATimeOrDistanceStopsTheSave() throws {
+        var draft = SessionDraft(try content(on: "2026-10-28"))
+        guard let fast = draft.runStep(1, child: 0) else { Issue.record("no fast step"); return }
+        var empty = fast
+        empty.goal = .init(_type: .distance, value: 0)
+        draft.setRunStep(1, child: 0, empty)
+        #expect(draft.problems == ["Give every step a time or distance, or make it open."])
+        empty.goal = .init(_type: .open)
+        draft.setRunStep(1, child: 0, empty)
+        #expect(draft.problems.isEmpty)
+    }
+
     @Test func aNewSessionIsTheUsersAndSendsItsContent() throws {
         var draft = SessionDraft.new(date: "2026-10-29")
         #expect(draft.type == .easy)
@@ -132,5 +144,10 @@ struct SessionDraftTests {
         #expect(StepFormat.parseTime("x") == nil)
         #expect(StepFormat.parsePace("5:15") == 315)
         #expect(StepFormat.parsePace("15") == nil)
+        // Shown to the metre, so opening a step and reading it back never rounds it.
+        #expect(GoalValueField.text(.init(_type: .distance, value: 1250)) == "1.25")
+        #expect(GoalValueField.text(.init(_type: .distance, value: 250)) == "0.25")
+        #expect(GoalValueField.text(.init(_type: .distance, value: 10000)) == "10")
+        #expect(GoalValueField.text(.init(_type: .time, value: 600)) == "10:00")
     }
 }

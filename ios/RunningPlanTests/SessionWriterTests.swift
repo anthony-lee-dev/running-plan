@@ -86,6 +86,9 @@ struct SessionWriterTests {
         await #expect(throws: SessionWriteError.conflict) {
             try await writer(OneAnswer(.conflict, problem)).update(id: "00000000-0000-4000-8000-000000000017", revision: 1, .init(title: "x"))
         }
+        await #expect(throws: SessionWriteError.invalid) {
+            try await writer(OneAnswer(.badRequest, problem)).update(id: "00000000-0000-4000-8000-000000000017", revision: 1, .init(title: "x"))
+        }
         await #expect(throws: SessionWriteError.signedOut) {
             try await writer(OneAnswer(.unauthorized, problem)).update(id: "00000000-0000-4000-8000-000000000017", revision: 1, .init(title: "x"))
         }

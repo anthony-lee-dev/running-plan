@@ -7,6 +7,8 @@ enum SessionWriteError: Error, Equatable {
     /// The session changed elsewhere since it was read (`If-Match` did not match).
     case conflict
     case notFound
+    /// The server refused the content (400).
+    case invalid
     case offline
     case server
 }
@@ -34,7 +36,8 @@ struct APISessionWriter: SessionWriting {
         case .unauthorized: throw SessionWriteError.signedOut
         case .conflict: throw SessionWriteError.conflict
         case .notFound: throw SessionWriteError.notFound
-        case .badRequest, .undocumented: throw SessionWriteError.server
+        case .badRequest: throw SessionWriteError.invalid
+        case .undocumented: throw SessionWriteError.server
         }
     }
 
@@ -46,7 +49,8 @@ struct APISessionWriter: SessionWriting {
         case .unauthorized: throw SessionWriteError.signedOut
         case .conflict: throw SessionWriteError.conflict
         case .notFound: throw SessionWriteError.notFound
-        case .badRequest, .undocumented: throw SessionWriteError.server
+        case .badRequest: throw SessionWriteError.invalid
+        case .undocumented: throw SessionWriteError.server
         }
     }
 
@@ -68,7 +72,8 @@ struct APISessionWriter: SessionWriting {
         case .created, .ok: return
         case .unauthorized: throw SessionWriteError.signedOut
         case .notFound: throw SessionWriteError.notFound
-        case .badRequest, .undocumented: throw SessionWriteError.server
+        case .badRequest: throw SessionWriteError.invalid
+        case .undocumented: throw SessionWriteError.server
         }
     }
 
