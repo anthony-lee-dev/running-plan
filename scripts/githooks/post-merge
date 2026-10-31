@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
-# After `git pull` or `git merge`: refresh the Xcode project if iOS files were added or removed.
-exec bash "$(dirname "$0")/regen-xcodeproj.sh" ORIG_HEAD HEAD
+# After `git pull` or `git merge`: refresh the Xcode project if iOS files were added or removed, and on main
+# remove local branches (and their worktrees) whose pull request has merged. Never fails or blocks the pull.
+dir="$(dirname "$0")"
+bash "$dir/regen-xcodeproj.sh" ORIG_HEAD HEAD
+if [[ "$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" == "main" ]]; then
+  bash "$dir/../prune-merged.sh" || true
+fi
+exit 0
