@@ -84,6 +84,9 @@ final class PlanStore {
         do {
             try await writer.checkIn(sessionId: sessionId, feeling: feeling, id: id)
             return nil
+        } catch SessionWriteError.invalid {
+            // Most likely an earlier answer was stored but its reply lost, and this one differs.
+            return "We may already have your check-in for this session. Thanks."
         } catch {
             return Self.message(for: error)
         }

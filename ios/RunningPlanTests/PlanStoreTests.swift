@@ -243,4 +243,10 @@ struct PlanStoreEditTests {
         #expect(await store.checkIn(sessionId: intervals, feeling: .tired, id: "55555555-5555-4555-8555-555555555555") == nil)
         #expect(await writer.calls.first == "checkin \(intervals) 2 55555555-5555-4555-8555-555555555555")
     }
+
+    @Test func aRefusedCheckInDoesNotTalkAboutSteps() async throws {
+        let store = try await loaded(FakeWriter(.failure(.invalid)))
+        let error = await store.checkIn(sessionId: intervals, feeling: .fresh, id: "55555555-5555-4555-8555-555555555555")
+        #expect(error?.contains("check-in") == true)
+    }
 }
