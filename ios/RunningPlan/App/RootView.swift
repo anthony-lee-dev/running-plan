@@ -7,6 +7,7 @@ struct RootView: View {
         account: APIConfiguration.liveSession,
         writer: APISessionWriter(client: APIConfiguration.liveSignedInClient())
     )
+    @State private var watchSync = WatchSyncModel()
     @State private var showOnboarding = false
     /// A session's spec sheet, over the tabs.
     @State private var openSession: SessionRoute?
@@ -24,6 +25,10 @@ struct RootView: View {
         .tint(Palette.accentText.color)
         .preferredColorScheme(.dark)
         .task { await plans.load() }
+        .task(id: watchWindowKey) {
+            guard let plan = plans.plan else { return }
+            await watchSync.resync(sessions: plan.value2.sessions, today: PreviewViewModel.localToday())
+        }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingFlow(dependencies: .live, onClose: { showOnboarding = false }, onSaved: { id in
                 showOnboarding = false
@@ -32,7 +37,7 @@ struct RootView: View {
         }
         .fullScreenCover(item: $openSession) { route in
             if case .open(let id) = route {
-                SessionScreen(plans: plans, sessionId: id, onClose: { openSession = nil })
+                SessionScreen(plans: plans, sessionId: id, watchSync: watchSync, onClose: { openSession = nil })
             }
         }
         .sheet(item: $sheet) { route in
@@ -47,6 +52,13 @@ struct RootView: View {
 
 @MainActor
 extension RootView {
+    /// Changes when the sessions kept on the watch change, so the schedule is refreshed then and not on every edit.
+    var watchWindowKey: String {
+        guard let plan = plans.plan else { return "" }
+        let today = PreviewViewModel.localToday()
+        return today + WatchSync.window(sessions: plan.value2.sessions, today: today).map(\.key).joined(separator: ",")
+    }
+
     @ViewBuilder func screen(_ tab: AppTab) -> some View {
         switch tab {
         case .next:

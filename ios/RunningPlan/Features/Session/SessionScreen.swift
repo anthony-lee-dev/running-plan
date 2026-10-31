@@ -21,6 +21,7 @@ enum SessionRoute: Identifiable, Hashable {
 struct SessionScreen: View {
     let plans: PlanStore
     let sessionId: String
+    var watchSync: WatchSyncModel?
     let onClose: () -> Void
 
     @State private var editing = false
@@ -37,6 +38,8 @@ struct SessionScreen: View {
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
                 busy: busy, error: error, checkedIn: checkedIn,
+                watchPlan: WatchWorkoutMapper.plan(for: session), watchSync: watchSync,
+                onToggleWatchSync: { toggleWatchSync(plan) },
                 onBack: onClose,
                 onEdit: { editing = true },
                 onAdjust: { adjust($0, session) },
@@ -59,6 +62,17 @@ struct SessionScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Palette.bg.color.ignoresSafeArea())
+        }
+    }
+
+    private func toggleWatchSync(_ plan: Components.Schemas.PlanDetail) {
+        guard let watchSync else { return }
+        Task {
+            if watchSync.isOn {
+                await watchSync.turnOff()
+            } else {
+                await watchSync.turnOn(sessions: plan.value2.sessions, today: PreviewViewModel.localToday())
+            }
         }
     }
 

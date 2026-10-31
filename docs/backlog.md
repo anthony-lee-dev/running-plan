@@ -172,7 +172,7 @@ theirs.
 
 ## Slice 6: Put it on my watch
 
-- [ ] 4.2 Send to watch with WorkoutKit: Add to Watch preview, and scheduling a rolling window (up to 15 workouts).
+- [x] 4.2 Send to watch with WorkoutKit: Add to Watch preview, and scheduling a rolling window (up to 15 workouts).
       Manual-gate box: WorkoutKit and HealthKit work on the free Personal Team. needs: 4.1, 0.6
 
 **Done when:** unit tests for the workout mapping pass; Gate D item: a session reaches the Apple Watch.

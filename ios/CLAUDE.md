@@ -136,7 +136,23 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   (gitignored, `DEVELOPMENT_TEAM = <team id>`), included from `project.yml`, so regenerating the project keeps it.
 - Free-team installs expire after 7 days; re-run from Xcode to renew. Up to 3 apps per device.
 - Do not add capabilities that need the paid program: Sign in with Apple, App Attest, Push, iCloud. HealthKit
-  (needed for import and WorkoutKit) should work on a free team; confirm when task 4.2/4.3 adds it.
+  (needed for import and WorkoutKit) should work on a free team. Task 4.2 added the HealthKit entitlement
+  (`RunningPlan.entitlements`, generated from `project.yml`) and the Health usage strings; the simulator build accepts
+  them. Only a device can show that a free team's provisioning profile accepts the entitlement and that the scheduler syncs.
+
+## Send to watch (task 4.2)
+
+- `Features/Watch/`: `WatchWorkoutMapper` (pure) turns a run session into a WorkoutKit `CustomWorkout`: leading warm-up
+  and trailing cool-down, every other step or repeat group an interval block, pace as a speed-range alert (the pace's
+  faster end is the upper speed), heart rate as a heart-rate alert, effort and none as no alert. Strength, rest and custom
+  sessions are not sent. A plan's id is derived from session id and revision, so the same session is the same plan.
+- `WatchSync` (pure) picks the window (next 15 planned runs from today) and diffs it against what is scheduled by
+  `(plan id, local date)`; removals run before additions so the cap holds. `WatchSyncModel` drives a `WatchScheduling`
+  (WorkoutKit in `LiveWatchScheduler`, a fake in tests). It asks permission only from the user's tap on "Keep my next
+  sessions on my watch"; `RootView` resyncs in the background only when that is on and already allowed.
+- If a free team refuses to sign the HealthKit entitlement, remove the `entitlements:` block and the two
+  `INFOPLIST_KEY_NSHealth*` lines from `project.yml`; the preview still works and scheduling needs a device check.
+- Add to Apple Watch uses `.workoutPreview`, which needs no permission. Watch sends need a paired Apple Watch.
 
 ## Commands
 
