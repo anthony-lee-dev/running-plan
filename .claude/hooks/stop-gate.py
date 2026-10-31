@@ -5,7 +5,7 @@ Reads the hook input JSON on stdin. If the branch changed files under api/, spec
 scripts/verify.sh for those packages. On failure it prints {"decision": "block", "reason": ...}
 so Claude continues and fixes it. After MAX_BLOCKS blocks in one session it lets Claude stop,
 so a problem it cannot fix (for example a missing simulator) never loops forever.
-A green run is remembered by a fingerprint of the changed package files, so later turns that change nothing
+A green run is remembered by a fingerprint (it does not notice toolchain or node_modules changes) of the changed package files, so later turns that change nothing
 there (chat, docs, a commit of the same content) skip the run.
 """
 import hashlib
@@ -22,7 +22,7 @@ PACKAGES = {"api/": "api", "spec/": "spec", "ios/": "ios", "scripts/": "api",
 
 
 def git(cwd, *args):
-    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    r = subprocess.run(["git", "-c", "core.quotepath=off", *args], cwd=cwd, capture_output=True, text=True)
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
@@ -45,7 +45,9 @@ def state_fingerprint(cwd, pkgs):
     for f in sorted(f for f in files if any(f.startswith(p) for p in PACKAGES)):
         h.update(f.encode())
         try:
-            with open(os.path.join(cwd, f), "rb") as fh:
+            path = os.path.join(cwd, f)
+            h.update(str(os.stat(path).st_mode).encode())  # a chmod changes the state too
+            with open(path, "rb") as fh:
                 h.update(fh.read())
         except OSError:
             h.update(b"<gone>")  # a deleted file still changes the state
@@ -65,10 +67,13 @@ def main():
     if not pkgs:
         return 0
 
-    green = os.path.join(tempfile.gettempdir(), f"running-plan-stop-gate-green-{session}")
+    where = hashlib.sha256(cwd.encode()).hexdigest()[:12]
+    green = os.path.join(tempfile.gettempdir(), f"running-plan-stop-gate-green-{session}-{where}")
     fingerprint = state_fingerprint(cwd, pkgs)
-    if os.path.exists(green) and open(green).read() == fingerprint:
-        return 0  # this exact state already passed
+    if os.path.exists(green):
+        with open(green) as f:
+            if f.read() == fingerprint:
+                return 0  # this exact state already passed
 
     result = subprocess.run(
         ["bash", "scripts/verify.sh", *pkgs], cwd=cwd, capture_output=True, text=True

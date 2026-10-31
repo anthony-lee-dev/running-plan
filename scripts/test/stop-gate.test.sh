@@ -73,6 +73,37 @@ expect_runs "green again after a fix: runs once" 6
 run_hook >/dev/null
 expect_runs "and is then skipped" 6
 
+# Cases that must re-run: deletion, rename, a second package, a moved base, a non-ASCII file name.
+n="$(runs)"
+rm api/new.ts
+run_hook >/dev/null
+expect_runs "deleting a file runs again" $((n + 1))
+
+git mv api/a.ts api/b.ts
+run_hook >/dev/null
+expect_runs "renaming a file runs again" $((n + 2))
+
+echo x >ios/App.swift
+run_hook >/dev/null
+expect_runs "touching a second package runs again" $((n + 3))
+[[ "$(tail -1 "$VERIFY_LOG")" == "api ios" ]] && ok "runs both packages" || bad "runs both packages"
+
+git add -A && git commit -qm "merge point"
+git update-ref refs/remotes/origin/main HEAD~1
+run_hook >/dev/null
+expect_runs "a moved base runs again" $((n + 4))
+
+echo one >"ios/Café.swift"
+run_hook >/dev/null
+expect_runs "a non-ASCII file name runs" $((n + 5))
+echo two >"ios/Café.swift"
+run_hook >/dev/null
+expect_runs "editing that file runs again" $((n + 6))
+
+chmod +x api/b.ts
+run_hook >/dev/null
+expect_runs "a mode-only change runs again" $((n + 7))
+
 rm -f "${TMPDIR:-/tmp}/running-plan-stop-gate-$session"*
 if [[ $fails -gt 0 ]]; then echo "stop-gate: $fails failed"; exit 1; fi
 echo "stop-gate: all passed"
