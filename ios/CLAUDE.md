@@ -76,6 +76,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   without it the test skips. Sign-in codes come from `GET /__test/codes/latest?email=` on that server.
 - Plain `http://127.0.0.1` works in the simulator without an App Transport Security exception.
 
+## Unit tests
+
+- Keep each `#expect` simple: build an expected array in a typed `let` first. An inline literal joined with `+` and
+  `Array(repeating:)` compiled on the Mac but hit "unable to type-check this expression in reasonable time" on CI.
+
 ## Snapshot tests
 
 - A screen's snapshot test hosts the real view in a `UIHostingController` (not `ImageRenderer`, which leaves out
