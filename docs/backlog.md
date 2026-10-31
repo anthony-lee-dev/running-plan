@@ -1,20 +1,14 @@
-# Backlog
+# Backlog (archive)
 
-Work is ordered in **vertical slices**: each slice is one feature a runner can use, with just the API and iOS work it
-needs, and it ends with an end-to-end check before the next slice starts. Agents take the first unticked task in the
-first unfinished slice (`/next-task`); a slice is finished when its tasks are ticked and its **Done when** holds.
-Tasks marked `any time` may be picked when the current slice is waiting on the human. The web companion and the
-`Later` sections come after slice 12.
+The task list now lives in **GitHub issues**: one issue = one task = one PR, a milestone per slice (its description
+holds the slice's **Done when**), labels `type: feature` / `type: defect` / `type: chore`, `area: *`, `ask-first`,
+`any-time`, `human-only` and `later`. Issue titles keep the old task ID (`[2.6] ...`), so references such as
+"backlog 2.15" in code and docs still resolve. `/next-task` picks open defects first, then the earliest unblocked
+feature. See `scripts/setup-issues.sh` and `scripts/github/issues.json` for how they were created.
 
-One task = one PR. `ask first` = post the plan and wait for the human before writing code. Task numbers are stable
-IDs, not order (2.x started as API tasks, 3.x and 4.x as iOS tasks). `/next-task` gives each PR to a worker subagent
-in its own worktree. Tasks in one slice without a shared `needs` can run side by side, two at most, and only one of
-them may touch `ios/` (the UI tests share the simulator).
-
-Sources: § points to `designs/Running Planner — System Design v1.0.md` (what to build). The test approach per layer
-and manual-gate rules come from `designs/Running Planner Agent Build Workflow.md` (how to build). That document's
-phase order and Gates B and C are replaced by the slices below: every slice adds contract tests for its endpoints
-(Gate B, a slice at a time) and snapshot and UI tests for its screens (Gate C, a slice at a time).
+This file keeps the tasks finished before the move, as a record, and the end-to-end check every slice follows.
+Sources: § points to `designs/Running Planner — System Design v1.0.md` (what to build); test approach and
+manual-gate rules come from `designs/Running Planner Agent Build Workflow.md` (how to build).
 
 **End-to-end check for every slice** (from slice 1 on):
 1. API contract tests for the slice's endpoints pass on the Workers and the Node entry.
@@ -23,7 +17,7 @@ phase order and Gates B and C are replaced by the slices below: every slice adds
    human; WorkoutKit and HealthKit checks are Gate D items. Agents never tick these boxes.
 4. After each deploy, `npm run smoke -w api` passes against the deployed API (task 2.22).
 
-Every screen task also needs 0.5 for its snapshot test.
+Every screen task also needs 0.5 (the dark-board PNGs) for its snapshot test.
 
 ## Done before the slices
 
@@ -159,17 +153,6 @@ and save a plan against the deployed API.
 
 **Done when:** a UI test edits a session and the change is still there after relaunching the app.
 
-## Slice 5: Edit offline
-
-- [ ] 2.6 `POST /v1/sync` for the offline edit queue: idempotency keys, cursor, per-session revision conflicts,
-      tombstones. The server processes as many operations as fit its per-request query budget (50 D1 queries on
-      Workers Free) and the client resends the rest. needs: 2.5
-- [ ] 3.6 Offline edit queue and sync: unit tests for the queue, keep-mine-or-theirs conflict prompt, tombstones,
-      stale proposals. needs: 2.6, 4.1
-
-**Done when:** a UI test edits offline, comes back online and the edit syncs; a conflicting edit asks keep mine or
-theirs.
-
 ## Slice 6: Put it on my watch
 
 - [x] 4.2 Send to watch with WorkoutKit: Add to Watch preview, and scheduling a rolling window (up to 15 workouts).
@@ -192,80 +175,5 @@ theirs.
 
 **Gate D (human, needs 0.6):** device checklist ticked: send-to-watch (slice 6) and HealthKit import (slice 7).
 
-## Slice 8: Check in and see plan vs actual
-
-- [ ] 4.4 Plan vs actual and check-in (DK-CheckIn); pain guidance shows whatever the review setting. needs: 4.3
-
-**Done when:** a UI test checks in after a matched session and sees plan vs actual.
-
-## Slice 9: Weekly review and proposals
-
-- [ ] 2.18 Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in
-      feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. The computation is
-      done (`api/src/domain/insights.ts`, `computeWeeklyReview`). needs: 2.12, 2.17
-- [ ] 2.14 Proposals API: generate, accept, dismiss; stale when the plan revision moves; re-running the interview
-      regenerates future weeks only (property test: keeps past and user-owned sessions) and is delivered as a
-      proposal. A pain flag in a check-in triggers an urgent proposal when the review setting is Weekly plus urgent
-      (left from 2.12). needs: 2.12, 2.13
-- [ ] 4.5 Weekly review and proposals (DK-Review), review frequency setting (default Weekly plus urgent).
-      needs: 4.4, 2.18, 2.14
-
-**Done when:** a UI test opens a due review and accepts a proposal, and the plan changes.
-
-## Slice 10: Progress
-
-- [ ] 2.15 `GET /v1/plans/{id}/progress`: adherence, volume trend, key and strength sessions completed, goal
-      countdown. The computation is done (`api/src/domain/insights.ts`, `computeProgress`); the route and its store
-      reads are left. needs: 2.12
-- [ ] 4.6 Progress (DK-Progress). needs: 2.15, 0.5
-- [ ] 4.7 Distance done and "On track" on the plan screens, left from 3.5: Next's "5.1 of 25 km" and its progress bar,
-      Week's "5.1 km done · plus 45 min cross-training", Whole's "15.2 / 16 km" per week and the goal card's
-      "On track" badge. Today they show planned distance and sessions done. needs: 2.15
-
-**Done when:** a UI test shows progress for a plan with done and missed sessions.
-
-## Slice 11: Goal and settings
-
-- [ ] 2.20 Spec clarification for `PATCH /v1/profile` (own PR, human merge; found by the 2.17 review): say that
-      `heartRate`, `scheduling` and `review` replace their whole section (the only way to clear a field), and decide
-      whether ranges may be equal and sub-objects reject unknown keys, as the API does today. Also give
-      `POST /v1/sessions/{id}/checkins` a 409 for an id reused with another body (as plan create has; the API answers
-      400 `id_in_use` until then), and say in the schema that `effortFelt` is for after-session check-ins only.
-      needs: 2.17. `any time`
-- [ ] 2.16 Account data export (§10). needs: 2.12
-- [ ] 3.7 Goal and settings: goal, re-run interview, review frequency and day, target display, account,
-      privacy, data export. There is no DK board for it, so the plan proposes a layout from the existing tokens
-      (no longer `ask first`: on 2026-10-30 the human agreed in a session to go ahead with that layout). needs: 3.4, 2.17, 2.14, 2.16
-
-**Done when:** a UI test changes a setting and re-runs the interview, which arrives as a proposal.
-
-## Slice 12: Polish and housekeeping
-
-- [ ] 2.19 Prune expired rows: `email_codes`, `rate_limits` windows and expired or rotated `refresh_tokens` (a scheduled
-      Worker or on write), found by the 2.4 review. needs: 2.4. `any time`
-- [ ] 3.8 Dynamic Type: the interview and preview screens use fixed system font sizes (`.font(.system(size:))`), which
-      do not scale (docs/design-notes.md asks for `Font.custom(_, size:, relativeTo:)`). Bundle the fonts, scale every
-      size, let rows wrap instead of clipping, and re-run the snapshot tests at a large size. needs: 3.3. `any time`
-
-## Human, not for agents
-
-- [ ] H.1 Coach review of the presets, invariants and strength exercise library (§12.1)
-- [ ] H.2 Apply for the Garmin Training API early (§12.3)
-- [ ] H.3 Legal review of injury and plan-guidance wording, and a privacy policy (§10, §12.7)
-
-## Later: needs the paid Apple Developer Program
-
-- [ ] L.1 Sign in with Apple alongside email (API and iOS)
-- [ ] L.2 App Attest: attest on iOS, verify on the API, then turn on `APP_ATTEST_REQUIRED` for activity uploads
-- [ ] L.3 TestFlight build for wider testing
-
-## Later: needs Garmin API access
-
-- [ ] G.1 Push workouts to Garmin Connect through the Training API (backend)
-- [ ] G.2 Import from the Garmin Activity API as a second route besides Apple Health
-
-## Web companion (after slice 12)
-
-- [ ] 5.1 Web app shell, adjust plan, view progress (no running-session uploads)
-
-**Gate E (human):** revisit `docs/autonomy.md` before widening auto-merge.
+Open work (slices 5 and 8 to 12, the human-only items, the `Later` sections, the web companion, and Gates D and E)
+is in GitHub issues.

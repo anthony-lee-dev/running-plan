@@ -1,0 +1,32 @@
+name: Feature
+description: One task = one pull request, end to end
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+      description: What a runner (or the next task) gets from this. Point at the § of the system design, the spec operation or the DK board.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: The test or check that proves it (contract test, UI test against the local API, device check).
+    validations:
+      required: true
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Blocked by
+      description: "Issue numbers, e.g. #12. Also add them with Relationships, Blocked by in the sidebar. Write 'none' if free."
+  - type: textarea
+    id: gates
+    attributes:
+      label: Manual gates
+      description: Device or Apple-account checks the human must do. They become unticked boxes in the PR.
+  - type: markdown
+    attributes:
+      value: |
+        Also set: milestone (the slice), an `area:` label, and `ask-first` or `any-time` where they apply.

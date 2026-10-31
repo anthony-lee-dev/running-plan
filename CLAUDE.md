@@ -15,7 +15,9 @@ set up each session on their watch by hand, then import results and review. Live
     autonomy dial and Day-1 setup (how to build).
   - `designs/dark/DK-*.dc.html` the 11 dark-theme screens (HTML source with exact colours and spacing).
   - `docs/design-notes.md` tokens and the screen-to-endpoint map pulled from those screens.
-- `docs/backlog.md` the task list agents pick from. `autonomy.json` and `docs/autonomy.md` what may auto-merge.
+- **GitHub issues** are the task list agents pick from: one issue = one task = one PR, a milestone per slice, `type: feature`
+  or `type: defect` labels. `docs/backlog.md` only archives the tasks finished before the move to issues (and holds the
+  end-to-end check every slice follows). `scripts/setup-issues.sh` created the issues. `autonomy.json` and `docs/autonomy.md` what may auto-merge.
 - The repo is **public**: never commit secrets (`.dev.vars` is gitignored; GitHub push protection also blocks known secret formats).
 
 ## Rules that apply everywhere
@@ -31,32 +33,36 @@ set up each session on their watch by hand, then import results and review. Live
   whether an existing one covers it; after adding one, `npm audit` must stay clean. A dev-tooling warning becomes
   a backlog task, not a fix inside an unrelated PR.
 - Sign-in is email (one-time code) for now. Sign in with Apple and App Attest wait for the paid Apple account
-  (backlog "Later"); keep App Attest behind `APP_ATTEST_REQUIRED`, default off.
+  (issues labelled `later`); keep App Attest behind `APP_ATTEST_REQUIRED`, default off.
 - The unsaved preview draft lives on the device for 24 hours. The `plans/generate` endpoint is stateless and unauthenticated.
 - Ignore the light and alternative-direction screens in the design canvas; only `DK-*` boards count.
 
 ## Definition of done
 
 1. `bash scripts/verify.sh <package>` exits 0 for every package you touched (`api`, `spec`, `web`, `ios`).
-2. Work is on a branch named `agent/<short-task>` with a PR opened by `/ship`, marked ready for review.
+2. Work is on a branch named `agent/<short-task>` with a PR opened by `/ship`, marked ready for review, and its body
+   says `Closes #<issue>` (`Refs #<issue>` for a contract-only PR).
 3. Manual-gate items (real device, Apple account) are listed as unticked boxes in the PR body, never faked.
 4. **Never run `gh pr merge`.** `/ship` calls `python3 scripts/request-merge.py`, which requests auto-merge only when
    `autonomy.json` on `main` allows it (see `docs/autonomy.md` for what each level auto-merges). Never edit `autonomy.json` to get a merge.
 
 ## Working style
 
-- One PR = one backlog task, end to end, with no size limit (the human's call: splitting a task across sessions
+- One PR = one issue, end to end, with no size limit (the human's call: splitting a task across sessions
   loses context). The exception is a contract change, which is a `spec/openapi.yaml` PR of its own first.
-- Build in vertical slices: `docs/backlog.md` groups tasks by feature, each with only the API and iOS work it needs
-  and an end-to-end check (contract tests, a UI test against the local API, a device check) before the next slice.
-- Pick work from `docs/backlog.md` (`/next-task`). Never report a backlog task as done without ticking it in
-  `docs/backlog.md` in the same change, including work done outside `/next-task` (a check run in a normal
-  session, say). When the work has no PR of its own, tick it, say in your reply that the tick is uncommitted,
-  and ask the human whether to ship it now or fold it into the next PR. A task that is only partly done stays
-  unticked; say what is left.
-- Human-only items (Phase 0, gates, "Human, not for agents") are ticked only when you did the work yourself in
-  the session, the human says they did it, or a read-only check shows it is done; never on inference. Ticking
-  a backlog line never ticks the `## Manual gates` boxes in a PR body: those stay for the human.
+- Build in vertical slices: each slice is a milestone grouping the features a runner needs, with only the API and iOS
+  work each needs, and an end-to-end check (contract tests, a UI test against the local API, a device check; see
+  `docs/backlog.md`) before the next slice. The milestone description holds the slice's **Done when**.
+- Pick work from the open issues (`/next-task`): defects first, then the earliest unblocked feature. Dependencies are
+  "blocked by" links (or a `Blocked by: #n` line in the body). Titles keep the old task ID (`[2.6] ...`) so older
+  references still resolve. A new bug is a `type: defect` issue (the Defect form): its fix starts with a failing
+  regression test.
+- Never report a task as done while its issue is open. The PR's `Closes #n` closes it on merge. For work with no PR of
+  its own (a check run in a normal session, say), close the issue with `gh issue close <n> --comment "<what was
+  checked>"`. A task that is only partly done stays open; say what is left in a comment.
+- Human-only issues (label `human-only`, gates, "Human, not for agents") are closed only when you did the work yourself
+  in the session, the human says they did it, or a read-only check shows it is done; never on inference. Closing an
+  issue never ticks the `## Manual gates` boxes in a PR body: those stay for the human.
 - Branch from `origin/main`, never from an unmerged branch. A stacked branch needs a rebase after its base is
   squash-merged, and that rebase needs a force-push, which is denied. To bring `main` into a pushed branch, merge
   it in and push.

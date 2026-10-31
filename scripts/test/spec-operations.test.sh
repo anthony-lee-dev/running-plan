@@ -78,7 +78,7 @@ if [[ -n "$strict" ]]; then
 fi
 echo "ok   no strict schema inside allOf"
 
-sort "$expected" -o "$expected"
+LC_ALL=C sort "$expected" -o "$expected"
 if diff -u "$expected" "$tmp/actual" >"$tmp/diff"; then
   echo "ok   spec has the $(wc -l <"$expected" | tr -d ' ') agreed operations with the right auth"
 else

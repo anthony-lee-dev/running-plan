@@ -1,0 +1,416 @@
+{
+  "labels": [
+    {
+      "name": "type: feature",
+      "color": "1d76db",
+      "description": "New behaviour a runner can use"
+    },
+    {
+      "name": "type: defect",
+      "color": "d73a4a",
+      "description": "Something that should work does not"
+    },
+    {
+      "name": "type: chore",
+      "color": "cfd3d7",
+      "description": "Housekeeping, tooling, docs, spec clarification"
+    },
+    {
+      "name": "area: api",
+      "color": "0e8a16",
+      "description": "api/"
+    },
+    {
+      "name": "area: ios",
+      "color": "5319e7",
+      "description": "ios/ (only one iOS worker at a time)"
+    },
+    {
+      "name": "area: spec",
+      "color": "fbca04",
+      "description": "spec/openapi.yaml"
+    },
+    {
+      "name": "area: web",
+      "color": "0052cc",
+      "description": "web/"
+    },
+    {
+      "name": "area: docs",
+      "color": "c5def5",
+      "description": "docs/ and designs/"
+    },
+    {
+      "name": "priority: high",
+      "color": "b60205",
+      "description": "Picked before everything else"
+    },
+    {
+      "name": "priority: normal",
+      "color": "ededed",
+      "description": "Default"
+    },
+    {
+      "name": "ask-first",
+      "color": "d93f0b",
+      "description": "Post the plan and wait for the human before writing code"
+    },
+    {
+      "name": "any-time",
+      "color": "bfdadc",
+      "description": "May be picked while the current slice waits on the human"
+    },
+    {
+      "name": "human-only",
+      "color": "000000",
+      "description": "Not for agents; closed only by the human"
+    },
+    {
+      "name": "later",
+      "color": "e4e669",
+      "description": "Blocked on the paid Apple account or Garmin API access"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "Slice 5: Edit offline",
+      "description": "Done when: a UI test edits offline, comes back online and the edit syncs; a conflicting edit asks keep mine or theirs."
+    },
+    {
+      "title": "Slice 8: Check in and see plan vs actual",
+      "description": "Done when: a UI test checks in after a matched session and sees plan vs actual."
+    },
+    {
+      "title": "Slice 9: Weekly review and proposals",
+      "description": "Done when: a UI test opens a due review and accepts a proposal, and the plan changes."
+    },
+    {
+      "title": "Slice 10: Progress",
+      "description": "Done when: a UI test shows progress for a plan with done and missed sessions."
+    },
+    {
+      "title": "Slice 11: Goal and settings",
+      "description": "Done when: a UI test changes a setting and re-runs the interview, which arrives as a proposal."
+    },
+    {
+      "title": "Slice 12: Polish and housekeeping",
+      "description": "Polish tasks that need no slice of their own."
+    },
+    {
+      "title": "Human, not for agents",
+      "description": "Coach review, Garmin application, legal review. Closed only by the human."
+    },
+    {
+      "title": "Later: Apple Developer Program",
+      "description": "Needs the paid Apple Developer Program."
+    },
+    {
+      "title": "Later: Garmin API",
+      "description": "Needs Garmin API access."
+    },
+    {
+      "title": "Web companion",
+      "description": "After slice 12. Gate E (human): revisit docs/autonomy.md before widening auto-merge."
+    }
+  ],
+  "issues": [
+    {
+      "id": "2.6",
+      "title": "Sync endpoint for the offline edit queue",
+      "milestone": "Slice 5: Edit offline",
+      "labels": [
+        "type: feature",
+        "area: api"
+      ],
+      "blocked_by": [],
+      "body": "`POST /v1/sync` for the offline edit queue: idempotency keys, cursor, per-session revision conflicts, tombstones. The server processes as many operations as fit its per-request query budget (50 D1 queries on Workers Free) and the client resends the rest.\n\nOld needs: 2.5 (done)."
+    },
+    {
+      "id": "3.6",
+      "title": "Offline edit queue and sync (iOS)",
+      "milestone": "Slice 5: Edit offline",
+      "labels": [
+        "type: feature",
+        "area: ios"
+      ],
+      "blocked_by": [
+        "2.6"
+      ],
+      "body": "Offline edit queue and sync: unit tests for the queue, keep-mine-or-theirs conflict prompt, tombstones, stale proposals.\n\nOld needs: 2.6, 4.1 (done)."
+    },
+    {
+      "id": "4.4",
+      "title": "Plan vs actual and check-in (DK-CheckIn)",
+      "milestone": "Slice 8: Check in and see plan vs actual",
+      "labels": [
+        "type: feature",
+        "area: ios"
+      ],
+      "blocked_by": [],
+      "body": "Plan vs actual and check-in (DK-CheckIn); pain guidance shows whatever the review setting.\n\nOld needs: 4.3."
+    },
+    {
+      "id": "2.18",
+      "title": "Weekly review summary API",
+      "milestone": "Slice 9: Weekly review and proposals",
+      "labels": [
+        "type: feature",
+        "area: api"
+      ],
+      "blocked_by": [],
+      "body": "Weekly review summary API: planned vs completed, distance and time against plan, key sessions, check-in feel and pain, inbox loose ends (§6.6a); computed on the backend so the web sees it too. The computation is done (`api/src/domain/insights.ts`, `computeWeeklyReview`).\n\nOld needs: 2.12, 2.17 (done)."
+    },
+    {
+      "id": "2.14",
+      "title": "Proposals API: generate, accept, dismiss",
+      "milestone": "Slice 9: Weekly review and proposals",
+      "labels": [
+        "type: feature",
+        "area: api"
+      ],
+      "blocked_by": [],
+      "body": "Proposals API: generate, accept, dismiss; stale when the plan revision moves; re-running the interview regenerates future weeks only (property test: keeps past and user-owned sessions) and is delivered as a proposal. A pain flag in a check-in triggers an urgent proposal when the review setting is Weekly plus urgent (left from 2.12).\n\nOld needs: 2.12, 2.13 (done)."
+    },
+    {
+      "id": "4.5",
+      "title": "Weekly review and proposals (DK-Review)",
+      "milestone": "Slice 9: Weekly review and proposals",
+      "labels": [
+        "type: feature",
+        "area: ios"
+      ],
+      "blocked_by": [
+        "4.4",
+        "2.18",
+        "2.14"
+      ],
+      "body": "Weekly review and proposals (DK-Review), review frequency setting (default Weekly plus urgent).\n\nOld needs: 4.4, 2.18, 2.14."
+    },
+    {
+      "id": "2.15",
+      "title": "Plan progress endpoint",
+      "milestone": "Slice 10: Progress",
+      "labels": [
+        "type: feature",
+        "area: api"
+      ],
+      "blocked_by": [],
+      "body": "`GET /v1/plans/{id}/progress`: adherence, volume trend, key and strength sessions completed, goal countdown. The computation is done (`api/src/domain/insights.ts`, `computeProgress`); the route and its store reads are left.\n\nOld needs: 2.12 (done)."
+    },
+    {
+      "id": "4.6",
+      "title": "Progress screen (DK-Progress)",
+      "milestone": "Slice 10: Progress",
+      "labels": [
+        "type: feature",
+        "area: ios"
+      ],
+      "blocked_by": [
+        "2.15"
+      ],
+      "body": "Progress (DK-Progress).\n\nOld needs: 2.15, 0.5 (done)."
+    },
+    {
+      "id": "4.7",
+      "title": "Distance done and \"On track\" on the plan screens",
+      "milestone": "Slice 10: Progress",
+      "labels": [
+        "type: feature",
+        "area: ios"
+      ],
+      "blocked_by": [
+        "2.15"
+      ],
+      "body": "Distance done and \"On track\" on the plan screens, left from 3.5: Next's \"5.1 of 25 km\" and its progress bar, Week's \"5.1 km done · plus 45 min cross-training\", Whole's \"15.2 / 16 km\" per week and the goal card's \"On track\" badge. Today they show planned distance and sessions done.\n\nOld needs: 2.15."
+    },
+    {
+      "id": "2.20",
+      "title": "Spec clarification for PATCH /v1/profile and check-in conflicts",
+      "milestone": "Slice 11: Goal and settings",
+      "labels": [
+        "type: chore",
+        "area: spec",
+        "any-time"
+      ],
+      "blocked_by": [],
+      "body": "Own PR (human merge; found by the 2.17 review): say that `heartRate`, `scheduling` and `review` replace their whole section (the only way to clear a field), and decide whether ranges may be equal and sub-objects reject unknown keys, as the API does today. Also give `POST /v1/sessions/{id}/checkins` a 409 for an id reused with another body (as plan create has; the API answers 400 `id_in_use` until then), and say in the schema that `effortFelt` is for after-session check-ins only.\n\nOld needs: 2.17 (done)."
+    },
+    {
+      "id": "2.16",
+      "title": "Account data export",
+      "milestone": "Slice 11: Goal and settings",
+      "labels": [
+        "type: feature",
+        "area: api"
+      ],
+      "blocked_by": [],
+      "body": "Account data export (§10).\n\nOld needs: 2.12 (done)."
+    },
+    {
+      "id": "3.7",
+      "title": "Goal and settings screen",
+      "milestone": "Slice 11: Goal and settings",
+      "labels": [
+        "type: feature",
+        "area: ios"
+      ],
+      "blocked_by": [
+        "2.14",
+        "2.16"
+      ],
+      "body": "Goal and settings: goal, re-run interview, review frequency and day, target display, account, privacy, data export. There is no DK board for it, so the plan proposes a layout from the existing tokens (no longer `ask first`: on 2026-10-30 the human agreed in a session to go ahead with that layout).\n\nOld needs: 3.4 (done), 2.17 (done), 2.14, 2.16."
+    },
+    {
+      "id": "2.19",
+      "title": "Prune expired rows",
+      "milestone": "Slice 12: Polish and housekeeping",
+      "labels": [
+        "type: chore",
+        "area: api",
+        "any-time"
+      ],
+      "blocked_by": [],
+      "body": "Prune expired rows: `email_codes`, `rate_limits` windows and expired or rotated `refresh_tokens` (a scheduled Worker or on write), found by the 2.4 review.\n\nOld needs: 2.4 (done)."
+    },
+    {
+      "id": "3.8",
+      "title": "Dynamic Type on the interview and preview screens",
+      "milestone": "Slice 12: Polish and housekeeping",
+      "labels": [
+        "type: feature",
+        "area: ios",
+        "any-time"
+      ],
+      "blocked_by": [],
+      "body": "Dynamic Type: the interview and preview screens use fixed system font sizes (`.font(.system(size:))`), which do not scale (docs/design-notes.md asks for `Font.custom(_, size:, relativeTo:)`). Bundle the fonts, scale every size, let rows wrap instead of clipping, and re-run the snapshot tests at a large size.\n\nOld needs: 3.3 (done)."
+    },
+    {
+      "id": "H.1",
+      "title": "Coach review of the presets, invariants and strength exercise library",
+      "milestone": "Human, not for agents",
+      "labels": [
+        "type: chore",
+        "human-only"
+      ],
+      "blocked_by": [],
+      "body": "Coach review of the presets, invariants and strength exercise library (§12.1)."
+    },
+    {
+      "id": "H.2",
+      "title": "Apply for the Garmin Training API early",
+      "milestone": "Human, not for agents",
+      "labels": [
+        "type: chore",
+        "human-only"
+      ],
+      "blocked_by": [],
+      "body": "Apply for the Garmin Training API early (§12.3)."
+    },
+    {
+      "id": "H.3",
+      "title": "Legal review of injury wording and a privacy policy",
+      "milestone": "Human, not for agents",
+      "labels": [
+        "type: chore",
+        "human-only"
+      ],
+      "blocked_by": [],
+      "body": "Legal review of injury and plan-guidance wording, and a privacy policy (§10, §12.7)."
+    },
+    {
+      "id": "L.1",
+      "title": "Sign in with Apple alongside email",
+      "milestone": "Later: Apple Developer Program",
+      "labels": [
+        "type: feature",
+        "area: api",
+        "area: ios",
+        "later"
+      ],
+      "blocked_by": [],
+      "body": "Sign in with Apple alongside email (API and iOS). Needs the paid Apple Developer Program."
+    },
+    {
+      "id": "L.2",
+      "title": "App Attest for activity uploads",
+      "milestone": "Later: Apple Developer Program",
+      "labels": [
+        "type: feature",
+        "area: api",
+        "area: ios",
+        "later"
+      ],
+      "blocked_by": [],
+      "body": "App Attest: attest on iOS, verify on the API, then turn on `APP_ATTEST_REQUIRED` for activity uploads. Needs the paid Apple Developer Program."
+    },
+    {
+      "id": "L.3",
+      "title": "TestFlight build for wider testing",
+      "milestone": "Later: Apple Developer Program",
+      "labels": [
+        "type: feature",
+        "area: ios",
+        "later"
+      ],
+      "blocked_by": [],
+      "body": "TestFlight build for wider testing. Needs the paid Apple Developer Program."
+    },
+    {
+      "id": "G.1",
+      "title": "Push workouts to Garmin Connect",
+      "milestone": "Later: Garmin API",
+      "labels": [
+        "type: feature",
+        "area: api",
+        "later"
+      ],
+      "blocked_by": [],
+      "body": "Push workouts to Garmin Connect through the Training API (backend). Needs Garmin API access (see H.2)."
+    },
+    {
+      "id": "G.2",
+      "title": "Import from the Garmin Activity API",
+      "milestone": "Later: Garmin API",
+      "labels": [
+        "type: feature",
+        "area: api",
+        "later"
+      ],
+      "blocked_by": [],
+      "body": "Import from the Garmin Activity API as a second route besides Apple Health. Needs Garmin API access (see H.2)."
+    },
+    {
+      "id": "5.1",
+      "title": "Web app shell, adjust plan, view progress",
+      "milestone": "Web companion",
+      "labels": [
+        "type: feature",
+        "area: web"
+      ],
+      "blocked_by": [],
+      "body": "Web app shell, adjust plan, view progress (no running-session uploads). After slice 12."
+    },
+    {
+      "id": "Gate D",
+      "title": "Device checklist: send-to-watch and HealthKit import",
+      "milestone": "Human, not for agents",
+      "labels": [
+        "type: chore",
+        "human-only"
+      ],
+      "blocked_by": [],
+      "body": "Gate D (human): on a real iPhone and Apple Watch, tick the device checklist: a session reaches the Apple Watch (slice 6), and a run recorded in Health (Apple Watch, Garmin and Nike data) lands in the inbox and matches (slice 7). Do it against the deployed API."
+    },
+    {
+      "id": "Gate E",
+      "title": "Revisit docs/autonomy.md before widening auto-merge",
+      "milestone": "Human, not for agents",
+      "labels": [
+        "type: chore",
+        "human-only"
+      ],
+      "blocked_by": [],
+      "body": "Gate E (human): revisit `docs/autonomy.md` and `autonomy.json` before widening auto-merge. Agents never edit `autonomy.json`."
+    }
+  ]
+}
