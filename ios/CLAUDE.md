@@ -11,7 +11,10 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 ## Decisions for the bootstrap task
 
 - Generate the Xcode project with XcodeGen from `ios/project.yml` (`brew install xcodegen`, then `xcodegen` in `ios/`).
-  The `.xcodeproj` is gitignored, so parallel worktrees never conflict on `project.pbxproj`.
+  The `.xcodeproj` is gitignored, so parallel worktrees never conflict on `project.pbxproj`. It lists every file
+  by name, so a pull that adds or removes iOS files leaves it stale ("cannot find ... in scope" in Xcode). The hooks
+  in `scripts/githooks/` regenerate it after a pull, rebase or branch switch that needs it; turn them on once per
+  clone with `git config core.hooksPath scripts/githooks`.
 - App target `RunningPlan`, unit test target `RunningPlanTests` (Swift Testing), UI test target `RunningPlanUITests`.
 - API client generated from `../spec/openapi.yaml` with Apple's swift-openapi-generator, run by
   `bash scripts/generate-api-client.sh` into `ios/APIClient/Sources/APIClient/Generated` (committed; local package

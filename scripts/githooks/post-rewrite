@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# After `git pull --rebase` or `git rebase` (not `commit --amend`): refresh the Xcode project if iOS files changed.
+[[ "${1:-}" == "rebase" ]] || exit 0
+exec bash "$(dirname "$0")/regen-xcodeproj.sh" ORIG_HEAD HEAD
