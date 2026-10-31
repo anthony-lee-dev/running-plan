@@ -28,7 +28,10 @@ struct SessionSummaryTests {
 
     @Test func theShapeIsTheStepsInOrderSizedByTime() throws {
         let shape = SessionSummary.shape(try session(on: "2026-10-28"))
-        #expect(shape.map(\.intensity) == [.easy] + Array(repeating: [.hard, .recovery], count: 5).flatMap { $0 } + [.easy])
+        // Built step by step: as one inline expression it is too slow to type-check on the CI runner.
+        let reps: [SessionSummary.Intensity] = Array(repeating: [SessionSummary.Intensity.hard, .recovery], count: 5).flatMap { $0 }
+        let expected: [SessionSummary.Intensity] = [.easy] + reps + [.easy]
+        #expect(shape.map(\.intensity) == expected)
         #expect(abs(shape.reduce(0) { $0 + $1.seconds } - SessionSummary.estimatedSeconds(try session(on: "2026-10-28"))) < 1)
         #expect(SessionSummary.shape(try session(on: "2026-10-30")).map(\.intensity) == [.easy])
         #expect(SessionSummary.shape(try session(on: "2026-10-27")).isEmpty, "strength has no run shape")
