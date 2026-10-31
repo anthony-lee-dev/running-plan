@@ -74,6 +74,10 @@ entry file, not a rewrite.
   `matched`; unlinking, downgrading to a suggestion or a new disposition undoes only what the match did. The route
   loads the state, the pure `planMatchChange` decides, and `MatchStore.apply` writes it in one D1 batch whose first
   statement aborts it (`json('{')`) if anything read has changed; the route retries up to three times.
+  Deleting a session or a plan unlinks its matches (task 2.21): the match rows go and an activity they had matched
+  returns to the inbox with a new revision. The D1 store does it in the delete's batch, guarded by the tombstone time
+  just written, so a refused delete unlinks nothing; the memory plan store calls the match store through
+  `onSessionsDeleted`. Reads still skip matches of deleted sessions, for rows written before this.
 - Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
   `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after
   its day is over (so due can exceed done + skipped + missed by what is left today); actual volume comes from the

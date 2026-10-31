@@ -126,5 +126,75 @@ export function matchStoreContract(name: string, make: () => Promise<Made>) {
       await m.plans.deleteSession(U1, S1, 2, LATER);
       expect(await m.store.forActivities(U1, [A1])).toEqual([]);
     });
+
+    // Backlog 2.21: deleting what an activity is matched to puts the activity back in the inbox.
+    it("deleting a session unlinks its match and puts a confirmed activity back in the inbox", async () => {
+      await confirm(S1, A1);
+      const before = await m.store.load(U1, { activityId: A1 });
+      expect(before.activities[0]).toMatchObject({ disposition: "matched" });
+      expect(await m.plans.deleteSession(U1, S1, 2, LATER)).toMatchObject({ ok: true });
+
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toEqual([]);
+      expect(after.activities[0]).toEqual({ id: A1, disposition: "inbox", revision: before.activities[0]!.revision + 1 });
+    });
+
+    it("deleting a session drops a suggested match and leaves its activity as it was", async () => {
+      const state = await m.store.load(U1, { sessionId: S1, activityId: A1 });
+      await m.store.apply(U1, state, planMatchChange(state, { kind: "put", sessionId: S1, activityId: A1, status: "suggested" }, NOW), NOW);
+      await m.plans.deleteSession(U1, S1, 1, LATER);
+
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toEqual([]);
+      expect(after.activities[0]).toEqual({ id: A1, disposition: "inbox", revision: 1 });
+    });
+
+    it("deleting a plan unlinks every match of its sessions", async () => {
+      await confirm(S1, A1);
+      await confirm(S2, A2);
+      const revision = (await m.plans.getPlan(U1, P1))!.plan.revision;
+      expect(await m.plans.deletePlan(U1, P1, revision, LATER)).toMatchObject({ ok: true });
+
+      for (const id of [A1, A2]) {
+        const after = await m.store.load(U1, { activityId: id });
+        expect(after.matches).toEqual([]);
+        expect(after.activities[0]).toMatchObject({ id, disposition: "inbox" });
+      }
+    });
+
+    it("a refused plan delete unlinks nothing", async () => {
+      await confirm(S1, A1);
+      const revision = (await m.plans.getPlan(U1, P1))!.plan.revision;
+      expect(await m.plans.deletePlan(U1, P1, revision - 1, LATER)).toMatchObject({ ok: false, reason: "conflict" });
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toHaveLength(1);
+      expect(after.activities[0]).toMatchObject({ disposition: "matched" });
+    });
+
+    it("another user's matches survive a delete", async () => {
+      const P2 = "00000000-0000-4000-8000-000000000102";
+      const S3 = "00000000-0000-4000-8000-000000000203";
+      const A3 = "00000000-0000-4000-8000-000000000903";
+      await m.plans.createPlan(U2, { ...plan, id: P2 }, [{ ...session(S3, "2026-10-28"), planId: P2 }], "h");
+      await m.activities.applyImport(U2, [activity(A3, 3)], []);
+      const theirs = await m.store.load(U2, { sessionId: S3, activityId: A3 });
+      await m.store.apply(U2, theirs, planMatchChange(theirs, { kind: "put", sessionId: S3, activityId: A3, status: "confirmed" }, NOW), NOW);
+      await confirm(S1, A1);
+
+      const revision = (await m.plans.getPlan(U1, P1))!.plan.revision;
+      await m.plans.deletePlan(U1, P1, revision, LATER);
+
+      const after = await m.store.load(U2, { activityId: A3 });
+      expect(after.matches).toHaveLength(1);
+      expect(after.activities[0]).toMatchObject({ disposition: "matched" });
+    });
+
+    it("a refused session delete unlinks nothing", async () => {
+      await confirm(S1, A1);
+      expect(await m.plans.deleteSession(U1, S1, 1, LATER)).toMatchObject({ ok: false, reason: "conflict" });
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toHaveLength(1);
+      expect(after.activities[0]).toMatchObject({ disposition: "matched" });
+    });
   });
 }
