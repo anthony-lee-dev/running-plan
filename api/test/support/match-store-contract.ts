@@ -189,6 +189,34 @@ export function matchStoreContract(name: string, make: () => Promise<Made>) {
       expect(after.activities[0]).toMatchObject({ disposition: "matched" });
     });
 
+    describe("suggestionCandidates", () => {
+      const ids = async (userId: string, from: string, to: string) => (await m.store.suggestionCandidates(userId, from, to)).map((s) => s.id).sort();
+
+      it("returns planned, unmatched, live sessions in the date range, with their content", async () => {
+        expect(await ids(U1, "2026-10-28", "2026-10-28")).toEqual([S1]);
+        expect(await ids(U1, "2026-10-28", "2026-10-29")).toEqual([S1, S2]);
+        expect(await ids(U1, "2026-11-01", "2026-11-02")).toEqual([]);
+        const [first] = await m.store.suggestionCandidates(U1, "2026-10-28", "2026-10-28");
+        expect(first).toMatchObject({ id: S1, date: "2026-10-28", type: "easy", steps: [{ kind: "work" }] });
+      });
+
+      it("leaves out matched, done, other users' and deleted sessions", async () => {
+        const state = await m.store.load(U1, { sessionId: S1, activityId: A1 });
+        await m.store.apply(U1, state, planMatchChange(state, { kind: "put", sessionId: S1, activityId: A1, status: "suggested" }, NOW), NOW);
+        expect(await ids(U1, "2026-10-28", "2026-10-29")).toEqual([S2]);
+        await confirm(S2, A2);
+        expect(await ids(U1, "2026-10-28", "2026-10-29")).toEqual([]);
+        expect(await ids(U2, "2026-10-28", "2026-10-29")).toEqual([]);
+      });
+
+      it("leaves out a deleted session and a deleted plan", async () => {
+        await m.plans.deleteSession(U1, S1, 1, LATER);
+        expect(await ids(U1, "2026-10-28", "2026-10-29")).toEqual([S2]);
+        await m.plans.deletePlan(U1, P1, (await m.plans.getPlan(U1, P1))!.plan.revision, LATER);
+        expect(await ids(U1, "2026-10-28", "2026-10-29")).toEqual([]);
+      });
+    });
+
     it("a refused session delete unlinks nothing", async () => {
       await confirm(S1, A1);
       expect(await m.plans.deleteSession(U1, S1, 1, LATER)).toMatchObject({ ok: false, reason: "conflict" });

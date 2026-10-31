@@ -78,6 +78,13 @@ entry file, not a rewrite.
   returns to the inbox with a new revision. The D1 store does it in the delete's batch, guarded by the tombstone time
   just written, so a refused delete unlinks nothing; the memory plan store calls the match store through
   `onSessionsDeleted`. Reads still skip matches of deleted sessions, for rows written before this.
+- Suggested sessions (task 2.12, `src/domain/suggestions.ts`): the upload results carry `suggestedSessionId` for
+  every activity of the batch still in the inbox (a re-send gets it again). It is only returned, never written as a
+  match row; the client confirms with `PUT /match`. Candidates come from `MatchStore.suggestionCandidates` (one query:
+  live `planned` sessions on the batch's dates with no match). Rules: same local date, run workouts to easy/long/
+  intervals/tempo, strength to strength, other types to custom, never rest; planned time (`plannedTimeSec`) within a
+  factor of 2 of the duration (a session with no planned time is allowed but ranks last); closest fit first, and a
+  session is suggested to at most one activity per batch. Starting values for the coach review (H.1).
 - Progress and the weekly review (`src/domain/insights.ts`, tasks 2.15 and 2.18): `computeProgress` and
   `computeWeeklyReview` are pure. A session is done when marked done or its match is confirmed; "missed" only after
   its day is over (so due can exceed done + skipped + missed by what is left today); actual volume comes from the

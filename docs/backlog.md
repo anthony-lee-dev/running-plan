@@ -179,10 +179,10 @@ theirs.
 
 ## Slice 7: Import runs and match them
 
-- [ ] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Matches and check-ins
-      are done (PUT and DELETE match, `PATCH /v1/activities/{id}`, `match` on listed activities, check-ins; the pain
-      flag's urgent proposal comes with 2.14; unlinking on delete is 2.21). Left: `suggestedSessionId` in the upload
-      results. needs: 2.5, 2.11
+- [x] 2.12 Matches and check-ins: `PUT /v1/sessions/{id}/match`, `POST /v1/sessions/{id}/checkins`. Matches and check-ins
+      are done (PUT and DELETE match, `PATCH /v1/activities/{id}`, `match` on listed activities, check-ins, and
+      `suggestedSessionId` in the upload results; the pain flag's urgent proposal comes with 2.14; unlinking on delete
+      is 2.21). needs: 2.5, 2.11
 - [ ] 4.3 HealthKit import inbox and matching by local date (DK-Inbox, unit tests for local-date matching): running,
       strength and other workout types; extra runs, unmatched, two runs in one day, missed sessions; manual entry
       as a short fallback. needs: 2.12, 3.5, 0.5, 0.6

@@ -21,7 +21,7 @@ interface PlanRow {
   create_hash: string | null;
 }
 
-interface SessionRow {
+export interface SessionRow {
   id: string;
   plan_id: string;
   date: string;
@@ -63,7 +63,7 @@ const planOf = (r: PlanRow, weeks: Week[]): StoredPlan => ({
   deletedAt: r.deleted_at,
 });
 
-const sessionOf = (r: SessionRow): StoredSession => ({
+export const sessionOf = (r: SessionRow): StoredSession => ({
   id: r.id,
   planId: r.plan_id,
   date: r.date,
