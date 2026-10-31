@@ -1,6 +1,7 @@
 import type { Disposition } from "../../domain/activities";
 import type { MatchEffects, MatchRow, MatchState, MatchStatus, SessionStatus } from "../../domain/matches";
 import { MatchConflictError, type MatchStore } from "../../ports";
+import { sessionOf, type SessionRow } from "./d1-plan-store";
 
 const LIVE_SESSION = `SELECT s.id FROM sessions s JOIN plans p ON p.id = s.plan_id
   WHERE p.user_id = ?1 AND p.deleted_at IS NULL AND s.deleted_at IS NULL`;
@@ -45,6 +46,20 @@ export class D1MatchStore implements MatchStore {
       activities: first((activities!.results as { id: string; disposition: Disposition; revision: number }[]).map((r) => ({ ...r })), aid),
       matches: (matches!.results as { session_id: string; activity_id: string; status: MatchStatus; updated_at: string }[]).map(toMatch),
     };
+  }
+
+  async suggestionCandidates(userId: string, from: string, to: string) {
+    const { results } = await this.db
+      .prepare(
+        `SELECT s.* FROM sessions s JOIN plans p ON p.id = s.plan_id
+          WHERE p.user_id = ?1 AND p.deleted_at IS NULL AND s.deleted_at IS NULL AND s.status = 'planned'
+            AND s.date >= ?2 AND s.date <= ?3
+            AND NOT EXISTS (SELECT 1 FROM matches m WHERE m.session_id = s.id)
+          ORDER BY s.date, s.id`,
+      )
+      .bind(userId, from, to)
+      .all<SessionRow>();
+    return results.map(sessionOf);
   }
 
   async apply(userId: string, state: MatchState, effects: MatchEffects, now: string) {

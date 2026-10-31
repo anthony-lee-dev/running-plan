@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { isLocalDate, parseActivityBatch, planImport, type StoredActivity } from "../domain/activities";
 import type { MatchRow } from "../domain/matches";
+import { suggestSessions } from "../domain/suggestions";
 import type { Deps } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
 import { problem } from "./problem";
@@ -58,7 +59,19 @@ export function activityRoutes(deps: Deps) {
       const existing = await deps.activities.candidates(userId, shiftDate(dates[0]!, -1), shiftDate(dates.at(-1)!, 1), keys);
       const plan = planImport(existing, parsed.value, deps.clock.now().toISOString(), () => deps.ids.uuid());
       await deps.activities.applyImport(userId, plan.creates, plan.updates);
-      return c.json({ results: plan.results });
+      // Suggest a session for every activity of this upload that still waits in the inbox (a re-send gets the same answer).
+      const finals = new Map([...existing, ...plan.updates, ...plan.creates].map((a) => [a.id, a]));
+      const waiting = [...new Set(plan.results.map((r) => r.activityId))].flatMap((id) => {
+        const a = finals.get(id);
+        return a && a.disposition === "inbox" ? [a] : [];
+      });
+      const suggested = new Map<string, string>();
+      if (waiting.length > 0) {
+        const waitingDates = waiting.map((a) => a.localDate).sort();
+        const sessions = await deps.matches.suggestionCandidates(userId, waitingDates[0]!, waitingDates.at(-1)!);
+        for (const [activityId, sessionId] of suggestSessions(waiting, sessions)) suggested.set(activityId, sessionId);
+      }
+      return c.json({ results: plan.results.map((r) => (suggested.has(r.activityId) ? { ...r, suggestedSessionId: suggested.get(r.activityId)! } : r)) });
     },
   );
 

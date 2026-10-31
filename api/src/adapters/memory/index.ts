@@ -184,6 +184,13 @@ export class MemoryPlanStore implements PlanStore {
     return undefined;
   }
 
+  /** The user's live sessions of live plans. */
+  liveSessions(userId: string): StoredSession[] {
+    return [...this.plans.values()]
+      .filter((e) => e.userId === userId && e.plan.deletedAt === null)
+      .flatMap((e) => [...e.sessions.values()].map((x) => x.session).filter((s) => s.deletedAt === null));
+  }
+
   /** The live session object itself (not a copy), with its plan entry; for MemoryMatchStore only. */
   sessionRef(userId: string, sessionId: string) {
     return this.findSession(userId, sessionId);
@@ -433,6 +440,14 @@ export class MemoryMatchStore implements MatchStore {
       x.revision += 1;
       x.updatedAt = now;
     }
+  }
+
+  async suggestionCandidates(userId: string, from: string, to: string) {
+    if (!(await this.auth.userExists(userId))) return [];
+    return this.plans
+      .liveSessions(userId)
+      .filter((s) => s.status === "planned" && s.date >= from && s.date <= to && !this.rows.some((r) => r.userId === userId && r.sessionId === s.id))
+      .map((s) => structuredClone(s));
   }
 
   async forActivities(userId: string, activityIds: string[]) {

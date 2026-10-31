@@ -180,6 +180,11 @@ export interface MatchStore {
   apply(userId: string, state: MatchState, effects: MatchEffects, now: string): Promise<void>;
   /** The matches of these activities whose session is still live. */
   forActivities(userId: string, activityIds: string[]): Promise<MatchRow[]>;
+  /**
+   * What an upload may suggest: the user's live `planned` sessions of live plans with a date in [from, to] that have
+   * no match yet. One query.
+   */
+  suggestionCandidates(userId: string, from: string, to: string): Promise<StoredSession[]>;
 }
 
 export interface StoredCheckIn extends CheckInFields {

@@ -133,3 +133,41 @@ describe("PATCH /v1/activities/{id}", () => {
     expect((await call("PATCH", `/v1/activities/${A1}`, body)).status).toBe(400);
   });
 });
+
+describe("suggestedSessionId in the upload results", () => {
+  const send = async (activities: unknown[], as = token) => ((await (await call("POST", "/v1/activities:batch", { activities }, as)).json()) as Json).results as Json[];
+
+  it("suggests the planned session on the run's local date", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, easy(id(204), "2026-11-02"));
+    const [r] = await send([run(10, "2026-11-02")]);
+    expect(r).toMatchObject({ status: "created", suggestedSessionId: id(204) });
+  });
+
+  it("leaves it out when no session is planned that day or the type does not fit", async () => {
+    const [none, ride] = await send([run(11, "2026-11-20"), { ...run(12, "2026-10-29"), workoutType: "cycling" }]);
+    expect(none).not.toHaveProperty("suggestedSessionId");
+    expect(ride).not.toHaveProperty("suggestedSessionId");
+  });
+
+  it("suggests a session once: two runs on a day with one session give one suggestion", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, easy(id(203), "2026-10-30"));
+    const results = await send([run(13, "2026-10-30"), { ...run(14, "2026-10-30"), startedAt: "2026-10-30T18:00:00-04:00" }]);
+    expect(results.filter((r) => r.suggestedSessionId === id(203))).toHaveLength(1);
+  });
+
+  it("does not suggest a matched session, and repeats the suggestion for an activity still in the inbox", async () => {
+    await confirm(S1, A1);
+    const [matched, other] = await send([run(1, "2026-10-28"), run(15, "2026-10-28")]);
+    expect(matched).toMatchObject({ status: "duplicate" });
+    expect(matched).not.toHaveProperty("suggestedSessionId");
+    expect(other).not.toHaveProperty("suggestedSessionId");
+    const [resend] = await send([run(2, "2026-10-29")]);
+    expect(resend).toMatchObject({ status: "duplicate", suggestedSessionId: S2 });
+  });
+
+  it("never suggests another user's session", async () => {
+    const other = await signIn("other@example.com");
+    const [r] = await send([run(20, "2026-10-29")], other);
+    expect(r).not.toHaveProperty("suggestedSessionId");
+  });
+});
