@@ -184,7 +184,6 @@ export class MemoryPlanStore implements PlanStore {
     return undefined;
   }
 
-  /** The live session object itself (not a copy), with its plan entry; for MemoryMatchStore only. */
   /** The user's live sessions of live plans. */
   liveSessions(userId: string): StoredSession[] {
     return [...this.plans.values()]
@@ -192,6 +191,7 @@ export class MemoryPlanStore implements PlanStore {
       .flatMap((e) => [...e.sessions.values()].map((x) => x.session).filter((s) => s.deletedAt === null));
   }
 
+  /** The live session object itself (not a copy), with its plan entry; for MemoryMatchStore only. */
   sessionRef(userId: string, sessionId: string) {
     return this.findSession(userId, sessionId);
   }
