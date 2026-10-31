@@ -104,8 +104,8 @@ git worktree remove <path>
 git branch -D <named branch> <worktree's original branch>
 ```
 
-Some of the orchestrator's commands, such as `git show`, `git worktree remove` and `git branch -D`, aren't on the
-repo's allow list. Expect a permission prompt for them unless the human has allowed them.
+The allow list covers `git branch -D agent/*` only, so deleting the worktree's original branch asks the human
+first.
 
 Leave the worktree of an open PR in place: its worker may still be asked to fix something.
 

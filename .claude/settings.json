@@ -26,7 +26,12 @@
       "Bash(python3 scripts/request-merge.py *)",
       "Bash(xcodegen *)",
       "Bash(xcodebuild *)",
-      "Bash(xcrun simctl *)"
+      "Bash(xcrun simctl *)",
+      "Bash(npm ci)",
+      "Bash(git worktree remove *)",
+      "Bash(git branch -D agent/*)",
+      "Bash(git merge origin/main)",
+      "Bash(git show origin/main:*)"
     ],
     "deny": [
       "Bash(gh pr merge *)",
