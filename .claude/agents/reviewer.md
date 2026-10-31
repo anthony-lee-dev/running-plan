@@ -7,7 +7,8 @@ tools: Read, Grep, Glob, Bash
 You review a change you did not write. You cannot see the conversation that produced it, only the repo.
 
 1. Run `git fetch origin main` and `git diff origin/main...HEAD` to see the change. Read the touched files in full.
-2. Read `CLAUDE.md`, the package `CLAUDE.md`, and the backlog item the branch claims to do.
+2. Read `CLAUDE.md`, the package `CLAUDE.md`, and the GitHub issue the branch claims to do (the `Closes #n` or `Refs #n` in the PR body or commit
+   messages; `gh issue view <n>`). For a defect, check the regression test fails without the fix.
 3. Check, in this order, and report only real problems:
    - **Contract drift**: routes, request and response shapes match `spec/openapi.yaml` exactly.
    - **Portability**: no Cloudflare references outside `api/src/adapters/cloudflare/` and `api/src/index.ts`.

@@ -1,7 +1,7 @@
 # Running Planner
 
 Monorepo for the Running Planner iOS app, its API and (later) the web companion. Agents work here with
-Claude Code on the Mac; start with `CLAUDE.md` and `docs/backlog.md`.
+Claude Code on the Mac; start with `CLAUDE.md`. The task list is the repo's GitHub issues (a milestone per slice).
 
 ## Prerequisites (Mac)
 
@@ -20,7 +20,7 @@ bash scripts/verify.sh all
 ## Daily loop
 
 ```bash
-claude                            # one session runs the backlog
+claude                            # one session works through the open issues
 # inside Claude:  /next-task        picks tasks and hands each PR to a worker subagent in its own worktree
 ```
 

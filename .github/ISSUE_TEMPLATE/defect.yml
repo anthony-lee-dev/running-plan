@@ -1,0 +1,34 @@
+name: Defect
+description: Something that should work does not
+labels: ["type: defect", "priority: normal"]
+body:
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact inputs, endpoint or screen, app/API version or commit.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: Error text, status code, screenshot.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where it was found
+      description: A related issue or PR, or "found by hand on device".
+  - type: markdown
+    attributes:
+      value: |
+        Also set an `area:` label, and `priority: high` if it breaks a shipped flow. A defect needs no milestone.
+        The fix starts with a failing regression test that reproduces it.

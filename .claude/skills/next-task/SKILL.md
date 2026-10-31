@@ -1,13 +1,13 @@
 ---
 name: next-task
-description: Work through docs/backlog.md by handing each pull request's worth of work to its own worker subagent in a git worktree (test-first, then /ship), while this session only picks tasks, waits for merges and reports. Use for "next task", "start slice N", "do 4.1", "keep going" or anything that continues the backlog.
+description: Work through the open GitHub issues (features and defects, grouped into slice milestones) by handing each pull request's worth of work to its own worker subagent in a git worktree (test-first, then /ship), while this session only picks tasks, waits for merges and reports. Use for "next task", "start slice N", "do 4.1", "keep going" or anything that continues the backlog.
 ---
 
 # Next task
 
 This session is the **orchestrator**. Workers build; you pick the work, start workers, wait for their PRs to merge
 and report. A whole slice can take many PRs, and doing them all in one session fills its context. So keep yours
-small: hold only the backlog, PR numbers and states, and each worker's short report. Don't read specs, design
+small: hold only the issue list, PR numbers and states, and each worker's short report. Don't read specs, design
 boards or code yourself. Reading them is the worker's job, and its context is thrown away when it finishes.
 
 ## 1. Pick the task
@@ -15,16 +15,25 @@ boards or code yourself. Reading them is the worker's job, and its context is th
 First check that the main checkout is clean and on `main` (`git status --short --branch`). If it isn't, say what's
 there and ask the human before starting any worker (see step 2 for why it matters).
 
-Read the backlog as it is on `main`, not as it is in this checkout: `git fetch origin main`, then
-`git show origin/main:docs/backlog.md`.
+The backlog is the repo's open GitHub issues. Slices are milestones (`Slice 5: ...`); each issue's title starts
+with its stable task ID (`[2.6] ...`).
 
-- Pick the first unticked task in the first unfinished slice whose `needs` are ticked.
-- Don't start a later slice until the current one's tasks are ticked and its **Done when** holds. Judge that from
-  the backlog and the merged PRs' bodies (`gh pr view <n>`), not by reading code. Tasks marked `any time` may be
-  picked while the current slice waits on the human, or as the second worker (step 3).
+```bash
+gh issue list --state open --limit 200 --json number,title,labels,milestone,body
+```
+
+An issue is **unblocked** when every `#n` on its body's `Blocked by:` line (if it has one) is closed, which is
+the case when no such `#n` appears in the open-issue list above. Skip issues labelled `human-only` or `later`.
+
+- Open `type: defect` issues come first (`priority: high` before `priority: normal`). A defect has no slice.
+- Then pick the lowest-numbered unblocked feature in the earliest milestone that has open issues.
+- Don't start a later slice until the current milestone has no open issues and its **Done when** (the
+  milestone's description) holds. Judge that from the issues and the merged PRs' bodies (`gh pr view <n>`), not
+  by reading code. Issues labelled `any-time` may be picked while the current slice waits on the human, or as the
+  second worker (step 3).
 - If the user named a task, use that one.
 - If nothing is unblocked, say what is waiting on the human (a merge, a device check, a gate) and stop.
-- For an `ask first` task, read what it points to, post the plan, and stop until the human answers. A worker can't
+- For an `ask-first` issue, read what it points to, post the plan, and stop until the human answers. A worker can't
   wait for an answer.
 
 ## 2. Start a worker
@@ -58,15 +67,15 @@ worker to add it in its PR.
 
 Run workers one at a time by default. A second may run alongside the first only when all of these hold:
 
-- the second task is in the current slice or marked `any time`, its `needs` are ticked, and neither task needs
+- the second task is in the current slice or labelled `any-time` (or is a defect), it is unblocked, and neither task needs
   the other or the other's PR;
-- at most one of them touches `ios/`, because the iOS UI tests share the simulator, and a second iOS run slows both;
-- they don't change the same files, apart from their own lines in `docs/backlog.md`.
+- at most one of them touches `ios/` (label `area: ios`), because the iOS UI tests share the simulator, and a second iOS run slows both;
+- they don't change the same files.
 
-The PR that merges second may conflict on `docs/backlog.md`. Step 4 spots this and sends it back to its worker,
-which merges `origin/main` into its branch and pushes. A rebase would need a force-push, which is denied.
+If the PR that merges second conflicts, step 4 spots this and sends it back to its worker, which merges
+`origin/main` into its branch and pushes. A rebase would need a force-push, which is denied.
 
-If the two are the last tasks of their slice, each sees the other still unticked. Say in one brief's "From the
+If the two are the last open issues of their milestone, each sees the other still open. Say in one brief's "From the
 human" that its PR is the slice's last, so that PR lists the slice's device check.
 
 ## 4. Wait for the merge
@@ -79,7 +88,8 @@ gh pr view <n> --json state,mergedAt,autoMergeRequest,mergeable,mergeStateStatus
 
 Don't rely on the report alone. Then:
 
-- **Merged:** clean up (step 6) and go back to step 1.
+- **Merged:** check the issue closed (`gh issue view <n> --json state`; a `Refs` PR leaves it open on purpose),
+  clean up (step 6) and go back to step 1.
 - **Checks running, auto-merge queued:** run `gh pr checks <n> --watch` in the background and check again when it
   ends. GitHub merges within a minute or so of the checks passing.
 - **A check failed, or `mergeable` is `CONFLICTING`:** send the failure or conflict to the same worker with
@@ -95,8 +105,8 @@ a force-push, which is denied.
 ## 5. Stop at a human gate
 
 Stop when the next step needs the human: a PR to merge, a manual-gate box, the slice's **Done when** device check,
-an `ask first` plan, or nothing left unblocked. Say plainly what is waiting and on whom, with PR links, and
-which backlog tasks the merged PRs ticked.
+an `ask-first` plan, or nothing left unblocked. Say plainly what is waiting and on whom, with PR links, and
+which issues the merged PRs closed.
 
 ## 6. Clean up worktrees
 

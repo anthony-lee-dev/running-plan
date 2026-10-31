@@ -46,7 +46,7 @@ It needs Node 22 or later and the GitHub CLI signed in as you (`gh auth login`).
 | `api/` | Hono app with a Workers entry and a Node entry, D1 health probe, pace formatting, two test files |
 | `spec/openapi.yaml` | Only `/v1/health` so far; backlog task 1.2 derives the rest |
 | `designs/` | Your System Design v1.0 file as is, plus the 11 dark boards as HTML source in `designs/dark/` |
-| `docs/` | `backlog.md` (phased tasks), `design-notes.md` (dark tokens and screens), `autonomy.md` (how the dial works) |
+| `docs/` | `backlog.md` (archive of the tasks finished before the move to GitHub issues, plus the per-slice end-to-end check), `design-notes.md` (dark tokens and screens), `autonomy.md` (how the dial works) |
 | `scripts/` | `verify.sh`, `check-boundaries.sh`, `request-merge.py`, `setup-github.sh` with `github/ruleset-main.json`, and `bootstrap.sh` (removes itself) |
 | `.claude/` | `settings.json` (permissions and the Stop hook), `hooks/stop-gate.py`, `agents/reviewer.md`, skills `ship` and `next-task` |
 | `.github/` | `api-ci` and `ios-ci` workflows, and a PR template with a manual-gates section |
@@ -69,18 +69,18 @@ One gap remains: the boards need the canvas runtime to render, so I could not tu
 
 ## Task breakdown
 
-Five phases, each ending in a gate you can check, all run on your Mac. The full task list is `docs/backlog.md`; `/next-task` picks the first unblocked item, so the backlog is how you steer.
+Five phases, each ending in a gate you can check, all run on your Mac. The task list is the repo's GitHub issues, a milestone per slice; `/next-task` picks open defects first, then the first unblocked feature, so the issues are how you steer.
 
-The phases and gates (A to E) are listed in `docs/backlog.md`, with a Phase 0 for the setup steps below.
+The finished phases and gates are archived in `docs/backlog.md`; the open slices, gates and human-only items are milestones and issues.
 
 Read it top to bottom: a phase does not start until the gate above it passes, and the first gate is the one worth your closest attention, since everything else is built on that spec.
 
 **Sizing a task** (rules of thumb):
 
 - One PR is one endpoint group, one rule-engine behaviour, or one screen. Past about 400 changed lines, split it.
-- Every task gets a plan, failing tests, then code; the `next-task` skill enforces that order, and tasks marked `ask first` wait for your OK on the plan.
+- Every task gets a plan, failing tests, then code; the `next-task` skill enforces that order, and issues labelled `ask-first` wait for your OK on the plan.
 - A spec change gets its own PR before any code that uses it.
-- A task is done only when it is ticked in `docs/backlog.md`, in the same change as the work. For work with no PR of its own (a check run in a normal session, say), the agent ticks it, says the tick is uncommitted, and asks you whether to ship it now or with the next PR. Human-only items are ticked only when the agent did the work itself, you say you did it, or a read-only check shows it; PR manual-gate boxes always stay for you (root `CLAUDE.md` has the exact rule).
+- A task is done only when its issue is closed: the PR body says `Closes #n`. For work with no PR of its own (a check run in a normal session, say), the agent closes the issue with a comment saying what was checked. Human-only issues are closed only when the agent did the work itself, you say you did it, or a read-only check shows it; PR manual-gate boxes always stay for you (root `CLAUDE.md` has the exact rule).
 - Run tasks side by side with one worktree each: `claude --worktree 2-8-validators` in one terminal, `claude --worktree 3-2-interview` in another. Two or three at once is a sensible start: every session draws on the same Pro usage limits, and Xcode builds compete for the Air's CPU.
 - Start with rule-engine tasks (validators 2.8 first, then 2.1 and 2.2 once the pace model in 2.9 is agreed): "green" is fully testable there, so they are the safest first hand-offs once the spec is merged.
 
@@ -150,7 +150,7 @@ With everything local, almost every step is a Claude Code command or a CLI on yo
 
 | Step | Use | Notes |
 | --- | --- | --- |
-| Pick and build a task | `/next-task` skill in the repo | Reads `docs/backlog.md`, plans, writes failing tests, codes, then runs `/ship` |
+| Pick and build a task | `/next-task` skill in the repo | Reads the open GitHub issues, plans, writes failing tests, codes, then runs `/ship` |
 | Review, PR, CI loop | `/ship` skill and `reviewer` subagent | Built-in `/code-review` (any plan) is a second opinion when you want one |
 | Keep going until green | Stop hook in `.claude/settings.json` | Up to five blocks per session |
 | Run tasks in parallel | `claude --worktree <name>` | One branch and folder per session under `.claude/worktrees/`; `.worktreeinclude` copies `.dev.vars` |
