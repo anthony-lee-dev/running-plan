@@ -56,20 +56,21 @@ final class PreviewUITests: XCTestCase {
         let app = LocalAPI.openPreview(api)
         let before = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
 
+        // The 15th of the previous month: always in the past and always exists, 14 to 46 days back. The popup opens on
+        // today's month.
         let calendar = Calendar.current
-        let today = Date()
-        // Yesterday, or the day before today in the previous month on the 1st: the popup opens on today's month.
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        var parts = calendar.dateComponents([.year, .month], from: Date())
+        parts.month! -= 1
+        parts.day = 15
+        let target = calendar.date(from: parts)!
         let picker = app.datePickers["preview.startDate"]
         XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
         for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
         picker.buttons.firstMatch.tap()
-        if !calendar.isDate(yesterday, equalTo: today, toGranularity: .month) {
-            app.buttons["Previous Month"].tap()
-        }
+        app.buttons["Previous Month"].tap()
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
-        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: yesterday))).firstMatch
+        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
         XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
         day.tap()
 
@@ -84,6 +85,12 @@ final class PreviewUITests: XCTestCase {
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
         XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
         try await LocalAPI.saveAndSignIn(app, api)
+
+        // The plan started at least two weeks ago, so this week is not week 1: the chosen date reached the saved plan.
+        app.buttons["Plan"].firstMatch.tap()
+        let weekTitle = app.staticTexts["week.title"].firstMatch
+        XCTAssertTrue(weekTitle.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertFalse(weekTitle.label.hasPrefix("Week 1"), "A plan started in the past should be past week 1, got \(weekTitle.label)")
     }
 
     @MainActor
