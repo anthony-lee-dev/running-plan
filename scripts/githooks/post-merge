@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# After `git pull` or `git merge`: refresh the Xcode project if iOS files were added or removed.
+exec bash "$(dirname "$0")/regen-xcodeproj.sh" ORIG_HEAD HEAD
