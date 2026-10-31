@@ -119,6 +119,8 @@ extension WholeView {
                                     ? RoundedRectangle(cornerRadius: 8).stroke(Palette.ink.color, lineWidth: 3).padding(-4)
                                     : nil
                             )
+                            // The whole column is the tap area, however short the bar (44 pt rule).
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                             .contentShape(Rectangle())
                             .onTapGesture { onWeek(bar.week) }
                     }

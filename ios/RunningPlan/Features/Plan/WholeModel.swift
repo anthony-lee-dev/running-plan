@@ -63,6 +63,7 @@ struct WholeModel: Equatable {
         goal = Goal(
             title: Self.title(planGoal),
             subtitle: Self.subtitle(planGoal, schedule: schedule),
+            // Whole weeks done; the board's bar also counts part of this week, which needs distance run (4.7).
             progress: schedule.weekCount > 0 ? Double(weeksDone) / Double(schedule.weekCount) : 0,
             weekLabel: weekLabel,
             doneLabel: weeksDone == 1 ? "1 week done" : "\(weeksDone) weeks done"
@@ -128,9 +129,9 @@ struct WholeModel: Equatable {
             return "Ends \(NextModel.weekday(end)), \(PlanPreview.shortDate(end))"
         }
         let days = PlanPreview.dayNumber(date) - PlanPreview.dayNumber(schedule.today)
+        if days < 0 { return "Race was \(NextModel.weekday(date)), \(PlanPreview.shortDate(date))" }
         let when: String
         switch days {
-        case ..<0: when = "done"
         case 0: when = "today"
         case 1: when = "1 day to go"
         default: when = "\(days) days to go"

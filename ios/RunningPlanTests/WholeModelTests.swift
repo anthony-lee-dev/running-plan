@@ -63,6 +63,7 @@ struct WholeModelTests {
         #expect(try goal(#"{"type":"custom","label":"Trail 15K","date":"2026-12-13"}"#).title == "Trail 15K")
         #expect(try goal(PlanFixture.goal, today: "2026-12-13").subtitle == "Race day Sunday, Dec 13 · today")
         #expect(try goal(PlanFixture.goal, today: "2026-12-12").subtitle == "Race day Sunday, Dec 13 · 1 day to go")
+        #expect(try goal(PlanFixture.goal, today: "2026-12-14").subtitle == "Race was Sunday, Dec 13")
     }
 
     @Test func beforeTheStartAndAfterTheEnd() throws {

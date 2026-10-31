@@ -85,7 +85,7 @@ text-only buttons) and a **disabled** state (0.4 opacity, not focusable by Voice
 | Notice card | Review ready, What we assumed, Heads up, pain guidance | `amber-soft` fill, radius 16–20, ink text | n/a | Pain guidance is never dismissible and shows whatever the review setting (§6.6a) |
 | Proposal card | Review | `card`, radius 20; title, one-line reason, before → after (old value struck through, muted) | n/a | Accepted: collapses to a one-line "Applied" row. Dismissed: removed. Stale (plan revision moved): actions disabled, "This suggestion is out of date" and a Refresh text button |
 | Inbox card | Import inbox | `card`, radius 24; date and source 13 pt, distance and time 20 pt tabular | Likely match: green check + badge | Extra run, unmatched, two runs on one day (both cards list the same day's session; confirming one moves the other to "Match to a session") |
-| Bar chart | Preview, Whole plan, Progress, session shape | Bars coloured by phase (base/easy `#4C9C80`, build `#E9B949`, peak `#F0643A`, taper `#8C9FD8`); planned bars in `line` behind actual bars | Current week: full opacity, others 0.6 | Empty (no data yet): planned bars only. Whole-plan bars are tappable and open that week |
+| Bar chart | Preview, Whole plan, Progress, session shape | Bars coloured by phase (base/easy `#4C9C80`, build `#E9B949`, peak `#F0643A`, taper `#8C9FD8`); planned bars in `line` behind actual bars | Whole plan: done and current weeks full opacity, weeks ahead 0.4, current week outlined in `ink` | Empty (no data yet): planned bars only. Whole-plan bars are tappable (a full-height column each) and open that week |
 | Progress bar | This week, Sessions done | 8–10 pt, radius full, track `line`, fill `green` | n/a | n/a |
 | Tab bar | All top-level screens | `#141310`, 1 pt `line` top border, 4 tabs each 52 pt tall, icon 24 + label 11 pt 600 muted | Active: `accent-text` icon and label | Badge on Next when the inbox or a review is waiting |
 
@@ -121,8 +121,8 @@ Checked against WCAG 2.1 AA on the dark boards.
   labels from the large-content viewer. Numbers keep tabular figures.
 - **VoiceOver:**
   - Charts are one element each with a summary label, as the boards already write them ("Bar chart of weekly
-    running distance over 10 weeks: 16, 18, … kilometres"); the whole-plan chart also exposes each week as an
-    adjustable or button element so it can be opened.
+    running distance over 10 weeks: 16, 18, … kilometres"). On the whole plan, the week rows under the chart are
+    the VoiceOver way to open a week (one button each), so the chart itself stays a single summary element.
   - The day strip on Next reads as one element: "This week: Monday done, Tuesday done, Wednesday today,
     Thursday rest, …".
   - Paces read as words, not punctuation: `6:30/km` is labelled "6 minutes 30 seconds per kilometre"; ranges read
