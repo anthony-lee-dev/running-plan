@@ -207,14 +207,37 @@ export class D1PlanStore implements PlanStore {
   }
 
   async deletePlan(userId: string, planId: string, baseRevision: number, now: string) {
-    const result = await this.db
-      .prepare(
-        `UPDATE plans SET deleted_at = ?, revision = revision + 1, content_revision = content_revision + 1, updated_at = ?
-         WHERE id = ? AND user_id = ? AND revision = ? AND deleted_at IS NULL`,
-      )
-      .bind(now, now, planId, userId, baseRevision)
-      .run();
-    return result.meta.changes > 0 ? { ok: true as const } : this.planFailure(userId, planId);
+    const results = await this.db.batch([
+      this.db
+        .prepare(
+          `UPDATE plans SET deleted_at = ?, revision = revision + 1, content_revision = content_revision + 1, updated_at = ?
+           WHERE id = ? AND user_id = ? AND revision = ? AND deleted_at IS NULL`,
+        )
+        .bind(now, now, planId, userId, baseRevision),
+      ...this.unlink(userId, "SELECT id FROM sessions WHERE plan_id = ?", planId, "SELECT 1 FROM plans WHERE id = ? AND deleted_at = ?", planId, now),
+    ]);
+    return results[0]!.meta.changes > 0 ? { ok: true as const } : this.planFailure(userId, planId);
+  }
+
+  /**
+   * Unlinks the matches of deleted sessions (backlog 2.21): an activity they had matched goes back to the inbox with a
+   * new revision, and the match rows go. Runs in the delete's batch and only if the delete happened, which `deleted`
+   * checks by the tombstone time just written.
+   */
+  private unlink(userId: string, sessions: string, sessionsArg: string, deleted: string, deletedArg: string, now: string) {
+    return [
+      this.db
+        .prepare(
+          `UPDATE activities SET disposition = 'inbox', revision = revision + 1, updated_at = ?
+           WHERE user_id = ? AND disposition = 'matched'
+             AND id IN (SELECT activity_id FROM matches WHERE user_id = ? AND session_id IN (${sessions}))
+             AND EXISTS (${deleted})`,
+        )
+        .bind(now, userId, userId, sessionsArg, deletedArg, now),
+      this.db
+        .prepare(`DELETE FROM matches WHERE user_id = ? AND session_id IN (${sessions}) AND EXISTS (${deleted})`)
+        .bind(userId, sessionsArg, deletedArg, now),
+    ];
   }
 
   async createSession(userId: string, session: StoredSession, createHash: string) {
@@ -267,10 +290,11 @@ export class D1PlanStore implements PlanStore {
   }
 
   /** Runs a guarded session update and, in the same transaction, moves the plan's contentRevision. */
-  private async change(userId: string, sessionId: string, update: D1PreparedStatement) {
+  private async change(userId: string, sessionId: string, update: D1PreparedStatement, after: D1PreparedStatement[] = []) {
     const results = await this.db.batch([
       update,
       this.db.prepare("UPDATE plans SET content_revision = content_revision + 1 WHERE id = (SELECT plan_id FROM sessions WHERE id = ?) AND changes() > 0 RETURNING content_revision").bind(sessionId),
+      ...after,
     ]);
     const bumped = results[1]!.results[0] as { content_revision: number } | undefined;
     if (results[0]!.meta.changes === 0 || !bumped) return this.sessionFailure(userId, sessionId);
@@ -304,6 +328,7 @@ export class D1PlanStore implements PlanStore {
              AND plan_id IN (SELECT id FROM plans WHERE user_id = ? AND deleted_at IS NULL)`,
         )
         .bind(now, now, sessionId, baseRevision, userId),
+      this.unlink(userId, "?", sessionId, "SELECT 1 FROM sessions WHERE id = ? AND deleted_at = ?", sessionId, now),
     );
   }
 }

@@ -164,6 +164,8 @@ interface PlanEntry {
  */
 export class MemoryPlanStore implements PlanStore {
   private plans = new Map<string, PlanEntry>();
+  /** Set by the match store: unlinks the matches of deleted sessions, as the D1 store does in the same batch. */
+  onSessionsDeleted: (userId: string, sessionIds: string[], now: string) => void = () => {};
 
   /** Takes the auth store so plans disappear with their account, as the database cascade does. */
   constructor(private readonly auth: AuthStore) {}
@@ -244,6 +246,7 @@ export class MemoryPlanStore implements PlanStore {
     if (!entry || (await this.userGone(userId))) return { ok: false, reason: "not_found" };
     if (entry.plan.revision !== baseRevision) return { ok: false, reason: "conflict", currentRevision: entry.plan.revision };
     entry.plan = { ...entry.plan, revision: baseRevision + 1, contentRevision: entry.plan.contentRevision + 1, updatedAt: now, deletedAt: now };
+    this.onSessionsDeleted(userId, [...entry.sessions.keys()], now);
     return { ok: true };
   }
 
@@ -285,7 +288,9 @@ export class MemoryPlanStore implements PlanStore {
 
   async deleteSession(userId: string, sessionId: string, baseRevision: number, now: string) {
     if (await this.userGone(userId)) return { ok: false as const, reason: "not_found" as const };
-    return this.change(userId, sessionId, baseRevision, (s) => ({ ...s, revision: baseRevision + 1, updatedAt: now, deletedAt: now }));
+    const result = this.change(userId, sessionId, baseRevision, (s) => ({ ...s, revision: baseRevision + 1, updatedAt: now, deletedAt: now }));
+    if (result.ok) this.onSessionsDeleted(userId, [sessionId], now);
+    return result;
   }
 }
 
@@ -352,7 +357,22 @@ export class MemoryMatchStore implements MatchStore {
     private readonly auth: AuthStore,
     private readonly plans: MemoryPlanStore,
     private readonly activities: MemoryActivityStore,
-  ) {}
+  ) {
+    plans.onSessionsDeleted = (userId, sessionIds, now) => this.unlinkSessions(userId, sessionIds, now);
+  }
+
+  /** Removes the matches of deleted sessions; an activity they had matched goes back to the inbox (backlog 2.21). */
+  private unlinkSessions(userId: string, sessionIds: string[], now: string) {
+    const gone = this.rows.filter((r) => r.userId === userId && sessionIds.includes(r.sessionId));
+    this.rows = this.rows.filter((r) => !gone.includes(r));
+    for (const r of gone) {
+      const x = this.activities.ref(userId, r.activityId);
+      if (x?.disposition !== "matched") continue;
+      x.disposition = "inbox";
+      x.revision += 1;
+      x.updatedAt = now;
+    }
+  }
 
   private snapshot(userId: string, ref: { sessionId?: string; activityId?: string }): MatchState {
     // Every match, also one whose session was deleted: the change then removes it.

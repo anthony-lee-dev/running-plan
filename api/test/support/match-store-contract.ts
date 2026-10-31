@@ -126,5 +126,48 @@ export function matchStoreContract(name: string, make: () => Promise<Made>) {
       await m.plans.deleteSession(U1, S1, 2, LATER);
       expect(await m.store.forActivities(U1, [A1])).toEqual([]);
     });
+
+    // Backlog 2.21: deleting what an activity is matched to puts the activity back in the inbox.
+    it("deleting a session unlinks its match and puts a confirmed activity back in the inbox", async () => {
+      await confirm(S1, A1);
+      const before = await m.store.load(U1, { activityId: A1 });
+      expect(before.activities[0]).toMatchObject({ disposition: "matched" });
+      expect(await m.plans.deleteSession(U1, S1, 2, LATER)).toMatchObject({ ok: true });
+
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toEqual([]);
+      expect(after.activities[0]).toEqual({ id: A1, disposition: "inbox", revision: before.activities[0]!.revision + 1 });
+    });
+
+    it("deleting a session drops a suggested match and leaves its activity as it was", async () => {
+      const state = await m.store.load(U1, { sessionId: S1, activityId: A1 });
+      await m.store.apply(U1, state, planMatchChange(state, { kind: "put", sessionId: S1, activityId: A1, status: "suggested" }, NOW), NOW);
+      await m.plans.deleteSession(U1, S1, 1, LATER);
+
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toEqual([]);
+      expect(after.activities[0]).toEqual({ id: A1, disposition: "inbox", revision: 1 });
+    });
+
+    it("deleting a plan unlinks every match of its sessions", async () => {
+      await confirm(S1, A1);
+      await confirm(S2, A2);
+      const revision = (await m.plans.getPlan(U1, P1))!.plan.revision;
+      expect(await m.plans.deletePlan(U1, P1, revision, LATER)).toMatchObject({ ok: true });
+
+      for (const id of [A1, A2]) {
+        const after = await m.store.load(U1, { activityId: id });
+        expect(after.matches).toEqual([]);
+        expect(after.activities[0]).toMatchObject({ id, disposition: "inbox" });
+      }
+    });
+
+    it("a refused delete unlinks nothing", async () => {
+      await confirm(S1, A1);
+      expect(await m.plans.deleteSession(U1, S1, 1, LATER)).toMatchObject({ ok: false, reason: "conflict" });
+      const after = await m.store.load(U1, { activityId: A1 });
+      expect(after.matches).toHaveLength(1);
+      expect(after.activities[0]).toMatchObject({ disposition: "matched" });
+    });
   });
 }
