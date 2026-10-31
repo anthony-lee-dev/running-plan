@@ -137,17 +137,33 @@ struct SessionDraftTests {
         #expect(swim.custom?.activityLabel == "Swimming")
     }
 
-    @Test func editableStepValuesRoundTrip() {
-        #expect(StepFormat.parseTime("10:00") == 600)
-        #expect(StepFormat.parseTime("1:02:05") == 3725)
-        #expect(StepFormat.parseTime("45") == 2700, "a bare number is minutes")
-        #expect(StepFormat.parseTime("x") == nil)
-        #expect(StepFormat.parsePace("5:15") == 315)
-        #expect(StepFormat.parsePace("15") == nil)
-        // Shown to the metre, so opening a step and reading it back never rounds it.
-        #expect(GoalValueField.text(.init(_type: .distance, value: 1250)) == "1.25")
-        #expect(GoalValueField.text(.init(_type: .distance, value: 250)) == "0.25")
-        #expect(GoalValueField.text(.init(_type: .distance, value: 10000)) == "10")
-        #expect(GoalValueField.text(.init(_type: .time, value: 600)) == "10:00")
+    @Test func timeDialsSplitAndRejoinASavedTime() {
+        #expect(DialValues.minutes(3725) == 62)
+        #expect(DialValues.secondsPart(3725) == 5)
+        #expect(DialValues.time(minutes: 62, seconds: 5) == 3725)
+        #expect(DialValues.time(minutes: 0, seconds: 0) == 1, "the API needs at least one second")
+        #expect(DialValues.minutes(600 * 60 + 600) == 600, "the wheel stops at its last minute")
+    }
+
+    @Test func distanceDialsShowASavedDistanceAndKeepWhatTheyDidNotTouch() {
+        #expect(DialValues.km(1250) == 1)
+        #expect(DialValues.hundredths(1250) == 25)
+        #expect(DialValues.km(10000) == 10)
+        #expect(DialValues.hundredths(10000) == 0)
+        #expect(DialValues.hundredths(250) == 25)
+        // 1234 m is off the 10 m grid: moving the km wheel keeps its 234 m, moving the decimal wheel sets 10 m steps.
+        #expect(DialValues.distance(km: 3, keepingFractionOf: 1234) == 3234)
+        #expect(DialValues.distance(hundredths: 50, keepingKmOf: 1234) == 1500)
+        #expect(DialValues.distance(km: 0, keepingFractionOf: 0) == 10, "never zero")
+        #expect(DialValues.distance(km: 200, keepingFractionOf: 990) == 200_000, "capped at the API maximum")
+    }
+
+    @Test func paceDialsStayWithinTheAPIRange() {
+        #expect(DialValues.paceMinutes(315) == 5)
+        #expect(DialValues.paceSecondsPart(315) == 15)
+        #expect(DialValues.pace(minutes: 5, seconds: 15) == 315)
+        #expect(DialValues.pace(minutes: 2, seconds: 0) == 120)
+        #expect(DialValues.pace(minutes: 20, seconds: 59) == 1200)
+        #expect(DialValues.pace(minutes: 1, seconds: 0) == 120)
     }
 }

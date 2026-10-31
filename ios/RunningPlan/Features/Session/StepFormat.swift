@@ -105,25 +105,4 @@ enum StepFormat {
         }
     }
 
-    /// Reads `10:00`, `1:02:05` or a bare number of minutes (`45`). Nil for anything else or zero.
-    static func parseTime(_ text: String) -> Int? {
-        let parts = text.trimmingCharacters(in: .whitespaces).split(separator: ":", omittingEmptySubsequences: false).map { Int($0) }
-        guard !parts.isEmpty, parts.count <= 3, parts.allSatisfy({ $0 != nil && $0! >= 0 }) else { return nil }
-        let numbers = parts.compactMap { $0 }
-        let seconds: Int
-        switch numbers.count {
-        case 1: seconds = numbers[0] * 60
-        case 2: seconds = numbers[0] * 60 + numbers[1]
-        default: seconds = numbers[0] * 3600 + numbers[1] * 60 + numbers[2]
-        }
-        return seconds > 0 ? seconds : nil
-    }
-
-    /// A pace as `m:ss` (per km) in seconds per km, within the API's 2:00 to 20:00.
-    static func parsePace(_ text: String) -> Int? {
-        let parts = text.trimmingCharacters(in: .whitespaces).split(separator: ":")
-        guard parts.count == 2, let m = Int(parts[0]), let s = Int(parts[1]), (0..<60).contains(s) else { return nil }
-        let total = m * 60 + s
-        return (120...1200).contains(total) ? total : nil
-    }
 }

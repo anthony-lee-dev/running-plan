@@ -134,27 +134,26 @@ private struct RunStepFields: View {
     }
 }
 
-/// A pace as `m:ss` per km; applied once it reads as a pace between 2:00 and 20:00.
+/// A pace per km on minute and second wheels, kept within 2:00 to 20:00. Writes only when a wheel moves.
 private struct PaceField: View {
     let label: String
     @Binding var seconds: Int
-    @State private var text = ""
 
     var body: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: 0) {
             Text(label)
-            Spacer()
-            TextField("m:ss", text: $text)
-                .keyboardType(.numbersAndPunctuation)
-                .multilineTextAlignment(.trailing)
-                .monospacedDigit()
-                .frame(maxWidth: 90)
-                .accessibilityLabel("\(label) pace, minutes and seconds per kilometre")
-            Text("/km").foregroundStyle(Palette.muted.color)
+            TwoWheelDial(
+                firstLabel: "\(label) pace minutes", firstRange: Array(DialValues.paceMinutes),
+                firstSelection: Binding(get: { DialValues.paceMinutes(seconds) }, set: { set(DialValues.pace(minutes: $0, seconds: DialValues.paceSecondsPart(seconds))) }),
+                firstUnit: "min",
+                secondLabel: "\(label) pace seconds", secondRange: Array(0...59),
+                secondSelection: Binding(get: { DialValues.paceSecondsPart(seconds) }, set: { set(DialValues.pace(minutes: DialValues.paceMinutes(seconds), seconds: $0)) }),
+                secondUnit: "sec /km", secondFormat: { String(format: "%02d", $0) },
+                identifier: "pace.\(label.lowercased())")
         }
-        .onAppear { text = PaceFormat.minutesSeconds(seconds) }
-        .onChange(of: text) { if let value = StepFormat.parsePace(text) { seconds = value } }
     }
+
+    private func set(_ value: Int) { if value != seconds { seconds = value } }
 }
 
 private struct ExerciseFields: View {
