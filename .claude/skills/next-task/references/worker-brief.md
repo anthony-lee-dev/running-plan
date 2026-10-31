@@ -11,12 +11,14 @@ the repo and this brief are all you have.
 Task: <id and the backlog line's text, word for word>
 Branch: <agent/... name the orchestrator chose>
 Done so far: <earlier PR links for this task and the list of what was left, or none>
+Existing PR: <none, or "#n: fix <the failing check or conflict>" when you carry on an open PR on Branch>
 From the human: <corrections or choices from the conversation that apply, or none>
 
 ## Set up
-1. Your worktree starts on a branch of its own. Give it the name above and start it from the latest `main`:
-   `git fetch origin main`, `git branch -m <Branch>`, then `git reset --hard origin/main`. The worktree is fresh, so
-   nothing is lost.
+1. Run `git fetch origin main`. Then:
+   - With no existing PR, run `git switch -c <Branch> origin/main`.
+   - With an existing PR, run `git switch <Branch>`. After step 2, go straight to "How to work" step 6 and fix
+     what "Existing PR" names.
 2. Run `npm ci`. Its warning that install scripts were blocked (esbuild, fsevents, workerd) is expected, and the
    tests pass without them. If it asks you to approve anything, don't approve it. Stop and report what it asked.
 
@@ -33,11 +35,13 @@ From the human: <corrections or choices from the conversation that apply, or non
 5. If the human corrected something in "From the human", add the correction to the relevant `CLAUDE.md` in
    this PR.
 6. Read `.claude/skills/ship/SKILL.md` and follow it step by step, including the CI watch. Start the reviewer
-   with the Agent tool (`subagent_type: "reviewer"`); it reviews your branch from your worktree.
+   with the Agent tool (`subagent_type: "reviewer"`). Put your worktree's absolute path (`pwd`) in its prompt, and
+   tell it to run git as `git -C <path>` and to read files by absolute path. Otherwise it may review the main
+   checkout, where your branch isn't checked out, and find an empty diff.
    - The repo's Stop hook doesn't run for you. You aren't done until `bash scripts/verify.sh <packages>`
      exits 0.
-   - If `docs/backlog.md` conflicts with `main`, merge `origin/main` into your branch and push. Never rebase
-     a pushed branch or force-push.
+   - If your branch conflicts with `main`, run `git merge origin/main`, fix the conflict, commit, then run
+     `git push origin <Branch>`. A bare `git push` is denied. Never rebase a pushed branch or force-push.
    - Never run `gh pr merge`, never edit `autonomy.json`, never tick a `## Manual gates` box, and never
      commit secrets.
 

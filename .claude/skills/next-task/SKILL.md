@@ -62,15 +62,15 @@ Run workers one at a time by default. A second may run alongside the first only 
 - at most one of them touches `ios/`, because the iOS UI tests need port 8790 and the simulator;
 - they don't change the same files, apart from their own lines in `docs/backlog.md`.
 
-The PR that merges second may conflict on `docs/backlog.md`. Its worker fixes that by merging `origin/main` into
-its branch and pushing; a rebase would need a force-push, which is denied.
+The PR that merges second may conflict on `docs/backlog.md`. Step 4 spots this and sends it back to its worker,
+which merges `origin/main` into its branch and pushes. A rebase would need a force-push, which is denied.
 
 ## 4. Wait for the merge
 
 When a worker reports, check its PR yourself:
 
 ```bash
-gh pr view <n> --json state,mergedAt,autoMergeRequest,statusCheckRollup
+gh pr view <n> --json state,mergedAt,autoMergeRequest,mergeable,mergeStateStatus,statusCheckRollup
 ```
 
 Don't rely on the report alone. Then:
@@ -78,7 +78,10 @@ Don't rely on the report alone. Then:
 - **Merged:** clean up (step 6) and go back to step 1.
 - **Checks running, auto-merge queued:** run `gh pr checks <n> --watch` in the background and check again when it
   ends. GitHub merges within a minute or so of the checks passing.
-- **A check failed:** send the failure to the same worker with SendMessage. It already has the context to fix it.
+- **A check failed, or `mergeable` is `CONFLICTING`:** send the failure or conflict to the same worker with
+  SendMessage. It already has the context to fix it. If it can't be reached, remove its worktree but keep the
+  branch (`git worktree remove <path>`), then start a new worker. Fill the brief's "Existing PR" field so the new
+  worker carries on that branch instead of starting a fresh one.
 - **Left for the human** (`request-merge.py` exited 3, or the PR has manual-gate boxes): stop (step 5).
 
 Never start a worker whose task needs an unmerged PR. Workers branch from `origin/main`, so they only see work
@@ -93,13 +96,17 @@ which backlog tasks the merged PRs ticked.
 
 ## 6. Clean up worktrees
 
-A worker that committed keeps its worktree under `.claude/worktrees/`; the Agent result gives the path. Once
-`gh pr view` shows its PR merged, remove the worktree and its branch (the one you named in the brief):
+A worker that committed keeps its worktree under `.claude/worktrees/`; the Agent result gives the path and the
+branch the worktree was created on. Once `gh pr view` shows the PR merged, remove the worktree. Then delete both
+branches: the one you named in the brief, and the worktree's original one, which the worker switched away from.
 
 ```bash
 git worktree remove <path>
-git branch -D <branch>
+git branch -D <named branch> <worktree's original branch>
 ```
+
+Some of the orchestrator's commands, such as `git show`, `git worktree remove` and `git branch -D`, aren't on the
+repo's allow list. Expect a permission prompt for them unless the human has allowed them.
 
 Leave the worktree of an open PR in place: its worker may still be asked to fix something.
 
