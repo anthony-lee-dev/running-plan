@@ -42,6 +42,17 @@ enum Palette {
     static let greenInk = RGB(red: 0x0F, green: 0x2A, blue: 0x20)
     static let restRing = RGB(red: 0x7C, green: 0x76, blue: 0x67)
     static let chipText = RGB(red: 0xFF, green: 0xB5, blue: 0x9B)
+    /// Badges by meaning (DK-Week): easy, long run, and the user's own sessions.
+    static let greenSoft = RGB(red: 0x1D, green: 0x3A, blue: 0x2E)
+    static let greenSoftText = RGB(red: 0x8E, green: 0xE0, blue: 0xBF)
+    static let blueSoft = RGB(red: 0x1F, green: 0x2A, blue: 0x4D)
+    static let blueText = RGB(red: 0xB7, green: 0xC7, blue: 0xF5)
+    static let yoursText = RGB(red: 0xD8, green: 0xD2, blue: 0xC2)
+    /// The Week / Whole plan switch: its track and the selected segment.
+    static let segmentTrack = RGB(red: 0x2D, green: 0x2A, blue: 0x22)
+    static let segmentSelected = RGB(red: 0x44, green: 0x3F, blue: 0x33)
+    /// The dashed border of a rest day's card (DK-Week).
+    static let restBorder = RGB(red: 0x5C, green: 0x57, blue: 0x48)
     /// Notice cards ("What we assumed", warnings): fill and the three text colours the boards use on it.
     static let amberSoft = RGB(red: 0x3B, green: 0x31, blue: 0x15)
     static let amberTitle = RGB(red: 0xF7, green: 0xE3, blue: 0xA6)
