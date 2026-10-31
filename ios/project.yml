@@ -38,9 +38,16 @@ targets:
         product: OpenAPIURLSession
       - package: swift-http-types
         product: HTTPTypes
+    entitlements:
+      path: RunningPlan/RunningPlan.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ca.anthonylee.runningplan$(BUNDLE_ID_SUFFIX)
+        INFOPLIST_KEY_NSHealthShareUsageDescription: Running Plan reads your runs from Health to compare them with your plan, and schedules planned workouts on your Apple Watch.
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: Running Plan schedules planned workouts on your Apple Watch.
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Running Plan

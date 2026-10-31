@@ -1,7 +1,8 @@
 import SwiftUI
 import UIKit
+import WorkoutKit
 
-/// DK-Session: the spec sheet for setting the workout up on a watch by hand. Add to Apple Watch arrives with WorkoutKit
+/// DK-Session: the spec sheet for setting the workout up on a watch. Add to Apple Watch previews the WorkoutKit workout
 /// (task 4.2); Copy steps as text covers every other watch. System fonts until the font task.
 struct SessionView: View {
     let model: SessionSheetModel
@@ -9,6 +10,10 @@ struct SessionView: View {
     var error: String?
     /// The before-session feeling sent this visit, if any.
     var checkedIn: BeforeFeeling?
+    /// The WorkoutKit plan for Add to Apple Watch; nil when this kind of session cannot go to the watch.
+    var watchPlan: WorkoutPlan?
+    var watchSync: WatchSyncModel?
+    var onToggleWatchSync: () -> Void = {}
     var onBack: () -> Void = {}
     var onEdit: () -> Void = {}
     var onAdjust: (QuickAdjustment) -> Void = { _ in }
@@ -17,6 +22,7 @@ struct SessionView: View {
 
     @State private var ticked: Set<Int> = []
     @State private var copied = false
+    @State private var previewing = false
 
     var body: some View {
         ScrollView {
@@ -38,7 +44,7 @@ struct SessionView: View {
                         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 16))
                 }
-                if !model.isRest { copyButton }
+                if !model.isRest { watchButtons }
                 if let error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color)
                         .accessibilityIdentifier("session.error")
@@ -193,6 +199,48 @@ struct SessionView: View {
     private func sectionLabel(_ text: String) -> some View {
         Text(text).font(.system(size: 13, weight: .semibold)).tracking(1).foregroundStyle(Palette.muted.color)
             .accessibilityAddTraits(.isHeader)
+    }
+
+    private var watchButtons: some View {
+        VStack(spacing: 10) {
+            if let watchPlan, !model.isDone {
+                Button { previewing = true } label: {
+                    Label("Add to Apple Watch", systemImage: "applewatch")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        .foregroundStyle(Color.white)
+                        .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
+                        .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("session.addToWatch")
+                .workoutPreview(watchPlan, isPresented: $previewing)
+                if let watchSync { syncRow(watchSync) }
+            }
+            copyButton
+        }
+    }
+
+    private func syncRow(_ sync: WatchSyncModel) -> some View {
+        VStack(spacing: 2) {
+            Button(action: onToggleWatchSync) {
+                Text(sync.isOn ? "Stop keeping sessions on my watch" : "Keep my next sessions on my watch")
+                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.accentText.color)
+                    .frame(minHeight: Metrics.minTouchTarget)
+            }
+            .accessibilityIdentifier("session.watchSync")
+            if let note = Self.syncNote(sync.status) {
+                Text(note).font(.system(size: 13)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
+            }
+        }
+    }
+
+    static func syncNote(_ status: WatchSyncModel.Status) -> String? {
+        switch status {
+        case .off: nil
+        case .unsupported: "Scheduling workouts needs an iPhone paired with an Apple Watch."
+        case .denied: "Allow Running Plan to schedule workouts in Settings to use this."
+        case .synced(let count): "Up to 15 upcoming runs stay on your watch. \(count) scheduled."
+        }
     }
 
     private var copyButton: some View {
