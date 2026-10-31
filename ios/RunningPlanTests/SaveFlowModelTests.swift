@@ -107,7 +107,7 @@ struct SaveFlowModelTests {
         #expect(model.step == .code(email: "runner@example.com"))
         #expect(await signIn.started == ["runner@example.com"])
 
-        await model.verify(code: " 123456 ")
+        await model.verify(code: " 123 456 ")
         #expect(await signIn.verified.map(\.1) == ["123456"])
         #expect(model.step == .saved(planId: p.ids.plan))
         #expect(!model.showsSignIn)

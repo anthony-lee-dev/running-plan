@@ -4,8 +4,14 @@ import SwiftUI
 struct PreviewView: View {
     let model: PreviewViewModel
     let onChangeAnswer: () -> Void
-    /// Nil until saving exists (task 3.4): the button is then shown disabled.
+    /// Nil shows the button disabled.
     let onSave: (() -> Void)?
+    /// Leaves the preview; the draft stays on the device for 24 hours.
+    var onClose: () -> Void = {}
+    /// Save shows a spinner in place of its label and cannot be tapped again.
+    var saving = false
+    /// A save failure, shown under the button.
+    var saveError: String?
 
     var body: some View {
         ScrollView {
@@ -41,6 +47,21 @@ struct PreviewView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .tracking(0.96)
                 .foregroundStyle(Palette.accentText.color)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // An overlay, so the board's layout (which has no close control) keeps its spacing.
+                .overlay(alignment: .trailing) {
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 18, weight: .semibold))
+                            .frame(width: Metrics.minTouchTarget, height: Metrics.minTouchTarget)
+                            .contentShape(Rectangle())
+                    }
+                    .foregroundStyle(Palette.ink.color)
+                    .accessibilityLabel("Close")
+                    // Closing mid-save would lose the "saved" hand-off for a plan the server already has.
+                    .disabled(saving)
+                    .padding(.trailing, -12)
+                }
             Text("Your suggested plan")
                 .font(.system(size: 34, weight: .bold))
                 .tracking(-0.7)
@@ -148,15 +169,22 @@ struct PreviewView: View {
     private var footer: some View {
         VStack(spacing: 10) {
             Button(action: { onSave?() }) {
-                Text("Save your plan")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(maxWidth: .infinity, minHeight: 56)
-                    .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
-                    .foregroundStyle(.white)
+                ZStack {
+                    Text("Save your plan").opacity(saving ? 0 : 1)
+                    if saving { ProgressView().tint(.white).accessibilityLabel("Saving your plan") }
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
+                .foregroundStyle(.white)
             }
-            .disabled(onSave == nil)
+            .disabled(onSave == nil || saving)
             .opacity(onSave == nil ? 0.4 : 1)
-            Text("Sign in with Apple or email to keep it. Unsaved previews are deleted after 24 hours.")
+            .accessibilityIdentifier("preview.save")
+            if let saveError {
+                Text(saveError).font(.system(size: 15)).foregroundStyle(Palette.amberText.color).accessibilityIdentifier("preview.saveError")
+            }
+            Text("Sign in with your email to keep it. Unsaved previews are deleted after 24 hours.")
                 .font(.system(size: 13))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Palette.muted.color)

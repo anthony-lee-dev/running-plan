@@ -36,12 +36,12 @@ private final class StubTransport: ClientTransport, @unchecked Sendable {
         guard var plan = (try? JSONSerialization.jsonObject(with: Data(sent.utf8))) as? [String: Any] else { return "{}" }
         let sessions = (plan["sessions"] as? [[String: Any]] ?? []).map { s -> [String: Any] in
             var s = s
-            s["planId"] = plan["id"]; s["revision"] = 1; s["updatedAt"] = "2026-10-30T12:00:00Z"; s["deletedAt"] = NSNull()
+            s["planId"] = plan["id"]; s["revision"] = 1; s["updatedAt"] = "2026-10-30T12:00:00.041Z"; s["deletedAt"] = NSNull()
             return s
         }
         plan["sessions"] = sessions
         plan["revision"] = 1; plan["contentRevision"] = 1; plan["warnings"] = []
-        plan["updatedAt"] = "2026-10-30T12:00:00Z"; plan["deletedAt"] = NSNull()
+        plan["updatedAt"] = "2026-10-30T12:00:00.041Z"; plan["deletedAt"] = NSNull()
         let data = (try? JSONSerialization.data(withJSONObject: plan)) ?? Data("{}".utf8)
         return String(decoding: data, as: UTF8.self)
     }
@@ -55,7 +55,8 @@ struct PlanSaverTests {
     }
 
     private func saver(_ transport: StubTransport) -> APIPlanSaver {
-        APIPlanSaver(client: Client(serverURL: URL(string: "http://127.0.0.1:8790")!, transport: transport))
+        // The app's client setup, which must read the server's timestamps (JavaScript's `toISOString`, with milliseconds).
+        APIPlanSaver(client: APIConfiguration.client(serverURL: URL(string: "http://127.0.0.1:8790")!, transport: transport))
     }
 
     private func sent(_ transport: StubTransport) throws -> [String: Any] {
