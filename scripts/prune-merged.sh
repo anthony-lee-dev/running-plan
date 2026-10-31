@@ -25,7 +25,7 @@ prune_main() {
     [[ "$track" == "[gone]" && -n "$upstream" ]] || continue
     [[ "$branch" == "main" || "$branch" == "$current" ]] && continue
     prune_branch "$branch"
-  done < <(git for-each-ref --format='%(refname:short)%09%(upstream)%09%(upstream:track)' refs/heads)
+  done < <(git for-each-ref --format='%(refname:lstrip=2)%09%(upstream)%09%(upstream:track)' refs/heads)
 
   git worktree prune
 }
@@ -43,7 +43,7 @@ worktree_of() {
 }
 
 prune_branch() {
-  local branch="$1" info path locked first
+  local branch="$1" info path locked first status
   info="$(worktree_of "$branch")"
   if [[ -n "$info" ]]; then
     IFS=$'\t' read -r path locked first <<<"$info"
@@ -51,7 +51,12 @@ prune_branch() {
       echo "prune-merged: skipped $branch (checked out in the main checkout)"
       return 0
     fi
-    if [[ -n "$(git -C "$path" status --porcelain 2>/dev/null)" ]]; then
+    # A status that fails is not a clean one: -f -f below skips git's own dirty check.
+    if ! status="$(git -C "$path" status --porcelain 2>/dev/null)"; then
+      echo "prune-merged: skipped $branch (could not read worktree $path)"
+      return 0
+    fi
+    if [[ -n "$status" ]]; then
       echo "prune-merged: skipped $branch (worktree $path has uncommitted changes)"
       return 0
     fi

@@ -113,6 +113,27 @@ expect_dir "locked dirty worktree is kept" "$tmp/wt/feat"
 expect_branch "locked dirty worktree: branch is kept" feat
 
 fresh
+pushed_branch feat
+git worktree add -q "$tmp/wt/feat" feat
+git worktree lock "$tmp/wt/feat"
+echo dirty >"$tmp/wt/feat/untracked.txt"
+echo "garbage" >"$tmp/wt/feat/.git"
+merge_on_origin feat
+run >/dev/null
+expect_dir "unreadable locked worktree is kept" "$tmp/wt/feat"
+expect_branch "unreadable locked worktree: branch is kept" feat
+
+fresh
+echo "node_modules/" >.gitignore && git add -A && git commit -q -m ignore && git push -q origin main
+pushed_branch feat
+git worktree add -q "$tmp/wt/feat" feat
+mkdir -p "$tmp/wt/feat/node_modules" && echo x >"$tmp/wt/feat/node_modules/x"
+merge_on_origin feat
+run >/dev/null
+expect_no_dir "worktree with only ignored files is removed" "$tmp/wt/feat"
+expect_no_branch "worktree with only ignored files: branch removed" feat
+
+fresh
 pushed_branch feat && merge_on_origin feat
 git fetch -q --prune origin
 git remote set-url origin "$tmp/does-not-exist.git"
