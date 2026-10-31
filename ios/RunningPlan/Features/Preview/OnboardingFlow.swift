@@ -25,6 +25,8 @@ struct OnboardingFlow: View {
     private enum Stage {
         case interview(InterviewFlow)
         case preview(PreviewViewModel, SaveFlowModel)
+        /// "I'd rather build my own plan", with the goal when one was chosen.
+        case blank(InterviewAnswers.Goal?, SaveFlowModel)
     }
 
     let dependencies: PreviewDependencies
@@ -66,6 +68,15 @@ struct OnboardingFlow: View {
                 .onChange(of: save.step) {
                     if case .saved(let id) = save.step { onSaved(id) }
                 }
+            case .blank(let goal, let save)?:
+                let signingIn = save.showsSignIn
+                BlankPlanView(goal: goal, today: dependencies.today(), save: save, onClose: onClose)
+                    .sheet(isPresented: Binding(get: { signingIn }, set: { if !$0 && save.showsSignIn { save.cancelSignIn() } })) {
+                        SignInView(model: save)
+                    }
+                    .onChange(of: save.step) {
+                        if case .saved(let id) = save.step { onSaved(id) }
+                    }
             }
         }
         .id(stageID)
@@ -87,7 +98,14 @@ struct OnboardingFlow: View {
     }
 
     private func finish(_ answers: InterviewAnswers, blankPlan: Bool) {
-        if blankPlan { return onClose() } // building a blank plan arrives with the plan editor
+        if blankPlan {
+            // The goal only when the user picked one before choosing to build their own plan.
+            var chosen = false
+            if case .interview(let flow)? = stage { chosen = flow.isAnswered(.goalDistance) }
+            stage = .blank(chosen ? answers.goal : nil, SaveFlowModel(signIn: dependencies.signIn, saver: dependencies.saver, store: dependencies.store, now: dependencies.now))
+            stageID += 1
+            return
+        }
         stage = Self.preview(for: answers, dependencies)
         stageID += 1
     }

@@ -14,6 +14,8 @@ struct WeekModel: Equatable {
     }
 
     struct Item: Equatable {
+        /// The session's id, to open it.
+        let id: String
         let title: String
         let detail: String
         let trailing: Trailing
@@ -31,6 +33,8 @@ struct WeekModel: Equatable {
         /// No session to do (none, or only rest sessions).
         let isRest: Bool
         let items: [Item]
+        /// Each session as its own VoiceOver label, with its day: one button each.
+        let itemsSpoken: [String]
         /// The day as one VoiceOver sentence.
         let spoken: String
     }
@@ -38,6 +42,8 @@ struct WeekModel: Equatable {
     let week: Int
     let title: String
     let range: String
+    /// The day "Add a session" starts on: today in this week, else the week's first day.
+    let addDate: String
     let canGoBack: Bool
     let canGoForward: Bool
     let planned: String
@@ -60,6 +66,7 @@ struct WeekModel: Equatable {
         title = "Week \(week + 1)\(phase)"
         let (first, last) = schedule.weekRange(week)
         range = "\(PlanPreview.shortDate(first)) – \(PlanPreview.shortDate(last))"
+        addDate = schedule.days(ofWeek: week).contains(schedule.today) ? schedule.today : first
         canGoBack = week > 0
         canGoForward = week < schedule.weekCount - 1
 
@@ -76,8 +83,9 @@ struct WeekModel: Equatable {
             let isToday = date == schedule.today
             let fullWeekday = NextModel.weekday(date)
             let number = String(Int(date.suffix(2)) ?? 0)
-            let onDay = sessions.filter { $0.value2.date == date && $0.value2._type != .rest }.map(\.value2)
-            let items = onDay.map { s in
+            let onDay = sessions.filter { $0.value2.date == date && $0.value2._type != .rest }
+            let items = onDay.map { session in
+                let s = session.value2
                 let trailing: Trailing
                 if s.status == .done {
                     trailing = .done
@@ -95,6 +103,7 @@ struct WeekModel: Equatable {
                     trailing = .none
                 }
                 return Item(
+                    id: session.value1.id,
                     title: s.title ?? SessionSummary.effort(s),
                     detail: SessionSummary.detail(s, withTime: isToday),
                     trailing: trailing,
@@ -103,6 +112,16 @@ struct WeekModel: Equatable {
                 )
             }
             let when = (isToday ? "Today, " : "") + "\(fullWeekday) \(number)"
+            let itemsSpoken = items.map { item in
+                let state: String
+                switch item.trailing {
+                case .done: state = ", done"
+                case .skipped: state = ", skipped"
+                case .badge(.yours): state = ", yours"
+                default: state = ""
+                }
+                return "\(when): \(item.title), \(PaceFormat.spoken(item.detail))\(state)"
+            }
             let spoken = items.isEmpty
                 ? "\(when): rest day"
                 : "\(when): " + items.map { item in
@@ -120,6 +139,7 @@ struct WeekModel: Equatable {
                 isToday: isToday,
                 isRest: items.isEmpty,
                 items: items,
+                itemsSpoken: itemsSpoken,
                 spoken: spoken
             )
         }

@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// DK-Week: one week of the plan, day by day, with arrows to the weeks either side. "Add a session" and opening a
-/// session arrive with the session editor (task 4.1).
+/// DK-Week: one week of the plan, day by day, with arrows to the weeks either side. A session opens DK-Session;
+/// "Add a session" opens the editor on today (or the week's first day).
 struct WeekView: View {
     let model: WeekModel
     var onMode: (PlanMode) -> Void = { _ in }
     let onWeek: (Int) -> Void
+    var onOpen: (String) -> Void = { _ in }
+    var onAdd: (String) -> Void = { _ in }
 
     var body: some View {
         ScrollView {
@@ -16,9 +18,18 @@ struct WeekView: View {
                 summary
                 VStack(spacing: 10) {
                     ForEach(Array(model.days.enumerated()), id: \.offset) { _, day in
-                        DayRow(day: day)
+                        DayRow(day: day, onOpen: onOpen)
                     }
                 }
+                Button { onAdd(model.addDate) } label: {
+                    Text("+ Add a session")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .foregroundStyle(Palette.ink.color)
+                        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Palette.restBorder.color, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+                        .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("week.add")
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -80,6 +91,7 @@ struct WeekView: View {
 
 private struct DayRow: View {
     let day: WeekModel.Day
+    let onOpen: (String) -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -95,18 +107,25 @@ private struct DayRow: View {
             }
             .frame(width: 40)
             .padding(.top, 14)
+            .accessibilityHidden(!day.isRest)
             VStack(spacing: 8) {
                 if day.isRest {
                     rest
                 } else {
-                    ForEach(Array(day.items.enumerated()), id: \.offset) { _, item in
-                        ItemCard(item: item)
+                    ForEach(Array(day.items.enumerated()), id: \.offset) { index, item in
+                        Button { onOpen(item.id) } label: { ItemCard(item: item) }
+                            .buttonStyle(.plain)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(day.itemsSpoken[index])
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityIdentifier("week.session")
                     }
                 }
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(day.spoken)
+        // A rest day reads as one sentence; a day with sessions is a button per session, each naming the day.
+        .accessibilityElement(children: day.isRest ? .ignore : .contain)
+        .accessibilityLabel(day.isRest ? day.spoken : "")
     }
 
     private var rest: some View {

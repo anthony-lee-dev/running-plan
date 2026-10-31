@@ -4,6 +4,10 @@ import Foundation
 /// Everything DK-Next shows, worked out from the plan and today's date.
 struct NextModel: Equatable {
     struct Focus: Equatable {
+        /// The session on the card, for Open workout, Make it easier and Move or skip.
+        let sessionId: String
+        /// Rest and finished sessions have nothing to make easier.
+        let canAdjust: Bool
         let label: String
         let title: String
         let effort: String
@@ -66,7 +70,7 @@ struct NextModel: Equatable {
         switch schedule.position {
         case .notStarted(let start):
             eyebrow = "\(day) · Starts \(Self.weekday(start)), \(PlanPreview.shortDate(start))"
-            focus = schedule.nextSession.map { Self.focus($0.value2, label: "FIRST SESSION · \(Self.weekday($0.value2.date).uppercased()), \(PlanPreview.shortDate($0.value2.date).uppercased())") }
+            focus = schedule.nextSession.map { Self.focus($0, label: "FIRST SESSION · \(Self.weekday($0.value2.date).uppercased()), \(PlanPreview.shortDate($0.value2.date).uppercased())") }
             week = []
             weekHeader = nil
             weekProgress = 0
@@ -82,10 +86,10 @@ struct NextModel: Equatable {
             let phase = schedule.phase(ofWeek: index).map { " · \($0.title)" } ?? ""
             eyebrow = "\(day) · Week \(index + 1) of \(schedule.weekCount)\(phase)"
             if let todayMain {
-                focus = Self.focus(todayMain.value2, label: "TODAY")
+                focus = Self.focus(todayMain, label: "TODAY")
                 nextUp = schedule.nextSession.map { "Next up: \($0.value2.title ?? SessionSummary.effort($0.value2)), \(Self.weekday($0.value2.date)) · \(Self.size($0.value2))" }
             } else {
-                focus = schedule.nextSession.map { Self.focus($0.value2, label: "NEXT UP · \(Self.weekday($0.value2.date).uppercased()), \(PlanPreview.shortDate($0.value2.date).uppercased())") }
+                focus = schedule.nextSession.map { Self.focus($0, label: "NEXT UP · \(Self.weekday($0.value2.date).uppercased()), \(PlanPreview.shortDate($0.value2.date).uppercased())") }
                 nextUp = nil
             }
             let sessions = schedule.sessions(inWeek: index)
@@ -119,8 +123,11 @@ struct NextModel: Equatable {
         return position == .finished ? .finished : .noMoreSessions
     }
 
-    private static func focus(_ s: Components.Schemas.SessionContent, label: String) -> Focus {
-        Focus(
+    private static func focus(_ session: Components.Schemas.Session, label: String) -> Focus {
+        let s = session.value2
+        return Focus(
+            sessionId: session.value1.id,
+            canAdjust: s._type != .rest && (s.status ?? .planned) == .planned,
             label: label,
             title: s.title ?? SessionSummary.effort(s),
             effort: SessionSummary.effort(s),

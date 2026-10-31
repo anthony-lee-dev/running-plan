@@ -73,4 +73,17 @@ struct WeekModelTests {
         #expect(days[3].spoken == "Thursday 29: rest day")
         #expect(days[2].spoken.hasPrefix("Today, Wednesday 28: Intervals: 5 × 600 m"))
     }
+
+    @Test func eachSessionOpensOnItsOwnWithItsDayInItsLabel() throws {
+        let days = WeekModel(schedule: try schedule(), week: 3).days
+        #expect(days[2].items.first?.id == "00000000-0000-4000-8000-000000000017")
+        #expect(days[0].itemsSpoken == ["Monday 26: Easy run, 5 km · 6 minutes 25 to 7 minutes 10 per kilometre, done"])
+        #expect(days[6].itemsSpoken == ["Sunday 1: Cycling, 45 min · easy effort, yours"])
+    }
+
+    @Test func aSessionIsAddedOnTodayInThisWeekElseTheFirstDay() throws {
+        let s = try schedule()
+        #expect(WeekModel(schedule: s, week: 3).addDate == "2026-10-28")
+        #expect(WeekModel(schedule: s, week: 4).addDate == "2026-11-02")
+    }
 }

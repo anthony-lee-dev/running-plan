@@ -1,3 +1,4 @@
+import APIClient
 import Foundation
 import Observation
 
@@ -10,7 +11,8 @@ protocol SignInService: Sendable {
 
 extension AuthSession: SignInService {}
 
-/// Save on DK-Preview: signs in with an emailed code when needed, then creates the plan from the stored draft.
+/// Save on DK-Preview: signs in with an emailed code when needed, then creates the plan from the stored draft. The
+/// same flow saves a blank plan ("I'd rather build my own plan").
 @MainActor
 @Observable
 final class SaveFlowModel {
@@ -31,7 +33,12 @@ final class SaveFlowModel {
     private let saver: PlanSaving
     private let store: PreviewDraftStoring
     private let now: () -> Date
-    private var pending: SavedPreview?
+    private enum Pending {
+        case preview(SavedPreview)
+        case blank(Components.Schemas.PlanCreate)
+    }
+
+    private var pending: Pending?
     /// Moves on cancel and "use a different email", so the answer to a request made before then changes nothing.
     private var attempt = 0
 
@@ -56,7 +63,17 @@ final class SaveFlowModel {
             error = "This preview is more than a day old. Change an answer to make a fresh one."
             return
         }
-        pending = preview
+        await begin(.preview(preview))
+    }
+
+    /// Signs in when needed, then creates the blank plan. The preview draft, if any, is left alone.
+    func saveBlank(_ plan: Components.Schemas.PlanCreate) async {
+        error = nil
+        await begin(.blank(plan))
+    }
+
+    private func begin(_ next: Pending) async {
+        pending = next
         attempt += 1
         if await signIn.isSignedIn {
             await attemptSave()
@@ -100,9 +117,15 @@ final class SaveFlowModel {
         guard let pending else { return }
         step = .saving
         do {
-            let id = try await saver.save(pending)
-            // Only the draft that was saved: a newer one made meanwhile stays.
-            if store.load(now: now())?.ids == pending.ids { store.clear() }
+            let id: String
+            switch pending {
+            case .preview(let preview):
+                id = try await saver.save(preview)
+                // Only the draft that was saved: a newer one made meanwhile stays.
+                if store.load(now: now())?.ids == preview.ids { store.clear() }
+            case .blank(let plan):
+                id = try await saver.createBlank(plan)
+            }
             step = .saved(planId: id)
         } catch SaveError.signedOut {
             // Tokens the server no longer accepts: sign in again, then the same save is retried.

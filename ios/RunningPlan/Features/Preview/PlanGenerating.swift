@@ -95,7 +95,8 @@ enum APIConfiguration {
     /// Every client the app makes. The server writes timestamps with milliseconds (JavaScript's `toISOString`), which
     /// the runtime's default date format rejects, so dates are read with or without them.
     static func client(serverURL: URL, transport: ClientTransport, middlewares: [ClientMiddleware] = []) -> Client {
-        Client(serverURL: serverURL, configuration: Configuration(dateTranscoder: dateTranscoder), transport: transport, middlewares: middlewares)
+        // The entity-tag fix runs last, nearest the transport, so every request (retries included) carries `If-Match: "3"`.
+        Client(serverURL: serverURL, configuration: Configuration(dateTranscoder: dateTranscoder), transport: transport, middlewares: middlewares + [EntityTagMiddleware()])
     }
 
     static let dateTranscoder: DateTranscoder = FlexibleISO8601()
