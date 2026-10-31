@@ -145,6 +145,7 @@ private struct NoWrites: SessionWriting {
     func create(planId: String, _ body: Components.Schemas.SessionCreate) async throws -> Components.Schemas.SessionWriteResult { throw SessionWriteError.server }
     func delete(id: String, revision: Int) async throws -> Components.Schemas.SessionWriteResult { throw SessionWriteError.server }
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws {}
+    func deletePlan(id: String, revision: Int) async throws { throw SessionWriteError.server }
 }
 
 @MainActor

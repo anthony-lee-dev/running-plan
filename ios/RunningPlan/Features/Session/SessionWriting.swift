@@ -20,6 +20,8 @@ protocol SessionWriting: Sendable {
     func delete(id: String, revision: Int) async throws -> Components.Schemas.SessionWriteResult
     /// A before-session check-in; `id` is client-made so a retry is not stored twice.
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws
+    /// Deletes a whole plan (a tombstone) when `revision` is still the plan's. Interim: task 3.7 replaces its only caller.
+    func deletePlan(id: String, revision: Int) async throws
 }
 
 /// Calls the session endpoints through a client that carries the user's token (`AuthMiddleware`).
@@ -73,6 +75,17 @@ struct APISessionWriter: SessionWriting {
         case .unauthorized: throw SessionWriteError.signedOut
         case .notFound: throw SessionWriteError.notFound
         case .badRequest: throw SessionWriteError.invalid
+        case .undocumented: throw SessionWriteError.server
+        }
+    }
+
+    func deletePlan(id: String, revision: Int) async throws {
+        let output = try await call { try await client.deletePlan(path: .init(planId: id), headers: .init(If_hyphen_Match: Self.etag(revision))) }
+        switch output {
+        case .noContent: return
+        case .unauthorized: throw SessionWriteError.signedOut
+        case .conflict: throw SessionWriteError.conflict
+        case .notFound: throw SessionWriteError.notFound
         case .undocumented: throw SessionWriteError.server
         }
     }

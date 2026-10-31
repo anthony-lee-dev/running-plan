@@ -97,6 +97,30 @@ final class PlanStore {
         merge(.init(session: session, planContentRevision: planContentRevision, warnings: warnings))
     }
 
+    /// Interim "Delete plan" (until Goal and settings, 3.7). On success, or when the plan is already gone, the store goes
+    /// back to the "Set a goal" state. Returns a sentence for the screen when it fails; the plan then stays.
+    func deletePlan() async -> String? {
+        guard let detail = plan else { return "Your plan isn't loaded yet. Please try again." }
+        let id = detail.value1.value1.id
+        do {
+            try await writer.deletePlan(id: id, revision: detail.value1.value1.revision)
+            state = .empty
+            return nil
+        } catch SessionWriteError.notFound {
+            state = .empty
+            return nil
+        } catch SessionWriteError.conflict {
+            await show(planId: id)
+            return "Your plan changed somewhere else. We've loaded the latest version; delete it again if you still want to."
+        } catch SessionWriteError.offline {
+            return "We couldn't reach the server. Check your connection and try again."
+        } catch SessionWriteError.signedOut {
+            return "You've been signed out. Sign in again to delete your plan."
+        } catch {
+            return "Something went wrong deleting your plan. Please try again."
+        }
+    }
+
     private func write(_ body: () async throws -> Components.Schemas.SessionWriteResult) async -> String? {
         do {
             merge(try await body())

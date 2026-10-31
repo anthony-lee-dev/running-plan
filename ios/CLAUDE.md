@@ -106,6 +106,15 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   without it the test skips. Sign-in codes come from `GET /__test/codes/latest?email=` on that server.
 - Plain `http://127.0.0.1` works in the simulator without an App Transport Security exception.
 
+## Delete plan (interim, task 3.9 issue #92)
+
+- `PlanScreen` shows a small "Delete plan" under the plan (`plan.delete`) with a confirmation dialog; `PlanStore.deletePlan`
+  calls `SessionWriting.deletePlan` (`DELETE /v1/plans/{id}`, `If-Match` = the plan's `revision`), then returns to the
+  empty state. 404 counts as deleted; 409 reloads; offline or other errors keep the plan and show a line under the button.
+  Goal and settings (3.7) replaces it. The row shows in week mode only (an inset covered the whole-plan list's rows on a
+  short screen and broke the Preview UI test). Known limits: workouts already on the watch stay until the next resync, and a
+  user with an older saved plan sees that one after a relaunch.
+
 ## Unit tests
 
 - Keep each `#expect` simple: build an expected array in a typed `let` first. An inline literal joined with `+` and

@@ -48,6 +48,31 @@ func writeResultJSON(title: String = "Intervals: 5 × 600 m", revision: Int = 2,
 
 private let problem = #"{"type":"about:blank","title":"No","status":409}"#
 
+struct SessionWriterDeletePlanTests {
+    private let planId = "11111111-1111-4111-8111-111111111111"
+
+    private func writer(_ transport: OneAnswer) -> APISessionWriter {
+        APISessionWriter(client: APIConfiguration.client(serverURL: URL(string: "http://127.0.0.1:8790")!, transport: transport))
+    }
+
+    @Test func deletingAPlanSendsItsRevisionAsAQuotedETag() async throws {
+        let transport = OneAnswer(.noContent, "")
+        try await writer(transport).deletePlan(id: planId, revision: 3)
+        #expect(transport.request?.method == .delete)
+        #expect(transport.request?.path == "/v1/plans/\(planId)")
+        #expect(transport.request?.headerFields[.ifMatch] == "\"3\"")
+    }
+
+    @Test func deletingAPlanMapsFailures() async throws {
+        await #expect(throws: SessionWriteError.conflict) { try await writer(OneAnswer(.conflict, problem)).deletePlan(id: planId, revision: 3) }
+        await #expect(throws: SessionWriteError.notFound) { try await writer(OneAnswer(.notFound, problem)).deletePlan(id: planId, revision: 3) }
+        await #expect(throws: SessionWriteError.signedOut) { try await writer(OneAnswer(.unauthorized, problem)).deletePlan(id: planId, revision: 3) }
+        await #expect(throws: SessionWriteError.offline) {
+            try await writer(OneAnswer(.ok, error: URLError(.notConnectedToInternet))).deletePlan(id: planId, revision: 3)
+        }
+    }
+}
+
 struct SessionWriterTests {
     private func writer(_ transport: OneAnswer) -> APISessionWriter {
         APISessionWriter(client: APIConfiguration.client(serverURL: URL(string: "http://127.0.0.1:8790")!, transport: transport))

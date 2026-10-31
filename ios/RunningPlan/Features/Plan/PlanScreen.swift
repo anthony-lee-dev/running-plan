@@ -9,6 +9,8 @@ struct PlanScreen: View {
     /// The week on screen; nil until the user moves, so it follows today.
     @State private var week: Int?
     @State private var mode: PlanMode = .week
+    @State private var confirmDelete = false
+    @State private var deleteError: String?
 
     var body: some View {
         Group {
@@ -53,10 +55,49 @@ struct PlanScreen: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Week only: the whole-plan list is a fixed layout and the row would cover its last weeks on a short screen.
+            if plans.plan != nil, mode == .week { deleteRow }
+        }
         .toolbarBackground(Palette.tabBar.color, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         // A different plan (a new save) starts again on its own this week.
         .onChange(of: plans.plan?.value1.value1.id) { week = nil }
+    }
+
+    /// Interim until Goal and settings (3.7): a small confirmed "Delete plan" under the plan.
+    private var deleteRow: some View {
+        VStack(spacing: 4) {
+            if let deleteError {
+                Text(deleteError)
+                    .font(.system(size: 13))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Palette.muted.color)
+                    .accessibilityIdentifier("plan.delete.error")
+            }
+            Button {
+                deleteError = nil
+                confirmDelete = true
+            } label: {
+                Text("Delete plan")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Palette.muted.color)
+                    .frame(minWidth: Metrics.minTouchTarget, minHeight: Metrics.minTouchTarget)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("plan.delete")
+            .confirmationDialog("Delete this plan?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Yes, delete it", role: .destructive) {
+                    Task { deleteError = await plans.deletePlan() }
+                }
+                Button("Keep plan", role: .cancel) {}
+            } message: {
+                Text("This removes the plan and all its sessions. You can set a new goal afterwards.")
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .background(Palette.bg.color)
     }
 
     private func centred<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
