@@ -229,7 +229,7 @@ struct PlanPreview: Equatable {
         return rounded == rounded.rounded() ? String(Int(rounded)) : String(format: "%.1f", rounded)
     }
 
-    private static func goalName(_ goal: Components.Schemas.Goal) -> String {
+    static func goalName(_ goal: Components.Schemas.Goal) -> String {
         switch goal._type {
         case ._5k: "5K"
         case ._10k: "10K"

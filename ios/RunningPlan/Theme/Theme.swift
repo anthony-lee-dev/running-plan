@@ -51,6 +51,11 @@ enum Palette {
     /// The Week / Whole plan switch: its track and the selected segment.
     static let segmentTrack = RGB(red: 0x2D, green: 0x2A, blue: 0x22)
     static let segmentSelected = RGB(red: 0x44, green: 0x3F, blue: 0x33)
+    /// The goal card on DK-Whole: fill, border, text and progress track.
+    static let goalCard = RGB(red: 0x33, green: 0x29, blue: 0x1F)
+    static let goalBorder = RGB(red: 0x4A, green: 0x3C, blue: 0x2B)
+    static let goalText = RGB(red: 0xCF, green: 0xC8, blue: 0xB8)
+    static let goalTrack = RGB(red: 0x4A, green: 0x46, blue: 0x38)
     /// The dashed border of a rest day's card (DK-Week).
     static let restBorder = RGB(red: 0x5C, green: 0x57, blue: 0x48)
     /// Notice cards ("What we assumed", warnings): fill and the three text colours the boards use on it.

@@ -143,7 +143,7 @@ and save a plan against the deployed API.
 
 ## Slice 3: See my plan
 
-- [ ] 3.5 Next (DK-Next), Plan week (DK-Week), whole plan (DK-Whole); paces shown as `6:30/km`. needs: 3.4, 0.5
+- [x] 3.5 Next (DK-Next), Plan week (DK-Week), whole plan (DK-Whole); paces shown as `6:30/km`. needs: 3.4, 0.5
 
 **Done when:** a UI test shows the saved plan on all three screens, with snapshot tests against the dark boards.
 
@@ -217,6 +217,9 @@ theirs.
       countdown. The computation is done (`api/src/domain/insights.ts`, `computeProgress`); the route and its store
       reads are left. needs: 2.12
 - [ ] 4.6 Progress (DK-Progress). needs: 2.15, 0.5
+- [ ] 4.7 Distance done and "On track" on the plan screens, left from 3.5: Next's "5.1 of 25 km" and its progress bar,
+      Week's "5.1 km done · plus 45 min cross-training", Whole's "15.2 / 16 km" per week and the goal card's
+      "On track" badge. Today they show planned distance and sessions done. needs: 2.15
 
 **Done when:** a UI test shows progress for a plan with done and missed sessions.
 

@@ -37,6 +37,10 @@ struct ThemeTests {
         #expect(Palette.yoursText == RGB(hex: "#D8D2C2"))
         #expect(Palette.restBorder == RGB(hex: "#5C5748"))
         #expect(Palette.segmentTrack == RGB(hex: "#2D2A22"))
+        #expect(Palette.goalCard == RGB(hex: "#33291F"))
+        #expect(Palette.goalBorder == RGB(hex: "#4A3C2B"))
+        #expect(Palette.goalText == RGB(hex: "#CFC8B8"))
+        #expect(Palette.goalTrack == RGB(hex: "#4A4638"))
         #expect(Palette.segmentSelected == RGB(hex: "#443F33"))
     }
 

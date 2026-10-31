@@ -65,6 +65,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   with `Date` intervals. It works out the week, today's sessions, the next session and week totals. Distance actually
   run waits for the progress endpoint (backlog 2.15); only session status (`done`) is used until then.
 - UI tests that touch the API pass `-auth.reset YES`, so an earlier test's sign-in (and plan) never replaces "Set a goal".
+- Screens: `NextModel`, `WeekModel` and `WholeModel` are pure (built from `PlanSchedule`) and pinned by unit tests;
+  `NextView`, `WeekView` and `WholeView` only draw them. Snapshot tests render the views with `PlanFixture` (the boards'
+  plan, today Wed 2026-10-28) through `BoardSnapshot`. Left for later tasks: the review and inbox cards, Open workout,
+  Make it easier, Move or skip, Add a session (4.1), and distance run and "On track" (progress endpoint, 2.15).
+- VoiceOver reads paces in words through `PaceFormat.spoken` ("6 minutes 25 to 7 minutes 10 per kilometre").
 
 ## UI tests against a local API (task 3.9)
 

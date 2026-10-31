@@ -42,4 +42,48 @@ struct WholeModelTests {
         #expect(rows[0].spoken == "Week 1, Base, Oct 5, 16 kilometres, done")
         #expect(rows[3].spoken == "Week 4, Build, this week, 25 kilometres")
     }
+
+    @Test func theGoalCardLikeTheBoard() throws {
+        let goal = try model().goal
+        #expect(goal.title == "10K in 55:00")
+        #expect(goal.subtitle == "Race day Sunday, Dec 13 · 46 days to go")
+        #expect(goal.weekLabel == "Week 4 of 10")
+        #expect(goal.doneLabel == "3 weeks done")
+        #expect(goal.progress == 0.3)
+    }
+
+    @Test func goalsWithoutATimeOrDateOrRace() throws {
+        func goal(_ json: String, today: String = PlanFixture.today) throws -> WholeModel.Goal {
+            WholeModel(schedule: PlanSchedule(plan: try PlanFixture.detail(goal: json), today: today)).goal
+        }
+        #expect(try goal(#"{"type":"half_marathon","date":"2026-12-13","targetTimeSec":6300}"#).title == "Half marathon in 1:45:00")
+        #expect(try goal(#"{"type":"10k","date":"2026-12-13"}"#).title == "10K")
+        #expect(try goal(#"{"type":"10k"}"#).subtitle == "Ends Sunday, Dec 13")
+        #expect(try goal(#"{"type":"none"}"#).title == "Your plan")
+        #expect(try goal(#"{"type":"custom","label":"Trail 15K","date":"2026-12-13"}"#).title == "Trail 15K")
+        #expect(try goal(PlanFixture.goal, today: "2026-12-13").subtitle == "Race day Sunday, Dec 13 · today")
+        #expect(try goal(PlanFixture.goal, today: "2026-12-12").subtitle == "Race day Sunday, Dec 13 · 1 day to go")
+        #expect(try goal(PlanFixture.goal, today: "2026-12-14").subtitle == "Race was Sunday, Dec 13")
+    }
+
+    @Test func beforeTheStartAndAfterTheEnd() throws {
+        let before = try model(today: "2026-10-01").goal
+        #expect(before.weekLabel == "Starts Oct 5")
+        #expect(before.doneLabel == "0 weeks done")
+        #expect(before.progress == 0)
+        let after = try model(today: "2027-01-01").goal
+        #expect(after.weekLabel == "Plan finished")
+        #expect(after.doneLabel == "10 weeks done")
+        #expect(after.progress == 1)
+    }
+
+    @Test func theChartHasABarPerWeekWithThisWeekMarked() throws {
+        let bars = try model().bars
+        #expect(bars.map(\.kilometres) == [16, 18, 21, 24.9, 20, 28, 31, 33, 24, 16])
+        #expect(bars.map(\.isCurrent) == [false, false, false, true, false, false, false, false, false, false])
+        let ahead: [Bool] = [false, false, false, false] + Array(repeating: true, count: 6)
+        #expect(bars.map(\.isAhead) == ahead)
+        #expect(bars[3].phase == .build)
+        #expect(try model().chartSpoken == "Weekly distance for the 10-week plan. Weeks 1 to 3 done, week 4 this week, longest week 33 km.")
+    }
 }
