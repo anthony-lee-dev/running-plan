@@ -6,5 +6,6 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   server: { proxy: { "/v1": "http://localhost:8787" } },
+  // testTimeout leaves room for a 5 s async wait (src/test/setup.ts) to fail with its own error.
   test: { environment: "jsdom", globals: true, setupFiles: ["./src/test/setup.ts"], testTimeout: 15000 },
 });
