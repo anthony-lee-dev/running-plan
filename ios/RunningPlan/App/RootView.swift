@@ -2,17 +2,25 @@ import SwiftUI
 
 struct RootView: View {
     @State private var selection: AppTab = .initial
-    @State private var plans = PlanStore(
-        loader: APIPlanLoader(client: APIConfiguration.liveSignedInClient()),
-        account: APIConfiguration.liveSession,
-        writer: APISessionWriter(client: APIConfiguration.liveSignedInClient())
-    )
+    @State private var plans: PlanStore
+    @State private var inbox: InboxStore
+    @State private var showInbox = false
     @State private var watchSync = WatchSyncModel()
     @State private var showOnboarding = false
     /// A session's spec sheet, over the tabs.
     @State private var openSession: SessionRoute?
     /// The editor for a new session, or the move sheet.
     @State private var sheet: SessionRoute?
+
+    init() {
+        let plans = PlanStore(
+            loader: APIPlanLoader(client: APIConfiguration.liveSignedInClient()),
+            account: APIConfiguration.liveSession,
+            writer: APISessionWriter(client: APIConfiguration.liveSignedInClient())
+        )
+        _plans = State(initialValue: plans)
+        _inbox = State(initialValue: InboxStore(service: APIInboxService(client: APIConfiguration.liveSignedInClient()), health: LiveHealthImporter(), plans: plans))
+    }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -25,6 +33,10 @@ struct RootView: View {
         .tint(Palette.accentText.color)
         .preferredColorScheme(.dark)
         .task { await plans.load() }
+        .task(id: plans.plan?.value1.value1.id) {
+            // The count on Next's inbox card; the inbox screen shows any error itself.
+            if plans.plan != nil { await inbox.refresh() }
+        }
         .task(id: watchWindowKey) {
             guard let plan = plans.plan else { return }
             await watchSync.resync(sessions: plan.value2.sessions, today: PreviewViewModel.localToday())
@@ -34,6 +46,9 @@ struct RootView: View {
                 showOnboarding = false
                 Task { await plans.show(planId: id) }
             })
+        }
+        .fullScreenCover(isPresented: $showInbox) {
+            InboxScreen(store: inbox, onClose: { showInbox = false })
         }
         .fullScreenCover(item: $openSession) { route in
             if case .open(let id) = route {
@@ -64,7 +79,8 @@ extension RootView {
         case .next:
             NextScreen(
                 plans: plans, onSetGoal: { showOnboarding = true },
-                onOpen: { openSession = .open(sessionId: $0) }, onMove: { sheet = .move(sessionId: $0) }
+                onOpen: { openSession = .open(sessionId: $0) }, onMove: { sheet = .move(sessionId: $0) },
+                inboxCount: inbox.count, onInbox: { showInbox = true }
             )
         case .plan:
             PlanScreen(

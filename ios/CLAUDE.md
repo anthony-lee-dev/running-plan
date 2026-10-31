@@ -154,6 +154,23 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   `INFOPLIST_KEY_NSHealth*` lines from `project.yml`; the preview still works and scheduling needs a device check.
 - Add to Apple Watch uses `.workoutPreview`, which needs no permission. Watch sends need a paired Apple Watch.
 
+## Import inbox (task 4.3)
+
+- `Features/Inbox/`: `InboxModel` (pure: cards, "Match to a session" choices, missed sessions) and `LocalDay` (a start
+  `Date` in the workout's own zone to `YYYY-MM-DD`) are unit-tested; `HealthWorkoutMapper` (pure) turns Health workouts
+  and manual entries into upload records; `InboxStore` drives `InboxServing` (the activity endpoints) and
+  `HealthImporting` (HealthKit in `LiveHealthImporter`, a fake in tests); `InboxScreen` only draws.
+- Health read access is asked for only from the user's tap on "Check Health for new workouts"; opening the inbox imports
+  only when access was already given, so no system prompt appears unasked (and UI tests are never blocked by one).
+  A workout's `localDate` uses the zone in its Health metadata, else the device's. Uploads skip a record with a bad
+  duration and drop bad optional fields (one bad field makes the API refuse the whole batch), in batches of 200.
+- The server's `suggestedSessionId` is not stored, so `InboxStore` keeps it for this run; the model falls back to the
+  same local date, a fitting type (mirrors `fits` in `api/src/domain/suggestions.ts`) and a session no other card holds.
+  Two runs on one day: the second is offered the day's session by hand until the first is confirmed.
+- Next has an always-visible "Import inbox" card (`next.inbox`): it is the way in to the inbox when empty and to manual entry.
+  A confirmed match is merged into `PlanStore` (`replace(session:...)`) so Next and Week show the session done.
+- Not done here: calling `generateProposals` after an import (the review and proposals tasks, 4.5 on).
+
 ## Commands
 
 - `bash scripts/verify.sh ios` (from repo root) regenerates the project, then builds and runs tests on a simulator.

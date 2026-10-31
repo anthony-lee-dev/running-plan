@@ -6,6 +6,8 @@ struct NextScreen: View {
     let onSetGoal: () -> Void
     var onOpen: (String) -> Void = { _ in }
     var onMove: (String) -> Void = { _ in }
+    var inboxCount = 0
+    var onInbox: () -> Void = {}
     @State private var busy = false
     @State private var error: String?
 
@@ -15,7 +17,7 @@ struct NextScreen: View {
             case .loaded(let plan):
                 NextView(
                     model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday())), onSetGoal: onSetGoal,
-                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, busy: busy, error: error
+                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox, busy: busy, error: error
                 )
             case .loading:
                 centred { ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your plan") }
