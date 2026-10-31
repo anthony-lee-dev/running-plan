@@ -378,50 +378,43 @@ private struct CustomFields: View {
     }
 }
 
-/// A time (`m:ss`) or distance (km) entry for a goal, applied as it is typed.
+/// A time (minute and second wheels) or distance (whole-km and hundredths wheels) dial for a goal. It reads the goal
+/// directly and writes only when a wheel moves, so opening a step never changes it.
 struct GoalValueField: View {
     @Binding var goal: Components.Schemas.StepGoal
-    @State private var text = ""
 
     var body: some View {
-        HStack {
-            TextField(goal._type == .time ? "m:ss" : "km", text: $text)
-                .keyboardType(goal._type == .time ? .numbersAndPunctuation : .decimalPad)
-                .font(.system(size: 18, weight: .semibold)).monospacedDigit()
-                .foregroundStyle(Palette.ink.color)
-                .accessibilityLabel(goal._type == .time ? "Time, minutes and seconds" : "Distance in kilometres")
-            Text(goal._type == .time ? "min:sec" : "km").font(.system(size: 14)).foregroundStyle(Palette.muted.color)
+        Group {
+            switch goal._type {
+            case .time:
+                TwoWheelDial(
+                    firstLabel: "Minutes", firstRange: Array(0...DialValues.maxMinutes),
+                    firstSelection: Binding(get: { DialValues.minutes(value) }, set: { set(DialValues.time(minutes: $0, seconds: DialValues.secondsPart(value))) }),
+                    firstUnit: "min",
+                    secondLabel: "Seconds", secondRange: Array(0...59),
+                    secondSelection: Binding(get: { DialValues.secondsPart(value) }, set: { set(DialValues.time(minutes: DialValues.minutes(value), seconds: $0)) }),
+                    secondUnit: "sec", secondFormat: { String(format: "%02d", $0) },
+                    identifier: "goal.time")
+            case .distance:
+                TwoWheelDial(
+                    firstLabel: "Kilometres", firstRange: Array(0...DialValues.maxKm),
+                    firstSelection: Binding(get: { DialValues.km(value) }, set: { set(DialValues.distance(km: $0, keepingFractionOf: value)) }),
+                    firstUnit: "",
+                    secondLabel: "Fraction of a kilometre", secondRange: Array(0...99),
+                    secondSelection: Binding(get: { DialValues.hundredths(value) }, set: { set(DialValues.distance(hundredths: $0, keepingKmOf: value)) }),
+                    secondUnit: "km", secondFormat: { String(format: ".%02d", $0) },
+                    identifier: "goal.distance")
+            case .open:
+                EmptyView()
+            }
         }
         .padding(.horizontal, 16)
-        .frame(minHeight: 50)
         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 16))
-        .onAppear { text = Self.text(goal) }
-        .onChange(of: goal._type) { text = Self.text(goal) }
-        .onChange(of: text) { apply(text) }
     }
 
-    static func text(_ goal: Components.Schemas.StepGoal) -> String {
-        switch goal._type {
-        case .time: StepFormat.clock(goal.value ?? 0)
-        // To the metre, so showing a goal never rounds it (1250 m reads 1.25, not 1.3).
-        // "%.3f" always has three decimals, so trimming trailing zeros never eats a whole number's zeros.
-        case .distance: String(format: "%.3f", Double(goal.value ?? 0) / 1000).replacing(/\.?0+$/, with: "")
-        case .open: ""
-        }
-    }
+    private var value: Int { goal.value ?? 0 }
 
-    /// Writes the typed value only when it differs, so opening a step never changes it.
-    private func apply(_ text: String) {
-        let value: Int
-        switch goal._type {
-        case .time:
-            value = StepFormat.parseTime(text) ?? 0
-        case .distance:
-            let km = Double(text.replacingOccurrences(of: ",", with: ".")) ?? 0
-            value = min(200_000, Int((km * 1000).rounded()))
-        case .open:
-            return
-        }
+    private func set(_ value: Int) {
         if value != goal.value { goal = .init(_type: goal._type, value: value) }
     }
 }
