@@ -145,6 +145,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   from the Mac's Xcode 27.1; keep the deployment target at iOS 17 so both build.
   It picks the first iPhone on the newest installed iOS runtime (older runtimes may not match the
   installed Xcode). Override with `IOS_SIM_DEST='platform=iOS Simulator,id=<udid>'`.
+- The `ios` check builds only when `ios/` changes beyond Markdown (or `spec/`, `api/`, `scripts/verify.sh` or the workflow
+  does). It caches the API client generator build and DerivedData; a cache miss only makes it slower.
 
 ## Manual gates (agents list these in the PR body, the human ticks them)
 

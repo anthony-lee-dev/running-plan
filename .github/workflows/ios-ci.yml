@@ -1,6 +1,7 @@
 name: ios-ci
 # Required check "ios" on main. Runs on every PR (see api-ci for why) but only builds
-# when ios/, spec/, the API its UI tests run against, or the verify script changed, so other PRs pass in seconds.
+# when ios/ (other than Markdown), spec/, the API its UI tests run against, the verify script or this workflow
+# changed, so other PRs pass in seconds.
 on:
   pull_request:
   push:
@@ -25,17 +26,19 @@ jobs:
           if [[ ! -f ios/project.yml ]]; then
             echo "No iOS project yet; nothing to build."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if git diff --quiet "$BASE" HEAD -- ios spec api package-lock.json scripts/verify.sh 2>/dev/null; then
+          if git diff --quiet "$BASE" HEAD -- ios ':(exclude)ios/*.md' spec api package-lock.json scripts/verify.sh .github/workflows/ios-ci.yml 2>/dev/null; then
             echo "iOS untouched."; echo "run=false" >> "$GITHUB_OUTPUT"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Select the newest Xcode on the runner
+        id: xcode
         if: steps.changes.outputs.run == 'true'
         run: |
           xc="$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)"
           if [[ -n "$xc" ]]; then sudo xcode-select -s "$xc"; fi
           xcodebuild -version
+          echo "version=$(xcodebuild -version | tr -s ' \n' '--')" >> "$GITHUB_OUTPUT"
       # The UI tests run against the API on Node (api/test/ui-server), started by verify.sh.
       - uses: actions/setup-node@v7
         if: steps.changes.outputs.run == 'true'
@@ -48,6 +51,28 @@ jobs:
       - name: Install XcodeGen
         if: steps.changes.outputs.run == 'true'
         run: brew install xcodegen
+      # Caches only speed the build up; a miss rebuilds from scratch. The generator is compiled by
+      # `swift run` in generate-api-client.sh (about 2 minutes cold). DerivedData restores the newest earlier
+      # build, so Xcode only recompiles what changed.
+      - uses: actions/cache@v4
+        if: steps.changes.outputs.run == 'true'
+        with:
+          path: ios/APIClientGenerator/.build
+          key: apiclient-generator-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/APIClientGenerator/Package.resolved', 'ios/APIClientGenerator/Package.swift') }}
+      # Every run restores the newest DerivedData for this Xcode; only main saves one, so PR runs
+      # don't fill the repo's cache quota.
+      - uses: actions/cache/restore@v4
+        if: steps.changes.outputs.run == 'true'
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
+          restore-keys: |
+            deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-
       - name: Verify
         if: steps.changes.outputs.run == 'true'
         run: bash scripts/verify.sh ios
+      - uses: actions/cache/save@v4
+        if: github.event_name == 'push' && steps.changes.outputs.run == 'true'
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
