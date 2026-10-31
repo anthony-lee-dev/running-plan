@@ -15,20 +15,27 @@ struct NextScreen: View {
             case .empty:
                 // Empty state of Next (docs/design-notes.md): the way into the interview.
                 centred {
-                    Button("Set a goal", action: onSetGoal)
-                        .font(.system(size: 17, weight: .semibold))
-                        .padding(.horizontal, 28)
-                        .frame(minHeight: 56)
-                        .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
-                        .foregroundStyle(.white)
+                    Button(action: onSetGoal) {
+                        // The frame inside the label, so the whole button is tappable.
+                        Text("Set a goal")
+                            .font(.system(size: 17, weight: .semibold))
+                            .padding(.horizontal, 28)
+                            .frame(minHeight: 56)
+                            .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
+                            .foregroundStyle(.white)
+                            .contentShape(Rectangle())
+                    }
                 }
             case .failed(let message):
                 centred {
                     Text(message).font(.system(size: 15)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
-                    Button("Try again") { Task { await plans.load() } }
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Palette.accentText.color)
-                        .frame(minHeight: Metrics.minTouchTarget)
+                    Button { Task { await plans.load() } } label: {
+                        Text("Try again")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Palette.accentText.color)
+                            .frame(minWidth: Metrics.minTouchTarget, minHeight: Metrics.minTouchTarget)
+                            .contentShape(Rectangle())
+                    }
                 }
             }
         }

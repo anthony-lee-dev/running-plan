@@ -54,14 +54,30 @@ struct NextModelTests {
     @Test func theWeekStripMarksDoneTodayRestAndPlannedDays() throws {
         let days = try model().week
         #expect(days.map(\.letter) == ["M", "T", "W", "T", "F", "S", "S"])
-        #expect(days.map(\.state) == [.done, .done, .today("28"), .rest, .planned("30"), .planned("31"), .planned("1")])
+        #expect(days.map(\.state) == [.done, .done, .planned("28"), .rest, .planned("30"), .planned("31"), .planned("1")])
+        #expect(days.map(\.isToday) == [false, false, true, false, false, false, false])
+    }
+
+    @Test func voiceOverReadsTheWeekAsOneSentenceWithFullDayNames() throws {
+        #expect(try model().weekSpoken == "This week: Monday done, Tuesday done, Wednesday today, Thursday rest, Friday planned, Saturday planned, Sunday planned")
+    }
+
+    @Test func aSessionAlreadyDoneTodayGivesWayToTheNext() throws {
+        let done = PlanFixture.sessionContents().map { $0.replacingOccurrences(of: #""date":"2026-10-28","type":"intervals","title":"Intervals: 5 × 600 m","key":true,"status":"planned""#, with: #""date":"2026-10-28","type":"intervals","title":"Intervals: 5 × 600 m","key":true,"status":"done""#) }
+        #expect(done != PlanFixture.sessionContents(), "the fixture's Wednesday should have been marked done")
+        let m = NextModel(schedule: PlanSchedule(plan: try PlanFixture.detail(replacing: done), today: PlanFixture.today))
+        #expect(m.focus?.label == "NEXT UP · FRIDAY, OCT 30")
+        #expect(m.week[2].state == .done)
+        #expect(m.week[2].isToday)
+        #expect(m.nextUp == nil)
     }
 
     @Test func onARestDayTheCardShowsTheNextSession() throws {
         let m = try model(today: "2026-10-29")
-        #expect(m.focus?.label == "NEXT UP · FRIDAY")
+        #expect(m.focus?.label == "NEXT UP · FRIDAY, OCT 30")
         #expect(m.focus?.title == "Easy run")
-        #expect(m.week[3].state == .todayRest)
+        #expect(m.week[3].state == .rest)
+        #expect(m.week[3].isToday)
         #expect(m.nextUp == nil, "the card already shows it")
     }
 
@@ -82,5 +98,21 @@ struct NextModelTests {
         #expect(m.eyebrow == "Sunday, Dec 20 · Plan finished")
         #expect(m.focus == nil)
         #expect(m.week.isEmpty)
+        #expect(m.nothingToDo == .finished)
+    }
+
+    @Test func afterTheLastSessionButBeforeTheEndThePlanIsNotCalledFinished() throws {
+        // The last session is Sat Dec 12; the plan ends on race day, Sun Dec 13.
+        let m = try model(today: "2026-12-13")
+        #expect(m.eyebrow.hasSuffix("Week 10 of 10 · Taper"))
+        #expect(m.focus == nil)
+        #expect(m.nothingToDo == .noMoreSessions)
+    }
+
+    @Test func aPlanWithNoSessionsSaysSo() throws {
+        let m = NextModel(schedule: PlanSchedule(plan: try PlanFixture.detail(replacing: []), today: PlanFixture.today))
+        #expect(m.focus == nil)
+        #expect(m.nothingToDo == .noMoreSessions)
+        #expect(try model().nothingToDo == nil)
     }
 }

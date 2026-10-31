@@ -23,8 +23,8 @@ struct NextView: View {
                 }
                 if let focus = model.focus {
                     FocusCard(focus: focus)
-                } else {
-                    finished
+                } else if let nothing = model.nothingToDo {
+                    nothingCard(nothing)
                 }
                 if !model.week.isEmpty {
                     weekCard
@@ -36,14 +36,22 @@ struct NextView: View {
         .background(Palette.bg.color.ignoresSafeArea())
     }
 
-    private var finished: some View {
+    private func nothingCard(_ nothing: NextModel.NothingToDo) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Your plan is finished. Well done.").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink.color)
-            Button("Set a new goal", action: onSetGoal)
+            Text(nothing == .finished ? "Your plan is finished. Well done." : "No more sessions in this plan.")
                 .font(.system(size: 17, weight: .semibold))
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 16))
-                .foregroundStyle(.white)
+                .foregroundStyle(Palette.ink.color)
+            if nothing == .finished {
+                Button(action: onSetGoal) {
+                    // The frame inside the label, so the whole bar is tappable.
+                    Text("Set a new goal")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 16))
+                        .foregroundStyle(.white)
+                        .contentShape(Rectangle())
+                }
+            }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -64,6 +72,8 @@ struct NextView: View {
                     DayDot(day: day).frame(maxWidth: .infinity)
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(model.weekSpoken)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule().fill(Palette.line.color)
@@ -153,22 +163,13 @@ struct WorkoutShape: View {
 private struct DayDot: View {
     let day: NextModel.Day
 
-    private var isToday: Bool {
-        switch day.state {
-        case .today, .todayRest: true
-        default: false
-        }
-    }
-
     var body: some View {
         VStack(spacing: 6) {
             Text(day.letter)
-                .font(.system(size: 12, weight: isToday ? .semibold : .regular))
-                .foregroundStyle(isToday ? Palette.ink.color : Palette.muted.color)
+                .font(.system(size: 12, weight: day.isToday ? .semibold : .regular))
+                .foregroundStyle(day.isToday ? Palette.ink.color : Palette.muted.color)
             dot.frame(width: 36, height: 36)
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
     }
 
     @ViewBuilder private var dot: some View {
@@ -176,31 +177,20 @@ private struct DayDot: View {
         case .done:
             Circle().fill(Palette.green.color)
                 .overlay(Image(systemName: "checkmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.greenInk.color))
-        case .today(let number):
-            Circle().strokeBorder(Palette.accentBorder.color, lineWidth: 3)
-                .overlay(Text(number).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink.color))
-        case .todayRest:
-            Circle().strokeBorder(Palette.accentBorder.color, style: StrokeStyle(lineWidth: 3, dash: [4, 3]))
-                .overlay(Text("rest").font(.system(size: 11)).foregroundStyle(Palette.ink.color))
-        case .rest:
-            Circle().strokeBorder(Palette.restRing.color, style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
-                .overlay(Text("rest").font(.system(size: 11)).foregroundStyle(Palette.muted.color))
-        case .skipped:
-            Circle().strokeBorder(Palette.line.color, lineWidth: 2)
-                .overlay(Image(systemName: "minus").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.muted.color))
+                .overlay(day.isToday ? Circle().strokeBorder(Palette.accentBorder.color, lineWidth: 3) : nil)
         case .planned(let number):
-            Circle().strokeBorder(Palette.line.color, lineWidth: 2)
-                .overlay(Text(number).font(.system(size: 13)).foregroundStyle(Palette.muted.color))
-        }
-    }
-
-    private var label: String {
-        let when = isToday ? "Today" : day.letter
-        switch day.state {
-        case .done: return "\(when), done"
-        case .skipped: return "\(when), skipped"
-        case .rest, .todayRest: return "\(when), rest day"
-        case .today(let n), .planned(let n): return "\(when) \(n), planned"
+            Circle().strokeBorder(day.isToday ? Palette.accentBorder.color : Palette.line.color, lineWidth: day.isToday ? 3 : 2)
+                .overlay(
+                    Text(number)
+                        .font(.system(size: 13, weight: day.isToday ? .semibold : .regular))
+                        .foregroundStyle(day.isToday ? Palette.ink.color : Palette.muted.color)
+                )
+        case .rest:
+            Circle().strokeBorder(day.isToday ? Palette.accentBorder.color : Palette.restRing.color, style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                .overlay(Text("rest").font(.system(size: 11)).foregroundStyle(day.isToday ? Palette.ink.color : Palette.muted.color))
+        case .skipped:
+            Circle().strokeBorder(day.isToday ? Palette.accentBorder.color : Palette.line.color, lineWidth: 2)
+                .overlay(Image(systemName: "minus").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.muted.color))
         }
     }
 }

@@ -13,14 +13,21 @@ struct NextModel: Equatable {
     }
 
     enum DayState: Equatable {
-        case done, skipped, rest, todayRest
-        case today(String)
+        case done, skipped, rest
+        /// Still to do; the day of the month.
         case planned(String)
     }
 
     struct Day: Equatable {
         let letter: String
+        let weekday: String
         let state: DayState
+        let isToday: Bool
+    }
+
+    /// Why there is no card: the plan has ended, or nothing is left to do in it (no sessions, or past the last one).
+    enum NothingToDo: Equatable {
+        case finished, noMoreSessions
     }
 
     let eyebrow: String
@@ -32,11 +39,27 @@ struct NextModel: Equatable {
     let weekProgress: Double
     /// The session after the one on the card, when the card is today's.
     let nextUp: String?
+    /// Set when there is no card.
+    let nothingToDo: NothingToDo?
+    /// The week strip as one VoiceOver sentence.
+    var weekSpoken: String {
+        "This week: " + week.map { day in
+            let state: String
+            switch day.state {
+            case .done: state = "done"
+            case .skipped: state = "skipped"
+            case .rest: state = "rest"
+            case .planned: state = day.isToday ? "today" : "planned"
+            }
+            return "\(day.weekday) \(state)"
+        }.joined(separator: ", ")
+    }
 
     init(schedule: PlanSchedule) {
         let today = schedule.today
         let day = "\(Self.weekday(today)), \(PlanPreview.shortDate(today))"
-        let todays = schedule.todaySessions
+        // Only what is still to do today; a session done or skipped gives way to the next one.
+        let todays = schedule.todaySessions.filter { $0.value2.status == .planned }
         // A run before strength when a day has both.
         let todayMain = todays.first { $0.value2._type != .strength && $0.value2._type != .custom } ?? todays.first
 
@@ -62,7 +85,7 @@ struct NextModel: Equatable {
                 focus = Self.focus(todayMain.value2, label: "TODAY")
                 nextUp = schedule.nextSession.map { "Next up: \($0.value2.title ?? SessionSummary.effort($0.value2)), \(Self.weekday($0.value2.date)) · \(Self.size($0.value2))" }
             } else {
-                focus = schedule.nextSession.map { Self.focus($0.value2, label: "NEXT UP · \(Self.weekday($0.value2.date).uppercased())") }
+                focus = schedule.nextSession.map { Self.focus($0.value2, label: "NEXT UP · \(Self.weekday($0.value2.date).uppercased()), \(PlanPreview.shortDate($0.value2.date).uppercased())") }
                 nextUp = nil
             }
             let sessions = schedule.sessions(inWeek: index)
@@ -70,9 +93,7 @@ struct NextModel: Equatable {
                 let onDay = sessions.filter { $0.value2.date == date && $0.value2._type != .rest }.map(\.value2)
                 let number = String(Int(date.suffix(2)) ?? 0)
                 let state: DayState
-                if date == today {
-                    state = onDay.isEmpty ? .todayRest : .today(number)
-                } else if onDay.isEmpty {
+                if onDay.isEmpty {
                     state = .rest
                 } else if onDay.allSatisfy({ $0.status == .done }) {
                     state = .done
@@ -81,7 +102,8 @@ struct NextModel: Equatable {
                 } else {
                     state = .planned(number)
                 }
-                return Day(letter: String(Self.weekday(date).prefix(1)), state: state)
+                let weekday = Self.weekday(date)
+                return Day(letter: String(weekday.prefix(1)), weekday: weekday, state: state, isToday: date == today)
             }
             let count = schedule.sessionCount(week: index)
             let done = schedule.doneCount(week: index)
@@ -89,6 +111,12 @@ struct NextModel: Equatable {
             weekHeader = "\(Int((schedule.plannedMetres(week: index) / 1000).rounded())) km planned · \(done) of \(count) sessions"
             weekProgress = count > 0 ? Double(done) / Double(count) : 0
         }
+        nothingToDo = Self.nothing(focus, schedule.position)
+    }
+
+    private static func nothing(_ focus: Focus?, _ position: PlanSchedule.Position) -> NothingToDo? {
+        guard focus == nil else { return nil }
+        return position == .finished ? .finished : .noMoreSessions
     }
 
     private static func focus(_ s: Components.Schemas.SessionContent, label: String) -> Focus {
