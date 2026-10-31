@@ -179,6 +179,57 @@ actor FakeWriter: SessionWriting {
         calls.append("checkin \(sessionId) \(feeling.feel) \(id)")
         _ = try answer.get()
     }
+
+    func deletePlan(id: String, revision: Int) async throws {
+        calls.append("deletePlan \(id) @\(revision)")
+        _ = try answer.get()
+    }
+}
+
+@MainActor
+struct PlanStoreDeleteTests {
+    private func loaded(_ writer: FakeWriter, loader: FakeLoader? = nil) async throws -> PlanStore {
+        let fallback = FakeLoader(.success(try PlanFixture.detail()))
+        let store = PlanStore(loader: loader ?? fallback, account: Account(true), writer: writer)
+        await store.load()
+        return store
+    }
+
+    @Test func deletingThePlanSendsItsRevisionAndShowsTheEmptyState() async throws {
+        let writer = FakeWriter()
+        let store = try await loaded(writer)
+        #expect(await store.deletePlan() == nil)
+        #expect(store.state == .empty)
+        #expect(await writer.calls == ["deletePlan \(PlanFixture.planID) @3"])
+    }
+
+    @Test func aPlanAlreadyGoneIsTreatedAsDeleted() async throws {
+        let store = try await loaded(FakeWriter(.failure(.notFound)))
+        #expect(await store.deletePlan() == nil)
+        #expect(store.state == .empty)
+    }
+
+    @Test func offlineKeepsThePlanAndExplains() async throws {
+        let store = try await loaded(FakeWriter(.failure(.offline)))
+        let error = await store.deletePlan()
+        #expect(error?.contains("connection") == true)
+        #expect(store.plan != nil)
+    }
+
+    @Test func aConflictReloadsThePlanAndSaysSo() async throws {
+        let loader = FakeLoader(.success(try PlanFixture.detail()))
+        let store = try await loaded(FakeWriter(.failure(.conflict)), loader: loader)
+        let error = await store.deletePlan()
+        #expect(error?.contains("changed") == true)
+        #expect(store.plan != nil)
+        #expect(await loader.calls == ["active", "plan \(PlanFixture.planID)"])
+    }
+
+    @Test func nothingLoadedMeansNothingToDelete() async {
+        let store = PlanStore(loader: FakeLoader(.success(nil)), account: Account(false), writer: FakeWriter())
+        await store.load()
+        #expect(await store.deletePlan() != nil)
+    }
 }
 
 @MainActor
