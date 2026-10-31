@@ -92,6 +92,11 @@ final class PlanStore {
         }
     }
 
+    /// A session the server changed outside this store's own edits (a match confirmed or undone).
+    func replace(session: Components.Schemas.Session, planContentRevision: Int, warnings: [Components.Schemas.Warning]) {
+        merge(.init(session: session, planContentRevision: planContentRevision, warnings: warnings))
+    }
+
     private func write(_ body: () async throws -> Components.Schemas.SessionWriteResult) async -> String? {
         do {
             merge(try await body())

@@ -8,6 +8,9 @@ struct NextView: View {
     var onOpen: (String) -> Void = { _ in }
     var onEasier: (String) -> Void = { _ in }
     var onMove: (String) -> Void = { _ in }
+    /// Workouts waiting in the import inbox, and the way into it (also how a run is added by hand).
+    var inboxCount = 0
+    var onInbox: () -> Void = {}
     /// A quick adjustment is on its way to the server.
     var busy = false
     var error: String?
@@ -35,11 +38,35 @@ struct NextView: View {
                 if !model.week.isEmpty {
                     weekCard
                 }
+                inboxCard
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
         .background(Palette.bg.color.ignoresSafeArea())
+    }
+
+    private var inboxCard: some View {
+        Button(action: onInbox) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Import inbox").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink.color)
+                    Text(inboxCount == 0 ? "Check Health for new runs" : "\(inboxCount) waiting to be matched")
+                        .font(.system(size: 13)).foregroundStyle(Palette.muted.color)
+                }
+                Spacer()
+                if inboxCount > 0 {
+                    Text("\(inboxCount)").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                        .padding(.horizontal, 9).padding(.vertical, 3).background(Palette.accent.color, in: Capsule())
+                }
+                Image(systemName: "chevron.right").foregroundStyle(Palette.muted.color)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: Metrics.minTouchTarget, alignment: .leading)
+            .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 20))
+            .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("next.inbox")
     }
 
     private func nothingCard(_ nothing: NextModel.NothingToDo) -> some View {
