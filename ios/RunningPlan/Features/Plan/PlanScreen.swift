@@ -75,7 +75,10 @@ struct PlanScreen: View {
                     .foregroundStyle(Palette.muted.color)
                     .accessibilityIdentifier("plan.delete.error")
             }
-            Button { confirmDelete = true } label: {
+            Button {
+                deleteError = nil
+                confirmDelete = true
+            } label: {
                 Text("Delete plan")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Palette.muted.color)
