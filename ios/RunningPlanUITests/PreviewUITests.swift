@@ -93,6 +93,46 @@ final class PreviewUITests: XCTestCase {
         XCTAssertFalse(weekTitle.label.hasPrefix("Week 1"), "A plan started in the past should be past week 1, got \(weekTitle.label)")
     }
 
+    /// Issue #104: pick a later start date; the plan is rebuilt from it, saves, and Next shows it as not started yet.
+    @MainActor
+    func testPickingALaterStartDateSavesAPlanThatHasNotStarted() async throws {
+        let api = try LocalAPI.url()
+        let app = LocalAPI.openPreview(api)
+        let before = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
+
+        // The 15th of next month: always ahead (at least 15 days) and within the 12-month cap.
+        let calendar = Calendar.current
+        var parts = calendar.dateComponents([.year, .month], from: Date())
+        parts.month! += 1
+        parts.day = 15
+        let target = calendar.date(from: parts)!
+        let picker = app.datePickers["preview.startDate"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
+        for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
+        picker.buttons.firstMatch.tap()
+        app.buttons["Next Month"].tap()
+        let label = DateFormatter()
+        label.dateFormat = "EEEE, MMMM d"
+        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
+        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        day.tap()
+
+        let deadline = Date().addingTimeInterval(15)
+        var after = before
+        while after <= before, Date() < deadline {
+            try await Task.sleep(for: .milliseconds(300))
+            after = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
+        }
+        XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
+
+        let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
+        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        try await LocalAPI.saveAndSignIn(app, api)
+
+        let starts = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Starts'")).firstMatch
+        XCTAssertTrue(starts.waitForExistence(timeout: 10), app.debugDescription)
+    }
+
     @MainActor
     func testTheCloseButtonLeavesThePreview() async throws {
         let api = try LocalAPI.url()

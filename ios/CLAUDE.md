@@ -44,8 +44,10 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   `.accessibilityElement(children: .contain)` first; and read observable state in `body`, not only inside a
   `Binding(get:)` closure, or the view does not redraw when it changes.
 
-- Start date (issue #97): the preview has a "Starts on" date picker (`preview.startDate`), today by default, today or
-  earlier only. The chosen date goes to `plans/generate` as `today` (the engine builds from it), `PreviewViewModel.startDate`
+- Start date (issue #97): the preview has a "Starts on" date picker (`preview.startDate`), today by default, any earlier
+  day, or a later one up to 12 months ahead (`PreviewViewModel.latestStart`; the engine and API accept a future `today`,
+  no spec change). A plan that has not started shows through `PlanSchedule.Position.notStarted`: Next shows "Starts <day>"
+  and the first session, Plan opens on week 1, the watch window and inbox have no "today" session or missed ones. The chosen date goes to `plans/generate` as `today` (the engine builds from it), `PreviewViewModel.startDate`
   is nil for "today", and `SavedPreview.startDate` (optional) keeps it so a saved draft is reused only for the same date.
   A goal date can still move the start (engine alignment); the preview then says so. The interview itself is unchanged.
 - Inbox picker (issue #98): "Match to a session" lists every open session of a fitting type in the plan, nearest the
@@ -107,7 +109,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 ## Scroll dials (issue #99)
 
 - Time, distance and pace are set on two native wheel pickers (`TwoWheelDial`), not typed: time is minutes (0 to 3333) and
-  seconds, distance whole km (0 to 200) and hundredths of a km (10 m steps), pace minutes (2 to 20) and seconds.
+  seconds, distance whole km (0 to 200) and tenths of a km (0.1 km steps; a value saved at two decimals, like 1.25 km, adds its own
+  step to the tenths wheel so it still shows, and is only rewritten when the user moves a wheel), pace minutes (2 to 20) and seconds.
   `DialValues` (pure, unit-tested) splits and rejoins them within the API's ranges (goal 1 to 200000, pace 120 to 1200).
   The dials read the saved value directly and write only when a wheel moves, so opening a step never changes it, and
   the km wheel keeps an off-grid saved value's metres. Identifiers: `goal.time`, `goal.distance`, `pace.fastest`,

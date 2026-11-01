@@ -17,7 +17,7 @@ enum DialValues {
     /// A time from the two wheels; never below one second, which the API requires.
     static func time(minutes: Int, seconds: Int) -> Int { min(maxGoal, max(1, minutes * 60 + seconds)) }
 
-    // MARK: Distance (whole-km and hundredths-of-a-km wheels, so 10 m steps)
+    // MARK: Distance (whole-km wheel and a decimal wheel in 0.1 km steps; saved hundredths still display)
 
     static func km(_ metres: Int) -> Int { min(maxKm, max(0, metres) / 1000) }
 
@@ -31,6 +31,20 @@ enum DialValues {
     static func distance(hundredths: Int, keepingKmOf metres: Int) -> Int { clampDistance(km(metres) * 1000 + hundredths * 10) }
 
     private static func clampDistance(_ metres: Int) -> Int { min(maxGoal, max(10, metres)) }
+
+    /// The decimal wheel's steps, in hundredths of a km: tenths (0.1 km), plus the saved value's own step when it sits
+    /// between tenths (an older 2-decimal value), so it still shows and is not rewritten unless the user moves the wheel.
+    static func fractionOptions(_ metres: Int) -> [Int] {
+        var options = Array(stride(from: 0, through: 90, by: 10))
+        let current = hundredths(metres)
+        if !options.contains(current) { options.append(current); options.sort() }
+        return options
+    }
+
+    /// ".5" for a tenth, ".25" for an off-grid hundredth.
+    static func fractionLabel(_ hundredths: Int) -> String {
+        hundredths % 10 == 0 ? ".\(hundredths / 10)" : String(format: ".%02d", hundredths)
+    }
 
     // MARK: Pace (minute and second wheels, per km)
 
