@@ -76,8 +76,8 @@ struct PreviewView: View {
         .padding(.top, 8)
     }
 
-    /// The start-date picker: today by default, or any earlier day (a back-dated plan shows its past sessions as missed,
-    /// so a run already done can be matched to one).
+    /// The start-date picker: today by default, an earlier day (a back-dated plan shows its past sessions as missed,
+    /// so a run already done can be matched to one), or a later one up to 12 months ahead (a plan that starts then).
     private var startCard: some View {
         let zone = TimeZone.current
         let chosen = model.effectiveStart
@@ -103,7 +103,7 @@ struct PreviewView: View {
                 .colorScheme(.dark)
                 .accessibilityIdentifier("preview.startDate")
             }
-            Text("Today, or an earlier day if you've already started. Sessions before today show as missed.")
+            Text("Today by default. Pick an earlier day if you've already started (sessions before today show as missed) or a later day to start then.")
                 .font(.system(size: 13)).foregroundStyle(Palette.muted.color)
             if let aligned, aligned != chosen {
                 Text("Your goal date moves the start to \(LocalDay.heading(aligned)), so the plan ends on it.")

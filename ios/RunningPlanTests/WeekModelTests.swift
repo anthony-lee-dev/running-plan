@@ -14,6 +14,15 @@ struct WeekModelTests {
         #expect(WeekModel.initialWeek(try schedule(today: "2027-01-01")) == 9, "after the end: the last week")
     }
 
+    @Test func aPlanThatHasNotStartedShowsWeekOneWithNothingToday() throws {
+        let s = try schedule(today: "2026-09-20")
+        let m = WeekModel(schedule: s, week: WeekModel.initialWeek(s))
+        #expect(m.title.hasPrefix("Week 1"))
+        #expect(!m.canGoBack)
+        #expect(m.addDate == "2026-10-05", "Add a session starts on the plan's first day, not a day before the plan")
+        #expect(!m.days.contains { $0.weekday == "TODAY" })
+    }
+
     @Test func theBoardsWeek() throws {
         let m = WeekModel(schedule: try schedule(), week: 3)
         #expect(m.title == "Week 4 · Build")

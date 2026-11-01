@@ -378,7 +378,7 @@ private struct CustomFields: View {
     }
 }
 
-/// A time (minute and second wheels) or distance (whole-km and hundredths wheels) dial for a goal. It reads the goal
+/// A time (minute and second wheels) or distance (whole-km and tenths wheels) dial for a goal. It reads the goal
 /// directly and writes only when a wheel moves, so opening a step never changes it.
 struct GoalValueField: View {
     @Binding var goal: Components.Schemas.StepGoal
@@ -400,9 +400,9 @@ struct GoalValueField: View {
                     firstLabel: "Kilometres", firstRange: Array(0...DialValues.maxKm),
                     firstSelection: Binding(get: { DialValues.km(value) }, set: { set(DialValues.distance(km: $0, keepingFractionOf: value)) }),
                     firstUnit: "",
-                    secondLabel: "Fraction of a kilometre", secondRange: Array(0...99),
+                    secondLabel: "Fraction of a kilometre", secondRange: DialValues.fractionOptions(value),
                     secondSelection: Binding(get: { DialValues.hundredths(value) }, set: { set(DialValues.distance(hundredths: $0, keepingKmOf: value)) }),
-                    secondUnit: "km", secondFormat: { String(format: ".%02d", $0) },
+                    secondUnit: "km", secondFormat: DialValues.fractionLabel,
                     identifier: "goal.distance")
             case .open:
                 EmptyView()

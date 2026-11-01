@@ -154,13 +154,32 @@ struct PreviewViewModelTests {
         #expect(store.saved?.startDate == "2026-10-26")
     }
 
-    @Test func aDateAfterTodayIsRefused() async throws {
+    @Test func choosingAFutureStartDateRegeneratesFromThatDateAndKeepsItWithTheDraft() async throws {
+        let generator = StubGenerator(.success(try DraftFixture.draft()))
+        let store = MemoryStore()
+        let vm = model(generator, store: store)
+        await vm.load()
+        await vm.setStartDate("2026-11-09")
+        #expect(await generator.todays == ["2026-11-02", "2026-11-09"])
+        #expect(vm.effectiveStart == "2026-11-09")
+        #expect(store.saved?.startDate == "2026-11-09")
+    }
+
+    @Test func theLatestStartIsTwelveMonthsAheadAndLaterDatesAreRefused() async throws {
         let generator = StubGenerator(.success(try DraftFixture.draft()))
         let vm = model(generator)
         await vm.load()
-        await vm.setStartDate("2026-11-03")
+        #expect(vm.latestStart == "2027-11-02")
+        await vm.setStartDate("2027-11-03")
         #expect(await generator.calls.count == 1)
         #expect(vm.startDate == nil)
+        await vm.setStartDate("2027-11-02")
+        #expect(vm.startDate == "2027-11-02")
+    }
+
+    @Test func aLeapDayCapFallsBackToTheTwentyEighth() {
+        #expect(PreviewViewModel.oneYearAfter("2027-02-28") == "2028-02-28")
+        #expect(PreviewViewModel.oneYearAfter("2028-02-29") == "2029-02-28")
     }
 
     @Test func choosingTodayAgainGoesBackToTheDefault() async throws {

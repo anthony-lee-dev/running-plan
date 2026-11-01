@@ -65,6 +65,15 @@ struct InboxModelTests {
         #expect(card.detail == "6:30/km average · 148 bpm")
     }
 
+    @Test func aPlanThatHasNotStartedHasNoMissedSessionsAndNothingIsMarkedMissed() throws {
+        // Today (Sep 20) is before the plan's first day: every open session is ahead, none missed.
+        let m = try model([activityFixture(id: "a1", date: "2026-09-20", durationSec: 1800)], today: "2026-09-20")
+        #expect(m.missedCount == 0)
+        let choices = m.choices(for: "a1")
+        #expect(!choices.isEmpty)
+        #expect(!choices.contains { $0.when.contains("missed") })
+    }
+
     @Test func aRunOnADayWithNothingPlannedIsAnExtraRun() throws {
         // Sunday Oct 25 is the last day of week 3, whose sessions are done.
         let card = try model([activityFixture(id: "a1", date: "2026-10-25", durationSec: 1325, distanceM: 3200, heartRate: nil)]).cards[0]

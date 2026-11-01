@@ -160,6 +160,18 @@ struct SessionDraftTests {
         #expect(DialValues.distance(km: 200, keepingFractionOf: 990) == 200_000, "capped at the API maximum")
     }
 
+    @Test func distanceFractionWheelGoesInTenthsAndKeepsAnOffGridSavedValue() {
+        #expect(DialValues.fractionOptions(1500) == [0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
+        // 1250 m (1.25 km) was saved at two decimals: its own step is added so it still shows, and nothing rewrites it.
+        #expect(DialValues.fractionOptions(1250) == [0, 10, 20, 25, 30, 40, 50, 60, 70, 80, 90])
+        #expect(DialValues.hundredths(1250) == 25)
+        #expect(DialValues.distance(hundredths: 25, keepingKmOf: 1250) == 1250)
+        #expect(DialValues.distance(hundredths: 30, keepingKmOf: 1250) == 1300)
+        #expect(DialValues.fractionLabel(50) == ".5")
+        #expect(DialValues.fractionLabel(0) == ".0")
+        #expect(DialValues.fractionLabel(25) == ".25")
+    }
+
     @Test func paceDialsStayWithinTheAPIRange() {
         #expect(DialValues.paceMinutes(315) == 5)
         #expect(DialValues.paceSecondsPart(315) == 15)

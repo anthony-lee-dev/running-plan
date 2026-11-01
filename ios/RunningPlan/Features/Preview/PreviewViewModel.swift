@@ -24,14 +24,23 @@ final class PreviewViewModel {
     /// A newer request makes an older one's answer stale, so only the latest may update the screen.
     private var generation = 0
 
-    /// The start date the user picked, or nil for today. Never after today. The engine builds the plan from the date
-    /// it is given (sent as `today`), so a past date back-dates the plan and its earlier sessions show as missed.
+    /// The start date the user picked, or nil for today. Never more than 12 months ahead. The engine builds the plan
+    /// from the date it is given (sent as `today`): a past date back-dates the plan and its earlier sessions show as
+    /// missed; a future date makes a plan that has not started yet.
     private(set) var startDate: String?
 
     /// The date the plan is built from.
     var effectiveStart: String { startDate ?? today() }
-    /// The latest date the picker offers.
-    var latestStart: String { today() }
+    /// The latest date the picker offers: the same day 12 months from today (29 February becomes the 28th).
+    var latestStart: String { Self.oneYearAfter(today()) }
+
+    static func oneYearAfter(_ day: String) -> String {
+        let parts = day.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return day }
+        let (year, month, date) = (parts[0] + 1, parts[1], parts[2])
+        let leapDay = month == 2 && date == 29 && !(year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
+        return String(format: "%04d-%02d-%02d", year, month, leapDay ? 28 : date)
+    }
 
     init(
         answers: InterviewAnswers,
@@ -71,10 +80,10 @@ final class PreviewViewModel {
         await generate()
     }
 
-    /// Today or an earlier date (string compare is safe for `YYYY-MM-DD`); a later one is ignored. Rebuilds the plan.
+    /// Any date up to `latestStart` (string compare is safe for `YYYY-MM-DD`); a later one is ignored. Rebuilds the plan.
     func setStartDate(_ date: String) async {
         let todayString = today()
-        guard date <= todayString else { return }
+        guard date <= latestStart else { return }
         let chosen: String? = date == todayString ? nil : date
         guard chosen != startDate else { return }
         startDate = chosen
