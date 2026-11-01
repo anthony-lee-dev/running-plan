@@ -3,13 +3,18 @@ import SwiftUI
 /// DK-Inbox: workouts found in Health (or added by hand) waiting to be matched to the plan. System fonts until the font task.
 struct InboxScreen: View {
     let store: InboxStore
+    let plans: PlanStore
     let onClose: () -> Void
     @State private var picking: String?
+    /// A session chosen in the picker: confirmed once the sheet has gone, so the check-in can be presented after it.
+    @State private var picked: (activityId: String, choice: InboxModel.Choice)?
     @State private var manual = false
     @State private var showAllRuns = false
 
     var body: some View {
         let model = store.model(today: PreviewViewModel.localToday())
+        // Read here, not only in the binding, so the cover appears when a match is confirmed.
+        let checkIn = store.pendingCheckIn
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Button(action: onClose) {
@@ -60,15 +65,26 @@ struct InboxScreen: View {
             .padding(.bottom, 24)
         }
         .background(Palette.bg.color.ignoresSafeArea())
-        .task { await store.load() }
+        .task {
+            // A check-in left from a match that finished after the inbox closed is not popped up on this visit.
+            store.finishCheckIn()
+            await store.load()
+        }
         .refreshable { await store.refresh() }
-        .sheet(isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } })) {
+        .sheet(isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } }), onDismiss: {
+            guard let pick = picked else { return }
+            picked = nil
+            Task { await store.confirm(activityId: pick.activityId, sessionId: pick.choice.id, label: pick.choice.title) }
+        }) {
             if let id = picking {
                 SessionPicker(choices: model.choices(for: id), emptyNote: model.emptyChoicesNote(for: id), onPick: { choice in
+                    picked = (id, choice)
                     picking = nil
-                    Task { await store.confirm(activityId: id, sessionId: choice.id, label: choice.title) }
                 }, onClose: { picking = nil })
             }
+        }
+        .fullScreenCover(item: Binding(get: { checkIn }, set: { if $0 == nil { store.finishCheckIn() } })) { target in
+            CheckInScreen(plans: plans, target: target, onClose: { store.finishCheckIn(saved: $0) })
         }
         .sheet(isPresented: $manual) { ManualRunSheet(store: store, onClose: { manual = false }) }
         .fullScreenCover(isPresented: $showAllRuns) { RunsScreen(store: store, onClose: { showAllRuns = false }) }

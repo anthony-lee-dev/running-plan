@@ -180,6 +180,11 @@ actor FakeWriter: SessionWriting {
         _ = try answer.get()
     }
 
+    func checkIn(sessionId: String, after answer: AfterCheckIn, id: String) async throws {
+        calls.append("after \(sessionId) \(answer.feeling.feel)/\(answer.feeling.effortFelt) \(answer.pain ? "pain" : "no pain") \(id)")
+        _ = try self.answer.get()
+    }
+
     func deletePlan(id: String, revision: Int) async throws {
         calls.append("deletePlan \(id) @\(revision)")
         _ = try answer.get()
@@ -293,6 +298,20 @@ struct PlanStoreEditTests {
         let store = try await loaded(writer)
         #expect(await store.checkIn(sessionId: intervals, feeling: .tired, id: "55555555-5555-4555-8555-555555555555") == nil)
         #expect(await writer.calls.first == "checkin \(intervals) 2 55555555-5555-4555-8555-555555555555")
+    }
+
+    @Test func anAfterSessionCheckInIsSentWithItsPainFlag() async throws {
+        let writer = FakeWriter()
+        let store = try await loaded(writer)
+        let answer = AfterCheckIn(feeling: .harder, pain: true)
+        #expect(await store.checkIn(sessionId: intervals, after: answer, id: "66666666-6666-4666-8666-666666666666") == nil)
+        #expect(await writer.calls.first == "after \(intervals) 2/8 pain 66666666-6666-4666-8666-666666666666")
+    }
+
+    @Test func aRefusedAfterCheckInSaysWeMayHaveIt() async throws {
+        let store = try await loaded(FakeWriter(.failure(.invalid)))
+        let error = await store.checkIn(sessionId: intervals, after: AfterCheckIn(feeling: .aboutRight, pain: false), id: "66666666-6666-4666-8666-666666666666")
+        #expect(error?.contains("check-in") == true)
     }
 
     @Test func aRefusedCheckInDoesNotTalkAboutSteps() async throws {
