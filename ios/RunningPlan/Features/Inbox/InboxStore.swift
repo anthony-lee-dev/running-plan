@@ -144,8 +144,12 @@ final class InboxStore {
         await refreshLists()
     }
 
-    /// The check-in was saved or skipped.
-    func finishCheckIn() { pendingCheckIn = nil }
+    /// The check-in was skipped, or saved: then Undo goes, since unmatching would leave the stored check-in feeding
+    /// proposals for a session that is no longer done.
+    func finishCheckIn(saved: Bool = false) {
+        pendingCheckIn = nil
+        if saved { lastConfirmed = nil }
+    }
 
     /// Takes the run off this session; it returns to the inbox and the session to planned.
     func unmatch(sessionId: String) async {

@@ -229,6 +229,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   kept before the lists reload); `InboxScreen` presents `CheckInScreen` full screen. The picker's choice is confirmed in the
   sheet's `onDismiss`, so the cover is never presented while the sheet is still leaving. Save sends through
   `PlanStore.checkIn(sessionId:after:id:)` (id made once per visit) and closes; "Skip for now" and the back link send nothing.
+  A saved check-in takes away the inbox's Undo (`finishCheckIn(saved: true)`): unmatching would leave the stored check-in
+  feeding proposals for a session no longer done. Opening the inbox drops a check-in left pending from an earlier visit.
 - Not wired: a check-in from the session page or after a re-map from the all-runs list, and `generateProposals` after an
   import (4.5 on).
 - UI-test request counts are for the whole run (one server), so compare before and after an action.

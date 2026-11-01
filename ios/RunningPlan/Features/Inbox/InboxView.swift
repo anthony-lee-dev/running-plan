@@ -65,7 +65,11 @@ struct InboxScreen: View {
             .padding(.bottom, 24)
         }
         .background(Palette.bg.color.ignoresSafeArea())
-        .task { await store.load() }
+        .task {
+            // A check-in left from a match that finished after the inbox closed is not popped up on this visit.
+            store.finishCheckIn()
+            await store.load()
+        }
         .refreshable { await store.refresh() }
         .sheet(isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } }), onDismiss: {
             guard let pick = picked else { return }
@@ -80,7 +84,7 @@ struct InboxScreen: View {
             }
         }
         .fullScreenCover(item: Binding(get: { checkIn }, set: { if $0 == nil { store.finishCheckIn() } })) { target in
-            CheckInScreen(plans: plans, target: target, onClose: { store.finishCheckIn() })
+            CheckInScreen(plans: plans, target: target, onClose: { store.finishCheckIn(saved: $0) })
         }
         .sheet(isPresented: $manual) { ManualRunSheet(store: store, onClose: { manual = false }) }
         .fullScreenCover(isPresented: $showAllRuns) { RunsScreen(store: store, onClose: { showAllRuns = false }) }

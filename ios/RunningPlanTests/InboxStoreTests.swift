@@ -203,6 +203,17 @@ struct InboxStoreTests {
 
         store.finishCheckIn()
         #expect(store.pendingCheckIn == nil)
+        #expect(store.lastConfirmed != nil, "Skipping keeps Undo")
+    }
+
+    @Test func aSavedCheckInTakesAwayUndo() async throws {
+        // Undo would leave the saved check-in feeding proposals for a session that is no longer done.
+        let (store, _, _, mondayId) = try await make()
+        await store.refresh()
+        await store.confirm(activityId: "a1", sessionId: mondayId, label: "Easy run · 5 km")
+        store.finishCheckIn(saved: true)
+        #expect(store.pendingCheckIn == nil)
+        #expect(store.lastConfirmed == nil)
     }
 
     @Test func aFailedMatchAsksForNoCheckIn() async throws {

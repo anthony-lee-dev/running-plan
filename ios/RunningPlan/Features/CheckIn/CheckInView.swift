@@ -5,7 +5,8 @@ import SwiftUI
 struct CheckInScreen: View {
     let plans: PlanStore
     let target: InboxStore.CheckInTarget
-    let onClose: () -> Void
+    /// Closes the screen; true when the check-in was saved.
+    let onClose: (_ saved: Bool) -> Void
     @State private var feeling: AfterFeeling?
     @State private var pain = false
     @State private var saving = false
@@ -16,7 +17,7 @@ struct CheckInScreen: View {
         CheckInView(
             model: CheckInModel(session: target.session.value2, activity: target.activity),
             feeling: $feeling, pain: $pain, saving: saving, error: error,
-            onSave: save, onSkip: onClose
+            onSave: save, onSkip: { onClose(false) }
         )
     }
 
@@ -26,7 +27,7 @@ struct CheckInScreen: View {
         Task {
             let failed = await plans.checkIn(sessionId: target.id, after: AfterCheckIn(feeling: feeling, pain: pain), id: id)
             saving = false
-            if let failed { error = failed } else { onClose() }
+            if let failed { error = failed } else { onClose(true) }
         }
     }
 }

@@ -83,6 +83,7 @@ final class InboxUITests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.staticTexts["inbox.empty"].waitForExistence(timeout: 10), "Saving returns to the inbox: \(app.debugDescription)")
+        XCTAssertFalse(app.buttons["inbox.undo"].exists, "A saved check-in takes away Undo")
         let checkIns = try await LocalAPI.requestCount(api, "POST /v1/sessions/*")
         XCTAssertEqual(checkIns, checkInsBefore + 1, "The check-in went to the API")
     }
