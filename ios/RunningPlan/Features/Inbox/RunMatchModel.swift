@@ -90,7 +90,8 @@ struct RunsModel {
             switch activity.value2.disposition {
             case .matched:
                 let session = activity.value2.match.flatMap { byId[$0.sessionId] }
-                status = session.map { .matched(sessionId: $0.value1.id, label: "\(InboxModel.label($0)) on \(LocalDay.heading($0.value2.date))") } ?? .inbox
+                status = session.map { .matched(sessionId: $0.value1.id, label: "\(InboxModel.label($0)) on \(LocalDay.heading($0.value2.date))") }
+                    ?? .matched(sessionId: activity.value2.match?.sessionId ?? "", label: "a session no longer in your plan")
             case .inbox: status = .inbox
             case .extra: status = .extra
             case .ignored: status = .ignored

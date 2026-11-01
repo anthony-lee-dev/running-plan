@@ -51,7 +51,7 @@ struct SessionScreen: View {
                 onSwap: { moving = true },
                 onCheckIn: { checkIn($0) },
                 matchedRun: matched.map(RunMatchModel.row(for:)),
-                canMatchRun: inbox != nil && matched == nil && RunMatchModel.canMatch(session, today: today),
+                canMatchRun: inbox?.allRunsLoaded == true && matched == nil && RunMatchModel.canMatch(session, today: today),
                 onPickRun: { pickingRun = true },
                 onUnmatchRun: { if let inbox { Task { await inbox.unmatch(sessionId: sessionId) } } }
             )
