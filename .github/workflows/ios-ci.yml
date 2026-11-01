@@ -54,14 +54,14 @@ jobs:
       # Caches only speed the build up; a miss rebuilds from scratch. The generator is compiled by
       # `swift run` in generate-api-client.sh (about 2 minutes cold). DerivedData restores the newest earlier
       # build, so Xcode only recompiles what changed.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         if: steps.changes.outputs.run == 'true'
         with:
           path: ios/APIClientGenerator/.build
           key: apiclient-generator-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/APIClientGenerator/Package.resolved', 'ios/APIClientGenerator/Package.swift') }}
       # Every run restores the newest DerivedData for this Xcode; only main saves one, so PR runs
       # don't fill the repo's cache quota.
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         if: steps.changes.outputs.run == 'true'
         with:
           path: ~/Library/Developer/Xcode/DerivedData
@@ -71,7 +71,7 @@ jobs:
       - name: Verify
         if: steps.changes.outputs.run == 'true'
         run: bash scripts/verify.sh ios
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v6
         if: github.event_name == 'push' && steps.changes.outputs.run == 'true'
         with:
           path: ~/Library/Developer/Xcode/DerivedData
