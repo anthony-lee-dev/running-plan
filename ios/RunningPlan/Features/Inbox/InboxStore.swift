@@ -21,6 +21,14 @@ final class InboxStore {
     private(set) var suggestions: [String: String] = [:]
     /// The match just confirmed, so the screen can offer Undo.
     private(set) var lastConfirmed: (sessionId: String, label: String)?
+    /// The session and run just matched from the inbox: DK-CheckIn shows plan vs actual and asks how it felt (§8.3).
+    private(set) var pendingCheckIn: CheckInTarget?
+
+    struct CheckInTarget: Identifiable, Equatable {
+        let session: Components.Schemas.Session
+        let activity: Components.Schemas.ActivityFields
+        var id: String { session.value1.id }
+    }
 
     private let service: InboxServing
     private let health: HealthImporting
@@ -122,16 +130,22 @@ final class InboxStore {
     private func match(activityId: String, sessionId: String, label: String, offerUndo: Bool) async {
         // The server then changes a second session (the old one goes back to planned), which the reply does not carry.
         let displaces = allRuns.contains { $0.value2.disposition == .matched && ($0.value2.id == activityId || $0.value2.match?.sessionId == sessionId) }
+        // Kept before the lists reload, which drop the run from the inbox.
+        let workout = (activities + allRuns).first { $0.value2.id == activityId }?.value1
         let ok = await run {
             let result = try await self.service.confirm(sessionId: sessionId, activityId: activityId)
             self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
             self.lastConfirmed = offerUndo ? (sessionId, label) : nil
+            if offerUndo, let workout { self.pendingCheckIn = CheckInTarget(session: result.session, activity: workout) }
         }
         guard ok else { return }
         if displaces { await reloadPlan() }
         // Reload: the server may have moved another workout's match.
         await refreshLists()
     }
+
+    /// The check-in was saved or skipped.
+    func finishCheckIn() { pendingCheckIn = nil }
 
     /// Takes the run off this session; it returns to the inbox and the session to planned.
     func unmatch(sessionId: String) async {
@@ -149,6 +163,7 @@ final class InboxStore {
             let result = try await self.service.unmatch(sessionId: last.sessionId)
             self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
             self.lastConfirmed = nil
+            self.pendingCheckIn = nil
         }
         if ok { await refreshLists() }
     }

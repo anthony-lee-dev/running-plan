@@ -81,8 +81,17 @@ final class PlanStore {
 
     /// `id` is made once by the caller and reused for a retry, so a check-in the server already stored is not doubled.
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async -> String? {
+        await sendCheckIn { try await self.writer.checkIn(sessionId: sessionId, feeling: feeling, id: id) }
+    }
+
+    /// The after-session check-in from DK-CheckIn; `id` as above.
+    func checkIn(sessionId: String, after answer: AfterCheckIn, id: String) async -> String? {
+        await sendCheckIn { try await self.writer.checkIn(sessionId: sessionId, after: answer, id: id) }
+    }
+
+    private func sendCheckIn(_ body: () async throws -> Void) async -> String? {
         do {
-            try await writer.checkIn(sessionId: sessionId, feeling: feeling, id: id)
+            try await body()
             return nil
         } catch SessionWriteError.invalid {
             // Most likely an earlier answer was stored but its reply lost, and this one differs.

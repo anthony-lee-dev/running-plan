@@ -48,7 +48,7 @@ struct RootView: View {
             })
         }
         .fullScreenCover(isPresented: $showInbox) {
-            InboxScreen(store: inbox, onClose: { showInbox = false })
+            InboxScreen(store: inbox, plans: plans, onClose: { showInbox = false })
         }
         .fullScreenCover(item: $openSession) { route in
             if case .open(let id) = route {
