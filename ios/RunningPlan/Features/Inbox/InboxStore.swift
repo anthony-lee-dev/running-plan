@@ -11,6 +11,9 @@ final class InboxStore {
 
     private(set) var activities: [Activity] = []
     private(set) var loaded = false
+    /// Every imported run, matched or not, once the session page or the all-runs list has asked for it.
+    private(set) var allRuns: [Activity] = []
+    private(set) var allRunsLoaded = false
     private(set) var busy = false
     private(set) var error: String?
     private(set) var lastSynced: Date?
@@ -59,6 +62,15 @@ final class InboxStore {
         await run { self.activities = try await self.service.inbox(); self.loaded = true }
     }
 
+    /// Reads every imported run (matched ones carry their session), for the session page and the all-runs list.
+    func loadAllRuns() async {
+        await run { self.allRuns = try await self.service.allRuns(); self.allRunsLoaded = true }
+    }
+
+    func runs(today: String) -> RunsModel {
+        RunsModel(activities: allRuns, sessions: plans.plan?.value2.sessions ?? [], today: today)
+    }
+
     /// From the user's tap: asks for Health access if needed, then imports.
     func syncHealth() async {
         guard health.isAvailable else { error = "Health isn't available on this device. You can add a run by hand."; return }
@@ -98,13 +110,37 @@ final class InboxStore {
     }
 
     func confirm(activityId: String, sessionId: String, label: String) async {
+        await match(activityId: activityId, sessionId: sessionId, label: label, offerUndo: true)
+    }
+
+    /// Matches a run to a session from the session page or the all-runs list. If the session already had a run, that
+    /// run goes back to the inbox; if the run was matched elsewhere, it moves and the other session is open again.
+    func rematch(activityId: String, sessionId: String, label: String) async {
+        await match(activityId: activityId, sessionId: sessionId, label: label, offerUndo: false)
+    }
+
+    private func match(activityId: String, sessionId: String, label: String, offerUndo: Bool) async {
+        // The server then changes a second session (the old one goes back to planned), which the reply does not carry.
+        let displaces = allRuns.contains { $0.value2.disposition == .matched && ($0.value2.id == activityId || $0.value2.match?.sessionId == sessionId) }
         let ok = await run {
             let result = try await self.service.confirm(sessionId: sessionId, activityId: activityId)
             self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
-            self.lastConfirmed = (sessionId, label)
+            self.lastConfirmed = offerUndo ? (sessionId, label) : nil
         }
+        guard ok else { return }
+        if displaces { await reloadPlan() }
         // Reload: the server may have moved another workout's match.
-        if ok { await refresh() }
+        await refreshLists()
+    }
+
+    /// Takes the run off this session; it returns to the inbox and the session to planned.
+    func unmatch(sessionId: String) async {
+        let ok = await run {
+            let result = try await self.service.unmatch(sessionId: sessionId)
+            self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
+            self.lastConfirmed = nil
+        }
+        if ok { await refreshLists() }
     }
 
     func undo() async {
@@ -114,7 +150,22 @@ final class InboxStore {
             self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
             self.lastConfirmed = nil
         }
-        if ok { await refresh() }
+        if ok { await refreshLists() }
+    }
+
+    /// An extra or ignored run back to the inbox.
+    func backToInbox(_ activityId: String) async {
+        let ok = await run { try await self.service.setDisposition(activityId: activityId, .inbox) }
+        if ok { await refreshLists() }
+    }
+
+    private func reloadPlan() async {
+        if let id = plans.plan?.value1.value1.id { await plans.show(planId: id) }
+    }
+
+    private func refreshLists() async {
+        await refresh()
+        if allRunsLoaded { await loadAllRuns() }
     }
 
     func addAsExtra(_ activityId: String) async { await setDisposition(activityId, .extra) }
@@ -122,7 +173,10 @@ final class InboxStore {
 
     private func setDisposition(_ activityId: String, _ disposition: Components.Schemas.ActivityUpdate.dispositionPayload) async {
         let ok = await run { try await self.service.setDisposition(activityId: activityId, disposition) }
-        if ok { activities.removeAll { $0.value2.id == activityId } }
+        if ok {
+            activities.removeAll { $0.value2.id == activityId }
+            if allRunsLoaded { await loadAllRuns() }
+        }
     }
 
     /// Runs a server call, turning a failure into a sentence. True when it succeeded.

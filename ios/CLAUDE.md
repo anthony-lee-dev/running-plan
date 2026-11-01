@@ -200,6 +200,21 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   A confirmed match is merged into `PlanStore` (`replace(session:...)`) so Next and Week show the session done.
 - Not done here: calling `generateProposals` after an import (the review and proposals tasks, 4.5 on).
 
+## Runs from any session (issue #105)
+
+- No API change: `PUT /v1/sessions/{id}/match` replaces the session's run (the old one returns to the inbox) and moves a
+  run matched elsewhere (that session goes back to `planned`); `DELETE` unmatches; `GET /v1/activities` without `inbox`
+  returns every run with its `match`.
+- The session page shows the matched run with Change and Unmatch (`session.run.change`, `session.run.unmatch`), or
+  "Match a run" (`session.run.match`) for a live non-rest session dated today or earlier with no run. The picker lists
+  unmatched inbox runs of a fitting type, nearest the session's day first (`RunMatchModel`, pure).
+- "All imported runs" (`inbox.allRuns`, `RunsScreen`) lists matched, inbox, extra and ignored runs; re-map with
+  "Match to a session" / "Change session", "Unmatch", "Back to inbox". `InboxStore.allRuns` is loaded on demand.
+- A move changes a second session the reply does not carry, so `InboxStore` reloads the plan when the match displaces
+  one (known from `allRuns`); otherwise the old session would stay `done` locally and its next edit would 409.
+- The Next tab's inbox card is unchanged. The UI test covers unmatch and rematch from the runs list; the session page
+  is pinned by `RunMatchModelTests` (no UI test: the first session of a fresh plan is usually in the future).
+
 ## Commands
 
 - `bash scripts/verify.sh ios` (from repo root) regenerates the project, then builds and runs tests on a simulator.

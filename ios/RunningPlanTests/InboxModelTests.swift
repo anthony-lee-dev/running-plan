@@ -6,12 +6,12 @@ import Testing
 /// An imported activity as the API lists it.
 func activityFixture(
     id: String, date: String, type: String = "running", durationSec: Int = 1994, distanceM: Int? = 5100,
-    heartRate: Int? = 148, source: String = "Apple Watch", matchedSession: String? = nil
+    heartRate: Int? = 148, source: String = "Apple Watch", matchedSession: String? = nil, disposition: String = "inbox"
 ) throws -> Components.Schemas.Activity {
     let distance = distanceM.map { #""distanceM":\#($0),"# } ?? ""
     let hr = heartRate.map { #""avgHeartRate":\#($0),"# } ?? ""
-    let match = matchedSession.map { #","match":{"sessionId":"\#($0)","activityId":"\#(id)","status":"suggested","updatedAt":"2026-10-28T07:42:00.000Z"}"# } ?? ""
-    let json = #"{"id":"\#(id)","source":"apple_health","externalId":"hk-\#(id)","sourceApp":"\#(source)","workoutType":"\#(type)","startedAt":"\#(date)T06:30:00.000Z","localDate":"\#(date)",\#(distance)\#(hr)"durationSec":\#(durationSec),"importedAt":"2026-10-28T07:42:00.000Z","disposition":"inbox"\#(match)}"#
+    let match = matchedSession.map { #","match":{"sessionId":"\#($0)","activityId":"\#(id)","status":"\#(disposition == "matched" ? "confirmed" : "suggested")","updatedAt":"2026-10-28T07:42:00.000Z"}"# } ?? ""
+    let json = #"{"id":"\#(id)","source":"apple_health","externalId":"hk-\#(id)","sourceApp":"\#(source)","workoutType":"\#(type)","startedAt":"\#(date)T06:30:00.000Z","localDate":"\#(date)",\#(distance)\#(hr)"durationSec":\#(durationSec),"importedAt":"2026-10-28T07:42:00.000Z","disposition":"\#(disposition)"\#(match)}"#
     return try APIConfiguration.decoder.decode(Components.Schemas.Activity.self, from: Data(json.utf8))
 }
 

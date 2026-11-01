@@ -6,6 +6,7 @@ struct InboxScreen: View {
     let onClose: () -> Void
     @State private var picking: String?
     @State private var manual = false
+    @State private var showAllRuns = false
 
     var body: some View {
         let model = store.model(today: PreviewViewModel.localToday())
@@ -70,6 +71,7 @@ struct InboxScreen: View {
             }
         }
         .sheet(isPresented: $manual) { ManualRunSheet(store: store, onClose: { manual = false }) }
+        .fullScreenCover(isPresented: $showAllRuns) { RunsScreen(store: store, onClose: { showAllRuns = false }) }
     }
 
     private var footer: some View {
@@ -82,6 +84,7 @@ struct InboxScreen: View {
                 textButton("Check Health for new workouts", id: "inbox.sync") { Task { await store.syncHealth() } }
             }
             textButton("Add a run manually", id: "inbox.manual") { manual = true }
+            textButton("All imported runs", id: "inbox.allRuns") { showAllRuns = true }
         }
         .padding(.horizontal, 4)
         .padding(.top, 8)
@@ -186,7 +189,7 @@ private struct InboxCardView: View {
     }
 }
 
-private struct SessionPicker: View {
+struct SessionPicker: View {
     let choices: [InboxModel.Choice]
     let emptyNote: String?
     let onPick: (InboxModel.Choice) -> Void

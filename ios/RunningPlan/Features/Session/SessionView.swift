@@ -19,6 +19,12 @@ struct SessionView: View {
     var onAdjust: (QuickAdjustment) -> Void = { _ in }
     var onSwap: () -> Void = {}
     var onCheckIn: (BeforeFeeling) -> Void = { _ in }
+    /// The imported run matched to this session, shown with Change and Unmatch (issue #105).
+    var matchedRun: RunMatchModel.RunRow?
+    /// Offer "Match a run": an open session of today or earlier with no run yet.
+    var canMatchRun = false
+    var onPickRun: () -> Void = {}
+    var onUnmatchRun: () -> Void = {}
 
     @State private var ticked: Set<Int> = []
     @State private var copied = false
@@ -44,6 +50,7 @@ struct SessionView: View {
                         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 16))
                 }
+                runSection
                 if !model.isRest { watchButtons }
                 if let error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color)
@@ -58,6 +65,34 @@ struct SessionView: View {
         .background(Palette.bg.color.ignoresSafeArea())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen.session")
+    }
+
+    @ViewBuilder private var runSection: some View {
+        if let run = matchedRun {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Matched run").font(.system(size: 13)).foregroundStyle(Palette.muted.color)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(run.headline).font(.system(size: 20, weight: .bold)).monospacedDigit().foregroundStyle(Palette.ink.color)
+                    Text(run.heading).font(.system(size: 14)).foregroundStyle(Palette.muted.color)
+                    if !run.detail.isEmpty {
+                        Text(run.detail).font(.system(size: 14)).monospacedDigit().foregroundStyle(Palette.muted.color)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                HStack(spacing: 10) {
+                    SecondaryButton(title: "Change", action: onPickRun).accessibilityIdentifier("session.run.change")
+                    SecondaryButton(title: "Unmatch", action: onUnmatchRun).accessibilityIdentifier("session.run.unmatch")
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 16))
+            .disabled(busy)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("session.run")
+        } else if canMatchRun {
+            SecondaryButton(title: "Match a run", action: onPickRun).accessibilityIdentifier("session.run.match")
+        }
     }
 
     private var topBar: some View {

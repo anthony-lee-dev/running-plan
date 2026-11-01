@@ -52,7 +52,7 @@ struct RootView: View {
         }
         .fullScreenCover(item: $openSession) { route in
             if case .open(let id) = route {
-                SessionScreen(plans: plans, sessionId: id, watchSync: watchSync, onClose: { openSession = nil })
+                SessionScreen(plans: plans, sessionId: id, watchSync: watchSync, inbox: inbox, onClose: { openSession = nil })
             }
         }
         .sheet(item: $sheet) { route in

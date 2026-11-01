@@ -15,6 +15,8 @@ enum InboxError: Error, Equatable {
 protocol InboxServing: Sendable {
     /// Activities waiting for review, newest first.
     func inbox() async throws -> [Components.Schemas.Activity]
+    /// Every imported run, matched or not (each with its `match`), newest first.
+    func allRuns() async throws -> [Components.Schemas.Activity]
     /// One upload of at most 200 records. Returns the suggested session per activity id.
     func upload(_ inputs: [Components.Schemas.ActivityInput]) async throws -> [String: String]
     func confirm(sessionId: String, activityId: String) async throws -> Components.Schemas.MatchWriteResult
@@ -33,6 +35,26 @@ struct APIInboxService: InboxServing {
         case .badRequest: throw InboxError.invalid
         case .undocumented: throw InboxError.server
         }
+    }
+
+    func allRuns() async throws -> [Components.Schemas.Activity] {
+        var runs: [Components.Schemas.Activity] = []
+        var cursor: String?
+        // A cap on pages so a misbehaving cursor cannot loop forever (2000 runs).
+        for _ in 0..<10 {
+            let output = try await call { try await client.listActivities(query: .init(cursor: cursor, limit: 200)) }
+            switch output {
+            case .ok(let ok):
+                let page = try ok.body.json
+                runs += page.activities
+                guard let next = page.nextCursor else { return runs }
+                cursor = next
+            case .unauthorized: throw InboxError.signedOut
+            case .badRequest: throw InboxError.invalid
+            case .undocumented: throw InboxError.server
+            }
+        }
+        return runs
     }
 
     func upload(_ inputs: [Components.Schemas.ActivityInput]) async throws -> [String: String] {
