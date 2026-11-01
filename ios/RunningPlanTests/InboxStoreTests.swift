@@ -92,6 +92,16 @@ private actor FakeService: InboxServing {
         return waiting
     }
 
+    var everything: [Components.Schemas.Activity] = []
+    var unmatched: [String] = []
+
+    func setEverything(_ runs: [Components.Schemas.Activity]) { everything = runs }
+
+    func allRuns() async throws -> [Components.Schemas.Activity] {
+        if let failure { throw failure }
+        return everything
+    }
+
     func upload(_ inputs: [Components.Schemas.ActivityInput]) async throws -> [String: String] {
         if let failure { throw failure }
         uploads.append(inputs.map { $0.value1.externalId })
@@ -109,7 +119,8 @@ private actor FakeService: InboxServing {
     }
 
     func unmatch(sessionId: String) async throws -> Components.Schemas.SessionWriteResult {
-        .init(session: session, planContentRevision: 10, warnings: [])
+        unmatched.append(sessionId)
+        return .init(session: session, planContentRevision: 10, warnings: [])
     }
 
     func setDisposition(activityId: String, _ disposition: Components.Schemas.ActivityUpdate.dispositionPayload) async throws {
@@ -215,6 +226,36 @@ struct InboxStoreTests {
         #expect(await store.addManual(id: "m-2", localDate: "2026-12-01", distanceKm: 5, minutes: 30) == false)
         #expect(store.error != nil)
         #expect(await service.uploads.count == 1)
+    }
+
+    @Test func movingAMatchedRunReloadsThePlanSoTheOldSessionIsPlannedAgain() async throws {
+        let (store, service, plans, mondayId) = try await make()
+        let otherId = try #require(plans.plan?.value2.sessions.first { $0.value1.id != mondayId && $0.value2._type == .easy }).value1.id
+        await service.setEverything([try activityFixture(id: "a1", date: "2026-10-26", matchedSession: otherId, disposition: "matched")])
+        await store.loadAllRuns()
+        #expect(store.allRuns.count == 1)
+
+        await store.rematch(activityId: "a1", sessionId: mondayId, label: "Easy run")
+
+        #expect(await service.confirmed.map(\.session) == [mondayId])
+        #expect(store.lastConfirmed == nil)
+        // The fake loader serves the stored plan again, where Monday is planned: the plan was reloaded, not only patched.
+        let monday = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
+        #expect(monday.value2.status == .planned)
+    }
+
+    @Test func unmatchingASessionCallsDeleteAndRefreshesTheLists() async throws {
+        let (store, service, _, mondayId) = try await make()
+        await store.loadAllRuns()
+        await store.unmatch(sessionId: mondayId)
+        #expect(await service.unmatched == [mondayId])
+        #expect(store.error == nil)
+    }
+
+    @Test func anExtraRunGoesBackToTheInbox() async throws {
+        let (store, service, _, _) = try await make()
+        await store.backToInbox("a1")
+        #expect(await service.dispositions == ["a1": "inbox"])
     }
 
     @Test func aFailureBecomesASentenceAndKeepsTheList() async throws {

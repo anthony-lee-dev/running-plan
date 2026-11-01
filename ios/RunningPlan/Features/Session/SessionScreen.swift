@@ -22,9 +22,12 @@ struct SessionScreen: View {
     let plans: PlanStore
     let sessionId: String
     var watchSync: WatchSyncModel?
+    /// Where runs come from; nil in previews and tests that do not match runs.
+    var inbox: InboxStore?
     let onClose: () -> Void
 
     @State private var editing = false
+    @State private var pickingRun = false
     @State private var moving = false
     @State private var busy = false
     @State private var error: String?
@@ -34,18 +37,41 @@ struct SessionScreen: View {
 
     var body: some View {
         if let plan = plans.plan, let session = plan.value2.sessions.first(where: { $0.value1.id == sessionId && $0.value1.deletedAt == nil }) {
-            let schedule = PlanSchedule(plan: plan, today: PreviewViewModel.localToday())
+            let today = PreviewViewModel.localToday()
+            let schedule = PlanSchedule(plan: plan, today: today)
+            let matched = inbox.flatMap { RunMatchModel.matchedRun(for: sessionId, in: $0.allRuns) }
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
-                busy: busy, error: error, checkedIn: checkedIn,
+                busy: busy || inbox?.busy == true, error: error ?? inbox?.error, checkedIn: checkedIn,
                 watchPlan: WatchWorkoutMapper.plan(for: session), watchSync: watchSync,
                 onToggleWatchSync: { toggleWatchSync(plan) },
                 onBack: onClose,
                 onEdit: { editing = true },
                 onAdjust: { adjust($0, session) },
                 onSwap: { moving = true },
-                onCheckIn: { checkIn($0) }
+                onCheckIn: { checkIn($0) },
+                matchedRun: matched.map(RunMatchModel.row(for:)),
+                canMatchRun: inbox != nil && matched == nil && RunMatchModel.canMatch(session, today: today),
+                onPickRun: { pickingRun = true },
+                onUnmatchRun: { if let inbox { Task { await inbox.unmatch(sessionId: sessionId) } } }
             )
+            .task {
+                guard let inbox else { return }
+                await inbox.refresh()
+                await inbox.loadAllRuns()
+            }
+            .sheet(isPresented: $pickingRun) {
+                if let inbox {
+                    RunPicker(
+                        runs: RunMatchModel.candidates(for: session, in: inbox.activities).map(RunMatchModel.row(for:)),
+                        onPick: { run in
+                            pickingRun = false
+                            Task { await inbox.rematch(activityId: run.id, sessionId: sessionId, label: InboxModel.label(session)) }
+                        },
+                        onClose: { pickingRun = false }
+                    )
+                }
+            }
             .sheet(isPresented: $editing) {
                 SessionEditor(plans: plans, session: session, onClose: { deleted in
                     editing = false
