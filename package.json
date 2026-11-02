@@ -9,6 +9,6 @@
     "verify": "bash scripts/verify.sh all"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.72.0"
+    "@redocly/cli": "^2.72.1"
   }
 }
