@@ -2,8 +2,8 @@ import APIClient
 import SwiftUI
 
 /// The Progress tab: DK-Progress for the saved plan from `GET /v1/plans/{id}/progress`, "Set a goal" when there is no
-/// plan, and loading and retry states. Reloads when the tab shows, after any session edit or match, on a new day once
-/// the view redraws (the key below), and on pull to refresh.
+/// plan, and loading and retry states. The store is shared and loaded by `RootView` (after any session edit or match,
+/// and on a new day once the view redraws; see `refreshKey`); this screen also reloads on pull to refresh.
 struct ProgressScreen: View {
     let plans: PlanStore
     let onSetGoal: () -> Void

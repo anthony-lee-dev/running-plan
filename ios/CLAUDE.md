@@ -249,8 +249,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Distance done (issue #74): `RootView` owns the one `ProgressStore` and loads it (key: plan, day, session revisions) for
   Next, Plan and Progress; `ProgressScreen` only reads it. `NextModel`, `WeekModel` and `WholeModel` take an optional
   progress reply through `DistanceDone` and keep their planned-only text when there is none or it is for another plan.
-  Distance bars fill by ran / planned (capped at 1); Week's "plus N min cross-training" is the user's own sessions marked
-  done (the reply cannot split running from other time); Whole shows ran / planned up to this week, and the goal card's
+  Distance bars fill by ran / planned (capped at 1); Week's "plus N min cross-training" is the user's own sessions in the week
+  that are not skipped (the reply cannot split running from other time); Whole shows ran / planned up to this week, and the goal card's
   "On track" badge and bar (whole weeks done plus this week's share).
 
 ## Commands

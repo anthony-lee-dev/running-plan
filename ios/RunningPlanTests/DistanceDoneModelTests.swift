@@ -50,14 +50,16 @@ struct DistanceDoneModelTests {
     @Test func weekShowsDistanceDone() throws {
         let m = WeekModel(schedule: try schedule(), week: 3, progress: try progress())
         #expect(m.planned == "25 km planned")
-        #expect(m.summary == "5.1 km done")
+        #expect(m.summary == "5.1 km done · plus 45 min cross-training")
         #expect(m.progress == 5100.0 / 24900.0)
     }
 
-    @Test func weekAddsCrossTrainingDoneAsMinutes() throws {
-        // The Sunday cycling is still planned, so only the Thursday ride that is done counts.
-        let m = WeekModel(schedule: try schedule(extra: [Self.cyclingDone]), week: 3, progress: try progress())
-        #expect(m.summary == "5.1 km done · plus 30 min cross-training")
+    @Test func weekAddsEveryCrossTrainingSessionThatIsNotSkipped() throws {
+        let both = WeekModel(schedule: try schedule(extra: [Self.cyclingDone]), week: 3, progress: try progress())
+        #expect(both.summary == "5.1 km done · plus 75 min cross-training")
+        let skipped = Self.cyclingDone.replacingOccurrences(of: #""status":"done""#, with: #""status":"skipped""#)
+        let one = WeekModel(schedule: try schedule(extra: [skipped]), week: 3, progress: try progress())
+        #expect(one.summary == "5.1 km done · plus 45 min cross-training")
     }
 
     @Test func aFinishedWeekShowsWhatWasRun() throws {

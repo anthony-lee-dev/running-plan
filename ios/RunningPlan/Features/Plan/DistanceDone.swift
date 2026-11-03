@@ -39,12 +39,12 @@ struct DistanceDone {
         return min(ran(week: week) / planned, 1)
     }
 
-    /// Minutes of the user's own cross-training marked done in the week (a run's distance is in the progress reply, this
-    /// is not: it comes from the sessions).
+    /// Minutes of the user's own cross-training in the week, skipped sessions left out (as on the board: "plus 45 min
+    /// cross-training"). The progress reply cannot split running from other time, so this comes from the sessions.
     func crossTrainingMinutes(week: Int) -> Int {
         let seconds = schedule.sessions(inWeek: week).reduce(0) { total, session in
             let s = session.value2
-            guard s._type == .custom, s.status == .done, s.custom?.goal?._type == .time else { return total }
+            guard s._type == .custom, s.status != .skipped, s.custom?.goal?._type == .time else { return total }
             return total + (s.custom?.goal?.value ?? 0)
         }
         return Int((Double(seconds) / 60).rounded())
