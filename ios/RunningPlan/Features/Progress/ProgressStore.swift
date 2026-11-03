@@ -54,7 +54,7 @@ final class ProgressStore {
             if let progress = try await loader.progress(planId: planId, today: today) {
                 state = .loaded(progress)
             } else {
-                state = .failed("This plan is no longer available. Pull to refresh.")
+                state = .failed("This plan is no longer available. Try again to load your latest plan.")
             }
         } catch is CancellationError {
             return

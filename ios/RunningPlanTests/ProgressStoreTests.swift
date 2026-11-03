@@ -90,7 +90,7 @@ struct ProgressStoreTests {
 
         let gone = ProgressStore(loader: FakeProgressLoader(result: .success(nil)))
         await gone.load(planId: PlanFixture.planID, today: PlanFixture.today)
-        #expect(gone.state == .failed("This plan is no longer available. Pull to refresh."))
+        #expect(gone.state == .failed("This plan is no longer available. Try again to load your latest plan."))
 
         let signedOut = ProgressStore(loader: FakeProgressLoader(result: .failure(.signedOut)))
         await signedOut.load(planId: PlanFixture.planID, today: PlanFixture.today)

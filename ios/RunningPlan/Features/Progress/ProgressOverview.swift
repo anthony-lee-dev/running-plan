@@ -25,7 +25,7 @@ struct ProgressOverview: View {
                 HStack(alignment: .top, spacing: 10) {
                     tile(model.sessions, colour: Palette.ink, id: "progress.sessions")
                     tile(model.keyRuns, colour: Palette.ink, id: "progress.keyRuns")
-                    tile(model.strength, colour: Palette.strengthText, id: "progress.strength")
+                    tile(model.strength, colour: Palette.plumText, id: "progress.strength")
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 chart
@@ -68,7 +68,6 @@ struct ProgressOverview: View {
                         .padding(.vertical, 5)
                         .foregroundStyle(badge == .onTrack ? Palette.greenInk.color : Palette.amberTitle.color)
                         .background(badge == .onTrack ? Palette.green.color : Palette.amberSoft.color, in: Capsule())
-                        .accessibilityIdentifier("progress.badge")
                 }
             }
             Text(model.goal.note)

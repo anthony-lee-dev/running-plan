@@ -81,7 +81,8 @@ struct ProgressModel: Equatable {
             if index == 0 {
                 headline = "Your first week is under way."
             } else {
-                let steady = adherence.due > 0 && Double(adherence.done) / Double(adherence.due) >= 0.7
+                // The server's on-track share: done of the sessions judged (today's still to do are not yet missed).
+                let steady = judged > 0 && Double(adherence.done) / Double(judged) >= 0.7
                 let count = Self.word(index)
                 let weeks = index == 1 ? "week" : "weeks"
                 headline = steady
