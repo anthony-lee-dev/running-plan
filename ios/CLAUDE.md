@@ -240,7 +240,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - `Features/Progress/`: `ProgressModel` (pure, unit-tested) builds the screen from `getProgress` and the plan; `ProgressStore`
   loads it through `ProgressLoading` (`APIProgressLoader`); `ProgressOverview` only draws (not `ProgressView`, which would
   shadow SwiftUI's spinner); `ProgressScreen` handles no plan, loading and retry. `ProgressFixture` holds the board's reply.
-- It reloads on a key of plan id, local day and every session's revision, so an edit, a match or a check-in refreshes it
+- It reloads on a key of plan id, local day and every session's revision, so an edit or a match refreshes it
   (the day is read when the view redraws, not on a midnight timer); pull to refresh also reloads, and a failed refresh
   keeps what was shown. The chart runs through this week, at most the last 8 weeks (`maxBars`), with
   planned bars only and "Your first week's progress appears on your review day" until week 1 is over.
