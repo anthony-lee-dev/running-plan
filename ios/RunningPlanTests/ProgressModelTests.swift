@@ -70,6 +70,12 @@ struct ProgressModelTests {
         #expect(model.sessions.value == "60%")
     }
 
+    @Test func sessionsStillToDoTodayDoNotMakeTheHeadlineSayBehind() throws {
+        // Two of today's sessions are due but not missed yet: 6 of 8 judged is steady, though 6 of 10 due is not.
+        let progress = try ProgressFixture.progress(adherence: .init(due: 10, done: 6, skipped: 1, missed: 1))
+        #expect(try ProgressFixture.model(progress: progress).headline == "Three steady weeks in. You've been showing up, and it's adding up.")
+    }
+
     @Test func thePercentNeverRoundsUpToAll() throws {
         let progress = try ProgressFixture.progress(adherence: .init(due: 200, done: 199, skipped: 0, missed: 1))
         #expect(try ProgressFixture.model(progress: progress).sessions.value == "99%")
