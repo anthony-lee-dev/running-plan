@@ -257,7 +257,7 @@ final class WatchSyncModel {
         // What is on the watch belongs to the account that put it there: sign-out, or another account, removes it.
         if let owner = defaults.string(forKey: Self.ownerKey), owner != id { await removeEverything() }
         window = []
-        status = !scheduler.isSupported ? .unsupported : (wantsSync ? .synced(0) : .off)
+        status = await restingStatus()
     }
 
     private func doTurnOn(sessions: [Components.Schemas.Session], today: String) async {
@@ -285,14 +285,23 @@ final class WatchSyncModel {
 
     private func doClear() async {
         await removeEverything()
-        status = !scheduler.isSupported ? .unsupported : (wantsSync ? .synced(0) : .off)
+        status = await restingStatus()
     }
 
     private func removeEverything() async {
         window = []
-        defaults.removeObject(forKey: Self.ownerKey)
-        guard scheduler.isSupported, await scheduler.authorization() == .authorized else { return }
+        guard scheduler.isSupported else { return defaults.removeObject(forKey: Self.ownerKey) }
+        // Without permission nothing can be removed, so keep the owner marker and try again later.
+        guard await scheduler.authorization() == .authorized else { return }
         for item in await scheduler.scheduled() { await scheduler.remove(item) }
+        defaults.removeObject(forKey: Self.ownerKey)
+    }
+
+    /// The status when nothing is being synced right now: the setting, checked against the permission.
+    private func restingStatus() async -> Status {
+        guard scheduler.isSupported else { return .unsupported }
+        guard wantsSync else { return .off }
+        return await scheduler.authorization() == .authorized ? .synced(0) : .denied
     }
 
     /// Brings the schedule up to date. Does nothing unless the user wants it; if permission is gone it only says so.

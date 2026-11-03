@@ -18,7 +18,7 @@ struct WatchSettingsSheet: View {
                     Text("Keep my runs on my Apple Watch").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink.color)
                 }
                 .tint(Palette.accent.color)
-                .disabled(!sync.isSupported)
+                .disabled(!sync.isSupported || sync.accountId == nil)
                 .frame(minHeight: Metrics.minTouchTarget)
                 .accessibilityIdentifier("watch.settings.toggle")
                 .accessibilityValue(isOn ? "On" : "Off")

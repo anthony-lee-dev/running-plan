@@ -281,6 +281,31 @@ struct WatchSyncTests {
         #expect(scheduler.items.isEmpty)
     }
 
+    @MainActor @Test func workoutsLeftWhilePermissionWasOffAreRemovedOnceItIsBack() async throws {
+        let scheduler = FakeScheduler()
+        let (first, defaults) = try fresh(scheduler)
+        await first.update(state: Self.loaded, account: "a", today: Self.today)
+        await first.turnOn(sessions: Self.sessions, today: Self.today)
+        scheduler.state = .denied
+        let second = WatchSyncModel(scheduler: scheduler, defaults: defaults)
+        await second.update(state: Self.loaded, account: "b", today: Self.today)
+        #expect(scheduler.items.count == 15)
+        scheduler.state = .authorized
+        let third = WatchSyncModel(scheduler: scheduler, defaults: defaults)
+        await third.update(state: Self.loaded, account: "b", today: Self.today)
+        #expect(scheduler.items.isEmpty)
+    }
+
+    @MainActor @Test func aClearedPlanWithRevokedPermissionStillShowsNotAllowed() async throws {
+        let scheduler = FakeScheduler()
+        let (model, _) = try fresh(scheduler)
+        await model.update(state: Self.loaded, account: "a", today: Self.today)
+        await model.turnOn(sessions: Self.sessions, today: Self.today)
+        scheduler.state = .denied
+        await model.update(state: .empty, account: "a", today: Self.today)
+        #expect(model.status == .denied)
+    }
+
     // MARK: Status copy
 
     private func run(on date: String) throws -> Components.Schemas.Session {
