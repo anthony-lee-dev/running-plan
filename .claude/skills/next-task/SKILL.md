@@ -93,9 +93,11 @@ Don't rely on the report alone. Then:
 - **Checks running, auto-merge queued:** run `gh pr checks <n> --watch` in the background and check again when it
   ends. GitHub merges within a minute or so of the checks passing.
 - **A check failed, or `mergeable` is `CONFLICTING`:** send the failure or conflict to the same worker with
-  SendMessage. It already has the context to fix it. If it can't be reached, remove its worktree but keep the
-  branch (`git worktree remove <path>`), then start a new worker. Fill the brief's "Existing PR" field so the new
-  worker carries on that branch instead of starting a fresh one.
+  SendMessage. It already has the context to fix it, and re-creates its worktree to do so (the brief's step 7). If
+  it can't be reached, remove any worktree it left but keep the branch (`git worktree remove <path>`), then start a
+  new worker. Fill the brief's "Existing PR" field so the new worker carries on that branch instead of starting a
+  fresh one. Either way the branch can't be checked out in the main checkout at the same time: if the human is
+  verifying it there, ask them to switch away first.
 - **Left for the human** (`request-merge.py` exited 3, or the PR has manual-gate boxes): stop (step 5).
 
 Never start a worker whose task needs an unmerged PR. Workers branch from `origin/main`, so they only see work
@@ -110,12 +112,19 @@ which issues the merged PRs closed.
 
 ## 6. Clean up worktrees
 
-A worker that committed keeps its worktree under `.claude/worktrees/`; the Agent result gives the path and the
-branch the worktree was created on. Once `gh pr view` shows the PR merged, remove the worktree. Then delete both
-branches: the one you named in the brief, and the worktree's original one, which the worker switched away from.
+A worker removes its own worktree as soon as its PR is pushed and open (the brief's step 7), so the human can
+check the branch out in the main checkout to verify it. Its report's "Worktree" line says whether it did. If it
+says "kept", or a worktree for that branch still shows in `git worktree list`, remove it yourself right away,
+without waiting for the merge (`git worktree unlock <path>` first if it is locked):
 
 ```bash
 git worktree remove <path>
+```
+
+Once `gh pr view` shows the PR merged, delete both branches: the one you named in the brief, and the worktree's
+original one, which the worker switched away from (the report's "Worktree" line, or the Agent result, names it).
+
+```bash
 git branch -D <named branch> <worktree's original branch>
 ```
 
@@ -126,7 +135,7 @@ A `git pull` on main also runs `scripts/prune-merged.sh` (post-merge hook), whic
 branches whose remote branch is gone. It never deletes the worktree's original branch (never pushed), so that
 `git branch -D` stays; run the script by hand if the hook did not.
 
-Leave the worktree of an open PR in place: its worker may still be asked to fix something.
+If the human has the branch checked out in the main checkout, `git branch -D` refuses it: leave it, and say so.
 
 ## If workers aren't available
 
