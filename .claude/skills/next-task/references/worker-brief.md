@@ -55,20 +55,18 @@ From the human: <corrections or choices from the conversation that apply, or non
      the slice's device check against the deployed API under `## Manual gates` as an unticked box
      (`docs/backlog.md`: "End-to-end check for every slice", item 3). The milestone's description has its **Done when**.
 7. Remove your worktree once `/ship` is finished: the PR is open and ready for review, and `git status` shows
-   nothing uncommitted and nothing your remote branch lacks. The human checks branches out in the main checkout to
-   verify them, and git refuses to check out a branch that a worktree still holds.
-   - Note your worktree's path (`pwd`) and its original branch (the one it was created on, before you switched to
-     Branch; `git reflog` shows it). The first line of `git worktree list` is the main checkout's path.
-   - Run, from the main checkout: `git -C <main checkout> worktree unlock <worktree path>`, then
-     `git -C <main checkout> worktree remove <worktree path>`. The unlock may say it isn't locked; that's fine. Never
-     add `--force`: if git refuses because something is uncommitted, commit and push it first.
+   nothing to commit and says the branch is up to date with `origin/<Branch>`. The human checks branches out in the
+   main checkout to verify them, and git refuses to check out a branch that a worktree still holds.
+   - Note your worktree's path (`pwd`) and its original branch: in `git reflog`, the line
+     `checkout: moving from <original branch> to <Branch>`.
+   - From inside the worktree, run `git worktree unlock <worktree path>`, then `git worktree remove <worktree path>`.
+     The unlock may say it isn't locked; that's fine. Never add `--force`: if git refuses because something is
+     uncommitted, commit and push it first.
    - This must be your last command: your shell's folder is gone afterwards. Send the report next.
    - If a command is refused, leave the worktree and give the reason under "Worktree" in the report; the
      orchestrator removes it.
-   - If the orchestrator later asks you to fix something on the PR, re-create the worktree first:
-     `git -C <main checkout> worktree add <worktree path> <Branch>`, then `cd` into it and run `npm ci`. If git says
-     Branch is already checked out (the human may be verifying it in the main checkout), stop and report that.
-     After the fix is pushed, remove the worktree again as above.
+   - If the orchestrator later asks you to fix something on the PR, it re-creates the worktree at the same path
+     first. `cd <worktree path>`, run `npm ci`, fix and push, then remove the worktree again as above.
 
 ## Commands that work in a worktree
 In a worktree, a guard refuses any command it can't prove stays inside the worktree. These keep you clear of it,

@@ -93,11 +93,12 @@ Don't rely on the report alone. Then:
 - **Checks running, auto-merge queued:** run `gh pr checks <n> --watch` in the background and check again when it
   ends. GitHub merges within a minute or so of the checks passing.
 - **A check failed, or `mergeable` is `CONFLICTING`:** send the failure or conflict to the same worker with
-  SendMessage. It already has the context to fix it, and re-creates its worktree to do so (the brief's step 7). If
-  it can't be reached, remove any worktree it left but keep the branch (`git worktree remove <path>`), then start a
-  new worker. Fill the brief's "Existing PR" field so the new worker carries on that branch instead of starting a
-  fresh one. Either way the branch can't be checked out in the main checkout at the same time: if the human is
-  verifying it there, ask them to switch away first.
+  SendMessage. It already has the context to fix it. It removed its worktree when it reported, so first re-create
+  it at the same path (`git worktree add <path> <named branch>`) and say so in the message. If the worker can't be
+  reached, remove any worktree it left but keep the branch (`git worktree unlock <path>`, then
+  `git worktree remove <path>`), then start a new worker. Fill the brief's "Existing PR" field so the new worker
+  carries on that branch instead of starting a fresh one. Either way the branch can't be checked out in the main
+  checkout at the same time: if the human is verifying it there, ask them to switch away first.
 - **Left for the human** (`request-merge.py` exited 3, or the PR has manual-gate boxes): stop (step 5).
 
 Never start a worker whose task needs an unmerged PR. Workers branch from `origin/main`, so they only see work
