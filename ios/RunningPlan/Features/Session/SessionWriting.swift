@@ -20,6 +20,8 @@ protocol SessionWriting: Sendable {
     func delete(id: String, revision: Int) async throws -> Components.Schemas.SessionWriteResult
     /// A before-session check-in; `id` is client-made so a retry is not stored twice.
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws
+    /// An after-session check-in (DK-CheckIn): feel, effort felt and the pain flag; `id` as above.
+    func checkIn(sessionId: String, after answer: AfterCheckIn, id: String) async throws
     /// Deletes a whole plan (a tombstone) when `revision` is still the plan's. Interim: task 3.7 replaces its only caller.
     func deletePlan(id: String, revision: Int) async throws
 }
@@ -68,7 +70,15 @@ struct APISessionWriter: SessionWriting {
     }
 
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws {
-        let body = Components.Schemas.CheckInCreate(value1: .init(when: .before, feel: feeling.feel), value2: .init(id: id))
+        try await send(sessionId: sessionId, .init(value1: .init(when: .before, feel: feeling.feel), value2: .init(id: id)))
+    }
+
+    func checkIn(sessionId: String, after answer: AfterCheckIn, id: String) async throws {
+        let fields = Components.Schemas.CheckInFields(when: .after, feel: answer.feeling.feel, effortFelt: answer.feeling.effortFelt, pain: answer.pain)
+        try await send(sessionId: sessionId, .init(value1: fields, value2: .init(id: id)))
+    }
+
+    private func send(sessionId: String, _ body: Components.Schemas.CheckInCreate) async throws {
         let output = try await call { try await client.createCheckIn(path: .init(sessionId: sessionId), body: .json(body)) }
         switch output {
         case .created, .ok: return

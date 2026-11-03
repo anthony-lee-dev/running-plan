@@ -107,6 +107,18 @@ struct SessionWriterTests {
         #expect(checked.body?.contains(#""feel":5"#) == true)
     }
 
+    @Test func anAfterSessionCheckInSendsFeelEffortAndPain() async throws {
+        let checkIn = #"{"id":"33333333-3333-4333-8333-333333333333","revision":1,"updatedAt":"2026-10-28T08:00:00.000Z","deletedAt":null,"sessionId":"00000000-0000-4000-8000-000000000017","when":"after","feel":2,"effortFelt":8,"pain":true}"#
+        let checked = OneAnswer(.created, checkIn)
+        try await writer(checked).checkIn(sessionId: "00000000-0000-4000-8000-000000000017", after: AfterCheckIn(feeling: .harder, pain: true), id: "33333333-3333-4333-8333-333333333333")
+        #expect(checked.request?.path == "/v1/sessions/00000000-0000-4000-8000-000000000017/checkins")
+        #expect(checked.body?.contains(#""when":"after""#) == true)
+        #expect(checked.body?.contains(#""feel":2"#) == true)
+        #expect(checked.body?.contains(#""effortFelt":8"#) == true)
+        #expect(checked.body?.contains(#""pain":true"#) == true)
+        #expect(checked.body?.contains(#""id":"33333333-3333-4333-8333-333333333333""#) == true)
+    }
+
     @Test func failuresAreExplained() async throws {
         await #expect(throws: SessionWriteError.conflict) {
             try await writer(OneAnswer(.conflict, problem)).update(id: "00000000-0000-4000-8000-000000000017", revision: 1, .init(title: "x"))

@@ -156,6 +156,7 @@ private struct NoWrites: SessionWriting {
     func create(planId: String, _ body: Components.Schemas.SessionCreate) async throws -> Components.Schemas.SessionWriteResult { throw SessionWriteError.server }
     func delete(id: String, revision: Int) async throws -> Components.Schemas.SessionWriteResult { throw SessionWriteError.server }
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async throws {}
+    func checkIn(sessionId: String, after answer: AfterCheckIn, id: String) async throws {}
     func deletePlan(id: String, revision: Int) async throws { throw SessionWriteError.server }
 }
 
@@ -187,6 +188,40 @@ struct InboxStoreTests {
         let session = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
         #expect(session.value2.status == .done)
         #expect(plans.plan?.value1.value3.contentRevision == 9)
+    }
+
+    @Test func confirmingAMatchAsksForAnAfterSessionCheckIn() async throws {
+        let (store, _, _, mondayId) = try await make()
+        await store.refresh()
+        await store.confirm(activityId: "a1", sessionId: mondayId, label: "Easy run · 5 km")
+
+        let pending = try #require(store.pendingCheckIn)
+        #expect(pending.id == mondayId)
+        #expect(pending.session.value2.status == .done)
+        #expect(pending.activity.durationSec == 1994)
+        #expect(pending.activity.distanceM == 5100)
+
+        store.finishCheckIn()
+        #expect(store.pendingCheckIn == nil)
+        #expect(store.lastConfirmed != nil, "Skipping keeps Undo")
+    }
+
+    @Test func aSavedCheckInTakesAwayUndo() async throws {
+        // Undo would leave the saved check-in feeding proposals for a session that is no longer done.
+        let (store, _, _, mondayId) = try await make()
+        await store.refresh()
+        await store.confirm(activityId: "a1", sessionId: mondayId, label: "Easy run · 5 km")
+        store.finishCheckIn(saved: true)
+        #expect(store.pendingCheckIn == nil)
+        #expect(store.lastConfirmed == nil)
+    }
+
+    @Test func aFailedMatchAsksForNoCheckIn() async throws {
+        let (store, service, _, mondayId) = try await make()
+        await store.refresh()
+        await service.fail(.offline)
+        await store.confirm(activityId: "a1", sessionId: mondayId, label: "Easy run · 5 km")
+        #expect(store.pendingCheckIn == nil)
     }
 
     @Test func extraAndIgnoredLeaveTheInbox() async throws {
