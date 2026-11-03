@@ -28,6 +28,9 @@ actor AuthSession {
 
     var isSignedIn: Bool { tokens != nil }
 
+    /// The signed-in account, or nil. Per-account settings on the device (the watch sync) key on it.
+    var userId: String? { tokens?.userId }
+
     func accessToken() -> String? { tokens?.accessToken }
 
     /// Sends a one-time code. The server answers the same whether or not an account exists.

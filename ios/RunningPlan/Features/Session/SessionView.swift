@@ -12,8 +12,9 @@ struct SessionView: View {
     var checkedIn: BeforeFeeling?
     /// The WorkoutKit plan for Add to Apple Watch; nil when this kind of session cannot go to the watch.
     var watchPlan: WorkoutPlan?
-    var watchSync: WatchSyncModel?
-    var onToggleWatchSync: () -> Void = {}
+    /// The watch status line for a run, nil when the session has none; "Watch settings" opens the sheet.
+    var watchLine: WatchStatusCopy.Line?
+    var onWatchSettings: () -> Void = {}
     var onBack: () -> Void = {}
     var onEdit: () -> Void = {}
     var onAdjust: (QuickAdjustment) -> Void = { _ in }
@@ -250,32 +251,30 @@ struct SessionView: View {
                 .accessibilityIdentifier("session.addToWatch")
                 .workoutPreview(watchPlan, isPresented: $previewing)
             }
-            if let watchSync, !model.isRest, watchPlan != nil || watchSync.isOn { syncRow(watchSync) }
+            if let watchLine { watchStatus(watchLine) }
             copyButton
         }
     }
 
-    private func syncRow(_ sync: WatchSyncModel) -> some View {
+    /// One status line about the watch and the way to Watch settings (issue #112).
+    private func watchStatus(_ line: WatchStatusCopy.Line) -> some View {
         VStack(spacing: 2) {
-            Button(action: onToggleWatchSync) {
-                Text(sync.isOn ? "Stop keeping sessions on my watch" : "Keep my next sessions on my watch")
-                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.accentText.color)
+            Text(line.text).font(.system(size: 14)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("session.watchStatus")
+            if line.offersSettings {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                }
+                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.accentText.color)
+                .frame(minHeight: Metrics.minTouchTarget)
+                .accessibilityIdentifier("session.openSettings")
+            }
+            Button(action: onWatchSettings) {
+                Text("Watch settings").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.accentText.color)
                     .frame(minHeight: Metrics.minTouchTarget)
             }
-            .accessibilityIdentifier("session.watchSync")
-            if let note = Self.syncNote(sync.status) {
-                Text(note).font(.system(size: 13)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
-            }
-        }
-    }
-
-    static func syncNote(_ status: WatchSyncModel.Status) -> String? {
-        switch status {
-        case .off: nil
-        case .unsupported: "Scheduling workouts needs an iPhone paired with an Apple Watch."
-        case .denied: "Allow Running Plan to schedule workouts in Settings to use this."
-        case .synced(0): "Up to 15 upcoming runs stay on your watch."
-        case .synced(let count): "Up to 15 upcoming runs stay on your watch. \(count) scheduled."
+            .accessibilityIdentifier("session.watchSettings")
         }
     }
 
