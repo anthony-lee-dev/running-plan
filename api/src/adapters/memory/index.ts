@@ -456,6 +456,17 @@ export class MemoryMatchStore implements MatchStore {
       .filter((r) => r.userId === userId && activityIds.includes(r.activityId) && this.plans.sessionRef(userId, r.sessionId))
       .map(({ userId: _u, ...m }) => ({ ...m }));
   }
+
+  async forPlan(userId: string, planId: string) {
+    if (!(await this.auth.userExists(userId))) return [];
+    return this.rows
+      .filter((r) => r.userId === userId && this.plans.sessionRef(userId, r.sessionId)?.session.planId === planId)
+      .sort((a, b) => (a.sessionId < b.sessionId ? -1 : 1))
+      .map(({ userId: _u, ...m }) => {
+        const a = this.activities.ref(userId, m.activityId);
+        return { ...m, ...(a?.distanceM !== undefined ? { distanceM: a.distanceM } : {}), ...(a ? { durationSec: a.durationSec } : {}) };
+      });
+  }
 }
 
 export class MemoryCheckInStore implements CheckInStore {

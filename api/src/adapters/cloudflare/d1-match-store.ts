@@ -123,6 +123,25 @@ export class D1MatchStore implements MatchStore {
       .all<{ session_id: string; activity_id: string; status: MatchStatus; updated_at: string }>();
     return results.map(toMatch);
   }
+
+  async forPlan(userId: string, planId: string) {
+    const { results } = await this.db
+      .prepare(
+        `SELECT m.session_id, m.activity_id, m.status, m.updated_at, a.distance_m, a.duration_sec
+           FROM matches m
+           JOIN sessions s ON s.id = m.session_id AND s.plan_id = ?2 AND s.deleted_at IS NULL
+           JOIN plans p ON p.id = s.plan_id AND p.user_id = ?1 AND p.deleted_at IS NULL
+           LEFT JOIN activities a ON a.id = m.activity_id AND a.user_id = ?1 AND a.deleted_at IS NULL
+          WHERE m.user_id = ?1 ORDER BY m.session_id`,
+      )
+      .bind(userId, planId)
+      .all<{ session_id: string; activity_id: string; status: MatchStatus; updated_at: string; distance_m: number | null; duration_sec: number | null }>();
+    return results.map((r) => ({
+      ...toMatch(r),
+      ...(r.distance_m !== null ? { distanceM: r.distance_m } : {}),
+      ...(r.duration_sec !== null ? { durationSec: r.duration_sec } : {}),
+    }));
+  }
 }
 
 const toMatch = (r: { session_id: string; activity_id: string; status: MatchStatus; updated_at: string }): MatchRow => ({

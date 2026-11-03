@@ -181,6 +181,11 @@ export interface MatchStore {
   /** The matches of these activities whose session is still live. */
   forActivities(userId: string, activityIds: string[]): Promise<MatchRow[]>;
   /**
+   * The matches of a live plan's live sessions, each with its activity's distance and duration (left out when the
+   * activity is gone). One query; the progress endpoint reads it.
+   */
+  forPlan(userId: string, planId: string): Promise<(MatchRow & { distanceM?: number; durationSec?: number })[]>;
+  /**
    * What an upload may suggest: the user's live `planned` sessions of live plans with a date in [from, to] that have
    * no match yet. One query.
    */

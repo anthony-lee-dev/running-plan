@@ -19,7 +19,6 @@ export const NOT_BUILT = new Set([
   "GET /v1/plans/{planId}/proposals",
   "POST /v1/proposals/{proposalId}:accept",
   "POST /v1/proposals/{proposalId}:dismiss",
-  "GET /v1/plans/{planId}/progress",
   "GET /v1/plans/{planId}/reviews/{weekIndex}",
 ]);
 
@@ -275,6 +274,11 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await rejected("PUT /v1/sessions/{sessionId}/match", M, { token, body: { activityId: a1, status: "suggested", extra: 1 } }, "/extra");
       await ok("DELETE /v1/sessions/{sessionId}/match", M, 200, { token });
       await ok("DELETE /v1/sessions/{sessionId}/match", M, 404, { token });
+
+      const G = `/v1/plans/${id(101)}/progress`;
+      await ok("GET /v1/plans/{planId}/progress", `${G}?today=2026-11-03`, 401);
+      await ok("GET /v1/plans/{planId}/progress", `${G}?today=2026-11-03`, 200, { token });
+      await ok("GET /v1/plans/{planId}/progress", `/v1/plans/${id(299)}/progress?today=2026-11-03`, 404, { token });
 
       const C = `/v1/sessions/${id(211)}/checkins`;
       const checkIn = { id: id(301), when: "after", feel: 4, effortFelt: 6 };

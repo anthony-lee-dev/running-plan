@@ -9,6 +9,7 @@ import { healthRoutes } from "./http/health";
 import { planRoutes } from "./http/plans";
 import { problem } from "./http/problem";
 import { profileRoutes } from "./http/profile";
+import { progressRoutes } from "./http/progress";
 
 /** Builds the HTTP app from its dependencies. Runtime-agnostic: no Cloudflare or Node APIs here. */
 export function createApp(deps: Deps, options: { generate?: typeof generatePlan } = {}) {
@@ -20,6 +21,7 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   app.route("/", generateRoutes(deps, options.generate));
   app.route("/", matchRoutes(deps));
   app.route("/", planRoutes(deps));
+  app.route("/", progressRoutes(deps));
   app.route("/", activityRoutes(deps));
   app.notFound((c) => c.json({ error: "not_found" }, 404));
   app.onError((error, c) => {
