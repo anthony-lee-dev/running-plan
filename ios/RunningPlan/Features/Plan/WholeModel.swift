@@ -1,8 +1,8 @@
 import APIClient
 import Foundation
 
-/// The week list of DK-Whole: one row per week, which opens that week. Distance actually run waits for the progress
-/// endpoint (backlog 2.15); until then a week is ticked when every session in it is marked done.
+/// The week list of DK-Whole: one row per week, which opens that week. With the progress reply, weeks up to this one
+/// show distance run over planned; without it a week is ticked when every session in it is marked done.
 struct WholeModel: Equatable {
     enum State: Equatable {
         case done, current, upcoming
@@ -17,13 +17,15 @@ struct WholeModel: Equatable {
         let spoken: String
     }
 
-    /// The goal card. "On track" waits for the progress endpoint (backlog 2.15).
+    /// The goal card.
     struct Goal: Equatable {
         let title: String
         let subtitle: String
         let progress: Double
         let weekLabel: String
         let doneLabel: String
+        /// From the progress endpoint; nil while it has not loaded or is too early to say.
+        let badge: ProgressModel.Badge?
     }
 
     struct Bar: Equatable {
@@ -40,7 +42,8 @@ struct WholeModel: Equatable {
     let bars: [Bar]
     let chartSpoken: String
 
-    init(schedule: PlanSchedule) {
+    init(schedule: PlanSchedule, progress: Components.Schemas.Progress? = nil) {
+        let distance = DistanceDone(progress: progress, schedule: schedule)
         let planGoal = schedule.plan.value1.value2.goal
         // Only a plan towards a dated race has a race week.
         let hasRace = planGoal._type != .none && planGoal.date != nil
@@ -63,10 +66,12 @@ struct WholeModel: Equatable {
         goal = Goal(
             title: Self.title(planGoal),
             subtitle: Self.subtitle(planGoal, schedule: schedule),
-            // Whole weeks done; the board's bar also counts part of this week, which needs distance run (4.7).
-            progress: schedule.weekCount > 0 ? Double(weeksDone) / Double(schedule.weekCount) : 0,
+            // Whole weeks done, plus the share of this week's distance run when the progress reply is in (as the board).
+            progress: schedule.weekCount > 0
+                ? (Double(weeksDone) + (current.flatMap { distance?.fraction(week: $0) } ?? 0)) / Double(schedule.weekCount) : 0,
             weekLabel: weekLabel,
-            doneLabel: weeksDone == 1 ? "1 week done" : "\(weeksDone) weeks done"
+            doneLabel: weeksDone == 1 ? "1 week done" : "\(weeksDone) weeks done",
+            badge: distance.flatMap { Self.badge($0.onTrack) }
         )
         bars = (0..<schedule.weekCount).map { week in
             Bar(
@@ -100,15 +105,24 @@ struct WholeModel: Equatable {
             }
             let count = schedule.sessionCount(week: week)
             let state: State = week == current ? .current : (count > 0 && schedule.doneCount(week: week) == count ? .done : .upcoming)
-            let spokenParts = ["Week \(week + 1)", phase?.title, week == current ? "this week" : date, "\(km[week]) kilometres", state == .done ? "done" : nil]
+            let ran = distance.flatMap { $0.shows(week: week) ? PlanPreview.kilometres($0.ran(week: week) / 1000) : nil }
+            let spokenParts = ["Week \(week + 1)", phase?.title, week == current ? "this week" : date, ran.map { "\($0) of \(km[week]) kilometres" } ?? "\(km[week]) kilometres", state == .done ? "done" : nil]
             return Row(
                 week: week,
                 label: "W\(week + 1)",
                 detail: parts.joined(separator: " · "),
-                distance: "\(km[week]) km",
+                distance: ran.map { "\($0) / \(km[week]) km" } ?? "\(km[week]) km",
                 state: state,
                 spoken: spokenParts.compactMap { $0 }.joined(separator: ", ")
             )
+        }
+    }
+
+    private static func badge(_ onTrack: Components.Schemas.Progress.goalPayload.onTrackPayload) -> ProgressModel.Badge? {
+        switch onTrack {
+        case .on_track: .onTrack
+        case .behind: .behind
+        case .unknown: nil
         }
     }
 

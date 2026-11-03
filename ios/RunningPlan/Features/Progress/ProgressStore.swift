@@ -41,6 +41,11 @@ final class ProgressStore {
     }
 
     private(set) var state: State = .loading
+
+    /// The reply when there is one, for the screens that only decorate with it.
+    var loaded: Components.Schemas.Progress? {
+        if case .loaded(let progress) = state { progress } else { nil }
+    }
     private let loader: ProgressLoading
 
     init(loader: ProgressLoading) {

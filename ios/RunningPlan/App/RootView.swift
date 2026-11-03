@@ -5,6 +5,8 @@ struct RootView: View {
     @State private var plans: PlanStore
     @State private var inbox: InboxStore
     @State private var showInbox = false
+    /// Loaded here, once, for Next, Plan and Progress (distance done, "On track", the Progress tab).
+    @State private var progress = ProgressStore(loader: APIProgressLoader(client: APIConfiguration.liveSignedInClient()))
     @State private var watchSync = WatchSyncModel()
     @State private var showOnboarding = false
     /// A session's spec sheet, over the tabs.
@@ -36,6 +38,10 @@ struct RootView: View {
         .task(id: plans.plan?.value1.value1.id) {
             // The count on Next's inbox card; the inbox screen shows any error itself.
             if plans.plan != nil { await inbox.refresh() }
+        }
+        .task(id: progressKey) {
+            guard let plan = plans.plan else { return }
+            await progress.load(planId: plan.value1.value1.id, today: PreviewViewModel.localToday())
         }
         .task(id: watchWindowKey) {
             guard let plan = plans.plan else { return }
@@ -74,20 +80,25 @@ extension RootView {
         return today + WatchSync.window(sessions: plan.value2.sessions, today: today).map(\.key).joined(separator: ",")
     }
 
+    /// Changes with the plan, the local day and any session's revision, so an edit or a match reloads progress.
+    var progressKey: String {
+        plans.plan.map(ProgressScreen.refreshKey) ?? ""
+    }
+
     @ViewBuilder func screen(_ tab: AppTab) -> some View {
         switch tab {
         case .next:
             NextScreen(
-                plans: plans, onSetGoal: { showOnboarding = true },
+                plans: plans, progress: progress, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onMove: { sheet = .move(sessionId: $0) },
                 inboxCount: inbox.count, onInbox: { showInbox = true }
             )
         case .plan:
             PlanScreen(
-                plans: plans, onSetGoal: { showOnboarding = true },
+                plans: plans, progress: progress, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onAdd: { sheet = .add(date: $0) }
             )
-        case .progress: ProgressScreen(plans: plans, onSetGoal: { showOnboarding = true })
+        case .progress: ProgressScreen(plans: plans, store: progress, onSetGoal: { showOnboarding = true })
         default: PlaceholderScreen(tab: tab)
         }
     }
