@@ -63,6 +63,11 @@ enum Palette {
     static let amberTitle = RGB(red: 0xF7, green: 0xE3, blue: 0xA6)
     static let amberText = RGB(red: 0xE5, green: 0xD2, blue: 0x9B)
     static let amberLink = RGB(red: 0xFF, green: 0xC3, blue: 0x8A)
+    /// DK-Progress: the countdown and body text on the `green-soft` goal card.
+    static let countdown = RGB(red: 0xE5, green: 0xFF, blue: 0xF4)
+    static let greenSoftBody = RGB(red: 0xBD, green: 0xEB, blue: 0xD6)
+    /// `plum-text`: strength (the Progress tally).
+    static let plumText = RGB(red: 0xD6, green: 0xC2, blue: 0xF5)
     /// Bar chart colours by plan phase.
     static let phaseBase = RGB(red: 0x4C, green: 0x9C, blue: 0x80)
     static let phaseBuild = RGB(red: 0xE9, green: 0xB9, blue: 0x49)

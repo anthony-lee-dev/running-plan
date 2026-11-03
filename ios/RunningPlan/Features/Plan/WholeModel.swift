@@ -113,7 +113,7 @@ struct WholeModel: Equatable {
     }
 
     /// "10K in 55:00", "Half marathon in 1:45:00", or the goal's name alone.
-    private static func title(_ goal: Components.Schemas.Goal) -> String {
+    static func title(_ goal: Components.Schemas.Goal) -> String {
         let name = PlanPreview.goalName(goal)
         guard goal._type != .none, let seconds = goal.targetTimeSec else { return name }
         let time = seconds >= 3600
