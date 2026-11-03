@@ -1,17 +1,14 @@
 import SwiftUI
 import UIKit
-import WorkoutKit
 
-/// DK-Session: the spec sheet for setting the workout up on a watch. Add to Apple Watch previews the WorkoutKit workout
-/// (task 4.2); Copy steps as text covers every other watch. System fonts until the font task.
+/// DK-Session: the spec sheet for setting the workout up on a watch. A run shows where it stands on an Apple Watch
+/// (issue #112, the sync is automatic); Copy steps as text covers every other watch. System fonts until the font task.
 struct SessionView: View {
     let model: SessionSheetModel
     var busy = false
     var error: String?
     /// The before-session feeling sent this visit, if any.
     var checkedIn: BeforeFeeling?
-    /// The WorkoutKit plan for Add to Apple Watch; nil when this kind of session cannot go to the watch.
-    var watchPlan: WorkoutPlan?
     /// The watch status line for a run, nil when the session has none; "Watch settings" opens the sheet.
     var watchLine: WatchStatusCopy.Line?
     var onWatchSettings: () -> Void = {}
@@ -29,7 +26,6 @@ struct SessionView: View {
 
     @State private var ticked: Set<Int> = []
     @State private var copied = false
-    @State private var previewing = false
 
     var body: some View {
         ScrollView {
@@ -239,18 +235,6 @@ struct SessionView: View {
 
     private var watchButtons: some View {
         VStack(spacing: 10) {
-            if let watchPlan, !model.isDone {
-                Button { previewing = true } label: {
-                    Label("Add to Apple Watch", systemImage: "applewatch")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                        .foregroundStyle(Color.white)
-                        .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
-                        .contentShape(Rectangle())
-                }
-                .accessibilityIdentifier("session.addToWatch")
-                .workoutPreview(watchPlan, isPresented: $previewing)
-            }
             if let watchLine { watchStatus(watchLine) }
             copyButton
         }

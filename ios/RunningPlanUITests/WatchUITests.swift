@@ -19,7 +19,7 @@ final class WatchUITests: XCTestCase {
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5), app.debugDescription)
 
         var copyShown = false
-        for index in 0..<min(rows.count, 7) {
+        for index in 0..<min(rows.count, 7) where !copyShown {
             rows.element(boundBy: index).tap()
             XCTAssertTrue(app.staticTexts["session.title"].waitForExistence(timeout: 5), app.debugDescription)
             XCTAssertFalse(app.buttons["session.addToWatch"].exists, "The per-session button is gone")
@@ -31,8 +31,11 @@ final class WatchUITests: XCTestCase {
                 app.buttons["session.watchSettings"].tap()
                 XCTAssertTrue(app.switches["watch.settings.toggle"].waitForExistence(timeout: 5), app.debugDescription)
                 app.buttons["Done"].tap()
+                XCTAssertTrue(app.switches["watch.settings.toggle"].waitForNonExistence(timeout: 5), "The sheet closes")
             }
-            app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Back to'")).firstMatch.tap()
+            let back = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Back to'")).firstMatch
+            XCTAssertTrue(back.waitForExistence(timeout: 5), app.debugDescription)
+            back.tap()
             XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5), app.debugDescription)
         }
         XCTAssertTrue(copyShown, "Copy steps stays on the sessions that have a spec sheet")

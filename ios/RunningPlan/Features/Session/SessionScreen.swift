@@ -44,7 +44,6 @@ struct SessionScreen: View {
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
                 busy: busy || inbox?.busy == true, error: error ?? inbox?.error, checkedIn: checkedIn,
-                watchPlan: WatchWorkoutMapper.plan(for: session),
                 watchLine: watchSync.flatMap {
                     WatchStatusCopy.line(for: session, in: plan.value2.sessions, status: $0.status, limit: $0.windowLimit, today: today)
                 },
