@@ -127,6 +127,32 @@ export function matchStoreContract(name: string, make: () => Promise<Made>) {
       expect(await m.store.forActivities(U1, [A1])).toEqual([]);
     });
 
+    describe("forPlan", () => {
+      it("lists the plan's matches with the activity's distance and duration", async () => {
+        await confirm(S1, A1);
+        expect(await m.store.forPlan(U1, P1)).toEqual([{ sessionId: S1, activityId: A1, status: "confirmed", updatedAt: NOW, distanceM: 5000, durationSec: 1800 }]);
+      });
+
+      it("includes a suggestion and leaves out a plan with no matches", async () => {
+        const state = await m.store.load(U1, { sessionId: S2, activityId: A2 });
+        await m.store.apply(U1, state, planMatchChange(state, { kind: "put", sessionId: S2, activityId: A2, status: "suggested" }, NOW), NOW);
+        expect(await m.store.forPlan(U1, P1)).toEqual([{ sessionId: S2, activityId: A2, status: "suggested", updatedAt: NOW, distanceM: 5000, durationSec: 1800 }]);
+        expect(await m.store.forPlan(U1, "00000000-0000-4000-8000-000000000199")).toEqual([]);
+      });
+
+      it("leaves out another plan's matches, another user's, and a deleted session's", async () => {
+        const P2 = "00000000-0000-4000-8000-000000000102";
+        const S3 = "00000000-0000-4000-8000-000000000203";
+        await m.plans.createPlan(U1, { ...plan, id: P2 }, [{ ...session(S3, "2026-10-30"), planId: P2 }], "h2");
+        await confirm(S1, A1);
+        await confirm(S3, A2);
+        expect((await m.store.forPlan(U1, P1)).map((r) => r.sessionId)).toEqual([S1]);
+        expect(await m.store.forPlan(U2, P1)).toEqual([]);
+        await m.plans.deleteSession(U1, S1, 2, LATER);
+        expect(await m.store.forPlan(U1, P1)).toEqual([]);
+      });
+    });
+
     // Backlog 2.21: deleting what an activity is matched to puts the activity back in the inbox.
     it("deleting a session unlinks its match and puts a confirmed activity back in the inbox", async () => {
       await confirm(S1, A1);
