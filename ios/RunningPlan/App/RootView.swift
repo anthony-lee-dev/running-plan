@@ -87,6 +87,7 @@ extension RootView {
                 plans: plans, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onAdd: { sheet = .add(date: $0) }
             )
+        case .progress: ProgressScreen(plans: plans, onSetGoal: { showOnboarding = true })
         default: PlaceholderScreen(tab: tab)
         }
     }
