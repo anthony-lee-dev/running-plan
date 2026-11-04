@@ -18,7 +18,8 @@ From the human: <corrections or choices from the conversation that apply, or non
 1. Run `git fetch origin main`. Then:
    - With no existing PR, run `git switch -c <Branch> origin/main`.
    - With an existing PR, run `git switch <Branch>`. After step 2, go straight to "How to work" step 6 and fix
-     what "Existing PR" names.
+     what "Existing PR" names, then remove your worktree (step 7). If git says Branch is already checked out
+     elsewhere (the human may be verifying it in the main checkout), stop and report that.
 2. Run `npm ci`. Its warning that install scripts were blocked (esbuild, fsevents, workerd) is expected, and the
    tests pass without them. If it asks you to approve anything, don't approve it. Stop and report what it asked.
 
@@ -53,6 +54,19 @@ From the human: <corrections or choices from the conversation that apply, or non
    - If this PR closes the last open issue in its milestone (or "From the human" says it is the slice's last), put
      the slice's device check against the deployed API under `## Manual gates` as an unticked box
      (`docs/backlog.md`: "End-to-end check for every slice", item 3). The milestone's description has its **Done when**.
+7. Remove your worktree once `/ship` is finished: the PR is open and ready for review, and `git status` shows
+   nothing to commit and says the branch is up to date with `origin/<Branch>`. The human checks branches out in the
+   main checkout to verify them, and git refuses to check out a branch that a worktree still holds.
+   - Note your worktree's path (`pwd`) and its original branch: in `git reflog`, the line
+     `checkout: moving from <original branch> to <Branch>`.
+   - From inside the worktree, run `git worktree unlock <worktree path>`, then `git worktree remove <worktree path>`.
+     The unlock may say it isn't locked; that's fine. Never add `--force`: if git refuses because something is
+     uncommitted, commit and push it first.
+   - This must be your last command: your shell's folder is gone afterwards. Send the report next.
+   - If a command is refused, leave the worktree and give the reason under "Worktree" in the report; the
+     orchestrator removes it.
+   - If the orchestrator later asks you to fix something on the PR, it re-creates the worktree at the same path
+     first. `cd <worktree path>`, run `npm ci`, fix and push, then remove the worktree again as above.
 
 ## Commands that work in a worktree
 In a worktree, a guard refuses any command it can't prove stays inside the worktree. These keep you clear of it,
@@ -77,5 +91,6 @@ Merge: <auto-merge queued | waiting for the human: why>
 Issue closes on merge: <yes | no (Refs only)>
 Left: <after a contract-only PR, the rest of the task; otherwise none>
 Manual gates: <the boxes in the PR body, or none>
+Worktree: <removed (original branch <name>) | kept: why>
 Notes: <anything the orchestrator must know, in one or two lines, or none>
 ```
