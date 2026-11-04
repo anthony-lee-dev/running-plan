@@ -11,6 +11,11 @@ struct NextView: View {
     /// Workouts waiting in the import inbox, and the way into it (also how a run is added by hand).
     var inboxCount = 0
     var onInbox: () -> Void = {}
+    /// Show the one-time watch card (issue #112).
+    var offerWatch = false
+    var onWatchTurnOn: () -> Void = {}
+    var onWatchNotNow: () -> Void = {}
+    var onWatchSettings: () -> Void = {}
     /// A quick adjustment is on its way to the server.
     var busy = false
     var error: String?
@@ -38,12 +43,48 @@ struct NextView: View {
                 if !model.week.isEmpty {
                     weekCard
                 }
+                if offerWatch { watchCard }
                 inboxCard
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
         .background(Palette.bg.color.ignoresSafeArea())
+    }
+
+    /// The one-time "Put your runs on your Apple Watch?" card, shown after the first plan is saved until answered.
+    private var watchCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Put your runs on your Apple Watch?").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink.color)
+            Text("Your next runs appear in the Workout app and update when you change your plan.")
+                .font(.system(size: 14)).foregroundStyle(Palette.muted.color)
+            HStack(spacing: 12) {
+                Button(action: onWatchTurnOn) {
+                    Text("Turn on").font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
+                        .padding(.horizontal, 20).frame(minHeight: Metrics.minTouchTarget)
+                        .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 14))
+                        .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("next.watch.turnOn")
+                Button(action: onWatchNotNow) {
+                    Text("Not now").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.accentText.color)
+                        .padding(.horizontal, 12).frame(minHeight: Metrics.minTouchTarget)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("next.watch.notNow")
+                Spacer()
+                Button(action: onWatchSettings) {
+                    Text("Watch settings").font(.system(size: 14)).foregroundStyle(Palette.accentText.color)
+                        .frame(minHeight: Metrics.minTouchTarget)
+                }
+                .accessibilityIdentifier("next.watch.settings")
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 20))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("next.watch")
     }
 
     private var inboxCard: some View {

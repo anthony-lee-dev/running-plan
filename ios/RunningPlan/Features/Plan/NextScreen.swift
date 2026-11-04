@@ -10,6 +10,9 @@ struct NextScreen: View {
     var onMove: (String) -> Void = { _ in }
     var inboxCount = 0
     var onInbox: () -> Void = {}
+    /// Where the one-time watch card and Watch settings come from; nil in previews and tests.
+    var watchSync: WatchSyncModel?
+    @State private var showWatchSettings = false
     @State private var busy = false
     @State private var error: String?
 
@@ -19,8 +22,18 @@ struct NextScreen: View {
             case .loaded(let plan):
                 NextView(
                     model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday()), progress: progress?.loaded), onSetGoal: onSetGoal,
-                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox, busy: busy, error: error
+                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox,
+                    offerWatch: watchSync?.shouldOfferTurnOn == true,
+                    onWatchTurnOn: {
+                        Task { await watchSync?.turnOn(sessions: plan.value2.sessions, today: PreviewViewModel.localToday()) }
+                    },
+                    onWatchNotNow: { Task { await watchSync?.markAsked() } },
+                    onWatchSettings: { showWatchSettings = true },
+                    busy: busy, error: error
                 )
+                .sheet(isPresented: $showWatchSettings) {
+                    if let watchSync { WatchSettingsSheet(sync: watchSync, plans: plans, onClose: { showWatchSettings = false }) }
+                }
             case .loading:
                 centred { ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your plan") }
             case .empty:

@@ -31,6 +31,8 @@
       "Bash(xcodebuild *)",
       "Bash(xcrun simctl *)",
       "Bash(npm ci)",
+      "Bash(git worktree unlock *)",
+      "Bash(git worktree add *)",
       "Bash(git worktree remove *)",
       "Bash(git branch -D agent/*)",
       "Bash(git merge origin/main)",

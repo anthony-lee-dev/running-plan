@@ -5,7 +5,7 @@ import Testing
 /// DK-Editor against its board, relatively (see `BoardSnapshot`). Text is pinned by
 /// `SessionSheetModelTests` and `SessionDraftTests`; these check layout and colour.
 ///
-/// DK-Session has no board comparison: on its tall board (1412 pt, with the Add to Apple Watch button that task 4.2
+/// DK-Session has no board comparison: on its tall board (1412 pt, with the watch buttons that task 4.2
 /// adds) the coarse grid scored a strength sheet, a rest day and even the editor nearer than the intervals sheet, so
 /// a relative check would pin nothing. Its content is pinned by `SessionSheetModelTests`; here it is only the
 /// editor's board, and the sheet serves as the editor's "different screen".
