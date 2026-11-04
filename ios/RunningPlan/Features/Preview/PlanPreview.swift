@@ -239,7 +239,7 @@ struct PlanPreview: Equatable {
         }
     }
 
-    private static let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    static let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
     /// `2027-01-10` as `Jan 10`.
     static func shortDate(_ date: String) -> String {

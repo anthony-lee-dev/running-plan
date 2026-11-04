@@ -132,7 +132,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   calls `SessionWriting.deletePlan` (`DELETE /v1/plans/{id}`, `If-Match` = the plan's `revision`), then returns to the
   empty state. 404 counts as deleted; 409 reloads; offline or other errors keep the plan and show a line under the button.
   Goal and settings (3.7) replaces it. The row shows in week mode only (an inset covered the whole-plan list's rows on a
-  short screen and broke the Preview UI test). Known limits: workouts already on the watch stay until the next resync, and a
+  short screen and broke the Preview UI test). Deleting the plan removes its workouts from the watch (`WatchSyncModel`, see Send to watch). Known limit: a
   user with an older saved plan sees that one after a relaunch.
 
 ## Unit tests
@@ -177,11 +177,23 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   sessions are not sent. A plan's id is derived from session id and revision, so the same session is the same plan.
 - `WatchSync` (pure) picks the window (next 15 planned runs from today) and diffs it against what is scheduled by
   `(plan id, local date)`; removals run before additions so the cap holds. `WatchSyncModel` drives a `WatchScheduling`
-  (WorkoutKit in `LiveWatchScheduler`, a fake in tests). It asks permission only from the user's tap on "Keep my next
-  sessions on my watch"; `RootView` resyncs in the background only when that is on and already allowed.
+  (WorkoutKit in `LiveWatchScheduler`, a fake in tests).
+- One automatic setting (issue #112, design in #100); there is no per-session "Add to Apple Watch" (`.workoutPreview` is gone).
+  Intent (`wantsSync`) is kept apart from permission: a refused or revoked permission shows `.denied` and the intent
+  stays on, so sync resumes by itself once allowed. Never store `false` on denied. Permission is asked only from a tap
+  (`turnOn`: the Next card's Turn on or the Watch settings switch), never from a resync.
+- The setting (`watch.sync.<userId>`) and the "asked" flag (`watch.asked.<userId>`) live in UserDefaults on this iPhone,
+  per account; `watch.owner` records whose workouts are on the watch, so a different account or sign-out removes them.
+  `WatchSyncModel.update(state:account:today:)` is the one entry point: `.loaded` resyncs, `.empty` (deleted plan,
+  signed out) clears, `.loading` and `.failed` do nothing. Never clear on `plan == nil`. `RootView` calls it on launch,
+  on a plan change and on `scenePhase == .active` (no background refresh task).
+- Next shows a one-time card ("Put your runs on your Apple Watch?", Turn on / Not now) until answered, only when
+  `WorkoutScheduler.isSupported`. The session page shows one status line (`WatchStatusCopy`, pure and unit-tested) and a
+  "Watch settings" link for open runs; none for strength, custom, rest, done, skipped or past sessions or an unsupported
+  device. `WatchSettingsSheet` holds the switch and is reused by Goal and settings (#77).
 - If a free team refuses to sign the HealthKit entitlement, remove the `entitlements:` block and the two
-  `INFOPLIST_KEY_NSHealth*` lines from `project.yml`; the preview still works and scheduling needs a device check.
-- Add to Apple Watch uses `.workoutPreview`, which needs no permission. Watch sends need a paired Apple Watch.
+  `INFOPLIST_KEY_NSHealth*` lines from `project.yml`; scheduling then cannot work, so this needs the paid team.
+  Scheduling under a free team is checked on a device (manual gate). Watch sends need a paired Apple Watch.
 
 ## Import inbox (task 4.3)
 

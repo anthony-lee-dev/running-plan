@@ -92,8 +92,73 @@ struct LiveWatchScheduler: WatchScheduling {
     func remove(_ item: WatchItem) async { await WorkoutScheduler.shared.remove(item.plan, at: item.components) }
 }
 
-/// Keeps the watch's schedule in step with the plan while the user has it switched on. It asks for permission only
-/// from `turnOn` (a tap), never from a background resync.
+
+/// The words about the watch on the session page and in Watch settings (design §8.4, issue #100). Pure.
+enum WatchStatusCopy {
+    struct Line: Equatable {
+        let text: String
+        /// Show the Open Settings button: only the user can allow the permission again.
+        let offersSettings: Bool
+    }
+
+    static let notAllowed = "Running Plan can't add workouts. Allow it in Settings."
+
+    /// `2026-11-04` as `Tue 4 Nov`.
+    static func day(_ date: String) -> String {
+        let parts = date.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3, (1...12).contains(parts[1]) else { return date }
+        return "\(PlanPreview.weekdayName(PlanPreview.dayNumber(date))) \(parts[2]) \(PlanPreview.months[parts[1] - 1])"
+    }
+
+    /// The status line under a run on the session page. Nil for sessions the watch never gets (strength, custom, rest),
+    /// ones already done, skipped or past, and a device that cannot schedule workouts.
+    static func line(
+        for session: Components.Schemas.Session, in sessions: [Components.Schemas.Session], status: WatchSyncModel.Status,
+        limit: Int, today: String
+    ) -> Line? {
+        let s = session.value2
+        guard s.status != .done, s.status != .skipped, s.date >= today, let plan = WatchWorkoutMapper.plan(for: session) else { return nil }
+        switch status {
+        case .unsupported:
+            return nil
+        case .off:
+            return Line(text: "Not on your watch. Turn on in Watch settings.", offersSettings: false)
+        case .denied:
+            return Line(text: notAllowed, offersSettings: true)
+        case .synced:
+            let key = WatchItem(id: plan.id, date: s.date, plan: plan).key
+            let inWindow = WatchSync.window(sessions: sessions, today: today, limit: limit).contains { $0.key == key }
+            return inWindow
+                ? Line(text: "On your watch: in the Workout app for \(day(s.date)).", offersSettings: false)
+                : Line(text: "Goes to your watch closer to the day.", offersSettings: false)
+        }
+    }
+
+    /// The status line in the Watch settings sheet; `through` is the last day in the window.
+    static func settingsLine(status: WatchSyncModel.Status, count: Int, through: String?) -> Line {
+        switch status {
+        case .unsupported:
+            return Line(text: "Needs an iPhone paired with an Apple Watch.", offersSettings: false)
+        case .off:
+            return Line(text: "Off. Your runs stay in this app.", offersSettings: false)
+        case .denied:
+            return Line(text: notAllowed, offersSettings: true)
+        case .synced:
+            guard let through, count > 0 else {
+                return Line(text: "On. Your next runs go to the Workout app as they come up.", offersSettings: false)
+            }
+            let text = count == 1
+                ? "Your next run is in the Workout app, on \(day(through))."
+                : "Your next \(count) runs are in the Workout app, up to \(day(through))."
+            return Line(text: text, offersSettings: false)
+        }
+    }
+}
+
+/// Keeps the watch's schedule in step with the plan while the user wants it. The setting (the user's intent) is kept
+/// apart from the permission: a refused or revoked permission shows as `.denied` and sync resumes when it is back.
+/// The setting and the "asked" flag are stored on this iPhone per account. It asks for permission only from
+/// `turnOn` (a tap), never from a resync.
 @MainActor @Observable
 final class WatchSyncModel {
     enum Status: Equatable {
@@ -103,20 +168,33 @@ final class WatchSyncModel {
         case synced(Int)
     }
 
-    private(set) var status: Status
+    private(set) var status: Status = .off
+    /// The runs kept on the watch as of the last sync, soonest first.
+    private(set) var window: [WatchItem] = []
+    private(set) var accountId: String?
+    /// The user wants sync (the switch), whatever the permission says.
+    private(set) var wantsSync = false
+    /// The turn-on card was answered, or the switch was used.
+    private(set) var asked = false
     private let scheduler: WatchScheduling
     private let defaults: UserDefaults
-    private static let key = "watch.sync"
-
-    var isOn: Bool { status != .off && status != .denied && status != .unsupported }
+    private var accountKnown = false
+    private static let ownerKey = "watch.owner"
 
     init(scheduler: WatchScheduling = LiveWatchScheduler(), defaults: UserDefaults = .standard) {
         self.scheduler = scheduler
         self.defaults = defaults
-        status = defaults.bool(forKey: Self.key) ? .synced(0) : .off
+        if !scheduler.isSupported { status = .unsupported }
     }
 
-    var isEnabled: Bool { defaults.bool(forKey: Self.key) }
+    var isSupported: Bool { scheduler.isSupported }
+    /// How many runs the window holds, so the settings sheet and the session page agree.
+    var windowLimit: Int { scheduler.maxWorkouts }
+    /// Show the one-time "Put your runs on your Apple Watch?" card.
+    var shouldOfferTurnOn: Bool { isSupported && accountId != nil && !asked && !wantsSync }
+
+    private func syncKey(_ id: String) -> String { "watch.sync.\(id)" }
+    private func askedKey(_ id: String) -> String { "watch.asked.\(id)" }
 
     /// One change at a time: a background resync must not interleave with a tap's turn on or off.
     private var tail: Task<Void, Never>?
@@ -139,32 +217,98 @@ final class WatchSyncModel {
         await serialized { await self.doTurnOff() }
     }
 
+    /// "Not now" on the card.
+    func markAsked() async {
+        await serialized {
+            guard let id = self.accountId else { return }
+            self.asked = true
+            self.defaults.set(true, forKey: self.askedKey(id))
+        }
+    }
+
     func resync(sessions: [Components.Schemas.Session], today: String) async {
         await serialized { await self.doResync(sessions: sessions, today: today) }
     }
 
+    /// Removes everything the app scheduled. The setting stays as it is, so the next plan syncs when it is saved.
+    func clearAll() async {
+        await serialized { await self.doClear() }
+    }
+
+    /// The one call the app makes when the plan, the account or the foreground changes. Only `.loaded` syncs and only
+    /// `.empty` clears: loading, offline and error leave the watch alone. `account` is nil when signed out.
+    func update(state: PlanStore.State, account: String?, today: String) async {
+        await serialized {
+            await self.doSetAccount(account)
+            switch state {
+            case .loaded(let plan): await self.doResync(sessions: plan.value2.sessions, today: today)
+            case .empty: await self.doClear()
+            case .loading, .failed: break
+            }
+        }
+    }
+
+    private func doSetAccount(_ id: String?) async {
+        if accountKnown, id == accountId { return }
+        accountKnown = true
+        accountId = id
+        wantsSync = id.map { defaults.bool(forKey: syncKey($0)) } ?? false
+        asked = id.map { defaults.bool(forKey: askedKey($0)) } ?? false
+        // What is on the watch belongs to the account that put it there: sign-out, or another account, removes it.
+        if let owner = defaults.string(forKey: Self.ownerKey), owner != id { await removeEverything() }
+        window = []
+        status = await restingStatus()
+    }
+
     private func doTurnOn(sessions: [Components.Schemas.Session], today: String) async {
         guard scheduler.isSupported else { return status = .unsupported }
+        guard let id = accountId else { return }
+        wantsSync = true
+        asked = true
+        defaults.set(true, forKey: syncKey(id))
+        defaults.set(true, forKey: askedKey(id))
         var state = await scheduler.authorization()
         if state == .notDetermined { state = await scheduler.requestAuthorization() }
-        guard state == .authorized else {
-            defaults.set(false, forKey: Self.key)
-            return status = .denied
-        }
-        defaults.set(true, forKey: Self.key)
+        guard state == .authorized else { return status = .denied }
         await sync(sessions: sessions, today: today)
     }
 
     private func doTurnOff() async {
-        defaults.set(false, forKey: Self.key)
-        status = .off
-        guard scheduler.isSupported, await scheduler.authorization() == .authorized else { return }
-        for item in await scheduler.scheduled() { await scheduler.remove(item) }
+        guard let id = accountId else { return }
+        wantsSync = false
+        asked = true
+        defaults.set(false, forKey: syncKey(id))
+        defaults.set(true, forKey: askedKey(id))
+        status = scheduler.isSupported ? .off : .unsupported
+        await removeEverything()
     }
 
-    /// Brings the schedule up to date after the plan changes. Does nothing unless switched on and already allowed.
+    private func doClear() async {
+        await removeEverything()
+        status = await restingStatus()
+    }
+
+    private func removeEverything() async {
+        window = []
+        guard scheduler.isSupported else { return defaults.removeObject(forKey: Self.ownerKey) }
+        // Without permission nothing can be removed, so keep the owner marker and try again later.
+        guard await scheduler.authorization() == .authorized else { return }
+        for item in await scheduler.scheduled() { await scheduler.remove(item) }
+        defaults.removeObject(forKey: Self.ownerKey)
+    }
+
+    /// The status when nothing is being synced right now: the setting, checked against the permission.
+    private func restingStatus() async -> Status {
+        guard scheduler.isSupported else { return .unsupported }
+        guard wantsSync else { return .off }
+        return await scheduler.authorization() == .authorized ? .synced(0) : .denied
+    }
+
+    /// Brings the schedule up to date. Does nothing unless the user wants it; if permission is gone it only says so.
     private func doResync(sessions: [Components.Schemas.Session], today: String) async {
-        guard isEnabled, scheduler.isSupported, await scheduler.authorization() == .authorized else { return }
+        guard scheduler.isSupported else { return status = .unsupported }
+        guard wantsSync else { return status = .off }
+        guard await scheduler.authorization() == .authorized else { return status = .denied }
         await sync(sessions: sessions, today: today)
     }
 
@@ -173,6 +317,8 @@ final class WatchSyncModel {
         let changes = WatchSync.diff(desired: desired, existing: await scheduler.scheduled())
         for item in changes.remove { await scheduler.remove(item) }
         for item in changes.add { await scheduler.schedule(item) }
+        if let id = accountId { defaults.set(id, forKey: Self.ownerKey) }
+        window = desired
         status = .synced(desired.count)
     }
 }

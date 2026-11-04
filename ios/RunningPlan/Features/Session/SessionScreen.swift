@@ -29,6 +29,7 @@ struct SessionScreen: View {
     @State private var editing = false
     @State private var pickingRun = false
     @State private var moving = false
+    @State private var showWatchSettings = false
     @State private var busy = false
     @State private var error: String?
     @State private var checkedIn: BeforeFeeling?
@@ -43,8 +44,10 @@ struct SessionScreen: View {
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
                 busy: busy || inbox?.busy == true, error: error ?? inbox?.error, checkedIn: checkedIn,
-                watchPlan: WatchWorkoutMapper.plan(for: session), watchSync: watchSync,
-                onToggleWatchSync: { toggleWatchSync(plan) },
+                watchLine: watchSync.flatMap {
+                    WatchStatusCopy.line(for: session, in: plan.value2.sessions, status: $0.status, limit: $0.windowLimit, today: today)
+                },
+                onWatchSettings: { showWatchSettings = true },
                 onBack: onClose,
                 onEdit: { editing = true },
                 onAdjust: { adjust($0, session) },
@@ -78,6 +81,9 @@ struct SessionScreen: View {
                     if deleted { onClose() }
                 })
             }
+            .sheet(isPresented: $showWatchSettings) {
+                if let watchSync { WatchSettingsSheet(sync: watchSync, plans: plans, onClose: { showWatchSettings = false }) }
+            }
             .sheet(isPresented: $moving) {
                 MoveSheet(plans: plans, sessionId: sessionId, onClose: { moving = false })
             }
@@ -88,17 +94,6 @@ struct SessionScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Palette.bg.color.ignoresSafeArea())
-        }
-    }
-
-    private func toggleWatchSync(_ plan: Components.Schemas.PlanDetail) {
-        guard let watchSync else { return }
-        Task {
-            if watchSync.isOn {
-                await watchSync.turnOff()
-            } else {
-                await watchSync.turnOn(sessions: plan.value2.sessions, today: PreviewViewModel.localToday())
-            }
         }
     }
 
