@@ -296,6 +296,30 @@ struct OfflineSyncTests {
         #expect(sync.notice != nil)
     }
 
+    @Test func aRefusedRequestThatIsNotAboutTheEditKeepsTheEdit() async throws {
+        // Even an empty request is refused (say, a bad cursor): the edit is not the problem.
+        let service = FakeSyncService { _, _ in throw SyncError.badRequest }
+        let (sync, _, _) = makeSync(service: service)
+        await sync.activate()
+        sync.enqueue(edit("a", .init(title: "Mine")))
+        let outcome = await sync.run()
+        #expect(outcome.failed)
+        #expect(sync.pendingCount == 1)
+    }
+
+    @Test func aConflictOnACreateIsDroppedNotAsked() async throws {
+        let service = FakeSyncService { _, ops in
+            try response(results: [result(ops[0].idempotencyKey, "conflict", server: sessionJSON(otherSession, revision: 3))])
+        }
+        let (sync, _, _) = makeSync(service: service)
+        await sync.activate()
+        let content = try decode(Components.Schemas.SessionContent.self, #"{"date":"2026-10-29","type":"rest"}"#)
+        sync.enqueue(.sessionCreate(key: "c", planId: PlanFixture.planID, .init(value1: content, value2: .init(id: otherSession))))
+        _ = await sync.run()
+        #expect(sync.conflicts.isEmpty)
+        #expect(sync.pendingCount == 0)
+    }
+
     @Test func aRejectedEditIsDroppedAndTheServersStateIsLoaded() async throws {
         let service = FakeSyncService { _, ops in try response(results: [result(ops[0].idempotencyKey, "rejected")]) }
         let (sync, _, _) = makeSync(service: service)

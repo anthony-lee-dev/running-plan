@@ -49,6 +49,7 @@ struct RootView: View {
                 if let notice = plans.syncNotice { SyncNoticeBanner(text: notice, onDismiss: plans.dismissSyncNotice) }
             }
         }
+        // The setter is ignored on purpose: the sheet cannot be dismissed (`interactiveDismissDisabled`), only answered.
         .sheet(item: Binding(get: { conflict }, set: { _ in })) { model in
             ConflictSheet(
                 model: model,
@@ -61,11 +62,13 @@ struct RootView: View {
             // Edits made offline go out when the app comes to the front and whenever the queue changes, and again every
             // half minute while some wait (no network monitor: an offline attempt costs nothing).
             guard scenePhase == .active, plans.sync != nil, plans.state != .loading else { return }
-            await plans.syncNow()
+            // Unstructured: the queue shrinking changes `syncKey`, which cancels this task, and a cancelled sync would
+            // lose the reload that follows it.
+            await Task { await plans.syncNow() }.value
             while !Task.isCancelled, plans.syncWaiting {
                 try? await Task.sleep(for: .seconds(30))
                 guard !Task.isCancelled else { return }
-                await plans.syncNow()
+                await Task { await plans.syncNow() }.value
             }
         }
         .task(id: plans.plan?.value1.value1.id) {

@@ -174,6 +174,14 @@ final class OfflineSync {
                     outcome.failed = true
                     return outcome
                 }
+                // A 400 may be about the request (a bad cursor), not the edit: only drop the edit when a request
+                // without it is accepted.
+                do {
+                    _ = try await service.sync(cursor: state.cursor, operations: [])
+                } catch {
+                    outcome.failed = true
+                    return outcome
+                }
                 // One operation the server cannot take; stopping would hold up everything behind it.
                 state.queue.remove(key: op.idempotencyKey)
                 notice = "One of your changes couldn't be saved and was dropped."
@@ -224,7 +232,7 @@ final class OfflineSync {
 
     private func conflict(_ server: Components.Schemas.SyncResult.serverPayload?, for op: SyncOp, _ outcome: inout Outcome) {
         let key = op.idempotencyKey
-        guard case .Session(let session)? = server else {
+        guard case .Session(let session)? = server, op.baseRevision != nil else {
             // No server copy, or a plan conflict (no screen edits a plan offline): take the server's state.
             state.queue.remove(key: key)
             outcome.reload = true
