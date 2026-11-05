@@ -10,7 +10,7 @@ enum SyncMerge {
         /// The plan on screen arrived as a tombstone.
         var planDeleted = false
         /// There was no plan on screen and the pull carries a live one: load it in full (the pull has no warnings).
-        var foundPlan = false
+        var foundPlanId: String?
     }
 
     /// - Parameter pending: ids of plans and sessions with an edit still queued or awaiting the user's choice; the
@@ -20,7 +20,7 @@ enum SyncMerge {
         to plan: Detail?, pending: Set<String>
     ) -> Result {
         guard var detail = plan else {
-            return Result(plan: nil, foundPlan: plans.contains { $0.value1.deletedAt == nil })
+            return Result(plan: nil, foundPlanId: plans.last { $0.value1.deletedAt == nil }?.value1.id)
         }
         let id = detail.value1.value1.id
         for change in plans where change.value1.id == id {

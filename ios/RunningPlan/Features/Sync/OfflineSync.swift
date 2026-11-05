@@ -17,6 +17,8 @@ final class OfflineSync {
         /// rejected edit): load it again.
         var reload = false
         var planDeleted = false
+        /// The pull carries a live plan and none is on screen.
+        var foundPlanId: String?
         var offline = false
         var signedOut = false
         var failed = false
@@ -134,6 +136,7 @@ final class OfflineSync {
             total.applied += outcome.applied
             total.reload = total.reload || outcome.reload
             total.planDeleted = total.planDeleted || outcome.planDeleted
+            total.foundPlanId = outcome.foundPlanId ?? total.foundPlanId
             total.offline = outcome.offline
             total.signedOut = outcome.signedOut
             total.failed = outcome.failed
@@ -278,7 +281,10 @@ final class OfflineSync {
         } else if let plan = merged.plan, plan != before {
             write(plan)
         }
-        if merged.foundPlan { outcome.reload = true }
+        if let id = merged.foundPlanId {
+            outcome.reload = true
+            outcome.foundPlanId = id
+        }
         state.plan = read()
         state.proposals = ProposalSync.merge(state.proposals, with: changes.proposals, plan: state.plan?.value1)
     }

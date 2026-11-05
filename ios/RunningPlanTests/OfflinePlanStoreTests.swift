@@ -48,6 +48,7 @@ private actor ScriptedLoader: PlanLoading {
     }
 
     func plan(id: String) async throws -> Components.Schemas.PlanDetail? {
+        if let probe { seen.append(await probe()) }
         if cancelOnPlanById { throw CancellationError() }
         return try PlanFixture.detail(id: id)
     }
@@ -79,6 +80,22 @@ struct PlanStoreSpinnerTests {
 
         #expect(await loader.seen == [.empty])
         #expect(store.plan != nil)
+    }
+
+    @Test func aPullThatBeganBeforeADeleteDoesNotBringThePlanBack() async throws {
+        let service = FakeSyncService { _, _ in try response() }
+        let sync = OfflineSync(store: MemoryOfflineStore(), service: service, scope: { "test|user" })
+        let loader = Loader()
+        let store = PlanStore(loader: loader, account: SignedIn(), writer: FakeWriter(), sync: sync)
+        await store.load()
+        #expect(await store.deletePlan() == nil)
+        #expect(store.state == .empty)
+
+        // The pull still lists the plan as live.
+        service.handler = { _, _ in try response(plans: [try planJSON()]) }
+        await store.syncNow()
+
+        #expect(store.state == .empty)
     }
 }
 

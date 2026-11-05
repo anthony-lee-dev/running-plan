@@ -22,6 +22,8 @@ final class PlanStore {
     private let account: SignInService
     private let writer: SessionWriting
     let sync: OfflineSync?
+    /// Plans this run deleted: a sync response that began before the delete must not bring one back.
+    private var deletedPlanIds: Set<String> = []
 
     init(loader: PlanLoading, account: SignInService, writer: SessionWriting, sync: OfflineSync? = nil) {
         self.loader = loader
@@ -111,6 +113,10 @@ final class PlanStore {
         if outcome.reload || (outcome.applied > 0 && !sync.hasPending) {
             if let id = plan?.value1.value1.id {
                 await run(keepOnError: true) { try await self.loader.plan(id: id) }
+            } else if let id = outcome.foundPlanId {
+                // Not a plan this device deleted a moment ago (the pull may predate the delete).
+                guard !deletedPlanIds.contains(id) else { return }
+                await run(keepOnError: true) { try await self.loader.plan(id: id) }
             } else {
                 await run(keepOnError: true) { try await self.loader.activePlan() }
             }
@@ -193,6 +199,7 @@ final class PlanStore {
         let id = detail.value1.value1.id
         do {
             try await writer.deletePlan(id: id, revision: detail.value1.value1.revision)
+            deletedPlanIds.insert(id)
             set(.empty)
             return nil
         } catch SessionWriteError.notFound {
