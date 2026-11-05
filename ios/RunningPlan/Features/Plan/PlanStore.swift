@@ -47,6 +47,8 @@ final class PlanStore {
     var pendingChanges: Int { sync?.pendingCount ?? 0 }
     /// True while some queued edit can still be sent (not held for the user's choice).
     var syncWaiting: Bool { sync?.hasSendable ?? false }
+    var syncNotice: String? { sync?.notice }
+    func dismissSyncNotice() { sync?.dismissNotice() }
     var showsOfflineBanner: Bool { (sync?.isOffline ?? false) && pendingChanges > 0 }
 
     func load() async {
@@ -67,6 +69,8 @@ final class PlanStore {
 
     /// After a save: show that plan without searching for it.
     func show(planId: String) async {
+        // A sign-in may have changed the account since the queue on screen was loaded.
+        await sync?.activate()
         await run { try await self.loader.plan(id: planId) }
     }
 
@@ -161,6 +165,7 @@ final class PlanStore {
     }
 
     private func sendCheckIn(_ body: () async throws -> Void, queued: () -> Bool) async -> String? {
+        await sync?.activate()
         if sync?.hasPending == true, queued() { return nil }
         do {
             try await body()
@@ -207,6 +212,7 @@ final class PlanStore {
 
     private func write(_ body: () async throws -> Components.Schemas.SessionWriteResult, queued: () -> Bool) async -> String? {
         // Once anything waits, later edits wait behind it: they were made on the revisions the queue will produce.
+        await sync?.activate()
         if sync?.hasPending == true, queued() { return nil }
         do {
             merge(try await body())

@@ -32,7 +32,9 @@ struct RootView: View {
     }
 
     var body: some View {
-        TabView(selection: $selection) {
+        // Read here, not only inside the binding's getter, or the view does not redraw when a conflict arrives.
+        let conflict = plans.conflict
+        return TabView(selection: $selection) {
             ForEach(AppTab.allCases) { tab in
                 screen(tab)
                     .tabItem { Label(tab.title, systemImage: tab.systemImage) }
@@ -42,9 +44,12 @@ struct RootView: View {
         .tint(Palette.accentText.color)
         .preferredColorScheme(.dark)
         .safeAreaInset(edge: .top, spacing: 0) {
-            if plans.showsOfflineBanner { OfflineBanner() }
+            VStack(spacing: 0) {
+                if plans.showsOfflineBanner { OfflineBanner() }
+                if let notice = plans.syncNotice { SyncNoticeBanner(text: notice, onDismiss: plans.dismissSyncNotice) }
+            }
         }
-        .sheet(item: Binding(get: { plans.conflict }, set: { _ in })) { model in
+        .sheet(item: Binding(get: { conflict }, set: { _ in })) { model in
             ConflictSheet(
                 model: model,
                 onKeepMine: { Task { await plans.keepMine(model) } },

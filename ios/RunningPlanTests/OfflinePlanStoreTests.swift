@@ -29,6 +29,59 @@ private actor SignedIn: SignInService {
     func verify(email: String, code: String) async throws {}
 }
 
+/// First `activePlan` finds nothing; later ones find the plan. Records the store's state seen while fetching.
+private actor ScriptedLoader: PlanLoading {
+    var calls = 0
+    var seen: [PlanStore.State] = []
+    var probe: (@MainActor @Sendable () -> PlanStore.State)?
+    var cancelOnPlanById = false
+
+    func configure(probe: @escaping @MainActor @Sendable () -> PlanStore.State, cancelOnPlanById: Bool = false) {
+        self.probe = probe
+        self.cancelOnPlanById = cancelOnPlanById
+    }
+
+    func activePlan() async throws -> Components.Schemas.PlanDetail? {
+        calls += 1
+        if let probe { seen.append(await probe()) }
+        return calls == 1 ? nil : try PlanFixture.detail()
+    }
+
+    func plan(id: String) async throws -> Components.Schemas.PlanDetail? {
+        if cancelOnPlanById { throw CancellationError() }
+        return try PlanFixture.detail(id: id)
+    }
+}
+
+@MainActor
+struct PlanStoreSpinnerTests {
+    @Test func aCancelledLoadDoesNotLeaveTheSpinnerUp() async throws {
+        let loader = ScriptedLoader()
+        let store = PlanStore(loader: loader, account: SignedIn(), writer: FakeWriter())
+        await store.load()
+        #expect(store.state == .empty)
+        await loader.configure(probe: { store.state }, cancelOnPlanById: true)
+
+        await store.show(planId: PlanFixture.planID)
+
+        #expect(store.state == .empty)
+    }
+
+    @Test func aReloadAfterSyncNeverShowsTheSpinner() async throws {
+        let loader = ScriptedLoader()
+        let service = FakeSyncService { _, _ in try response(plans: [try planJSON()]) }
+        let sync = OfflineSync(store: MemoryOfflineStore(), service: service, scope: { "test|user" })
+        let store = PlanStore(loader: loader, account: SignedIn(), writer: FakeWriter(), sync: sync)
+        await store.load()
+        await loader.configure(probe: { store.state })
+
+        await store.syncNow()
+
+        #expect(await loader.seen == [.empty])
+        #expect(store.plan != nil)
+    }
+}
+
 @MainActor
 struct OfflinePlanStoreTests {
     private func store(

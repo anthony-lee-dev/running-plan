@@ -156,6 +156,30 @@ struct OfflineSyncTests {
         #expect(sync.notice?.contains("deleted") == true)
     }
 
+    @Test func aReplayedDeleteIsNotReportedAsADeletionElsewhere() async throws {
+        let service = FakeSyncService { _, ops in
+            try response(results: [result(ops[0].idempotencyKey, "conflict", server: sessionJSON(revision: 2, deleted: true))])
+        }
+        let (sync, _, _) = makeSync(service: service)
+        await sync.activate()
+        sync.enqueue(.sessionDelete(key: "d", id: syncSession, baseRevision: 1))
+
+        let outcome = await sync.run()
+
+        #expect(outcome.applied == 1)
+        #expect(sync.pendingCount == 0)
+        #expect(sync.notice == nil)
+    }
+
+    @Test func aRejectedEditTellsTheUser() async throws {
+        let service = FakeSyncService { _, ops in try response(results: [result(ops[0].idempotencyKey, "rejected")]) }
+        let (sync, _, _) = makeSync(service: service)
+        await sync.activate()
+        sync.enqueue(edit("a", .init(title: "Mine")))
+        _ = await sync.run()
+        #expect(sync.notice != nil)
+    }
+
     @Test func aTombstoneInThePullRemovesTheSession() async throws {
         let service = FakeSyncService { _, _ in try response(sessions: [sessionJSON(revision: 3, deleted: true)]) }
         let (sync, box, _) = makeSync(service: service)

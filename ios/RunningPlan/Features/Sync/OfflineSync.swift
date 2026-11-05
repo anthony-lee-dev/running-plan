@@ -216,6 +216,7 @@ final class OfflineSync {
             // The server will not take it, now or later: show the server's state instead.
             state.queue.remove(key: key)
             outcome.reload = true
+            notice = "One of your changes couldn't be saved, so we've shown what's on the server."
         case .conflict:
             conflict(result.server, for: op, &outcome)
         }
@@ -230,6 +231,12 @@ final class OfflineSync {
             return
         }
         let id = session.value1.id
+        if session.value1.deletedAt != nil, case .session_period_delete = op {
+            // Our own delete, applied before a crash lost the record of it: done, and nothing to tell the user.
+            state.queue.drop(entity: .session(id))
+            outcome.applied += 1
+            return
+        }
         if session.value1.deletedAt != nil {
             // Deleted elsewhere: it stays deleted (§8.2), so there is nothing to keep.
             state.queue.drop(entity: .session(id))

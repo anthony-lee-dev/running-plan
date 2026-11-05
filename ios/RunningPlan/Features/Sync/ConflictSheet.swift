@@ -63,6 +63,27 @@ struct ConflictSheet: View {
     }
 }
 
+/// A plain sentence about something sync did (an inline line, never a blocking alert). Tap to dismiss.
+struct SyncNoticeBanner: View {
+    let text: String
+    let onDismiss: () -> Void
+
+    var body: some View {
+        Button(action: onDismiss) {
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundStyle(Palette.amberText.color)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, minHeight: Metrics.minTouchTarget)
+                .padding(.horizontal, 16)
+                .background(Palette.amberSoft.color)
+                .contentShape(Rectangle())
+        }
+        .accessibilityHint("Dismiss")
+        .accessibilityIdentifier("sync.notice")
+    }
+}
+
 /// "Offline. Changes are saved and will sync." under the title while edits wait.
 struct OfflineBanner: View {
     var body: some View {
