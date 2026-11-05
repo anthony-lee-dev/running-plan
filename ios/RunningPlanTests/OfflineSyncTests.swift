@@ -282,7 +282,7 @@ struct OfflineSyncTests {
     @Test func aRefusedBatchIsRetriedOneEditAtATimeAndOnlyTheBadOneIsDropped() async throws {
         let service = FakeSyncService { _, ops in
             if ops.count > 1 || ops.first?.idempotencyKey == "bad" { throw SyncError.badRequest }
-            return try response(results: [result(ops[0].idempotencyKey, "applied", revision: 2)])
+            return try response(results: ops.map { result($0.idempotencyKey, "applied", revision: 2) })
         }
         let (sync, _, _) = makeSync(service: service)
         await sync.activate()
