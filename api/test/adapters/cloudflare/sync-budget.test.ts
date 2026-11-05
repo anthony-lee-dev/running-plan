@@ -76,6 +76,11 @@ async function counted(body: unknown) {
 }
 
 const easy = (n: number, date = "2026-11-03", over: Json = {}) => ({ id: id(n), date, type: "easy", steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, target: { type: "effort", effort: "easy" } }], ...over });
+/** A session's content as session.create carries it: the operation holds the id. */
+const content = (n: number, date = "2026-11-03") => {
+  const { id: _id, ...rest } = easy(n, date);
+  return rest;
+};
 const planData = (n: number, sessions: Json[]) => ({ id: id(n), goal: { type: "5k", date: "2027-01-10" }, startDate: "2026-11-02", weekCount: 8, source: "rules", engine: { presetId: "5k", version: "1.0.0" }, adaptive: true, weeks: [{ index: 0, phase: "base" }], sessions });
 let key = 9000;
 const op = (kind: SyncKind, over: Json) => ({ idempotencyKey: id(key++), kind, ...over });
@@ -99,8 +104,8 @@ describe("sync query budget on the Workers entry", () => {
     ["plan.update stale", "plan.update", () => ({ id: id(100), baseRevision: 5, data: { adaptive: false } })],
     ["plan.delete", "plan.delete", () => ({ id: id(100), baseRevision: 1 })],
     ["plan.delete stale", "plan.delete", () => ({ id: id(100), baseRevision: 5 })],
-    ["session.create", "session.create", () => ({ id: id(220), planId: id(100), data: easy(220, "2026-11-08") })],
-    ["session.create replayed", "session.create", () => ({ id: id(200), planId: id(100), data: easy(200) })],
+    ["session.create", "session.create", () => ({ id: id(220), planId: id(100), data: content(220, "2026-11-08") })],
+    ["session.create replayed", "session.create", () => ({ id: id(200), planId: id(100), data: content(200) })],
     ["session.update", "session.update", () => ({ id: id(200), baseRevision: 1, data: { status: "done", notes: "n" } })],
     ["session.update stale", "session.update", () => ({ id: id(200), baseRevision: 4, data: { status: "done" } })],
     ["session.delete", "session.delete", () => ({ id: id(200), baseRevision: 1 })],
@@ -116,13 +121,14 @@ describe("sync query budget on the Workers entry", () => {
     expect(json.results).toHaveLength(1);
     expect(queries).toBeGreaterThan(5); // the counter works: the token check, key lookup, the operation and the pull
     // The key lookup (1) and the operation's cost, on top of what every call spends.
-    expect(queries).toBeLessThanOrEqual(1 + OP_COST[kind] + FIXED_QUERIES);
+    // (The spare in FIXED_QUERIES is left out, so a cost one too low fails here.)
+    expect(queries).toBeLessThanOrEqual(1 + OP_COST[kind] + FIXED_QUERIES - 1);
     expect(queries).toBeLessThanOrEqual(QUERY_LIMIT);
   });
 
   it("a full queue stays inside 50 queries and always makes progress", async () => {
     // Worst-priced kinds first, 200 of them: the server must stop early rather than pass 50.
-    const ops = Array.from({ length: 200 }, (_, i) => op("session.create", { id: id(5000 + i), planId: id(100), data: easy(5000 + i, "2026-11-08") }));
+    const ops = Array.from({ length: 200 }, (_, i) => op("session.create", { id: id(5000 + i), planId: id(100), data: content(5000 + i, "2026-11-08") }));
     const { json, queries } = await counted({ operations: ops });
     expect(queries).toBeLessThanOrEqual(QUERY_LIMIT);
     expect(json.results.length).toBeGreaterThan(0);

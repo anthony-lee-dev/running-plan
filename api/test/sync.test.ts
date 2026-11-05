@@ -42,6 +42,11 @@ const easy = (n: number, date: string, over: Json = {}) => ({
   steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, target: { type: "effort", effort: "easy" } }],
   ...over,
 });
+/** A session's content as session.create carries it: the operation holds the id. */
+const content = (n: number, date: string) => {
+  const { id: _id, ...rest } = easy(n, date);
+  return rest;
+};
 const planData = (n = 1) => ({
   id: id(100 + n),
   goal: { type: "5k", date: "2027-01-10" },
@@ -139,7 +144,7 @@ describe("POST /v1/sync", () => {
     const res = await sync(token, {
       operations: [
         planCreate(),
-        { idempotencyKey: k(), kind: "session.create", id: id(250), planId: id(101), data: easy(50, "2026-11-10") },
+        { idempotencyKey: k(), kind: "session.create", id: id(250), planId: id(101), data: content(50, "2026-11-10") },
         { idempotencyKey: k(), kind: "checkin.create", id: id(300), sessionId: id(250), data: { when: "after", feel: 4, effortFelt: 5 } },
       ],
     });
@@ -153,8 +158,8 @@ describe("POST /v1/sync", () => {
     await sync(token, { operations: [planCreate()] });
     const res = await sync(token, {
       operations: [
-        { idempotencyKey: k(), kind: "session.create", id: id(251), planId: id(101), data: easy(51, "2030-01-01") }, // outside the plan
-        { idempotencyKey: k(), kind: "session.create", id: id(252), planId: id(199), data: easy(52, "2026-11-10") }, // no such plan
+        { idempotencyKey: k(), kind: "session.create", id: id(251), planId: id(101), data: content(51, "2030-01-01") }, // outside the plan
+        { idempotencyKey: k(), kind: "session.create", id: id(252), planId: id(199), data: content(52, "2026-11-10") }, // no such plan
         { idempotencyKey: k(), kind: "plan.create", id: id(101), data: planData(1) }, // same body again: idempotent, not an error
         { idempotencyKey: k(), kind: "plan.create", id: id(101), data: { ...planData(1), adaptive: false } }, // same id, other body
         { idempotencyKey: k(), kind: "checkin.create", id: id(301), sessionId: id(299), data: { when: "after", feel: 3 } },
@@ -233,6 +238,7 @@ describe("POST /v1/sync", () => {
     bad("a missing base revision", { operations: [{ idempotencyKey: id(1), kind: "session.delete", id: id(1) }] });
     bad("an unknown field in plan data", { operations: [{ idempotencyKey: id(1), kind: "plan.create", id: id(101), data: { ...planData(1), extra: 1 } }] });
     bad("plan data whose id is not the operation's", { operations: [{ idempotencyKey: id(1), kind: "plan.create", id: id(102), data: planData(1) }] });
+    bad("an id inside session data", { operations: [{ idempotencyKey: id(1), kind: "session.create", id: id(250), planId: id(101), data: easy(50, "2026-11-10") }] });
     bad("a bad check-in", { operations: [{ idempotencyKey: id(1), kind: "checkin.create", id: id(300), sessionId: id(211), data: { when: "after", feel: 9 } }] });
     bad("an unknown field in a session update", { operations: [{ idempotencyKey: id(1), kind: "session.update", id: id(211), baseRevision: 1, data: { extra: 1 } }] });
     bad("a cursor this server did not make", { cursor: "garbage!", operations: [] });

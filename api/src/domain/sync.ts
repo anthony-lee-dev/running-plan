@@ -24,7 +24,7 @@ export type SyncKind = "plan.create" | "plan.update" | "plan.delete" | "session.
  */
 export const OP_COST: Record<SyncKind, number> = {
   "plan.create": 8, // exists check, batch, then up to 5 chunks of the session-id clash check, plus the race re-read
-  "plan.update": 7,
+  "plan.update": 8, // read 3, write batch 1, failure check 1, re-read of the server version 3
   "plan.delete": 5,
   "session.create": 8,
   "session.update": 6,
@@ -66,7 +66,7 @@ const FIELDS: Record<SyncKind, readonly string[]> = {
   "checkin.create": ["sessionId", "data"],
 };
 const SESSION_UPDATE_KEYS = ["date", "type", "title", "key", "status", "steps", "custom", "notes", "clear"];
-const SESSION_CREATE_KEYS = ["id", "date", "type", "title", "key", "status", "owner", "steps", "custom", "notes"];
+const SESSION_CREATE_KEYS = ["date", "type", "title", "key", "status", "owner", "steps", "custom", "notes"];
 
 const b64 = (text: string) => btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const unb64 = (text: string) => atob(text.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(text.length / 4) * 4, "="));

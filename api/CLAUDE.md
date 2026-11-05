@@ -114,9 +114,10 @@ entry file, not a rewrite.
   The pull pages each table by `(updated_at, id)` with a position per table in the cursor (tombstones included, plan
   with weeks, no sessions; a deleted plan's sessions are not tombstoned, the client drops them with the plan);
   `hasMore` when any table hit its page. A session or match write moves the plan's `updated_at` along with its
-  `content_revision`, so the pull returns the plan with the new number. Known limit: two writes in the same millisecond
-  that straddle a pull can leave the later one with a smaller id behind the cursor; the next change to that row
-  delivers it. `proposals` is always `[]` until the proposals endpoints (2.14) exist.
+  `content_revision`, so the pull returns the plan with the new number. Known limit: a write takes its `updated_at`
+  before it commits, so a request that reads the clock, then loses the race to a pull that advances the cursor, then
+  commits can leave its rows behind that cursor (the same holds for two writes in one millisecond); revision checks
+  still stop lost writes, the risk is only a missed pull, fixed by the row's next change. `proposals` is always `[]` until the proposals endpoints (2.14) exist.
 - Proposal engine (`src/domain/proposals.ts`, task 2.13): `proposeAdjustments({ plan, checkIns, matches, today })`
   returns proposal drafts and never edits the plan. Rules: a missed key session (last 14 days, not done, no confirmed
   match) is dropped, one proposal each and urgent; pain in the last 7 days makes next week 30% lighter with hard

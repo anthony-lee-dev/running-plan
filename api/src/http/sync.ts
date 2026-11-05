@@ -96,7 +96,6 @@ export function syncRoutes(deps: Deps) {
       case "session.create": {
         const got = await deps.plans.getPlan(userId, op.planId);
         if (!got) return notFound();
-        if ("id" in op.data && op.data.id !== op.id) return invalid([{ path: "/id", message: "Must match the operation's id" }]);
         const parsed = parseSessionCreate({ ...op.data, id: op.id }, { startDate: got.plan.startDate, weekCount: got.plan.weekCount });
         if (!parsed.ok) return invalid(parsed.errors);
         const hash = await canonicalHash(parsed.value);

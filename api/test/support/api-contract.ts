@@ -305,6 +305,24 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       expect(stale.json.results[0]).toMatchObject({ status: "conflict", server: { revision: 2 } });
       const gone = await ok("POST /v1/sync", S, 200, { token, body: { operations: [op(3, { kind: "session.delete", baseRevision: 2 })] } });
       expect(gone.json.changes.sessions.find((s: Json) => s.id === id(211)).deletedAt).not.toBeNull();
+      // More shapes the response schema must hold: a created session, a check-in in the pull, a plan conflict, a rejection.
+      const rest = await ok("POST /v1/sync", S, 200, {
+        token,
+        body: {
+          cursor: gone.json.cursor,
+          operations: [
+            op(5, { kind: "session.create", id: id(230), planId: id(101), data: (({ id: _id, ...content }) => content)(easy(30, "2026-11-10")) }),
+            op(6, { kind: "checkin.create", id: id(330), sessionId: id(212), data: { when: "after", feel: 4, effortFelt: 5, pain: false, note: "ok" } }),
+            op(7, { kind: "plan.update", id: id(101), baseRevision: 1, data: { adaptive: false } }),
+            op(8, { kind: "plan.update", id: id(101), baseRevision: 1, data: { adaptive: true } }),
+            op(9, { kind: "session.update", id: id(299), baseRevision: 1, data: { notes: "x" } }),
+          ],
+        },
+      });
+      expect(rest.json.results.map((r: Json) => r.status)).toEqual(["applied", "applied", "applied", "conflict", "rejected"]);
+      expect(rest.json.results[3].server).toMatchObject({ id: id(101), revision: 2 });
+      expect(rest.json.results[4].problem.status).toBe(404);
+      expect(rest.json.changes.checkins).toMatchObject([{ id: id(330), sessionId: id(212), when: "after" }]);
       await ok("POST /v1/sync", S, 400, { token, body: { operations: [], cursor: "garbage!" } });
       await rejected("POST /v1/sync", S, { token, body: { operations: [], extra: 1 } }, "/extra");
       await rejected("POST /v1/sync", S, { token, body: { operations: [op(4, { kind: "session.delete", baseRevision: 1, extra: 1 })] } }, "/operations/0/extra");
