@@ -72,7 +72,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 
 - `Features/Plan/`: `PlanStore` (owned by `RootView`, shared by the tabs) loads the active plan on launch and, after a
   save, the saved plan by id. Signed out or a 401 that survives the refresh shows the empty state ("Set a goal")
-  without an error; offline or a server error shows a retry. Kept in memory only: the on-device store is slice 5.
+  without an error; a server error shows a retry. Offline it opens on the plan as last seen (kept on the device by
+  `OfflineSync`, see "Offline queue and sync"); with no copy yet it shows a retry.
 - The active plan is the most recently updated one on the first `listPlans` page. The list is ordered by start date
   then id, not by save time, so `updatedAt` picks the latest save. Session edits do not move a plan's `updatedAt`.
 - `PlanSchedule` is pure: it takes `today` as `YYYY-MM-DD` and counts weeks in calendar days from `startDate`, never
@@ -92,7 +93,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   mirror `api/src/domain/strength.ts` in `ExerciseLibrary`; change both together.
 - Edits go straight to the API through `PlanStore.apply/create/delete` (`APISessionWriter`, `If-Match: "<revision>"`),
   and the server's copy of the session replaces ours, so the next edit sends the new revision. A 409 reloads the plan
-  and says so; offline is an inline error (the queue is slice 5).
+  and says so; offline the edit is queued (see "Offline queue and sync").
 - Quick adjustments (`QuickAdjustment`): Shorter, Easier, Swap (move to another day of the week; what is there takes
   its place) and Skip. The server keeps `owner: system` for a status-only edit, so Skip also sends the unchanged
   `date` to make the session the user's. The amounts are starting values for the coach review (H.1).
@@ -264,6 +265,36 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   Distance bars fill by ran / planned (capped at 1); Week's "plus N min cross-training" is the user's own sessions in the week
   that are not skipped (the reply cannot split running from other time); Whole shows ran / planned up to this week, and the goal card's
   "On track" badge and bar (whole weeks done plus this week's share).
+
+## Offline queue and sync (issue #67, design §8.2)
+
+- `Features/Sync/`: `EditQueue` (pure, Codable), `SessionEditing` (pure: the on-device copy of an edit, mirrors
+  `api/src/domain/session-edit.ts`; change both together), `SyncMerge` and `ProposalSync` (pure: pull into plan, stale
+  proposals), `ConflictModel` (pure: what the sheet shows), `OfflineSync` (the engine), `OfflineStore` (JSON file per
+  API host and account in Application Support), `SyncServing`/`APISyncService` (`POST /v1/sync`), `ConflictSheet`.
+- `PlanStore` is still what the screens read. With an `OfflineSync`, an edit that gets `offline`, or any edit while
+  earlier ones wait (they were made on the revisions the queue will produce), is appended to the queue (written to disk
+  first), shown at once with a bumped revision, and sent later. Session update, create, delete and check-ins queue;
+  deleting a plan stays online-only. The idempotency key is made once, when the edit is queued; a check-in's op id is its own id.
+- A request carries at most one edit per session; its answer's `revision` becomes the base of the next. Never send
+  two edits of one session in a request: the second would conflict with the first. A session created and deleted
+  before any request carried the create is dropped from the queue; once sent it might have been applied, so both go.
+- Results: `applied`/`duplicate` leave the queue; `rejected` is dropped and the plan reloaded; `conflict` asks the user
+  ("Keep mine" resends the same key on the server's revision, "Use the other version" drops our edits to that session
+  and shows the server's), except when the server copy already holds every field the edit set (a replay after a Worker
+  crash: no prompt) or is a tombstone (a deleted session stays deleted: no prompt, a notice). A conflicted session is
+  held back; other sessions go on.
+- The loop sends until every operation is answered (the server stops early at its query budget) and `hasMore` is false;
+  a response with no results for a non-empty batch stops it. A 400/413 retries one edit at a time and drops only the
+  edit the server refuses. Offline or signed out keeps the queue. Triggers: launch, coming to the front, the queue
+  changing, and every 30 s while edits can be sent (`RootView.syncKey`).
+- Pulling: entities with a queued edit keep the device's copy; a deleted plan clears the plan and drops the queued edits
+  of its sessions (the server does not tombstone them); a live plan pulled onto a device with none is loaded in full
+  (the pull has no `warnings`). After edits are applied the plan is reloaded for its warnings. Proposals are kept in
+  `OfflineState.proposals`, marked `stale` when `baseContentRevision` no longer matches (nothing draws them until #70).
+- Known limit: a pull can miss a row written by a request that raced it until that row changes again (`api/CLAUDE.md`).
+- Offline cannot be UI-tested against the local server (tokens are per host and port), so unit tests carry it
+  (`OfflineSyncTests`, `OfflinePlanStoreTests`, `EditQueueTests`, `SyncServiceTests`).
 
 ## Commands
 
