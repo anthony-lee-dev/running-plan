@@ -3,6 +3,8 @@ import SwiftUI
 /// The Next tab: DK-Next for the saved plan, "Set a goal" when there is none, and loading and retry states.
 struct NextScreen: View {
     let plans: PlanStore
+    /// Distance done on the week card; the one store the Progress tab uses.
+    var progress: ProgressStore?
     let onSetGoal: () -> Void
     var onOpen: (String) -> Void = { _ in }
     var onMove: (String) -> Void = { _ in }
@@ -19,7 +21,7 @@ struct NextScreen: View {
             switch plans.state {
             case .loaded(let plan):
                 NextView(
-                    model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday())), onSetGoal: onSetGoal,
+                    model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday()), progress: progress?.loaded), onSetGoal: onSetGoal,
                     onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox,
                     offerWatch: watchSync?.shouldOfferTurnOn == true,
                     onWatchTurnOn: {

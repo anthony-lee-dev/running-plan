@@ -77,12 +77,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   then id, not by save time, so `updatedAt` picks the latest save. Session edits do not move a plan's `updatedAt`.
 - `PlanSchedule` is pure: it takes `today` as `YYYY-MM-DD` and counts weeks in calendar days from `startDate`, never
   with `Date` intervals. It works out the week, today's sessions, the next session and week totals. Distance actually
-  run waits for the progress endpoint (backlog 2.15); only session status (`done`) is used until then.
+  run comes from the progress endpoint through `DistanceDone` (see "Progress" below); `PlanSchedule` itself only uses session status.
 - UI tests that touch the API pass `-auth.reset YES`, so an earlier test's sign-in (and plan) never replaces "Set a goal".
 - Screens: `NextModel`, `WeekModel` and `WholeModel` are pure (built from `PlanSchedule`) and pinned by unit tests;
   `NextView`, `WeekView` and `WholeView` only draw them. Snapshot tests render the views with `PlanFixture` (the boards'
-  plan, today Wed 2026-10-28) through `BoardSnapshot`. Left for later tasks: the review and inbox cards, and distance
-  run and "On track" (progress endpoint, 2.15).
+  plan, today Wed 2026-10-28) through `BoardSnapshot`. Left for later tasks: the review card.
 - VoiceOver reads paces in words through `PaceFormat.spoken` ("6 minutes 25 to 7 minutes 10 per kilometre").
 
 ## Session sheet and editor (task 4.1)
@@ -258,6 +257,13 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   planned bars only and "Your first week's progress appears on your review day" until week 1 is over.
 - The endpoint has no per-run detail, so the board's pace sentence and longest-run win are replaced: the goal card speaks
   about sessions done (on track, behind, or too early to say) and the win is the latest finished week when it was the biggest.
+
+- Distance done (issue #74): `RootView` owns the one `ProgressStore` and loads it (key: plan, day, session revisions) for
+  Next, Plan and Progress; `ProgressScreen` only reads it. `NextModel`, `WeekModel` and `WholeModel` take an optional
+  progress reply through `DistanceDone` and keep their planned-only text when there is none or it is for another plan.
+  Distance bars fill by ran / planned (capped at 1); Week's "plus N min cross-training" is the user's own sessions in the week
+  that are not skipped (the reply cannot split running from other time); Whole shows ran / planned up to this week, and the goal card's
+  "On track" badge and bar (whole weeks done plus this week's share).
 
 ## Commands
 

@@ -3,6 +3,8 @@ import SwiftUI
 /// The Plan tab: DK-Week (opening on this week) and DK-Whole for the saved plan; "Set a goal" when there is none.
 struct PlanScreen: View {
     let plans: PlanStore
+    /// Distance done and "On track"; the one store the Progress tab uses.
+    var progress: ProgressStore?
     let onSetGoal: () -> Void
     var onOpen: (String) -> Void = { _ in }
     var onAdd: (String) -> Void = { _ in }
@@ -20,9 +22,9 @@ struct PlanScreen: View {
                 let shown = min(max(week ?? WeekModel.initialWeek(schedule), 0), max(schedule.weekCount - 1, 0))
                 switch mode {
                 case .week:
-                    WeekView(model: WeekModel(schedule: schedule, week: shown), onMode: { mode = $0 }, onWeek: { week = $0 }, onOpen: onOpen, onAdd: onAdd)
+                    WeekView(model: WeekModel(schedule: schedule, week: shown, progress: progress?.loaded), onMode: { mode = $0 }, onWeek: { week = $0 }, onOpen: onOpen, onAdd: onAdd)
                 case .whole:
-                    WholeView(model: WholeModel(schedule: schedule), onMode: { mode = $0 }, onWeek: {
+                    WholeView(model: WholeModel(schedule: schedule, progress: progress?.loaded), onMode: { mode = $0 }, onWeek: {
                         week = $0
                         mode = .week
                     })

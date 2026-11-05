@@ -35,7 +35,6 @@ struct PlanModePicker: View {
 }
 
 /// DK-Whole: the goal card, weekly distance by phase, and one row per week; tapping a week (bar or row) opens it.
-/// "On track" and distance done wait for the progress endpoint (backlog 2.15).
 struct WholeView: View {
     let model: WholeModel
     let onMode: (PlanMode) -> Void
@@ -70,10 +69,21 @@ struct WholeView: View {
 extension WholeView {
     private var goalCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("GOAL").font(.system(size: 12, weight: .semibold)).tracking(0.96).foregroundStyle(Palette.accentText.color)
-                Text(model.goal.title).font(.system(size: 28, weight: .bold)).tracking(-0.56).foregroundStyle(Palette.ink.color)
-                Text(model.goal.subtitle).font(.system(size: 14)).foregroundStyle(Palette.goalText.color)
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("GOAL").font(.system(size: 12, weight: .semibold)).tracking(0.96).foregroundStyle(Palette.accentText.color)
+                    Text(model.goal.title).font(.system(size: 28, weight: .bold)).tracking(-0.56).foregroundStyle(Palette.ink.color)
+                    Text(model.goal.subtitle).font(.system(size: 14)).foregroundStyle(Palette.goalText.color)
+                }
+                Spacer(minLength: 0)
+                if let badge = model.goal.badge {
+                    Text(badge.title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .foregroundStyle(badge == .onTrack ? Palette.greenInk.color : Palette.amberTitle.color)
+                        .background(badge == .onTrack ? Palette.green.color : Palette.amberSoft.color, in: Capsule())
+                }
             }
             VStack(spacing: 6) {
                 GeometryReader { proxy in

@@ -60,7 +60,7 @@ struct WeekModel: Equatable {
         }
     }
 
-    init(schedule: PlanSchedule, week: Int) {
+    init(schedule: PlanSchedule, week: Int, progress: Components.Schemas.Progress? = nil) {
         self.week = week
         let phase = schedule.phase(ofWeek: week).map { " · \($0.title)" } ?? ""
         title = "Week \(week + 1)\(phase)"
@@ -75,9 +75,15 @@ struct WeekModel: Equatable {
         planned = "\(Int((schedule.plannedMetres(week: week) / 1000).rounded())) km planned"
         let count = schedule.sessionCount(week: week)
         let done = schedule.doneCount(week: week)
-        // The board's "5.1 km done · plus 45 min cross-training" needs distance run (progress endpoint, 2.15).
-        summary = "\(done) of \(count) sessions done"
-        progress = count > 0 ? Double(done) / Double(count) : 0
+        if let distance = DistanceDone(progress: progress, schedule: schedule), distance.shows(week: week),
+           let fraction = distance.fraction(week: week) {
+            let cross = distance.crossTrainingMinutes(week: week)
+            summary = "\(PlanPreview.kilometres(distance.ran(week: week) / 1000)) km done" + (cross > 0 ? " · plus \(cross) min cross-training" : "")
+            self.progress = fraction
+        } else {
+            summary = "\(done) of \(count) sessions done"
+            self.progress = count > 0 ? Double(done) / Double(count) : 0
+        }
 
         days = schedule.days(ofWeek: week).map { date in
             let isToday = date == schedule.today

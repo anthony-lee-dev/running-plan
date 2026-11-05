@@ -80,7 +80,7 @@ struct PlanSchedule {
         sessions(inWeek: index).filter { $0.value2._type != .rest }.count
     }
 
-    /// Sessions marked done. Distance actually run comes from the progress endpoint (backlog 2.15), not from here.
+    /// Sessions marked done. Distance actually run comes from the progress endpoint (`DistanceDone`), not from here.
     func doneCount(week index: Int) -> Int {
         sessions(inWeek: index).filter { $0.value2._type != .rest && $0.value2.status == .done }.count
     }

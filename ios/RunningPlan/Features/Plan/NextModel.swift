@@ -59,7 +59,8 @@ struct NextModel: Equatable {
         }.joined(separator: ", ")
     }
 
-    init(schedule: PlanSchedule) {
+    init(schedule: PlanSchedule, progress: Components.Schemas.Progress? = nil) {
+        let distance = DistanceDone(progress: progress, schedule: schedule)
         let today = schedule.today
         let day = "\(Self.weekday(today)), \(PlanPreview.shortDate(today))"
         // Only what is still to do today; a session done or skipped gives way to the next one.
@@ -112,8 +113,15 @@ struct NextModel: Equatable {
             let count = schedule.sessionCount(week: index)
             let done = schedule.doneCount(week: index)
             // Weekly totals are whole kilometres, as on the boards ("25 km" for 24.9).
-            weekHeader = "\(Int((schedule.plannedMetres(week: index) / 1000).rounded())) km planned · \(done) of \(count) sessions"
-            weekProgress = count > 0 ? Double(done) / Double(count) : 0
+            let planned = "\(Int((schedule.plannedMetres(week: index) / 1000).rounded()))"
+            if let distance, let fraction = distance.fraction(week: index) {
+                // Distance run so far (progress endpoint), with the bar filled by distance.
+                weekHeader = "\(PlanPreview.kilometres(distance.ran(week: index) / 1000)) of \(planned) km · \(done) of \(count) sessions"
+                weekProgress = fraction
+            } else {
+                weekHeader = "\(planned) km planned · \(done) of \(count) sessions"
+                weekProgress = count > 0 ? Double(done) / Double(count) : 0
+            }
         }
         nothingToDo = Self.nothing(focus, schedule.position)
     }
