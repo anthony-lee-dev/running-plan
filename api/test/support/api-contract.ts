@@ -14,7 +14,6 @@ export interface ContractTarget {
 /** Spec operations with no route yet. Remove one when its slice builds it, and add its cases. */
 export const NOT_BUILT = new Set([
   "POST /v1/account/export",
-  "POST /v1/sync",
   "POST /v1/plans/{planId}/proposals:generate",
   "GET /v1/plans/{planId}/proposals",
   "POST /v1/proposals/{proposalId}:accept",
@@ -286,6 +285,47 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("POST /v1/sessions/{sessionId}/checkins", C, 200, { token, body: checkIn });
       await rejected("POST /v1/sessions/{sessionId}/checkins", C, { token, body: { id: id(302), when: "after", feel: 3, extra: 1 } }, "/extra");
       await ok("POST /v1/sessions/{sessionId}/checkins", `/v1/sessions/${id(299)}/checkins`, 404, { token, body: { id: id(303), when: "after", feel: 3 } });
+    });
+
+    it("sync: push, conflict, duplicate, pull and forbidden shapes", async () => {
+      const { accessToken: token } = await signIn();
+      const S = "/v1/sync";
+      const op = (n: number, over: Json) => ({ idempotencyKey: id(800 + n), id: id(211), ...over });
+      await ok("POST /v1/sync", S, 401, { body: { operations: [] } });
+      await ok("POST /v1/sync", S, 200, { token, body: { operations: [{ idempotencyKey: id(800), kind: "plan.create", id: id(101), data: planBody(1) }] } });
+      const pulled = await ok("POST /v1/sync", S, 200, { token, body: { operations: [] } });
+      expect(pulled.json.changes.sessions).toHaveLength(2);
+      const edit = op(1, { kind: "session.update", baseRevision: 1, data: { status: "done" } });
+      const first = await ok("POST /v1/sync", S, 200, { token, body: { cursor: pulled.json.cursor, operations: [edit] } });
+      expect(first.json.results[0]).toMatchObject({ status: "applied", revision: 2 });
+      expect(first.json.changes.sessions).toHaveLength(1);
+      const again = await ok("POST /v1/sync", S, 200, { token, body: { operations: [edit] } });
+      expect(again.json.results[0]).toMatchObject({ status: "duplicate", revision: 2 });
+      const stale = await ok("POST /v1/sync", S, 200, { token, body: { operations: [op(2, { kind: "session.update", baseRevision: 1, data: { notes: "x" } })] } });
+      expect(stale.json.results[0]).toMatchObject({ status: "conflict", server: { revision: 2 } });
+      const gone = await ok("POST /v1/sync", S, 200, { token, body: { operations: [op(3, { kind: "session.delete", baseRevision: 2 })] } });
+      expect(gone.json.changes.sessions.find((s: Json) => s.id === id(211)).deletedAt).not.toBeNull();
+      // More shapes the response schema must hold: a created session, a check-in in the pull, a plan conflict, a rejection.
+      const rest = await ok("POST /v1/sync", S, 200, {
+        token,
+        body: {
+          cursor: gone.json.cursor,
+          operations: [
+            op(5, { kind: "session.create", id: id(230), planId: id(101), data: (({ id: _id, ...content }) => content)(easy(30, "2026-11-10")) }),
+            op(6, { kind: "checkin.create", id: id(330), sessionId: id(212), data: { when: "after", feel: 4, effortFelt: 5, pain: false, note: "ok" } }),
+            op(7, { kind: "plan.update", id: id(101), baseRevision: 1, data: { adaptive: false } }),
+            op(8, { kind: "plan.update", id: id(101), baseRevision: 1, data: { adaptive: true } }),
+            op(9, { kind: "session.update", id: id(299), baseRevision: 1, data: { notes: "x" } }),
+          ],
+        },
+      });
+      expect(rest.json.results.map((r: Json) => r.status)).toEqual(["applied", "applied", "applied", "conflict", "rejected"]);
+      expect(rest.json.results[3].server).toMatchObject({ id: id(101), revision: 2 });
+      expect(rest.json.results[4].problem.status).toBe(404);
+      expect(rest.json.changes.checkins).toMatchObject([{ id: id(330), sessionId: id(212), when: "after" }]);
+      await ok("POST /v1/sync", S, 400, { token, body: { operations: [], cursor: "garbage!" } });
+      await rejected("POST /v1/sync", S, { token, body: { operations: [], extra: 1 } }, "/extra");
+      await rejected("POST /v1/sync", S, { token, body: { operations: [op(4, { kind: "session.delete", baseRevision: 1, extra: 1 })] } }, "/operations/0/extra");
     });
 
     it("operations listed as not built have no route yet", async () => {

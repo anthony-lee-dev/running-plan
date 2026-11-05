@@ -1,6 +1,6 @@
 import type { StoredCheckIn, CheckInStore } from "../../ports";
 
-interface Row {
+export interface CheckInRow {
   id: string;
   user_id: string;
   session_id: string;
@@ -14,7 +14,7 @@ interface Row {
   deleted_at: string | null;
 }
 
-const toCheckIn = (r: Row): StoredCheckIn => ({
+export const toCheckIn = (r: CheckInRow): StoredCheckIn => ({
   id: r.id,
   sessionId: r.session_id,
   when: r.when,
@@ -46,7 +46,7 @@ export class D1CheckInStore implements CheckInStore {
         .bind(c.id, userId, c.when, c.feel, c.effortFelt ?? null, c.pain ? 1 : 0, c.note ?? null, c.revision, c.updatedAt, c.deletedAt, c.sessionId, userId),
       this.db.prepare("SELECT * FROM checkins WHERE id = ?").bind(c.id),
     ]);
-    const row = (read!.results as Row[])[0];
+    const row = (read!.results as CheckInRow[])[0];
     // The session first: one that is not the user's is simply not found, whatever the id.
     if (live!.results.length === 0 || !row) return { status: "no_session" as const };
     if (inserted!.meta.changes > 0) return { status: "created" as const, checkIn: toCheckIn(row) };

@@ -1,7 +1,7 @@
 import type { Goal, SessionContent, Week } from "../../domain/plan-input";
 import type { PlanStore, PlanWriteFields, StoredPlan, StoredSession, WriteFailure } from "../../ports";
 
-interface PlanRow {
+export interface PlanRow {
   id: string;
   goal_type: Goal["type"];
   goal_label: string | null;
@@ -46,7 +46,7 @@ const goalOf = (r: PlanRow): Goal => ({
   ...(r.goal_target_sec !== null ? { targetTimeSec: r.goal_target_sec } : {}),
 });
 
-const planOf = (r: PlanRow, weeks: Week[]): StoredPlan => ({
+export const planOf = (r: PlanRow, weeks: Week[]): StoredPlan => ({
   id: r.id,
   goal: goalOf(r),
   startDate: r.start_date,
@@ -148,8 +148,10 @@ export class D1PlanStore implements PlanStore {
       const raced = await existing(); // two creates of the same id at once
       if (raced) return { status: "exists" as const, mine: raced.user_id === userId, createHash: raced.user_id === userId ? raced.create_hash : null };
       // A session id already in use (by any user) rolled the whole batch back.
-      for (const s of sessions) {
-        if (await this.db.prepare("SELECT 1 AS ok FROM sessions WHERE id = ?").bind(s.id).first()) return { status: "conflict" as const };
+      // Few queries however many sessions: D1 allows 100 bound values in one.
+      for (let i = 0; i < sessions.length; i += 90) {
+        const ids = sessions.slice(i, i + 90).map((s) => s.id);
+        if (await this.db.prepare(`SELECT 1 AS ok FROM sessions WHERE id IN (${ids.map(() => "?").join(",")}) LIMIT 1`).bind(...ids).first()) return { status: "conflict" as const };
       }
       throw error;
     }
@@ -260,7 +262,8 @@ export class D1PlanStore implements PlanStore {
              WHERE EXISTS (SELECT 1 FROM plans WHERE id = ?2 AND user_id = ?3 AND deleted_at IS NULL)`,
           )
           .bind(session.id, session.planId, userId, ...sessionColumns(session), session.revision, session.updatedAt, session.deletedAt, createHash),
-        this.db.prepare("UPDATE plans SET content_revision = content_revision + 1 WHERE id = ? AND changes() > 0 RETURNING content_revision").bind(session.planId),
+        // updated_at moves too, so a sync pull sees the plan's new contentRevision.
+        this.db.prepare("UPDATE plans SET content_revision = content_revision + 1, updated_at = ? WHERE id = ? AND changes() > 0 RETURNING content_revision").bind(session.updatedAt, session.planId),
       ]);
       const bumped = results[1]!.results[0] as { content_revision: number } | undefined;
       return bumped ? { status: "created" as const, contentRevision: bumped.content_revision } : { status: "no_plan" as const };
@@ -290,10 +293,10 @@ export class D1PlanStore implements PlanStore {
   }
 
   /** Runs a guarded session update and, in the same transaction, moves the plan's contentRevision. */
-  private async change(userId: string, sessionId: string, update: D1PreparedStatement, after: D1PreparedStatement[] = []) {
+  private async change(userId: string, sessionId: string, now: string, update: D1PreparedStatement, after: D1PreparedStatement[] = []) {
     const results = await this.db.batch([
       update,
-      this.db.prepare("UPDATE plans SET content_revision = content_revision + 1 WHERE id = (SELECT plan_id FROM sessions WHERE id = ?) AND changes() > 0 RETURNING content_revision").bind(sessionId),
+      this.db.prepare("UPDATE plans SET content_revision = content_revision + 1, updated_at = ? WHERE id = (SELECT plan_id FROM sessions WHERE id = ?) AND changes() > 0 RETURNING content_revision").bind(now, sessionId),
       ...after,
     ]);
     const bumped = results[1]!.results[0] as { content_revision: number } | undefined;
@@ -306,6 +309,7 @@ export class D1PlanStore implements PlanStore {
     return this.change(
       userId,
       sessionId,
+      now,
       this.db
         .prepare(
           `UPDATE sessions SET date = ?, type = ?, title = ?, is_key = ?, status = ?, owner = ?, steps = ?, custom = ?, notes = ?,
@@ -321,6 +325,7 @@ export class D1PlanStore implements PlanStore {
     return this.change(
       userId,
       sessionId,
+      now,
       this.db
         .prepare(
           `UPDATE sessions SET deleted_at = ?, revision = revision + 1, updated_at = ?

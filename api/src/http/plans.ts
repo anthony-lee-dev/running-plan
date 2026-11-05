@@ -51,11 +51,11 @@ export function warningsFor(plan: StoredPlan, sessions: StoredSession[]) {
   return warnings.map((w) => ({ code: w.code, severity: w.severity, message: w.message, weekIndex: w.weekIndex, ...(w.sessionIds ? { sessionIds: w.sessionIds.slice(0, 20) } : {}) }));
 }
 
+/** The spec's `Plan`: what sync carries (no sessions, no warnings). */
+export const planView = (plan: StoredPlan) => ({ ...syncMeta(plan), ...planFields(plan), weeks: plan.weeks, contentRevision: plan.contentRevision });
+
 const planDetail = (plan: StoredPlan, sessions: StoredSession[]) => ({
-  ...syncMeta(plan),
-  ...planFields(plan),
-  weeks: plan.weeks,
-  contentRevision: plan.contentRevision,
+  ...planView(plan),
   sessions: sessions.map(sessionView),
   warnings: warningsFor(plan, sessions),
 });

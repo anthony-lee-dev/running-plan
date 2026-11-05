@@ -22,6 +22,10 @@ import type {
   RefreshRecord,
   StoredPlan,
   StoredSession,
+  AppliedOp,
+  SyncCursor,
+  SyncPosition,
+  SyncStore,
   UserRecord,
   WriteFailure,
 } from "../../ports";
@@ -191,6 +195,12 @@ export class MemoryPlanStore implements PlanStore {
       .flatMap((e) => [...e.sessions.values()].map((x) => x.session).filter((s) => s.deletedAt === null));
   }
 
+  /** Every plan and session of the user, tombstones included (the sync pull). */
+  everything(userId: string): { plans: StoredPlan[]; sessions: StoredSession[] } {
+    const entries = [...this.plans.values()].filter((e) => e.userId === userId);
+    return structuredClone({ plans: entries.map((e) => e.plan), sessions: entries.flatMap((e) => [...e.sessions.values()].map((x) => x.session)) });
+  }
+
   /** The live session object itself (not a copy), with its plan entry; for MemoryMatchStore only. */
   sessionRef(userId: string, sessionId: string) {
     return this.findSession(userId, sessionId);
@@ -268,7 +278,7 @@ export class MemoryPlanStore implements PlanStore {
         : { status: "exists" as const, mine, createHash: null };
     }
     entry.sessions.set(session.id, { session: structuredClone(session), createHash });
-    entry.plan = { ...entry.plan, contentRevision: entry.plan.contentRevision + 1 };
+    entry.plan = { ...entry.plan, contentRevision: entry.plan.contentRevision + 1, updatedAt: session.updatedAt };
     return { status: "created" as const, contentRevision: entry.plan.contentRevision };
   }
 
@@ -278,24 +288,24 @@ export class MemoryPlanStore implements PlanStore {
     return found && structuredClone({ session: found.session, plan: { ...found.entry.plan, weeks: [] }, createHash: found.createHash as string | null });
   }
 
-  private change(userId: string, sessionId: string, baseRevision: number, apply: (s: StoredSession) => StoredSession) {
+  private change(userId: string, sessionId: string, baseRevision: number, now: string, apply: (s: StoredSession) => StoredSession) {
     const found = this.findSession(userId, sessionId);
     if (!found) return { ok: false as const, reason: "not_found" as const };
     if (found.session.revision !== baseRevision) return { ok: false as const, reason: "conflict" as const, currentRevision: found.session.revision };
     const session = apply(found.session);
     found.entry.sessions.set(sessionId, { session, createHash: found.createHash });
-    found.entry.plan = { ...found.entry.plan, contentRevision: found.entry.plan.contentRevision + 1 };
+    found.entry.plan = { ...found.entry.plan, contentRevision: found.entry.plan.contentRevision + 1, updatedAt: now };
     return { ok: true as const, session: structuredClone(session), contentRevision: found.entry.plan.contentRevision };
   }
 
   async writeSession(userId: string, sessionId: string, baseRevision: number, next: SessionContent, now: string) {
     if (await this.userGone(userId)) return { ok: false as const, reason: "not_found" as const };
-    return this.change(userId, sessionId, baseRevision, (s) => ({ ...structuredClone(next), id: s.id, planId: s.planId, revision: baseRevision + 1, updatedAt: now, deletedAt: null }));
+    return this.change(userId, sessionId, baseRevision, now, (s) => ({ ...structuredClone(next), id: s.id, planId: s.planId, revision: baseRevision + 1, updatedAt: now, deletedAt: null }));
   }
 
   async deleteSession(userId: string, sessionId: string, baseRevision: number, now: string) {
     if (await this.userGone(userId)) return { ok: false as const, reason: "not_found" as const };
-    const result = this.change(userId, sessionId, baseRevision, (s) => ({ ...s, revision: baseRevision + 1, updatedAt: now, deletedAt: now }));
+    const result = this.change(userId, sessionId, baseRevision, now, (s) => ({ ...s, revision: baseRevision + 1, updatedAt: now, deletedAt: now }));
     if (result.ok) this.onSessionsDeleted(userId, [sessionId], now);
     return result;
   }
@@ -433,6 +443,7 @@ export class MemoryMatchStore implements MatchStore {
       found.session.revision += 1;
       found.session.updatedAt = now;
       found.entry.plan.contentRevision += 1;
+      found.entry.plan.updatedAt = now;
     }
     for (const a of effects.activities) {
       const x = this.activities.ref(userId, a.id)!;
@@ -477,6 +488,11 @@ export class MemoryCheckInStore implements CheckInStore {
     private readonly plans: MemoryPlanStore,
   ) {}
 
+  /** Every check-in of the user (the sync pull). */
+  everything(userId: string): StoredCheckIn[] {
+    return [...this.rows.values()].filter((r) => r.userId === userId).map((r) => structuredClone(r.checkIn));
+  }
+
   async create(userId: string, checkIn: StoredCheckIn) {
     if (!(await this.auth.userExists(userId))) return { status: "no_session" as const };
     // The session first: one that is not the user's is simply not found, whatever the id.
@@ -487,6 +503,50 @@ export class MemoryCheckInStore implements CheckInStore {
     const stored: StoredCheckIn = { ...structuredClone(checkIn), pain: checkIn.pain ?? false };
     this.rows.set(checkIn.id, { userId, checkIn: stored });
     return { status: "created" as const, checkIn: structuredClone(stored) };
+  }
+}
+
+/** The offline edit queue in memory: the keys of applied operations, and the pull over the other memory stores. */
+export class MemorySyncStore implements SyncStore {
+  private ops = new Map<string, AppliedOp>();
+
+  constructor(
+    private readonly auth: AuthStore,
+    private readonly plans: MemoryPlanStore,
+    private readonly checkIns: MemoryCheckInStore,
+  ) {}
+
+  async findOps(userId: string, keys: string[]) {
+    return keys.flatMap((k) => {
+      const op = this.ops.get(`${userId}/${k}`);
+      return op ? [{ ...op }] : [];
+    });
+  }
+
+  async recordOps(userId: string, ops: AppliedOp[]) {
+    if (!(await this.auth.userExists(userId))) return;
+    for (const op of ops) if (!this.ops.has(`${userId}/${op.idempotencyKey}`)) this.ops.set(`${userId}/${op.idempotencyKey}`, { ...op });
+  }
+
+  async changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number }) {
+    if (!(await this.auth.userExists(userId))) return { plans: [], sessions: [], checkins: [], cursor, hasMore: false };
+    const all = this.plans.everything(userId);
+    const page = <T extends { id: string; updatedAt: string }>(rows: T[], p: SyncPosition | undefined, limit: number) => {
+      const sorted = rows
+        .filter((r) => !p || r.updatedAt > p.updatedAt || (r.updatedAt === p.updatedAt && r.id > p.id))
+        .sort((a, b) => cmp(a.updatedAt, b.updatedAt) || cmp(a.id, b.id));
+      const rowsOut = sorted.slice(0, limit);
+      const lastRow = rowsOut.at(-1);
+      return { rows: rowsOut, more: sorted.length > limit, position: lastRow ? { updatedAt: lastRow.updatedAt, id: lastRow.id } : p };
+    };
+    const plans = page(all.plans, cursor.plans, limits.plans);
+    const sessions = page(all.sessions, cursor.sessions, limits.sessions);
+    const checkins = page(this.checkIns.everything(userId), cursor.checkins, limits.checkins);
+    const next: SyncCursor = {};
+    if (plans.position) next.plans = plans.position;
+    if (sessions.position) next.sessions = sessions.position;
+    if (checkins.position) next.checkins = checkins.position;
+    return { plans: plans.rows, sessions: sessions.rows, checkins: checkins.rows, cursor: next, hasMore: plans.more || sessions.more || checkins.more };
   }
 }
 
@@ -508,6 +568,7 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
   const auth = overrides.auth ?? new MemoryAuthStore();
   const plans = new MemoryPlanStore(auth);
   const activities = new MemoryActivityStore(auth);
+  const checkIns = new MemoryCheckInStore(auth, plans);
   return {
     clock: systemClock,
     health: new MemoryHealthProbe(),
@@ -516,7 +577,8 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
     plans,
     activities,
     matches: new MemoryMatchStore(auth, plans, activities),
-    checkIns: new MemoryCheckInStore(auth, plans),
+    checkIns,
+    sync: new MemorySyncStore(auth, plans, checkIns),
     email: new MemoryEmailSender(),
     rateLimiter: new MemoryRateLimiter(),
     ids: webIdSource,
