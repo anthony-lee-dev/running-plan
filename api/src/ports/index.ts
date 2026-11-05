@@ -209,6 +209,53 @@ export interface CheckInStore {
   ): Promise<{ status: "created"; checkIn: StoredCheckIn } | { status: "exists"; mine: true; checkIn: StoredCheckIn } | { status: "exists"; mine: false } | { status: "no_session" }>;
 }
 
+/** Where a pull stopped in one table: rows are ordered by `updatedAt`, then `id`. */
+export interface SyncPosition {
+  updatedAt: string;
+  id: string;
+}
+
+/** A pull position per table; a table absent from it is read from the start. */
+export interface SyncCursor {
+  plans?: SyncPosition;
+  sessions?: SyncPosition;
+  checkins?: SyncPosition;
+}
+
+export interface SyncChanges {
+  /** With their weeks. Tombstones included. */
+  plans: StoredPlan[];
+  sessions: StoredSession[];
+  checkins: StoredCheckIn[];
+  /** Where the next pull continues. */
+  cursor: SyncCursor;
+  /** A table has more rows after `cursor`. */
+  hasMore: boolean;
+}
+
+/** An operation already applied, remembered under its idempotency key. */
+export interface AppliedOp {
+  idempotencyKey: string;
+  opHash: string;
+  revision: number;
+}
+
+/**
+ * The offline edit queue's bookkeeping. Kept to a few queries per call: Workers Free allows 50 D1 queries a request,
+ * and a batch counts as one.
+ */
+export interface SyncStore {
+  /** The remembered operations among these keys (at most 90 per call). One query. */
+  findOps(userId: string, keys: string[]): Promise<AppliedOp[]>;
+  /** Remembers applied operations; a key already stored is left as it was. One batch. */
+  recordOps(userId: string, ops: AppliedOp[], now: string): Promise<void>;
+  /**
+   * Rows changed after `cursor` (tombstones included), at most the given number per table. Four queries: plans,
+   * their weeks, sessions and check-ins.
+   */
+  changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number }): Promise<SyncChanges>;
+}
+
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */
 export interface EmailSender {
   sendCode(to: string, code: string): Promise<void>;
@@ -242,6 +289,7 @@ export interface Deps {
   activities: ActivityStore;
   matches: MatchStore;
   checkIns: CheckInStore;
+  sync: SyncStore;
   email: EmailSender;
   rateLimiter: RateLimiter;
   ids: IdSource;

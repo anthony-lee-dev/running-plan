@@ -96,7 +96,7 @@ export class D1MatchStore implements MatchStore {
         : []),
       ...effects.sessions.flatMap((s) => [
         this.db.prepare("UPDATE sessions SET status = ?, revision = revision + 1, updated_at = ? WHERE id = ? AND revision = ?").bind(s.status, now, s.id, s.baseRevision),
-        this.db.prepare("UPDATE plans SET content_revision = content_revision + 1 WHERE id = ? AND user_id = ?").bind(s.planId, userId),
+        this.db.prepare("UPDATE plans SET content_revision = content_revision + 1, updated_at = ? WHERE id = ? AND user_id = ?").bind(now, s.planId, userId),
       ]),
       ...effects.activities.map((a) =>
         this.db

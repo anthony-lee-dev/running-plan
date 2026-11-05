@@ -98,6 +98,25 @@ entry file, not a rewrite.
   nothing. Deletes are tombstones. Creates are idempotent: the request's canonical hash is stored, so a repeat is a
   200 and the same id with another body a 409. The D1 SQL in `adapters/cloudflare/` may use SQLite features; only
   the migrations stay portable.
+- Sync (task 2.6, `src/http/sync.ts`, `src/domain/sync.ts`, `SyncStore`): `POST /v1/sync` applies operations in
+  order. A request the spec forbids (unknown field, bad kind or key, bad `plan.create` or check-in data, a bad cursor, a
+  repeated key) is a 400 for the whole request; what only stored data can judge (missing entity, a date outside the
+  plan, an id in use) is `rejected` on that operation; a stale `baseRevision` is `conflict` with the server's `Plan` or
+  `Session` and is **not** remembered, so "keep mine" can resend under the same key. Only `applied` operations are
+  stored (`sync_ops`, keyed per user, with a hash of the operation): a repeat is `duplicate` with the original revision
+  and costs nothing, the same key on another edit is `rejected` (`idempotency_key_reused`). Remembering happens in one
+  batch after the loop, so a crash between an edit and that write replays it: creates are idempotent by id and hash,
+  an update replays as a conflict whose server copy is the user's own edit. **Query budget**: the route spends
+  `QUERY_LIMIT` (50) minus `FIXED_QUERIES` (token check, remembering, the 4-query pull, a spare), charging each
+  operation its worst-case `OP_COST` and each 50 keys one lookup (D1 allows 100 bound values per query); when the
+  next operation does not fit it stops and `results` is shorter than `operations`. Change a store method that sync
+  calls and `test/adapters/cloudflare/sync-budget.test.ts` (counts real D1 queries) says whether the costs still hold.
+  The pull pages each table by `(updated_at, id)` with a position per table in the cursor (tombstones included, plan
+  with weeks, no sessions; a deleted plan's sessions are not tombstoned, the client drops them with the plan);
+  `hasMore` when any table hit its page. A session or match write moves the plan's `updated_at` along with its
+  `content_revision`, so the pull returns the plan with the new number. Known limit: two writes in the same millisecond
+  that straddle a pull can leave the later one with a smaller id behind the cursor; the next change to that row
+  delivers it. `proposals` is always `[]` until the proposals endpoints (2.14) exist.
 - Proposal engine (`src/domain/proposals.ts`, task 2.13): `proposeAdjustments({ plan, checkIns, matches, today })`
   returns proposal drafts and never edits the plan. Rules: a missed key session (last 14 days, not done, no confirmed
   match) is dropped, one proposal each and urgent; pain in the last 7 days makes next week 30% lighter with hard
