@@ -81,6 +81,7 @@ export async function raiseAdjustments(
     }));
     if (await deps.proposals.create(userId, stored)) return stored;
   }
+  // The plan moved on every attempt: nothing was stored, and the next generate will see the new plan.
   return [];
 }
 
