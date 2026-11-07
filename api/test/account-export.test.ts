@@ -66,6 +66,23 @@ describe("POST /v1/account/export", () => {
     });
   });
 
+  it("exports proposals in the spec's shape, without the engine key or revision, and not those of a deleted plan", async () => {
+    // Pain on a session this week, with a run next week to lighten: each plan gets an urgent proposal.
+    const adaptive = (pid: string, a: string, b: string) => ({ ...plan(pid, [easy(a, "2026-11-05"), easy(b, "2026-11-10")]), adaptive: true, source: "rules", engine: { presetId: "5k", version: "0.2.0" } });
+    await call("POST", "/v1/plans", adaptive(P, S1, S2));
+    await call("POST", "/v1/plans", adaptive(P2, S3, id(204)));
+    await call("POST", `/v1/sessions/${S1}/checkins`, { id: id(301), when: "after", feel: 2, effortFelt: 8, pain: true });
+    await call("POST", `/v1/sessions/${S3}/checkins`, { id: id(302), when: "after", feel: 2, effortFelt: 8, pain: true });
+    expect(((await (await exportAccount()).json()) as Json).proposals).toHaveLength(2);
+    const deleted = await app.request(`/v1/plans/${P2}`, { method: "DELETE", headers: { authorization: `Bearer ${token}`, "if-match": '"1"' } });
+    expect(deleted.status).toBe(204);
+    const body = (await (await exportAccount()).json()) as Json;
+    expect(body.proposals).toHaveLength(1);
+    expect(body.proposals[0]).toMatchObject({ planId: P, kind: "adjustment", urgent: true, status: "pending", deletedAt: null, resolvedAt: null });
+    expect(body.proposals[0]).not.toHaveProperty("key");
+    expect(body.proposals[0]).not.toHaveProperty("revision");
+  });
+
   it("exports the saved profile", async () => {
     const before = await call("GET", "/v1/profile");
     await app.request("/v1/profile", {

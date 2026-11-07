@@ -8,13 +8,13 @@ import type { FieldError } from "./profile";
 export const QUERY_LIMIT = 50;
 /**
  * Kept back for what every call does besides the operations: the token check (1), remembering the applied operations
- * (1), the pull (4) and a spare.
+ * (1), marking stale proposals (1), the pull (5) and a spare.
  */
-export const FIXED_QUERIES = 7;
+export const FIXED_QUERIES = 9;
 /** Idempotency keys looked up per query; D1 allows 100 bound values in one. */
 export const KEY_LOOKUP_CHUNK = 50;
 /** Rows per table in one pull. */
-export const PULL_LIMITS = { plans: 25, sessions: 100, checkins: 100 };
+export const PULL_LIMITS = { plans: 25, sessions: 100, checkins: 100, proposals: 25 };
 
 export type SyncKind = "plan.create" | "plan.update" | "plan.delete" | "session.create" | "session.update" | "session.delete" | "checkin.create";
 
@@ -31,6 +31,13 @@ export const OP_COST: Record<SyncKind, number> = {
   "session.delete": 4,
   "checkin.create": 2,
 };
+/**
+ * A check-in with the pain flag also raises an urgent proposal (task 2.14): review setting 1, session 2, plan 3,
+ * matches, check-ins and used keys 3, the write 1.
+ */
+export const PAIN_CHECKIN_COST = OP_COST["checkin.create"] + 10;
+/** The worst-case queries of one operation. */
+export const opCost = (op: SyncOp): number => (op.kind === "checkin.create" && op.data.pain === true ? PAIN_CHECKIN_COST : OP_COST[op.kind]);
 
 interface OpBase {
   idempotencyKey: string;
@@ -72,7 +79,8 @@ const b64 = (text: string) => btoa(text).replace(/\+/g, "-").replace(/\//g, "_")
 const unb64 = (text: string) => atob(text.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(text.length / 4) * 4, "="));
 
 const wire = (p: SyncPosition | undefined) => (p ? { t: p.updatedAt, i: p.id } : undefined);
-export const encodeCursor = (cursor: SyncCursor): string => b64(JSON.stringify({ p: wire(cursor.plans), s: wire(cursor.sessions), c: wire(cursor.checkins) }));
+export const encodeCursor = (cursor: SyncCursor): string =>
+  b64(JSON.stringify({ p: wire(cursor.plans), s: wire(cursor.sessions), c: wire(cursor.checkins), q: wire(cursor.proposals) }));
 
 const position = (v: unknown): SyncPosition | undefined | null => {
   if (v === undefined) return undefined;
@@ -85,9 +93,10 @@ export function decodeCursor(text: string): SyncCursor | undefined {
   try {
     const v: unknown = JSON.parse(unb64(text));
     if (!isObject(v)) return undefined;
-    const [plans, sessions, checkins] = [position(v.p), position(v.s), position(v.c)];
-    if (plans === null || sessions === null || checkins === null) return undefined;
-    return { ...(plans ? { plans } : {}), ...(sessions ? { sessions } : {}), ...(checkins ? { checkins } : {}) };
+    // A cursor made before proposals joined the pull has no `q`: proposals are then read from the start.
+    const [plans, sessions, checkins, proposals] = [position(v.p), position(v.s), position(v.c), position(v.q)];
+    if (plans === null || sessions === null || checkins === null || proposals === null) return undefined;
+    return { ...(plans ? { plans } : {}), ...(sessions ? { sessions } : {}), ...(checkins ? { checkins } : {}), ...(proposals ? { proposals } : {}) };
   } catch {
     return undefined;
   }

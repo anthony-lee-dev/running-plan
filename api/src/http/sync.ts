@@ -6,11 +6,12 @@ import { sameCheckIn } from "../domain/checkins";
 import { canonicalHash } from "../domain/plan-hash";
 import { parsePlanUpdate, parseSessionCreate, parseSessionUpdate, type SessionContent, type Week } from "../domain/plan-input";
 import { applySessionUpdate } from "../domain/session-edit";
-import { encodeCursor, FIXED_QUERIES, KEY_LOOKUP_CHUNK, OP_COST, parseSyncRequest, PULL_LIMITS, QUERY_LIMIT, type SyncOp } from "../domain/sync";
+import { encodeCursor, FIXED_QUERIES, KEY_LOOKUP_CHUNK, opCost, parseSyncRequest, PULL_LIMITS, QUERY_LIMIT, type SyncOp } from "../domain/sync";
 import type { AppliedOp, Deps, StoredPlan, StoredSession } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
 import { planView, sessionView } from "./plans";
 import { problem } from "./problem";
+import { proposalView, raiseForPain } from "./proposals";
 
 const MAX_BODY_BYTES = 1_000_000;
 
@@ -132,7 +133,11 @@ export function syncRoutes(deps: Deps) {
       }
       case "checkin.create": {
         const made = await deps.checkIns.create(userId, { ...op.data, id: op.id, sessionId: op.sessionId, revision: 1, updatedAt: now, deletedAt: null });
-        if (made.status === "created") return { status: "applied", revision: 1 };
+        if (made.status === "created") {
+          // The pain flag's urgent proposal, as on the check-in endpoint; `opCost` reserves its queries.
+          await raiseForPain(deps, userId, made.checkIn);
+          return { status: "applied", revision: 1 };
+        }
         if (made.status === "no_session") return notFound();
         if (made.mine && sameCheckIn(made.checkIn, { ...op.data, sessionId: op.sessionId })) return { status: "applied", revision: made.checkIn.revision };
         return idInUse();
@@ -178,8 +183,9 @@ export function syncRoutes(deps: Deps) {
         );
         continue;
       }
-      if (budget < OP_COST[op.kind]) break;
-      budget -= OP_COST[op.kind];
+      const cost = opCost(op);
+      if (budget < cost) break;
+      budget -= cost;
       const outcome = await apply(userId, op, now);
       results.push({ idempotencyKey, ...outcome });
       if (outcome.status === "applied" && outcome.revision !== undefined) applied.push({ idempotencyKey, opHash, revision: outcome.revision });
@@ -187,6 +193,8 @@ export function syncRoutes(deps: Deps) {
     // Only applied edits are remembered: a conflict or rejection is looked at afresh when the client resends it.
     await deps.sync.recordOps(userId, applied, now);
 
+    // Proposals whose plan moved are written as stale first, so the pull carries them with a new `updatedAt`.
+    await deps.proposals.markStale(userId, now);
     const changes = await deps.sync.changesSince(userId, cursor, PULL_LIMITS);
     return c.json({
       results,
@@ -194,8 +202,7 @@ export function syncRoutes(deps: Deps) {
         plans: changes.plans.map(planView),
         sessions: changes.sessions.map(sessionView),
         checkins: changes.checkins,
-        // Proposals join the pull with their endpoints (task 2.14).
-        proposals: [],
+        proposals: changes.proposals.map(proposalView),
       },
       cursor: encodeCursor(changes.cursor),
       hasMore: changes.hasMore,
