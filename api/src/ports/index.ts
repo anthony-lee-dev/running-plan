@@ -81,6 +81,50 @@ export interface ProfileStore {
   ): Promise<{ ok: true; profile: Profile } | { ok: false; currentRevision: number }>;
 }
 
+/** A proposal as the export carries it: the spec's `Proposal`, already in its JSON shape. */
+export interface ExportedProposal {
+  id: string;
+  planId: string;
+  baseContentRevision: number;
+  kind: "adjustment" | "interview_rerun";
+  creator: { type: "rules" | "ai"; version: string };
+  reason: string;
+  urgent: boolean;
+  changes: unknown[];
+  planChanges?: unknown;
+  status: "pending" | "accepted" | "dismissed" | "stale";
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  resolvedAt: string | null;
+}
+
+/** Everything stored for one account that is still live (tombstones left out), as flat lists. */
+export interface AccountData {
+  email: string;
+  /** Live plans, newest start first, with weeks. */
+  plans: StoredPlan[];
+  /** Live sessions of the live plans, by date then id. */
+  sessions: StoredSession[];
+  /** Live activities, newest first. */
+  activities: StoredActivity[];
+  /** Matches whose session and activity are live. */
+  matches: MatchRow[];
+  /** Live check-ins on live sessions, by update time then id. */
+  checkins: StoredCheckIn[];
+  /** Live proposals of live plans, by creation time then id. */
+  proposals: ExportedProposal[];
+}
+
+/**
+ * The account data export (design 10): a read of every table the user owns. One call, and on D1 one batch (one
+ * query against the 50-query limit), however much the account holds.
+ */
+export interface AccountExportStore {
+  /** Undefined when the user does not exist. */
+  read(userId: string): Promise<AccountData | undefined>;
+}
+
 export interface StoredPlan extends PlanFieldsInput {
   id: string;
   revision: number;
@@ -254,50 +298,6 @@ export interface SyncStore {
    * their weeks, sessions and check-ins.
    */
   changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number }): Promise<SyncChanges>;
-}
-
-/** A proposal as the export carries it: the spec's `Proposal`, already in its JSON shape. */
-export interface ExportedProposal {
-  id: string;
-  planId: string;
-  baseContentRevision: number;
-  kind: "adjustment" | "interview_rerun";
-  creator: { type: "rules" | "ai"; version: string };
-  reason: string;
-  urgent: boolean;
-  changes: unknown[];
-  planChanges?: unknown;
-  status: "pending" | "accepted" | "dismissed" | "stale";
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  resolvedAt: string | null;
-}
-
-/** Everything stored for one account that is still live (tombstones left out), as flat lists. */
-export interface AccountData {
-  email: string;
-  /** Live plans, newest start first, with weeks. */
-  plans: StoredPlan[];
-  /** Live sessions of the live plans, by date then id. */
-  sessions: StoredSession[];
-  /** Live activities, newest first. */
-  activities: StoredActivity[];
-  /** Matches whose session and activity are live. */
-  matches: MatchRow[];
-  /** Live check-ins on live sessions, by update time then id. */
-  checkins: StoredCheckIn[];
-  /** Live proposals of live plans, by creation time then id. */
-  proposals: ExportedProposal[];
-}
-
-/**
- * The account data export (design 10): a read of every table the user owns. One call, and on D1 one batch (one
- * query against the 50-query limit), however much the account holds.
- */
-export interface AccountExportStore {
-  /** Undefined when the user does not exist. */
-  read(userId: string): Promise<AccountData | undefined>;
 }
 
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */

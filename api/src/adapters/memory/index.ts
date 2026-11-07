@@ -161,6 +161,43 @@ export class MemoryProfileStore implements ProfileStore {
   }
 }
 
+/**
+ * The data export in memory, read through the other memory stores. Proposals are always empty here until the
+ * proposals endpoints (task 2.14) have a memory store to read.
+ */
+export class MemoryAccountExportStore implements AccountExportStore {
+  constructor(
+    private readonly emailOf: (userId: string) => string | undefined,
+    private readonly plans: MemoryPlanStore,
+    private readonly activities: MemoryActivityStore,
+    private readonly matches: MemoryMatchStore,
+    private readonly checkIns: MemoryCheckInStore,
+  ) {}
+
+  async read(userId: string): Promise<AccountData | undefined> {
+    const email = this.emailOf(userId);
+    if (email === undefined) return undefined;
+    const all = this.plans.everything(userId);
+    const live = all.plans.filter((p) => p.deletedAt === null);
+    const livePlanIds = new Set(live.map((p) => p.id));
+    const sessions = all.sessions.filter((s) => s.deletedAt === null && livePlanIds.has(s.planId));
+    const sessionIds = new Set(sessions.map((s) => s.id));
+    const activities = await this.activities.list(userId, { limit: Number.MAX_SAFE_INTEGER });
+    return {
+      email,
+      plans: live.sort((a, b) => cmp(b.startDate, a.startDate) || cmp(b.id, a.id)),
+      sessions: sessions.sort((a, b) => cmp(a.date, b.date) || cmp(a.id, b.id)),
+      activities,
+      matches: await this.matches.forActivities(userId, activities.map((a) => a.id)),
+      checkins: this.checkIns
+        .everything(userId)
+        .filter((c) => c.deletedAt === null && sessionIds.has(c.sessionId))
+        .sort((a, b) => cmp(a.updatedAt, b.updatedAt) || cmp(a.id, b.id)),
+      proposals: [],
+    };
+  }
+}
+
 interface PlanEntry {
   userId: string;
   plan: StoredPlan;
@@ -509,43 +546,6 @@ export class MemoryCheckInStore implements CheckInStore {
     const stored: StoredCheckIn = { ...structuredClone(checkIn), pain: checkIn.pain ?? false };
     this.rows.set(checkIn.id, { userId, checkIn: stored });
     return { status: "created" as const, checkIn: structuredClone(stored) };
-  }
-}
-
-/**
- * The data export in memory, read through the other memory stores. Proposals are always empty here until the
- * proposals endpoints (task 2.14) have a memory store to read.
- */
-export class MemoryAccountExportStore implements AccountExportStore {
-  constructor(
-    private readonly emailOf: (userId: string) => string | undefined,
-    private readonly plans: MemoryPlanStore,
-    private readonly activities: MemoryActivityStore,
-    private readonly matches: MemoryMatchStore,
-    private readonly checkIns: MemoryCheckInStore,
-  ) {}
-
-  async read(userId: string): Promise<AccountData | undefined> {
-    const email = this.emailOf(userId);
-    if (email === undefined) return undefined;
-    const all = this.plans.everything(userId);
-    const live = all.plans.filter((p) => p.deletedAt === null);
-    const livePlanIds = new Set(live.map((p) => p.id));
-    const sessions = all.sessions.filter((s) => s.deletedAt === null && livePlanIds.has(s.planId));
-    const sessionIds = new Set(sessions.map((s) => s.id));
-    const activities = await this.activities.list(userId, { limit: Number.MAX_SAFE_INTEGER });
-    return {
-      email,
-      plans: live.sort((a, b) => cmp(b.startDate, a.startDate) || cmp(b.id, a.id)),
-      sessions: sessions.sort((a, b) => cmp(a.date, b.date) || cmp(a.id, b.id)),
-      activities,
-      matches: await this.matches.forActivities(userId, activities.map((a) => a.id)),
-      checkins: this.checkIns
-        .everything(userId)
-        .filter((c) => c.deletedAt === null && sessionIds.has(c.sessionId))
-        .sort((a, b) => cmp(a.updatedAt, b.updatedAt) || cmp(a.id, b.id)),
-      proposals: [],
-    };
   }
 }
 
