@@ -12,6 +12,7 @@ import { problem } from "./http/problem";
 import { profileRoutes } from "./http/profile";
 import { proposalRoutes } from "./http/proposals";
 import { progressRoutes } from "./http/progress";
+import { reviewRoutes } from "./http/reviews";
 import { syncRoutes } from "./http/sync";
 
 /** Builds the HTTP app from its dependencies. Runtime-agnostic: no Cloudflare or Node APIs here. */
@@ -26,6 +27,7 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   app.route("/", matchRoutes(deps));
   app.route("/", planRoutes(deps));
   app.route("/", progressRoutes(deps));
+  app.route("/", reviewRoutes(deps));
   app.route("/", proposalRoutes(deps));
   app.route("/", syncRoutes(deps));
   app.route("/", activityRoutes(deps));

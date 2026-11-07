@@ -455,6 +455,10 @@ export class MemoryActivityStore implements ActivityStore {
       .sort(newestFirst)
       .slice(0, limit);
   }
+
+  async countInbox(userId: string) {
+    return (await this.mine(userId)).filter((a) => a.disposition === "inbox").length;
+  }
 }
 
 /** Matches in memory. `apply` checks and writes with no await in between, like the database's transaction. */

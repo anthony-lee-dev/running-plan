@@ -115,4 +115,12 @@ export class D1ActivityStore implements ActivityStore {
       .all<Row>();
     return results.map(toActivity);
   }
+
+  async countInbox(userId: string) {
+    const row = await this.db
+      .prepare("SELECT COUNT(*) AS n FROM activities WHERE user_id = ? AND deleted_at IS NULL AND disposition = 'inbox'")
+      .bind(userId)
+      .first<{ n: number }>();
+    return row?.n ?? 0;
+  }
 }
