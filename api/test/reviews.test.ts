@@ -93,6 +93,13 @@ describe("GET /v1/plans/{id}/reviews/{weekIndex}", () => {
     expect(body.proposals[0]).not.toHaveProperty("key");
   });
 
+  it("drops a proposal once the plan has moved on from the one it was made for", async () => {
+    await call("POST", `/v1/sessions/${S_EASY}/checkins`, { id: id(302), when: "after", feel: 2, effortFelt: 8, pain: true });
+    expect((await json(await review())).proposals).toHaveLength(2);
+    expect((await call("POST", `/v1/plans/${P}/sessions`, run(id(205), "2026-11-14"))).status).toBe(201);
+    expect((await json(await review())).proposals).toEqual([]);
+  });
+
   it("does not write: no proposals are made by reading the review", async () => {
     await review();
     const list = await json(await call("GET", `/v1/plans/${P}/proposals?status=pending`));
