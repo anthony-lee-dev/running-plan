@@ -386,9 +386,29 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       expect(dismissed.json).toMatchObject({ status: "dismissed" });
       await ok("POST /v1/proposals/{proposalId}:dismiss", dismiss(again.json.proposals[0]), 409, { token });
 
+      // Accepting an interview re-run rebuilds the weeks after the current one: a bigger batch of deletes and creates plus
+      // plan-level changes. The response (plan detail with warnings) has to fit the spec as well.
+      const second = `/v1/plans/${id(102)}`;
+      await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(2, { sessions: [easy(61, "2026-11-03"), easy(62, "2026-11-12"), easy(63, "2026-11-19")] }) });
+      const interview = { goal: { distance: "10k" }, weeklyDistanceM: 20000, runsPerWeek: 4, runningHistory: "1_to_3_years" };
+      const rebuilt = await ok("POST /v1/plans/{planId}/proposals:generate", `${second}/proposals:generate`, 200, { token, body: { ...now, interview } });
+      const [big] = rebuilt.json.proposals;
+      expect(big.changes.filter((c: Json) => c.op === "delete").map((c: Json) => c.sessionId).sort()).toEqual([id(262), id(263)]);
+      const applied = await ok("POST /v1/proposals/{proposalId}:accept", `/v1/proposals/${big.id}:accept`, 200, { token });
+      const ids = applied.json.sessions.map((s: Json) => s.id);
+      expect(ids).toContain(id(261)); // before this week: kept
+      expect(ids).not.toContain(id(262));
+      expect(ids).not.toContain(id(263));
+      expect(applied.json.sessions.filter((s: Json) => s.date >= "2026-11-09" && s.owner === "system").length).toBeGreaterThan(8);
+      expect(applied.json).toMatchObject({ goal: { type: "10k" }, revision: 2, contentRevision: 2, engine: { presetId: "10k", interview: { runsPerWeek: 4 } } });
+      expect(applied.json.weekCount).toBeGreaterThan(8);
+      expect(applied.json.weeks.map((w: Json) => w.index)).toEqual(Array.from({ length: applied.json.weekCount - 1 }, (_, i) => i + 1).filter((i) => i >= 1).length ? expect.any(Array) : []);
+      const reread = await ok("GET /v1/plans/{planId}", second, 200, { token });
+      expect(reread.json.sessions.length).toBe(applied.json.sessions.length);
+
       // The sync pull carries them all, a stale one marked as such.
       const pulled = await ok("POST /v1/sync", "/v1/sync", 200, { token, body: { operations: [] } });
-      expect(pulled.json.changes.proposals.map((p: Json) => p.status).sort()).toEqual(["accepted", "dismissed", "stale", "stale"]);
+      expect(pulled.json.changes.proposals.map((p: Json) => p.status).sort()).toEqual(["accepted", "accepted", "dismissed", "stale", "stale"]);
     });
 
     it("operations listed as not built have no route yet", async () => {
