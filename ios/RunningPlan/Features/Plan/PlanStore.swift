@@ -2,9 +2,10 @@ import APIClient
 import Foundation
 import Observation
 
-/// The saved plan the Next and Plan tabs show. Loaded from the server on launch and after a save; kept in memory only
-/// (the on-device store and offline sync are slice 5). Session edits go straight to the API, and the server's copy of
-/// the session replaces ours, so the next edit sends the new revision.
+/// The saved plan the Next and Plan tabs show. Loaded from the server on launch and after a save. Session edits go
+/// straight to the API while online, and the server's copy of the session replaces ours, so the next edit sends the
+/// new revision. With an `OfflineSync`, an edit that cannot reach the server (or any edit while earlier ones wait) is
+/// queued and shown at once, and the plan is kept on the device so the app opens offline.
 @MainActor
 @Observable
 final class PlanStore {
@@ -20,11 +21,18 @@ final class PlanStore {
     private let loader: PlanLoading
     private let account: SignInService
     private let writer: SessionWriting
+    let sync: OfflineSync?
+    /// Plans this run deleted: a sync response that began before the delete must not bring one back.
+    private var deletedPlanIds: Set<String> = []
 
-    init(loader: PlanLoading, account: SignInService, writer: SessionWriting) {
+    init(loader: PlanLoading, account: SignInService, writer: SessionWriting, sync: OfflineSync? = nil) {
         self.loader = loader
         self.account = account
         self.writer = writer
+        self.sync = sync
+        sync?.read = { [weak self] in self?.plan }
+        sync?.write = { [weak self] plan in self?.set(.loaded(plan)) }
+        sync?.clear = { [weak self] in self?.set(.empty) }
     }
 
     var plan: Components.Schemas.PlanDetail? {
@@ -32,32 +40,105 @@ final class PlanStore {
         return nil
     }
 
+    private func set(_ new: State) {
+        if state != new { state = new }
+        if case .loaded(let plan) = new { sync?.cache(plan: plan) }
+    }
+
+    /// Edits waiting to sync.
+    var pendingChanges: Int { sync?.pendingCount ?? 0 }
+    /// True while some queued edit can still be sent (not held for the user's choice).
+    var syncWaiting: Bool { sync?.hasSendable ?? false }
+    var syncNotice: String? { sync?.notice }
+    func dismissSyncNotice() { sync?.dismissNotice() }
+    var showsOfflineBanner: Bool { (sync?.isOffline ?? false) && pendingChanges > 0 }
+
     func load() async {
         guard await account.isSignedIn else {
-            state = .empty
+            set(.empty)
             return
         }
+        await sync?.activate()
+        if let sync, sync.hasPending, let cached = sync.cachedPlan {
+            // Edits made offline are not on the server yet: show them, push them, then load what the server holds.
+            set(.loaded(cached))
+            await syncNow()
+            return
+        }
+        // The root view then syncs (its task keys on the load finishing), pulling changes from other devices.
         await run { try await self.loader.activePlan() }
     }
 
     /// After a save: show that plan without searching for it.
     func show(planId: String) async {
+        // A sign-in may have changed the account since the queue on screen was loaded.
+        await sync?.activate()
         await run { try await self.loader.plan(id: planId) }
     }
 
-    private func run(_ fetch: () async throws -> Components.Schemas.PlanDetail?) async {
-        if plan == nil { state = .loading }
+    private func run(keepOnError: Bool = false, _ fetch: () async throws -> Components.Schemas.PlanDetail?) async {
+        let previous = state
+        // A background reload (after a sync) never shows the spinner: it would race a load the user is waiting for.
+        if plan == nil, !keepOnError { set(.loading) }
         do {
-            state = try await fetch().map(State.loaded) ?? .empty
+            set(try await fetch().map(State.loaded) ?? .empty)
         } catch PlanLoadError.signedOut {
-            state = .empty
+            set(.empty)
         } catch is CancellationError {
+            // A cancelled load must not leave the spinner up for good.
+            if state == .loading { state = previous }
             return
         } catch PlanLoadError.offline {
-            state = .failed("We couldn't reach the server. Check your connection and try again.")
+            if keepOnError { return }
+            // Offline: open on the plan as last seen, with any edits made since.
+            if plan == nil, let cached = sync?.cachedPlan {
+                set(.loaded(cached))
+            } else {
+                set(.failed("We couldn't reach the server. Check your connection and try again."))
+            }
         } catch {
-            state = .failed("Something went wrong loading your plan. Please try again.")
+            if keepOnError { return }
+            set(.failed("Something went wrong loading your plan. Please try again."))
         }
+    }
+
+    // MARK: Sync
+
+    /// Pushes the offline queue and pulls what changed elsewhere (launch, coming to the front, after an edit).
+    func syncNow() async {
+        guard let sync, await account.isSignedIn else { return }
+        await sync.activate()
+        let outcome = await sync.run()
+        if outcome.planDeleted { return }
+        if outcome.reload || (outcome.applied > 0 && !sync.hasPending) {
+            if let id = plan?.value1.value1.id {
+                await run(keepOnError: true) { try await self.loader.plan(id: id) }
+            } else if let id = outcome.foundPlanId {
+                // Not a plan this device deleted a moment ago (the pull may predate the delete).
+                guard !deletedPlanIds.contains(id) else { return }
+                await run(keepOnError: true) { try await self.loader.plan(id: id) }
+            } else {
+                await run(keepOnError: true) { try await self.loader.activePlan() }
+            }
+        }
+    }
+
+    /// The first sync conflict waiting for the user.
+    var conflict: ConflictModel? {
+        guard let sync else { return nil }
+        for conflict in sync.conflicts {
+            if let model = ConflictModel(conflict: conflict, queue: sync.state.queue) { return model }
+        }
+        return nil
+    }
+
+    func keepMine(_ model: ConflictModel) async {
+        sync?.keepMine(key: model.key)
+        await syncNow()
+    }
+
+    func useOtherVersion(_ model: ConflictModel) {
+        sync?.useServer(key: model.key)
     }
 
     // MARK: Edits
@@ -65,33 +146,37 @@ final class PlanStore {
     /// Sends the edits in order. Returns a sentence for the screen when one fails (the ones before it stay applied).
     func apply(_ edits: [SessionEdit]) async -> String? {
         for edit in edits {
-            if let error = await write({ try await self.writer.update(id: edit.sessionId, revision: edit.revision, edit.update) }) { return error }
+            if let error = await write({ try await self.writer.update(id: edit.sessionId, revision: edit.revision, edit.update) }, queued: { self.queueUpdate(edit) }) { return error }
         }
         return nil
     }
 
     func create(_ session: Components.Schemas.SessionCreate) async -> String? {
         guard let planId = plan?.value1.value1.id else { return "Your plan isn't loaded yet. Please try again." }
-        return await write { try await self.writer.create(planId: planId, session) }
+        return await write({ try await self.writer.create(planId: planId, session) }, queued: { self.queueCreate(planId: planId, session) })
     }
 
     func delete(sessionId: String, revision: Int) async -> String? {
-        await write { try await self.writer.delete(id: sessionId, revision: revision) }
+        await write({ try await self.writer.delete(id: sessionId, revision: revision) }, queued: { self.queueDelete(sessionId: sessionId, revision: revision) })
     }
 
     /// `id` is made once by the caller and reused for a retry, so a check-in the server already stored is not doubled.
     func checkIn(sessionId: String, feeling: BeforeFeeling, id: String) async -> String? {
-        await sendCheckIn { try await self.writer.checkIn(sessionId: sessionId, feeling: feeling, id: id) }
+        await sendCheckIn({ try await self.writer.checkIn(sessionId: sessionId, feeling: feeling, id: id) }, queued: { self.queueCheckIn(sessionId: sessionId, id: id, .before(feeling)) })
     }
 
     /// The after-session check-in from DK-CheckIn; `id` as above.
     func checkIn(sessionId: String, after answer: AfterCheckIn, id: String) async -> String? {
-        await sendCheckIn { try await self.writer.checkIn(sessionId: sessionId, after: answer, id: id) }
+        await sendCheckIn({ try await self.writer.checkIn(sessionId: sessionId, after: answer, id: id) }, queued: { self.queueCheckIn(sessionId: sessionId, id: id, .after(answer)) })
     }
 
-    private func sendCheckIn(_ body: () async throws -> Void) async -> String? {
+    private func sendCheckIn(_ body: () async throws -> Void, queued: () -> Bool) async -> String? {
+        await sync?.activate()
+        if sync?.hasPending == true, queued() { return nil }
         do {
             try await body()
+            return nil
+        } catch SessionWriteError.offline where sync != nil && queued() {
             return nil
         } catch SessionWriteError.invalid {
             // Most likely an earlier answer was stored but its reply lost, and this one differs.
@@ -108,15 +193,17 @@ final class PlanStore {
 
     /// Interim "Delete plan" (until Goal and settings, 3.7). On success, or when the plan is already gone, the store goes
     /// back to the "Set a goal" state. Returns a sentence for the screen when it fails; the plan then stays.
+    /// Online only: a plan delete is not queued.
     func deletePlan() async -> String? {
         guard let detail = plan else { return "Your plan isn't loaded yet. Please try again." }
         let id = detail.value1.value1.id
         do {
             try await writer.deletePlan(id: id, revision: detail.value1.value1.revision)
-            state = .empty
+            deletedPlanIds.insert(id)
+            set(.empty)
             return nil
         } catch SessionWriteError.notFound {
-            state = .empty
+            set(.empty)
             return nil
         } catch SessionWriteError.conflict {
             await show(planId: id)
@@ -130,9 +217,14 @@ final class PlanStore {
         }
     }
 
-    private func write(_ body: () async throws -> Components.Schemas.SessionWriteResult) async -> String? {
+    private func write(_ body: () async throws -> Components.Schemas.SessionWriteResult, queued: () -> Bool) async -> String? {
+        // Once anything waits, later edits wait behind it: they were made on the revisions the queue will produce.
+        await sync?.activate()
+        if sync?.hasPending == true, queued() { return nil }
         do {
             merge(try await body())
+            return nil
+        } catch SessionWriteError.offline where sync != nil && queued() {
             return nil
         } catch SessionWriteError.conflict {
             // Changed elsewhere: show the latest so the user can redo the change on it.
@@ -164,6 +256,58 @@ final class PlanStore {
         }
         detail.value1.value3.contentRevision = result.planContentRevision
         detail.value2.warnings = result.warnings
-        state = .loaded(detail)
+        set(.loaded(detail))
+    }
+
+    // MARK: Offline
+
+    private func liveSession(_ id: String) -> Components.Schemas.Session? {
+        plan?.value2.sessions.first { $0.value1.id == id && $0.value1.deletedAt == nil }
+    }
+
+    /// Queues the edit and shows its result on this device. False when it cannot be queued (nothing loaded).
+    private func queueUpdate(_ edit: SessionEdit) -> Bool {
+        guard let sync, let current = liveSession(edit.sessionId) else { return false }
+        sync.enqueue(.sessionUpdate(key: OfflineSync.newKey(), id: edit.sessionId, baseRevision: edit.revision, edit.update))
+        put(SessionEditing.apply(edit.update, to: current, now: sync.now))
+        return true
+    }
+
+    private func queueCreate(planId: String, _ create: Components.Schemas.SessionCreate) -> Bool {
+        guard let sync, plan != nil else { return false }
+        sync.enqueue(.sessionCreate(key: OfflineSync.newKey(), planId: planId, create))
+        put(SessionEditing.created(planId: planId, create, now: sync.now))
+        return true
+    }
+
+    private func queueDelete(sessionId: String, revision: Int) -> Bool {
+        guard let sync, let current = liveSession(sessionId) else { return false }
+        switch sync.enqueue(.sessionDelete(key: OfflineSync.newKey(), id: sessionId, baseRevision: revision)) {
+        case .cancelled:
+            // Created and deleted before the server ever saw it.
+            if var detail = plan {
+                detail.value2.sessions.removeAll { $0.value1.id == sessionId }
+                set(.loaded(detail))
+            }
+        case .queued:
+            put(SessionEditing.deleted(current, now: sync.now))
+        }
+        return true
+    }
+
+    private func queueCheckIn(sessionId: String, id: String, _ fields: Components.Schemas.CheckInFields) -> Bool {
+        guard let sync, liveSession(sessionId) != nil else { return false }
+        sync.enqueue(.checkIn(key: OfflineSync.newKey(), id: id, sessionId: sessionId, fields))
+        return true
+    }
+
+    private func put(_ session: Components.Schemas.Session) {
+        guard var detail = plan else { return }
+        if let index = detail.value2.sessions.firstIndex(where: { $0.value1.id == session.value1.id }) {
+            detail.value2.sessions[index] = session
+        } else {
+            detail.value2.sessions.append(session)
+        }
+        set(.loaded(detail))
     }
 }

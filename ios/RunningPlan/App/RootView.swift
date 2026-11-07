@@ -19,14 +19,22 @@ struct RootView: View {
         let plans = PlanStore(
             loader: APIPlanLoader(client: APIConfiguration.liveSignedInClient()),
             account: APIConfiguration.liveSession,
-            writer: APISessionWriter(client: APIConfiguration.liveSignedInClient())
+            writer: APISessionWriter(client: APIConfiguration.liveSignedInClient()),
+            sync: OfflineSync(
+                store: FileOfflineStore.live,
+                service: APISyncService(client: APIConfiguration.liveSignedInClient()),
+                // The queue belongs to one API host and one account, so another account never sends it.
+                scope: { await APIConfiguration.liveSession.userId.map { "\(APIConfiguration.baseURL.absoluteString)|\($0)" } }
+            )
         )
         _plans = State(initialValue: plans)
         _inbox = State(initialValue: InboxStore(service: APIInboxService(client: APIConfiguration.liveSignedInClient()), health: LiveHealthImporter(), plans: plans))
     }
 
     var body: some View {
-        TabView(selection: $selection) {
+        // Read here, not only inside the binding's getter, or the view does not redraw when a conflict arrives.
+        let conflict = plans.conflict
+        return TabView(selection: $selection) {
             ForEach(AppTab.allCases) { tab in
                 screen(tab)
                     .tabItem { Label(tab.title, systemImage: tab.systemImage) }
@@ -35,7 +43,34 @@ struct RootView: View {
         }
         .tint(Palette.accentText.color)
         .preferredColorScheme(.dark)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(spacing: 0) {
+                if plans.showsOfflineBanner { OfflineBanner() }
+                if let notice = plans.syncNotice { SyncNoticeBanner(text: notice, onDismiss: plans.dismissSyncNotice) }
+            }
+        }
+        // The setter is ignored on purpose: the sheet cannot be dismissed (`interactiveDismissDisabled`), only answered.
+        .sheet(item: Binding(get: { conflict }, set: { _ in })) { model in
+            ConflictSheet(
+                model: model,
+                onKeepMine: { Task { await plans.keepMine(model) } },
+                onUseOther: { plans.useOtherVersion(model) }
+            )
+        }
         .task { await plans.load() }
+        .task(id: syncKey) {
+            // Edits made offline go out when the app comes to the front and whenever the queue changes, and again every
+            // half minute while some wait (no network monitor: an offline attempt costs nothing).
+            guard scenePhase == .active, plans.sync != nil, plans.state != .loading else { return }
+            // Unstructured: the queue shrinking changes `syncKey`, which cancels this task, and a cancelled sync would
+            // lose the reload that follows it.
+            await Task { await plans.syncNow() }.value
+            while !Task.isCancelled, plans.syncWaiting {
+                try? await Task.sleep(for: .seconds(30))
+                guard !Task.isCancelled else { return }
+                await Task { await plans.syncNow() }.value
+            }
+        }
         .task(id: plans.plan?.value1.value1.id) {
             // The count on Next's inbox card; the inbox screen shows any error itself.
             if plans.plan != nil { await inbox.refresh() }
@@ -88,6 +123,11 @@ extension RootView {
         case .empty: return active + "empty"
         case .loading, .failed: return active + "other"
         }
+    }
+
+    /// Changes when the app comes to the front or the number of queued edits changes.
+    var syncKey: String {
+        "\(scenePhase == .active)-\(plans.pendingChanges)-\(plans.state == .loading)"
     }
 
     /// Changes with the plan, the local day and any session's revision, so an edit or a match reloads progress.
