@@ -5,6 +5,7 @@ import { D1ActivityStore } from "./adapters/cloudflare/d1-activity-store";
 import { D1MatchStore } from "./adapters/cloudflare/d1-match-store";
 import { D1CheckInStore } from "./adapters/cloudflare/d1-checkin-store";
 import { D1AuthStore } from "./adapters/cloudflare/d1-auth-store";
+import { D1ExportStore } from "./adapters/cloudflare/d1-export-store";
 import { D1HealthProbe } from "./adapters/cloudflare/d1-health";
 import { D1ProfileStore } from "./adapters/cloudflare/d1-profile-store";
 import { D1PlanStore } from "./adapters/cloudflare/d1-plan-store";
@@ -42,6 +43,7 @@ export default {
       health: new D1HealthProbe(env.DB),
       auth: new D1AuthStore(env.DB),
       profiles: new D1ProfileStore(env.DB),
+      accountExport: new D1ExportStore(env.DB),
       plans: new D1PlanStore(env.DB),
       activities: new D1ActivityStore(env.DB),
       matches: new D1MatchStore(env.DB),

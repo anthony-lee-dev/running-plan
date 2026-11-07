@@ -5,6 +5,8 @@ import type { MatchEffects, MatchRow, MatchState } from "../../domain/matches";
 import { acceptedChanges, type ProposalChangeRecord, type ProposalPlanChanges, type ProposalStatus, type StoredProposal } from "../../domain/proposal-model";
 import type {
   ProposalStore,
+  AccountData,
+  AccountExportStore,
   ActivityQuery,
   ActivityStore,
   CheckInStore,
@@ -110,6 +112,10 @@ export class MemoryAuthStore implements AuthStore {
   async userExists(id: string): Promise<boolean> {
     return this.users.has(id);
   }
+  /** The account's email, for the data export. */
+  emailOf(id: string): string | undefined {
+    return this.users.get(id)?.email;
+  }
   async saveRefresh(record: RefreshRecord): Promise<void> {
     this.refresh.set(record.id, { ...record, scopes: [...record.scopes] });
   }
@@ -154,6 +160,46 @@ export class MemoryProfileStore implements ProfileStore {
     const profile: Profile = { ...structuredClone(fields), revision: baseRevision + 1, updatedAt: now };
     this.profiles.set(userId, profile);
     return { ok: true as const, profile: structuredClone(profile) };
+  }
+}
+
+/** The data export in memory, read through the other memory stores. */
+export class MemoryAccountExportStore implements AccountExportStore {
+  constructor(
+    private readonly emailOf: (userId: string) => string | undefined,
+    private readonly plans: MemoryPlanStore,
+    private readonly activities: MemoryActivityStore,
+    private readonly matches: MemoryMatchStore,
+    private readonly checkIns: MemoryCheckInStore,
+    private readonly proposals: MemoryProposalStore,
+  ) {}
+
+  async read(userId: string): Promise<AccountData | undefined> {
+    const email = this.emailOf(userId);
+    if (email === undefined) return undefined;
+    const all = this.plans.everything(userId);
+    const live = all.plans.filter((p) => p.deletedAt === null);
+    const livePlanIds = new Set(live.map((p) => p.id));
+    const sessions = all.sessions.filter((s) => s.deletedAt === null && livePlanIds.has(s.planId));
+    const sessionIds = new Set(sessions.map((s) => s.id));
+    const activities = await this.activities.list(userId, { limit: Number.MAX_SAFE_INTEGER });
+    return {
+      email,
+      plans: live.sort((a, b) => cmp(b.startDate, a.startDate) || cmp(b.id, a.id)),
+      sessions: sessions.sort((a, b) => cmp(a.date, b.date) || cmp(a.id, b.id)),
+      activities,
+      matches: await this.matches.forActivities(userId, activities.map((a) => a.id)),
+      checkins: this.checkIns
+        .everything(userId)
+        .filter((c) => c.deletedAt === null && sessionIds.has(c.sessionId))
+        .sort((a, b) => cmp(a.updatedAt, b.updatedAt) || cmp(a.id, b.id)),
+      proposals: this.proposals
+        .everything(userId)
+        .filter((p) => p.deletedAt === null && livePlanIds.has(p.planId))
+        .sort((a, b) => cmp(a.createdAt, b.createdAt) || cmp(a.id, b.id))
+        // The spec's `Proposal`: the engine's key and the revision stay internal.
+        .map(({ key: _key, revision: _revision, ...proposal }) => proposal),
+    };
   }
 }
 
@@ -726,14 +772,16 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
   const activities = new MemoryActivityStore(auth);
   const checkIns = new MemoryCheckInStore(auth, plans);
   const proposals = new MemoryProposalStore(auth, plans, checkIns);
+  const matches = new MemoryMatchStore(auth, plans, activities);
   return {
     clock: systemClock,
     health: new MemoryHealthProbe(),
     auth,
     profiles: new MemoryProfileStore(auth),
+    accountExport: new MemoryAccountExportStore((id) => (auth instanceof MemoryAuthStore ? auth.emailOf(id) : undefined), plans, activities, matches, checkIns, proposals),
     plans,
     activities,
-    matches: new MemoryMatchStore(auth, plans, activities),
+    matches,
     checkIns,
     proposals,
     sync: new MemorySyncStore(auth, plans, checkIns, proposals),

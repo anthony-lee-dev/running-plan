@@ -39,6 +39,13 @@ entry file, not a rewrite.
   are printed). Put local values in `api/.dev.vars` (gitignored). Only `cf-connecting-ip` is trusted for rate limits.
   Access tokens stay valid until they expire (15 minutes) after their refresh family is revoked; account delete
   takes effect at once because each request checks the user still exists. Production secrets are set by the human with `npx wrangler secret put <NAME>`.
+- Account export (task 2.16, `POST /v1/account/export`; the spec says POST, the issue text said GET): `AccountExportStore.read`
+  returns flat live lists and `src/http/account.ts` shapes them with the same views as the plan and activity routes (`planDetail`,
+  `activityView`). On D1 it is one `db.batch` of eight selects bound to the user alone, so the data read counts as one query however
+  much the account holds (about four with the token check, rate limit and profile read); keep it that way (no per-plan lookups). Left out: tombstones, and everything under a deleted plan
+  (its sessions are not tombstoned, so each table joins the plan and requires it live), check-ins and matches of deleted
+  sessions. Activities are the user's own data and stay when their plan goes. Limited to 5 an hour per account, response
+  `Cache-Control: no-store`. Proposals are exported in the spec's `Proposal` shape (live ones of live plans; the engine's key and the revision stay out), by the D1 store and the memory store alike.
 - Pace derivation (`src/domain/paces.ts`) uses the Riegel race-equivalence model, exponent 1.06 (design §12.2 decided
   for backlog 2.9). Its zone anchors (easy 1.20 to 1.35 of 5K pace, long 1.15 to 1.30, tempo 10K pace ±3%, interval 3K
   to 5K pace) and the heart-rate bands are starting values awaiting the coach review (backlog H.1).

@@ -54,6 +54,7 @@ export function warningsFor(plan: StoredPlan, sessions: StoredSession[]) {
 /** The spec's `Plan`: what sync carries (no sessions, no warnings). */
 export const planView = (plan: StoredPlan) => ({ ...syncMeta(plan), ...planFields(plan), weeks: plan.weeks, contentRevision: plan.contentRevision });
 
+/** The spec's `PlanDetail`: the plan with its live sessions and the validators' warnings. */
 export const planDetail = (plan: StoredPlan, sessions: StoredSession[]) => ({
   ...planView(plan),
   sessions: sessions.map(sessionView),

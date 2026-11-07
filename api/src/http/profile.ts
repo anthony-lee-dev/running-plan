@@ -10,6 +10,11 @@ export function parseIfMatch(header: string | undefined): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
+/** The stored profile, or the default (revision 1, a fixed time so it reads the same until first saved). */
+export async function currentProfile(deps: Deps, userId: string): Promise<Profile> {
+  return (await deps.profiles.get(userId)) ?? { ...structuredClone(DEFAULT_PROFILE), revision: 1, updatedAt: "1970-01-01T00:00:00.000Z" };
+}
+
 export function profileRoutes(deps: Deps) {
   const app = new Hono<{ Variables: AuthVariables }>();
   app.use("/v1/profile", requireScope(deps, "app"));
@@ -19,9 +24,7 @@ export function profileRoutes(deps: Deps) {
       headers: { "content-type": "application/json", etag: `"${profile.revision}"` },
     });
 
-  // A fixed time, so the default profile reads the same every time until it is first saved.
-  const current = async (userId: string): Promise<Profile> =>
-    (await deps.profiles.get(userId)) ?? { ...structuredClone(DEFAULT_PROFILE), revision: 1, updatedAt: "1970-01-01T00:00:00.000Z" };
+  const current = (userId: string) => currentProfile(deps, userId);
 
   app.get("/v1/profile", async (c) => respond(await current(c.get("userId"))));
 

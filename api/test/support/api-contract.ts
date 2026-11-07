@@ -13,7 +13,6 @@ export interface ContractTarget {
 
 /** Spec operations with no route yet. Remove one when its slice builds it, and add its cases. */
 export const NOT_BUILT = new Set([
-  "POST /v1/account/export",
   "GET /v1/plans/{planId}/reviews/{weekIndex}",
 ]);
 
@@ -161,6 +160,29 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("DELETE /v1/account", "/v1/account", 401);
       await ok("DELETE /v1/account", "/v1/account", 204, { token: accessToken });
       await ok("GET /v1/profile", "/v1/profile", 401, { token: accessToken });
+    });
+
+    it("account export: empty, then with a plan, a confirmed match and a check-in, and the rate limit", async () => {
+      const { accessToken: token } = await signIn();
+      const X = "/v1/account/export";
+      await ok("POST /v1/account/export", X, 401);
+      const empty = await ok("POST /v1/account/export", X, 200, { token });
+      expect(empty.json).toMatchObject({ email: EMAIL, plans: [], activities: [], checkins: [], proposals: [] });
+      await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(1) });
+      const up = await ok("POST /v1/activities:batch", "/v1/activities:batch", 200, { token, body: { activities: [run(1, "2026-11-03"), run(2, "2026-11-04")] } });
+      const [a1] = (up.json.results as { activityId: string }[]).map((r) => r.activityId);
+      await ok("PUT /v1/sessions/{sessionId}/match", `/v1/sessions/${id(211)}/match`, 200, { token, body: { activityId: a1, status: "confirmed" } });
+      await ok("POST /v1/sessions/{sessionId}/checkins", `/v1/sessions/${id(211)}/checkins`, 201, { token, body: { id: id(301), when: "after", feel: 4, effortFelt: 6, note: "ok" } });
+      const full = await ok("POST /v1/account/export", X, 200, { token });
+      expect(full.json.plans).toHaveLength(1);
+      expect(full.json.plans[0].sessions).toHaveLength(2);
+      expect(full.json.activities).toHaveLength(2);
+      expect(full.json.activities.find((a: Json) => a.id === a1).match).toMatchObject({ sessionId: id(211), status: "confirmed" });
+      expect(full.json.checkins).toHaveLength(1);
+      // Two used so far; the fifth still answers, the sixth is rate limited.
+      for (let i = 0; i < 3; i++) await ok("POST /v1/account/export", X, 200, { token });
+      const limited = await ok("POST /v1/account/export", X, 429, { token });
+      expect(Number(limited.headers.get("retry-after"))).toBeGreaterThan(0);
     });
 
     it("profile: read, update, conflicts, unknown fields", async () => {
