@@ -402,7 +402,7 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       expect(applied.json.sessions.filter((s: Json) => s.date >= "2026-11-09" && s.owner === "system").length).toBeGreaterThan(8);
       expect(applied.json).toMatchObject({ goal: { type: "10k" }, revision: 2, contentRevision: 2, engine: { presetId: "10k", interview: { runsPerWeek: 4 } } });
       expect(applied.json.weekCount).toBeGreaterThan(8);
-      expect(applied.json.weeks.map((w: Json) => w.index)).toEqual(Array.from({ length: applied.json.weekCount - 1 }, (_, i) => i + 1).filter((i) => i >= 1).length ? expect.any(Array) : []);
+      expect(Math.max(...applied.json.weeks.map((w: Json) => w.index))).toBeLessThan(applied.json.weekCount);
       const reread = await ok("GET /v1/plans/{planId}", second, 200, { token });
       expect(reread.json.sessions.length).toBe(applied.json.sessions.length);
 
