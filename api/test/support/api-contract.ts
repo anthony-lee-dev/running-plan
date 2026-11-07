@@ -14,10 +14,6 @@ export interface ContractTarget {
 /** Spec operations with no route yet. Remove one when its slice builds it, and add its cases. */
 export const NOT_BUILT = new Set([
   "POST /v1/account/export",
-  "POST /v1/plans/{planId}/proposals:generate",
-  "GET /v1/plans/{planId}/proposals",
-  "POST /v1/proposals/{proposalId}:accept",
-  "POST /v1/proposals/{proposalId}:dismiss",
   "GET /v1/plans/{planId}/reviews/{weekIndex}",
 ]);
 
@@ -326,6 +322,73 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("POST /v1/sync", S, 400, { token, body: { operations: [], cursor: "garbage!" } });
       await rejected("POST /v1/sync", S, { token, body: { operations: [], extra: 1 } }, "/extra");
       await rejected("POST /v1/sync", S, { token, body: { operations: [op(4, { kind: "session.delete", baseRevision: 1, extra: 1 })] } }, "/operations/0/extra");
+    });
+
+    it("proposals: generate, list, accept, dismiss, stale, and the sync pull", async () => {
+      const { accessToken: token } = await signIn();
+      await ok("POST /v1/plans", "/v1/plans", 201, { token, body: planBody(1) });
+      const P = `/v1/plans/${id(101)}`;
+      // A session for next week to lighten. The user added it, so a change to it is locked unless opted into.
+      await ok("POST /v1/plans/{planId}/sessions", `${P}/sessions`, 201, { token, body: easy(5, "2026-11-10") });
+      // Weekly (not Weekly plus urgent), so the pain flag below raises nothing by itself and the clock does not matter.
+      const profile = await ok("GET /v1/profile", "/v1/profile", 200, { token });
+      await ok("PATCH /v1/profile", "/v1/profile", 200, { token, body: { review: { frequency: "weekly" } }, headers: { "if-match": `"${profile.json.revision}"` } });
+      await ok("POST /v1/sessions/{sessionId}/checkins", `/v1/sessions/${id(211)}/checkins`, 201, { token, body: { id: id(301), when: "after", feel: 2, effortFelt: 8, pain: true } });
+
+      const generate = `${P}/proposals:generate`;
+      const now = { today: "2026-11-06" };
+      await ok("POST /v1/plans/{planId}/proposals:generate", generate, 401, { body: now });
+      expect((await call("POST /v1/plans/{planId}/proposals:generate", generate, { token, body: {} })).status).toBe(400);
+      await ok("POST /v1/plans/{planId}/proposals:generate", `/v1/plans/${id(199)}/proposals:generate`, 404, { token, body: now });
+      // The control call of `rejected` is a valid generate: it makes the pain proposal.
+      const made = await rejected("POST /v1/plans/{planId}/proposals:generate", generate, { token, body: { ...now, extra: 1 } }, "/extra");
+      expect(made.json.proposals).toMatchObject([{ kind: "adjustment", urgent: true, status: "pending", baseContentRevision: 2 }]);
+      const pain = made.json.proposals[0];
+      expect((await ok("POST /v1/plans/{planId}/proposals:generate", generate, 200, { token, body: now })).json.proposals).toEqual([]); // not made twice
+
+      await rejected(
+        "POST /v1/plans/{planId}/proposals:generate",
+        generate,
+        { token, body: { ...now, interview: { goal: { distance: "5k", extra: 1 } } } },
+        "/interview/goal/extra",
+      );
+      const rerun = await ok("POST /v1/plans/{planId}/proposals:generate", generate, 200, { token, body: { ...now, interview: { goal: { distance: "10k" }, weeklyDistanceM: 20000 } } });
+      expect(rerun.json.proposals).toMatchObject([{ kind: "interview_rerun", urgent: false, status: "pending" }]);
+      expect(rerun.json.proposals[0].planChanges).toMatchObject({ goal: { type: "10k" } });
+
+      const list = `${P}/proposals`;
+      await ok("GET /v1/plans/{planId}/proposals", list, 401);
+      await ok("GET /v1/plans/{planId}/proposals", `/v1/plans/${id(199)}/proposals`, 404, { token });
+      expect((await ok("GET /v1/plans/{planId}/proposals", list, 200, { token })).json.proposals.length).toBeGreaterThanOrEqual(2);
+      await ok("GET /v1/plans/{planId}/proposals", `${list}?status=accepted`, 200, { token });
+
+      // Accepting the pain proposal (with the user-owned session) moves the plan, so the re-run is stale.
+      const accept = (p: Json) => `/v1/proposals/${p.id}:accept`;
+      await ok("POST /v1/proposals/{proposalId}:accept", accept(pain), 401);
+      await ok("POST /v1/proposals/{proposalId}:accept", `/v1/proposals/${id(399)}:accept`, 404, { token });
+      const accepted = await ok("POST /v1/proposals/{proposalId}:accept", accept(pain), 200, { token, body: { includeUserOwned: true } });
+      expect(accepted.json).toMatchObject({ id: id(101), contentRevision: 3 });
+      await ok("POST /v1/proposals/{proposalId}:accept", accept(pain), 409, { token });
+      const stale = rerun.json.proposals[0];
+      await ok("POST /v1/proposals/{proposalId}:accept", accept(stale), 409, { token });
+      await ok("POST /v1/proposals/{proposalId}:dismiss", `/v1/proposals/${stale.id}:dismiss`, 409, { token });
+      // Two re-runs are stale: this one and the control call of `rejected` above.
+      const staleList = (await ok("GET /v1/plans/{planId}/proposals", `${list}?status=stale`, 200, { token })).json.proposals as Json[];
+      expect(staleList.map((p) => p.id)).toContain(stale.id);
+      expect(staleList.every((p) => p.status === "stale")).toBe(true);
+
+      // A new re-run can be dismissed once.
+      const again = await ok("POST /v1/plans/{planId}/proposals:generate", generate, 200, { token, body: { ...now, interview: { goal: { distance: "5k" } } } });
+      const dismiss = (p: Json) => `/v1/proposals/${p.id}:dismiss`;
+      await ok("POST /v1/proposals/{proposalId}:dismiss", dismiss(again.json.proposals[0]), 401);
+      await ok("POST /v1/proposals/{proposalId}:dismiss", `/v1/proposals/${id(399)}:dismiss`, 404, { token });
+      const dismissed = await ok("POST /v1/proposals/{proposalId}:dismiss", dismiss(again.json.proposals[0]), 200, { token });
+      expect(dismissed.json).toMatchObject({ status: "dismissed" });
+      await ok("POST /v1/proposals/{proposalId}:dismiss", dismiss(again.json.proposals[0]), 409, { token });
+
+      // The sync pull carries them all, a stale one marked as such.
+      const pulled = await ok("POST /v1/sync", "/v1/sync", 200, { token, body: { operations: [] } });
+      expect(pulled.json.changes.proposals.map((p: Json) => p.status).sort()).toEqual(["accepted", "dismissed", "stale", "stale"]);
     });
 
     it("operations listed as not built have no route yet", async () => {

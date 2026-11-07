@@ -9,6 +9,7 @@ import { healthRoutes } from "./http/health";
 import { planRoutes } from "./http/plans";
 import { problem } from "./http/problem";
 import { profileRoutes } from "./http/profile";
+import { proposalRoutes } from "./http/proposals";
 import { progressRoutes } from "./http/progress";
 import { syncRoutes } from "./http/sync";
 
@@ -23,6 +24,7 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   app.route("/", matchRoutes(deps));
   app.route("/", planRoutes(deps));
   app.route("/", progressRoutes(deps));
+  app.route("/", proposalRoutes(deps));
   app.route("/", syncRoutes(deps));
   app.route("/", activityRoutes(deps));
   app.notFound((c) => c.json({ error: "not_found" }, 404));

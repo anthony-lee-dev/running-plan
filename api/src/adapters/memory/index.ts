@@ -2,7 +2,9 @@ import type { Profile, ProfileFields } from "../../domain/profile";
 import type { SessionContent } from "../../domain/plan-input";
 import type { StoredActivity } from "../../domain/activities";
 import type { MatchEffects, MatchRow, MatchState } from "../../domain/matches";
+import { acceptedChanges, type ProposalChangeRecord, type ProposalPlanChanges, type ProposalStatus, type StoredProposal } from "../../domain/proposal-model";
 import type {
+  ProposalStore,
   ActivityQuery,
   ActivityStore,
   CheckInStore,
@@ -155,7 +157,7 @@ export class MemoryProfileStore implements ProfileStore {
   }
 }
 
-interface PlanEntry {
+export interface PlanEntry {
   userId: string;
   plan: StoredPlan;
   createHash: string;
@@ -170,6 +172,8 @@ export class MemoryPlanStore implements PlanStore {
   private plans = new Map<string, PlanEntry>();
   /** Set by the match store: unlinks the matches of deleted sessions, as the D1 store does in the same batch. */
   onSessionsDeleted: (userId: string, sessionIds: string[], now: string) => void = () => {};
+  /** Set by the proposal store: tombstones the plan's proposals, as the D1 store does in the same batch. */
+  onPlanDeleted: (userId: string, planId: string, now: string) => void = () => {};
 
   /** Takes the auth store so plans disappear with their account, as the database cascade does. */
   constructor(private readonly auth: AuthStore) {}
@@ -199,6 +203,46 @@ export class MemoryPlanStore implements PlanStore {
   everything(userId: string): { plans: StoredPlan[]; sessions: StoredSession[] } {
     const entries = [...this.plans.values()].filter((e) => e.userId === userId);
     return structuredClone({ plans: entries.map((e) => e.plan), sessions: entries.flatMap((e) => [...e.sessions.values()].map((x) => x.session)) });
+  }
+
+  /** The live plan's entry itself (not a copy); for MemoryProposalStore only. */
+  planRef(userId: string, planId: string) {
+    return this.live(userId, planId);
+  }
+
+  /**
+   * Applies an accepted proposal's changes to a live plan entry. One synchronous step, so nothing else can write in
+   * between. Moves the plan's `contentRevision` once, and its `revision` when plan-level changes apply.
+   */
+  applyProposal(userId: string, entry: PlanEntry, changes: ProposalChangeRecord[], planChanges: ProposalPlanChanges | undefined, now: string) {
+    const deleted: string[] = [];
+    for (const c of changes) {
+      const found = entry.sessions.get(c.sessionId);
+      if (c.op === "create") {
+        entry.sessions.set(c.sessionId, { session: { ...structuredClone(c.after), id: c.sessionId, planId: entry.plan.id, revision: 1, updatedAt: now, deletedAt: null }, createHash: "" });
+      } else if (found && found.session.deletedAt === null && c.op === "update") {
+        entry.sessions.set(c.sessionId, { ...found, session: { ...structuredClone(c.after), id: c.sessionId, planId: entry.plan.id, revision: found.session.revision + 1, updatedAt: now, deletedAt: null } });
+      } else if (found && found.session.deletedAt === null && c.op === "delete") {
+        found.session = { ...found.session, revision: found.session.revision + 1, updatedAt: now, deletedAt: now };
+        deleted.push(c.sessionId);
+      }
+    }
+    let plan: StoredPlan = { ...entry.plan, contentRevision: entry.plan.contentRevision + 1, updatedAt: now };
+    if (planChanges) {
+      const weekCount = planChanges.weekCount ?? plan.weekCount;
+      const weeks = new Map(plan.weeks.map((w) => [w.index, w]));
+      for (const w of planChanges.weeks ?? []) weeks.set(w.index, structuredClone(w));
+      plan = {
+        ...plan,
+        ...(planChanges.goal ? { goal: structuredClone(planChanges.goal) } : {}),
+        ...(planChanges.engine ? { engine: structuredClone(planChanges.engine) } : {}),
+        weekCount,
+        weeks: [...weeks.values()].filter((w) => w.index < weekCount).sort((a, b) => a.index - b.index),
+        revision: plan.revision + 1,
+      };
+    }
+    entry.plan = plan;
+    if (deleted.length > 0) this.onSessionsDeleted(userId, deleted, now);
   }
 
   /** The live session object itself (not a copy), with its plan entry; for MemoryMatchStore only. */
@@ -264,6 +308,7 @@ export class MemoryPlanStore implements PlanStore {
     if (entry.plan.revision !== baseRevision) return { ok: false, reason: "conflict", currentRevision: entry.plan.revision };
     entry.plan = { ...entry.plan, revision: baseRevision + 1, contentRevision: entry.plan.contentRevision + 1, updatedAt: now, deletedAt: now };
     this.onSessionsDeleted(userId, [...entry.sessions.keys()], now);
+    this.onPlanDeleted(userId, planId, now);
     return { ok: true };
   }
 
@@ -506,6 +551,107 @@ export class MemoryCheckInStore implements CheckInStore {
   }
 }
 
+/** Proposals in memory. Every method checks and writes with no await in between, like the database's transactions. */
+export class MemoryProposalStore implements ProposalStore {
+  private rows = new Map<string, { userId: string; proposal: StoredProposal }>();
+
+  constructor(
+    private readonly auth: AuthStore,
+    private readonly plans: MemoryPlanStore,
+    private readonly checkIns: MemoryCheckInStore,
+  ) {
+    plans.onPlanDeleted = (userId, planId, now) => {
+      for (const row of this.rows.values()) {
+        if (row.userId !== userId || row.proposal.planId !== planId || row.proposal.deletedAt !== null) continue;
+        row.proposal = { ...row.proposal, deletedAt: now, updatedAt: now, revision: row.proposal.revision + 1 };
+      }
+    };
+  }
+
+  /** The status a read reports: pending turns stale once the plan's content revision has moved past the base. */
+  private effective(userId: string, p: StoredProposal): ProposalStatus {
+    if (p.status !== "pending") return p.status;
+    const entry = this.plans.planRef(userId, p.planId);
+    return entry && entry.plan.contentRevision !== p.baseContentRevision ? "stale" : p.status;
+  }
+
+  /** Every proposal of the user as stored, tombstones included (the sync pull, after `markStale`). */
+  everything(userId: string): StoredProposal[] {
+    return [...this.rows.values()].filter((r) => r.userId === userId).map((r) => structuredClone(r.proposal));
+  }
+
+  private live(userId: string, planId: string) {
+    return [...this.rows.values()].filter((r) => r.userId === userId && r.proposal.planId === planId && r.proposal.deletedAt === null && this.plans.planRef(userId, planId));
+  }
+
+  async create(userId: string, proposals: StoredProposal[]) {
+    if (!(await this.auth.userExists(userId))) return false;
+    if (proposals.length === 0) return true;
+    const planId = proposals[0]!.planId;
+    const entry = this.plans.planRef(userId, planId);
+    if (!entry || proposals.some((p) => p.planId !== planId || p.baseContentRevision !== entry.plan.contentRevision)) return false;
+    for (const p of proposals) this.rows.set(p.id, { userId, proposal: structuredClone(p) });
+    return true;
+  }
+
+  async list(userId: string, planId: string, status: ProposalStatus) {
+    if (!(await this.auth.userExists(userId))) return [];
+    return this.live(userId, planId)
+      .map((r) => structuredClone({ ...r.proposal, status: this.effective(userId, r.proposal) }))
+      .filter((p) => p.status === status)
+      .sort((a, b) => cmp(b.createdAt, a.createdAt) || cmp(b.id, a.id))
+      .slice(0, 200);
+  }
+
+  async usedKeys(userId: string, planId: string) {
+    if (!(await this.auth.userExists(userId))) return [];
+    return this.live(userId, planId).flatMap((r) => (r.proposal.key !== undefined && this.effective(userId, r.proposal) !== "stale" ? [r.proposal.key] : []));
+  }
+
+  async checkInsForPlan(userId: string, planId: string) {
+    if (!(await this.auth.userExists(userId))) return [];
+    const sessionIds = new Set(this.plans.liveSessions(userId).filter((s) => s.planId === planId).map((s) => s.id));
+    return this.checkIns.everything(userId).filter((c) => c.deletedAt === null && sessionIds.has(c.sessionId));
+  }
+
+  async markStale(userId: string, now: string) {
+    if (!(await this.auth.userExists(userId))) return;
+    for (const row of this.rows.values()) {
+      const p = row.proposal;
+      if (row.userId === userId && p.deletedAt === null && this.effective(userId, p) === "stale" && p.status === "pending") {
+        row.proposal = { ...p, status: "stale", updatedAt: now, revision: p.revision + 1 };
+      }
+    }
+  }
+
+  private find(userId: string, proposalId: string) {
+    const row = this.rows.get(proposalId);
+    return row && row.userId === userId && row.proposal.deletedAt === null && this.plans.planRef(userId, row.proposal.planId) ? row : undefined;
+  }
+
+  async dismiss(userId: string, proposalId: string, now: string) {
+    if (!(await this.auth.userExists(userId))) return { ok: false as const, reason: "not_found" as const };
+    const row = this.find(userId, proposalId);
+    if (!row) return { ok: false as const, reason: "not_found" as const };
+    const status = this.effective(userId, row.proposal);
+    if (status !== "pending") return { ok: false as const, reason: "not_pending" as const, status };
+    row.proposal = { ...row.proposal, status: "dismissed", resolvedAt: now, updatedAt: now, revision: row.proposal.revision + 1 };
+    return { ok: true as const, proposal: structuredClone(row.proposal) };
+  }
+
+  async accept(userId: string, proposalId: string, includeUserOwned: boolean, now: string) {
+    if (!(await this.auth.userExists(userId))) return { ok: false as const, reason: "not_found" as const };
+    const row = this.find(userId, proposalId);
+    if (!row) return { ok: false as const, reason: "not_found" as const };
+    const status = this.effective(userId, row.proposal);
+    if (status !== "pending") return { ok: false as const, reason: "not_pending" as const, status };
+    const p = row.proposal;
+    this.plans.applyProposal(userId, this.plans.planRef(userId, p.planId)!, acceptedChanges(p.changes, includeUserOwned) as ProposalChangeRecord[], p.planChanges as ProposalPlanChanges | undefined, now);
+    row.proposal = { ...p, status: "accepted", resolvedAt: now, updatedAt: now, revision: p.revision + 1 };
+    return { ok: true as const, planId: p.planId };
+  }
+}
+
 /** The offline edit queue in memory: the keys of applied operations, and the pull over the other memory stores. */
 export class MemorySyncStore implements SyncStore {
   private ops = new Map<string, AppliedOp>();
@@ -514,6 +660,7 @@ export class MemorySyncStore implements SyncStore {
     private readonly auth: AuthStore,
     private readonly plans: MemoryPlanStore,
     private readonly checkIns: MemoryCheckInStore,
+    private readonly proposals: MemoryProposalStore,
   ) {}
 
   async findOps(userId: string, keys: string[]) {
@@ -528,8 +675,8 @@ export class MemorySyncStore implements SyncStore {
     for (const op of ops) if (!this.ops.has(`${userId}/${op.idempotencyKey}`)) this.ops.set(`${userId}/${op.idempotencyKey}`, { ...op });
   }
 
-  async changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number }) {
-    if (!(await this.auth.userExists(userId))) return { plans: [], sessions: [], checkins: [], cursor, hasMore: false };
+  async changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number; proposals: number }) {
+    if (!(await this.auth.userExists(userId))) return { plans: [], sessions: [], checkins: [], proposals: [], cursor, hasMore: false };
     const all = this.plans.everything(userId);
     const page = <T extends { id: string; updatedAt: string }>(rows: T[], p: SyncPosition | undefined, limit: number) => {
       const sorted = rows
@@ -542,11 +689,20 @@ export class MemorySyncStore implements SyncStore {
     const plans = page(all.plans, cursor.plans, limits.plans);
     const sessions = page(all.sessions, cursor.sessions, limits.sessions);
     const checkins = page(this.checkIns.everything(userId), cursor.checkins, limits.checkins);
+    const proposals = page(this.proposals.everything(userId), cursor.proposals, limits.proposals);
     const next: SyncCursor = {};
     if (plans.position) next.plans = plans.position;
     if (sessions.position) next.sessions = sessions.position;
     if (checkins.position) next.checkins = checkins.position;
-    return { plans: plans.rows, sessions: sessions.rows, checkins: checkins.rows, cursor: next, hasMore: plans.more || sessions.more || checkins.more };
+    if (proposals.position) next.proposals = proposals.position;
+    return {
+      plans: plans.rows,
+      sessions: sessions.rows,
+      checkins: checkins.rows,
+      proposals: proposals.rows,
+      cursor: next,
+      hasMore: plans.more || sessions.more || checkins.more || proposals.more,
+    };
   }
 }
 
@@ -569,6 +725,7 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
   const plans = new MemoryPlanStore(auth);
   const activities = new MemoryActivityStore(auth);
   const checkIns = new MemoryCheckInStore(auth, plans);
+  const proposals = new MemoryProposalStore(auth, plans, checkIns);
   return {
     clock: systemClock,
     health: new MemoryHealthProbe(),
@@ -578,7 +735,8 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
     activities,
     matches: new MemoryMatchStore(auth, plans, activities),
     checkIns,
-    sync: new MemorySyncStore(auth, plans, checkIns),
+    proposals,
+    sync: new MemorySyncStore(auth, plans, checkIns, proposals),
     email: new MemoryEmailSender(),
     rateLimiter: new MemoryRateLimiter(),
     ids: webIdSource,

@@ -8,6 +8,7 @@ import { requireScope, type AuthVariables } from "./auth";
 import { activityView } from "./activities";
 import { sessionView, warningsFor } from "./plans";
 import { problem } from "./problem";
+import { raiseForPain } from "./proposals";
 import { readBody } from "./validate";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -77,9 +78,13 @@ export function matchRoutes(deps: Deps) {
     if (!UUID.test(sessionId)) return notFound(c);
     const { id, ...fields } = parsed.value;
     const now = deps.clock.now().toISOString();
-    // The pain flag's urgent proposal (Weekly plus urgent) comes with the proposals API, task 2.14.
-    const result = await deps.checkIns.create(c.get("userId"), { ...fields, id, sessionId, revision: 1, updatedAt: now, deletedAt: null });
-    if (result.status === "created") return c.json(result.checkIn, 201);
+    const userId = c.get("userId");
+    const result = await deps.checkIns.create(userId, { ...fields, id, sessionId, revision: 1, updatedAt: now, deletedAt: null });
+    if (result.status === "created") {
+      // A pain flag raises an urgent proposal at once under Weekly plus urgent (a repeat of the request does not).
+      await raiseForPain(deps, userId, result.checkIn);
+      return c.json(result.checkIn, 201);
+    }
     if (result.status === "no_session") return notFound(c);
     if (result.mine && sameCheckIn(result.checkIn, { ...fields, sessionId })) return c.json(result.checkIn, 200);
     // The spec lists no 409 here yet (backlog 2.20), so a reused id is a bad request for now.

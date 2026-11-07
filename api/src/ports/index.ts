@@ -4,6 +4,7 @@ import type { PlanFieldsInput, SessionContent } from "../domain/plan-input";
 import type { StoredActivity } from "../domain/activities";
 import type { MatchEffects, MatchRow, MatchState } from "../domain/matches";
 import type { CheckInFields } from "../domain/checkins";
+import type { ProposalFailure, ProposalStatus, StoredProposal } from "../domain/proposal-model";
 
 export interface Clock {
   now(): Date;
@@ -209,6 +210,37 @@ export interface CheckInStore {
   ): Promise<{ status: "created"; checkIn: StoredCheckIn } | { status: "exists"; mine: true; checkIn: StoredCheckIn } | { status: "exists"; mine: false } | { status: "no_session" }>;
 }
 
+export type ProposalAccept = { ok: true; planId: string } | ProposalFailure;
+
+/**
+ * Proposals (design §6.6): what the engine suggests, kept until the user accepts or dismisses it. A pending proposal
+ * becomes stale when its plan's `contentRevision` moves past `baseContentRevision`. Reads (`list`, `usedKeys`) report
+ * that as soon as it happens; `markStale` writes it (moving `updatedAt`) so a sync pull can carry it. Accept and
+ * dismiss check it again inside their transaction, so a proposal built on an old plan is never applied.
+ */
+export interface ProposalStore {
+  /**
+   * Stores the proposals, all for one plan. Nothing is written, and false returned, when the plan is gone or its
+   * `contentRevision` is no longer the one they were built on.
+   */
+  create(userId: string, proposals: StoredProposal[]): Promise<boolean>;
+  /** A plan's proposals with this status, newest first (at most 200). One whose plan has moved is `stale`, not `pending`. */
+  list(userId: string, planId: string, status: ProposalStatus): Promise<StoredProposal[]>;
+  /** The keys of the plan's adjustment proposals that still count: pending (not stale), accepted or dismissed. */
+  usedKeys(userId: string, planId: string): Promise<string[]>;
+  /** The plan's check-ins that are live, on live sessions: what the engine looks at. */
+  checkInsForPlan(userId: string, planId: string): Promise<StoredCheckIn[]>;
+  /** Marks the user's pending proposals whose plan has moved as stale. */
+  markStale(userId: string, now: string): Promise<void>;
+  dismiss(userId: string, proposalId: string, now: string): Promise<{ ok: true; proposal: StoredProposal } | ProposalFailure>;
+  /**
+   * Applies the proposal to its plan in one transaction and marks it accepted. Changes to user-owned sessions are
+   * skipped unless `includeUserOwned`. A deleted session is tombstoned and its match unlinked; the plan's
+   * `contentRevision` moves once (and its `revision` when plan-level changes apply).
+   */
+  accept(userId: string, proposalId: string, includeUserOwned: boolean, now: string): Promise<ProposalAccept>;
+}
+
 /** Where a pull stopped in one table: rows are ordered by `updatedAt`, then `id`. */
 export interface SyncPosition {
   updatedAt: string;
@@ -220,6 +252,7 @@ export interface SyncCursor {
   plans?: SyncPosition;
   sessions?: SyncPosition;
   checkins?: SyncPosition;
+  proposals?: SyncPosition;
 }
 
 export interface SyncChanges {
@@ -227,6 +260,8 @@ export interface SyncChanges {
   plans: StoredPlan[];
   sessions: StoredSession[];
   checkins: StoredCheckIn[];
+  /** Tombstones included. */
+  proposals: StoredProposal[];
   /** Where the next pull continues. */
   cursor: SyncCursor;
   /** A table has more rows after `cursor`. */
@@ -250,10 +285,10 @@ export interface SyncStore {
   /** Remembers applied operations; a key already stored is left as it was. One batch. */
   recordOps(userId: string, ops: AppliedOp[], now: string): Promise<void>;
   /**
-   * Rows changed after `cursor` (tombstones included), at most the given number per table. Four queries: plans,
-   * their weeks, sessions and check-ins.
+   * Rows changed after `cursor` (tombstones included), at most the given number per table. Five queries: plans,
+   * their weeks, sessions, check-ins and proposals.
    */
-  changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number }): Promise<SyncChanges>;
+  changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number; proposals: number }): Promise<SyncChanges>;
 }
 
 /** Sends the one-time sign-in code. Dev logs it; production sends email. */
@@ -289,6 +324,7 @@ export interface Deps {
   activities: ActivityStore;
   matches: MatchStore;
   checkIns: CheckInStore;
+  proposals: ProposalStore;
   sync: SyncStore;
   email: EmailSender;
   rateLimiter: RateLimiter;

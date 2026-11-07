@@ -2,6 +2,7 @@ import type { Week } from "../../domain/plan-input";
 import type { AppliedOp, SyncCursor, SyncPosition, SyncStore } from "../../ports";
 import { toCheckIn, type CheckInRow } from "./d1-checkin-store";
 import { planOf, sessionOf, type PlanRow, type SessionRow } from "./d1-plan-store";
+import { proposalOf, type ProposalRow } from "./d1-proposal-store";
 
 /** `AND (updated_at, id) > position`, in the plain form SQLite and Postgres both take. */
 const after = (p: SyncPosition | undefined) =>
@@ -31,7 +32,7 @@ export class D1SyncStore implements SyncStore {
     );
   }
 
-  async changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number }) {
+  async changesSince(userId: string, cursor: SyncCursor, limits: { plans: number; sessions: number; checkins: number; proposals: number }) {
     const page = <T>(table: string, p: SyncPosition | undefined, limit: number) => {
       const a = after(p);
       return this.db
@@ -39,14 +40,16 @@ export class D1SyncStore implements SyncStore {
         .bind(userId, ...a.binds, limit + 1)
         .all<T>();
     };
-    const [plans, sessions, checkins] = await Promise.all([
+    const [plans, sessions, checkins, proposals] = await Promise.all([
       page<PlanRow>("plans", cursor.plans, limits.plans),
       page<SessionRow>("sessions", cursor.sessions, limits.sessions),
       page<CheckInRow>("checkins", cursor.checkins, limits.checkins),
+      page<ProposalRow>("proposals", cursor.proposals, limits.proposals),
     ]);
     const planRows = plans.results.slice(0, limits.plans);
     const sessionRows = sessions.results.slice(0, limits.sessions);
     const checkinRows = checkins.results.slice(0, limits.checkins);
+    const proposalRows = proposals.results.slice(0, limits.proposals);
 
     const weeks = new Map<string, Week[]>();
     if (planRows.length > 0) {
@@ -65,14 +68,24 @@ export class D1SyncStore implements SyncStore {
       return row ? { updatedAt: row.updated_at, id: row.id } : fallback;
     };
     const next: SyncCursor = {};
-    const positions = { plans: last(planRows, cursor.plans), sessions: last(sessionRows, cursor.sessions), checkins: last(checkinRows, cursor.checkins) };
-    for (const key of ["plans", "sessions", "checkins"] as const) if (positions[key]) next[key] = positions[key];
+    const positions = {
+      plans: last(planRows, cursor.plans),
+      sessions: last(sessionRows, cursor.sessions),
+      checkins: last(checkinRows, cursor.checkins),
+      proposals: last(proposalRows, cursor.proposals),
+    };
+    for (const key of ["plans", "sessions", "checkins", "proposals"] as const) if (positions[key]) next[key] = positions[key];
     return {
       plans: planRows.map((r) => planOf(r, weeks.get(r.id) ?? [])),
       sessions: sessionRows.map(sessionOf),
       checkins: checkinRows.map(toCheckIn),
+      proposals: proposalRows.map(proposalOf),
       cursor: next,
-      hasMore: plans.results.length > limits.plans || sessions.results.length > limits.sessions || checkins.results.length > limits.checkins,
+      hasMore:
+        plans.results.length > limits.plans ||
+        sessions.results.length > limits.sessions ||
+        checkins.results.length > limits.checkins ||
+        proposals.results.length > limits.proposals,
     };
   }
 }

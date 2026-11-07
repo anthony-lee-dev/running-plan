@@ -8,6 +8,7 @@ import { D1AuthStore } from "./adapters/cloudflare/d1-auth-store";
 import { D1HealthProbe } from "./adapters/cloudflare/d1-health";
 import { D1ProfileStore } from "./adapters/cloudflare/d1-profile-store";
 import { D1PlanStore } from "./adapters/cloudflare/d1-plan-store";
+import { D1ProposalStore } from "./adapters/cloudflare/d1-proposal-store";
 import { D1SyncStore } from "./adapters/cloudflare/d1-sync-store";
 import { D1RateLimiter } from "./adapters/cloudflare/d1-rate-limiter";
 import { LogEmailSender, systemClock, webIdSource } from "./adapters/memory";
@@ -45,6 +46,7 @@ export default {
       activities: new D1ActivityStore(env.DB),
       matches: new D1MatchStore(env.DB),
       checkIns: new D1CheckInStore(env.DB),
+      proposals: new D1ProposalStore(env.DB),
       sync: new D1SyncStore(env.DB),
       rateLimiter: new D1RateLimiter(env.DB),
       email:

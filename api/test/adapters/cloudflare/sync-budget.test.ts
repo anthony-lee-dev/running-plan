@@ -4,7 +4,7 @@ import { env } from "cloudflare:workers";
 import { applyD1Migrations } from "cloudflare:test";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import worker from "../../../src/index";
-import { FIXED_QUERIES, OP_COST, QUERY_LIMIT, type SyncKind } from "../../../src/domain/sync";
+import { FIXED_QUERIES, OP_COST, PAIN_CHECKIN_COST, QUERY_LIMIT, type SyncKind } from "../../../src/domain/sync";
 
 const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
 const SECRET = "budget-test-secret-budget-test-secret";
@@ -123,6 +123,18 @@ describe("sync query budget on the Workers entry", () => {
     // The key lookup (1) and the operation's cost, on top of what every call spends.
     // (The spare in FIXED_QUERIES is left out, so a cost one too low fails here.)
     expect(queries).toBeLessThanOrEqual(1 + OP_COST[kind] + FIXED_QUERIES - 1);
+    expect(queries).toBeLessThanOrEqual(QUERY_LIMIT);
+  });
+
+  it("a check-in with the pain flag, which raises an urgent proposal, stays within its higher cost", async () => {
+    // Dated from the real clock, which the pain trigger reads: a session today and one three days on to lighten.
+    const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+    const data = { ...planData(103, [easy(230, day(0)), easy(231, day(3))]), startDate: day(0), goal: { type: "5k" } };
+    await counted({ operations: [op("plan.create", { id: id(103), data })] });
+    const { json, queries } = await counted({ operations: [op("checkin.create", { id: id(302), sessionId: id(230), data: { when: "after", feel: 2, pain: true } })] });
+    expect(json.results[0].status).toBe("applied");
+    expect(json.changes.proposals).toMatchObject([{ kind: "adjustment", urgent: true, status: "pending" }]);
+    expect(queries).toBeLessThanOrEqual(1 + PAIN_CHECKIN_COST + FIXED_QUERIES - 1);
     expect(queries).toBeLessThanOrEqual(QUERY_LIMIT);
   });
 

@@ -80,7 +80,7 @@ export const sessionOf = (r: SessionRow): StoredSession => ({
   deletedAt: r.deleted_at,
 });
 
-const sessionColumns = (s: SessionContent) => [
+export const sessionColumns = (s: SessionContent) => [
   s.date,
   s.type,
   s.title ?? null,
@@ -217,6 +217,13 @@ export class D1PlanStore implements PlanStore {
         )
         .bind(now, now, planId, userId, baseRevision),
       ...this.unlink(userId, "SELECT id FROM sessions WHERE plan_id = ?", planId, "SELECT 1 FROM plans WHERE id = ? AND deleted_at = ?", planId, now),
+      // The plan's proposals go with it (tombstones, so a sync pull carries the deletion), only if the delete happened.
+      this.db
+        .prepare(
+          `UPDATE proposals SET deleted_at = ?, revision = revision + 1, updated_at = ?
+           WHERE plan_id = ? AND user_id = ? AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM plans WHERE id = ? AND deleted_at = ?)`,
+        )
+        .bind(now, now, planId, userId, planId, now),
     ]);
     return results[0]!.meta.changes > 0 ? { ok: true as const } : this.planFailure(userId, planId);
   }
