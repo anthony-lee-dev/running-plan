@@ -1,7 +1,7 @@
 import type { Disposition, StoredActivity, WorkoutType, ActivitySource } from "../../domain/activities";
 import type { ActivityQuery, ActivityStore } from "../../ports";
 
-interface Row {
+export interface Row {
   id: string;
   source: ActivitySource;
   external_id: string;
@@ -23,7 +23,7 @@ interface Row {
 
 const optional = <K extends string>(key: K, value: string | number | null) => (value === null ? {} : ({ [key]: value } as Record<K, string | number>));
 
-function toActivity(r: Row): StoredActivity {
+export function toActivity(r: Row): StoredActivity {
   return {
     id: r.id,
     source: r.source,
