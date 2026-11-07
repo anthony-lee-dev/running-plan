@@ -12,9 +12,7 @@ export interface ContractTarget {
 }
 
 /** Spec operations with no route yet. Remove one when its slice builds it, and add its cases. */
-export const NOT_BUILT = new Set([
-  "GET /v1/plans/{planId}/reviews/{weekIndex}",
-]);
+export const NOT_BUILT = new Set<string>([]);
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -383,6 +381,16 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("GET /v1/plans/{planId}/proposals", `/v1/plans/${id(199)}/proposals`, 404, { token });
       expect((await ok("GET /v1/plans/{planId}/proposals", list, 200, { token })).json.proposals.length).toBeGreaterThanOrEqual(2);
       await ok("GET /v1/plans/{planId}/proposals", `${list}?status=accepted`, 200, { token });
+
+      // The weekly review carries the pending proposals (the Proposal schema is checked inside it) and the inbox count.
+      const R = `${P}/reviews`;
+      await ok("GET /v1/plans/{planId}/reviews/{weekIndex}", `${R}/0?today=2026-11-09`, 401);
+      await ok("GET /v1/plans/{planId}/reviews/{weekIndex}", `/v1/plans/${id(199)}/reviews/0?today=2026-11-09`, 404, { token });
+      await ok("GET /v1/plans/{planId}/reviews/{weekIndex}", `${R}/51?today=2026-11-09`, 404, { token });
+      const reviewed = await ok("GET /v1/plans/{planId}/reviews/{weekIndex}", `${R}/0?today=2026-11-09`, 200, { token });
+      expect(reviewed.json).toMatchObject({ planId: id(101), weekIndex: 0, looseEnds: { inboxActivities: 0 } });
+      expect(reviewed.json.proposals.length).toBeGreaterThanOrEqual(2);
+      expect(reviewed.json.summary.checkIns).toMatchObject({ count: 1, painFlags: 1 });
 
       // Accepting the pain proposal (with the user-owned session) moves the plan, so the re-run is stale.
       const accept = (p: Json) => `/v1/proposals/${p.id}:accept`;

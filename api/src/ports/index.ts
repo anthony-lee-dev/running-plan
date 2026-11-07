@@ -207,6 +207,8 @@ export interface ActivityStore {
   get(userId: string, id: string): Promise<StoredActivity | undefined>;
   /** Newest first: local date, then start, then id, all descending. */
   list(userId: string, query: ActivityQuery): Promise<StoredActivity[]>;
+  /** How many of the user's live activities are still in the inbox, whatever their date. One query. */
+  countInbox(userId: string): Promise<number>;
 }
 
 /** Thrown by `MatchStore.apply` when something it read has changed since; nothing was written. */

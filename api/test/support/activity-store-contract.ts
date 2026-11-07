@@ -83,6 +83,14 @@ export function activityStoreContract(name: string, make: () => Promise<{ store:
       expect((await store.list(U1, { limit: 10 })).map((a) => a.id)).toEqual([aid(2), aid(1)]);
     });
 
+    it("counts the user's inbox activities, whatever their date and however many", async () => {
+      expect(await store.countInbox(U1)).toBe(0);
+      await store.applyImport(U1, [activity(1, "2026-01-05"), activity(2, "2026-10-27"), activity(3, "2026-10-28", { disposition: "extra" }), activity(4, "2026-10-28", { disposition: "matched" })], []);
+      await store.applyImport(U2, [activity(5, "2026-10-28", { externalId: "HK-5" })], []);
+      expect(await store.countInbox(U1)).toBe(2);
+      expect(await store.countInbox(U2)).toBe(1);
+    });
+
     it("lists newest first, filters by date and inbox, and pages", async () => {
       await store.applyImport(U1, [
         activity(1, "2026-10-26"),
