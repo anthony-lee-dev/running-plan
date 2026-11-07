@@ -63,7 +63,17 @@ public protocol APIProtocol: Sendable {
     func getProfile(_ input: Operations.getProfile.Input) async throws -> Operations.getProfile.Output
     /// Update profile settings
     ///
-    /// Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    /// Sections left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    ///
+    /// `paces` merges by zone: a zone you send replaces that zone, the others stay.
+    /// `heartRate`, `scheduling` and `review` replace their whole section: whatever you send becomes the
+    /// stored section, so a field left out of a section you send is cleared. Sending the section without
+    /// the field is the only way to clear it (there is no `null`). Send the fields you want to keep again.
+    ///
+    /// Ranges in this body must be strictly ordered: `minSecPerKm` below `maxSecPerKm` and `minBpm` below
+    /// `maxBpm`; an equal pair is a 400 (a session target, by contrast, may have equal ends). The body and each section object reject unknown fields with a 400, and
+    /// `scheduling.longRunDay` may not be one of `scheduling.unavailableDays`.
+    ///
     ///
     /// - Remark: HTTP `PATCH /v1/profile`.
     /// - Remark: Generated from `#/paths//v1/profile/patch(updateProfile)`.
@@ -151,7 +161,8 @@ public protocol APIProtocol: Sendable {
     /// Record a before- or after-session check-in
     ///
     /// The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
-    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` and the same
+    /// body returns 200. The same `id` with another body, or an id already used by another record, is a 409.
     ///
     ///
     /// - Remark: HTTP `POST /v1/sessions/{sessionId}/checkins`.
@@ -330,7 +341,17 @@ extension APIProtocol {
     }
     /// Update profile settings
     ///
-    /// Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    /// Sections left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    ///
+    /// `paces` merges by zone: a zone you send replaces that zone, the others stay.
+    /// `heartRate`, `scheduling` and `review` replace their whole section: whatever you send becomes the
+    /// stored section, so a field left out of a section you send is cleared. Sending the section without
+    /// the field is the only way to clear it (there is no `null`). Send the fields you want to keep again.
+    ///
+    /// Ranges in this body must be strictly ordered: `minSecPerKm` below `maxSecPerKm` and `minBpm` below
+    /// `maxBpm`; an equal pair is a 400 (a session target, by contrast, may have equal ends). The body and each section object reject unknown fields with a 400, and
+    /// `scheduling.longRunDay` may not be one of `scheduling.unavailableDays`.
+    ///
     ///
     /// - Remark: HTTP `PATCH /v1/profile`.
     /// - Remark: Generated from `#/paths//v1/profile/patch(updateProfile)`.
@@ -522,7 +543,8 @@ extension APIProtocol {
     /// Record a before- or after-session check-in
     ///
     /// The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
-    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` and the same
+    /// body returns 200. The same `id` with another body, or an id already used by another record, is a 409.
     ///
     ///
     /// - Remark: HTTP `POST /v1/sessions/{sessionId}/checkins`.
@@ -884,6 +906,8 @@ public enum Components {
             case sun = "sun"
         }
         /// Pace range in seconds per km; `minSecPerKm` is the faster end. Shown as `5:45–6:00/km`.
+        /// A session target may have equal ends; a profile update may not (see `updateProfile`).
+        ///
         ///
         /// - Remark: Generated from `#/components/schemas/PaceRange`.
         public struct PaceRange: Codable, Hashable, Sendable {
@@ -907,7 +931,24 @@ public enum Components {
                 case minSecPerKm
                 case maxSecPerKm
             }
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.minSecPerKm = try container.decode(
+                    Swift.Int.self,
+                    forKey: .minSecPerKm
+                )
+                self.maxSecPerKm = try container.decode(
+                    Swift.Int.self,
+                    forKey: .maxSecPerKm
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "minSecPerKm",
+                    "maxSecPerKm"
+                ])
+            }
         }
+        /// Beats per minute. A session target may have equal ends; a profile update may not (see `updateProfile`).
+        ///
         /// - Remark: Generated from `#/components/schemas/HeartRateRange`.
         public struct HeartRateRange: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/HeartRateRange/minBpm`.
@@ -929,6 +970,21 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case minBpm
                 case maxBpm
+            }
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.minBpm = try container.decode(
+                    Swift.Int.self,
+                    forKey: .minBpm
+                )
+                self.maxBpm = try container.decode(
+                    Swift.Int.self,
+                    forKey: .maxBpm
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "minBpm",
+                    "maxBpm"
+                ])
             }
         }
         /// Effort level for effort-based targets and custom sessions.
@@ -1239,7 +1295,9 @@ public enum Components {
                 case interval
             }
         }
-        /// Only what the user supplied; never inferred (§6.3).
+        /// Only what the user supplied; never inferred (§6.3). In a profile update this replaces the whole
+        /// section, so leave out a field to clear it. Unknown fields are rejected.
+        ///
         ///
         /// - Remark: Generated from `#/components/schemas/HeartRateSettings`.
         public struct HeartRateSettings: Codable, Hashable, Sendable {
@@ -1263,7 +1321,26 @@ public enum Components {
                 case maxBpm
                 case zones
             }
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.maxBpm = try container.decodeIfPresent(
+                    Swift.Int.self,
+                    forKey: .maxBpm
+                )
+                self.zones = try container.decodeIfPresent(
+                    [Components.Schemas.HeartRateRange].self,
+                    forKey: .zones
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "maxBpm",
+                    "zones"
+                ])
+            }
         }
+        /// In a profile update this replaces the whole section, so leave out a field to clear it. Unknown
+        /// fields are rejected, and `longRunDay` may not be one of `unavailableDays`.
+        ///
+        ///
         /// - Remark: Generated from `#/components/schemas/SchedulingPreferences`.
         public struct SchedulingPreferences: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SchedulingPreferences/longRunDay`.
@@ -1292,7 +1369,31 @@ public enum Components {
                 case restDay
                 case unavailableDays
             }
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.longRunDay = try container.decodeIfPresent(
+                    Components.Schemas.Weekday.self,
+                    forKey: .longRunDay
+                )
+                self.restDay = try container.decodeIfPresent(
+                    Components.Schemas.Weekday.self,
+                    forKey: .restDay
+                )
+                self.unavailableDays = try container.decodeIfPresent(
+                    [Components.Schemas.Weekday].self,
+                    forKey: .unavailableDays
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "longRunDay",
+                    "restDay",
+                    "unavailableDays"
+                ])
+            }
         }
+        /// In a profile update this replaces the whole section: `frequency` is required, and leaving out
+        /// `day` clears it. Unknown fields are rejected.
+        ///
+        ///
         /// - Remark: Generated from `#/components/schemas/ReviewSettings`.
         public struct ReviewSettings: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ReviewSettings/frequency`.
@@ -1316,6 +1417,21 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case frequency
                 case day
+            }
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.frequency = try container.decode(
+                    Components.Schemas.ReviewFrequency.self,
+                    forKey: .frequency
+                )
+                self.day = try container.decodeIfPresent(
+                    Components.Schemas.Weekday.self,
+                    forKey: .day
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "frequency",
+                    "day"
+                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/Profile`.
@@ -3644,7 +3760,9 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInFields/feel`.
             public var feel: Swift.Int
-            /// Perceived effort, 1 to 10. After-session check-ins only.
+            /// Perceived effort, 1 to 10. For after-session check-ins only (`when: after`): with
+            /// `when: before` it is a 400.
+            ///
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInFields/effortFelt`.
             public var effortFelt: Swift.Int?
@@ -3659,7 +3777,7 @@ public enum Components {
             /// - Parameters:
             ///   - when:
             ///   - feel: Overall feel, 1 (awful) to 5 (great).
-            ///   - effortFelt: Perceived effort, 1 to 10. After-session check-ins only.
+            ///   - effortFelt: Perceived effort, 1 to 10. For after-session check-ins only (`when: after`): with
             ///   - pain: Coarse pain flag. True shows "stop and seek advice" whatever the review setting.
             ///   - note:
             public init(
@@ -7236,7 +7354,17 @@ public enum Operations {
     }
     /// Update profile settings
     ///
-    /// Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    /// Sections left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    ///
+    /// `paces` merges by zone: a zone you send replaces that zone, the others stay.
+    /// `heartRate`, `scheduling` and `review` replace their whole section: whatever you send becomes the
+    /// stored section, so a field left out of a section you send is cleared. Sending the section without
+    /// the field is the only way to clear it (there is no `null`). Send the fields you want to keep again.
+    ///
+    /// Ranges in this body must be strictly ordered: `minSecPerKm` below `maxSecPerKm` and `minBpm` below
+    /// `maxBpm`; an equal pair is a 400 (a session target, by contrast, may have equal ends). The body and each section object reject unknown fields with a 400, and
+    /// `scheduling.longRunDay` may not be one of `scheduling.unavailableDays`.
+    ///
     ///
     /// - Remark: HTTP `PATCH /v1/profile`.
     /// - Remark: Generated from `#/paths//v1/profile/patch(updateProfile)`.
@@ -9995,7 +10123,8 @@ public enum Operations {
     /// Record a before- or after-session check-in
     ///
     /// The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
-    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` and the same
+    /// body returns 200. The same `id` with another body, or an id already used by another record, is a 409.
     ///
     ///
     /// - Remark: HTTP `POST /v1/sessions/{sessionId}/checkins`.
@@ -10217,6 +10346,29 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "notFound",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// The request conflicts with the current state (same id with a different body, stale or non-pending proposal)
+            ///
+            /// - Remark: Generated from `#/paths//v1/sessions/{sessionId}/checkins/post(createCheckIn)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Components.Responses.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Components.Responses.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
                             response: self
                         )
                     }
