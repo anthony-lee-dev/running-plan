@@ -205,7 +205,17 @@ paths:
     patch:
       operationId: updateProfile
       summary: Update profile settings
-      description: Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+      description: |
+        Sections left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+
+        `paces` merges by zone: a zone you send replaces that zone, the others stay.
+        `heartRate`, `scheduling` and `review` replace their whole section: whatever you send becomes the
+        stored section, so a field left out of a section you send is cleared. Sending the section without
+        the field is the only way to clear it (there is no `null`). Send the fields you want to keep again.
+
+        Ranges in this body must be strictly ordered: `minSecPerKm` below `maxSecPerKm` and `minBpm` below
+        `maxBpm`; an equal pair is a 400 (a session target, by contrast, may have equal ends). The body and each section object reject unknown fields with a 400, and
+        `scheduling.longRunDay` may not be one of `scheduling.unavailableDays`.
       tags: [profile]
       security:
         - bearerAuth: [app]
@@ -567,7 +577,8 @@ paths:
       summary: Record a before- or after-session check-in
       description: |
         The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
-        setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+        setting, a pain flag triggers an immediate proposal. Repeating with the same `id` and the same
+        body returns 200. The same `id` with another body, or an id already used by another record, is a 409.
       tags: [sessions]
       security:
         - bearerAuth: [app]
@@ -596,6 +607,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /v1/sync:
     post:
@@ -1099,7 +1112,10 @@ components:
       enum: [mon, tue, wed, thu, fri, sat, sun]
     PaceRange:
       type: object
-      description: Pace range in seconds per km; `minSecPerKm` is the faster end. Shown as `5:45–6:00/km`.
+      description: |
+        Pace range in seconds per km; `minSecPerKm` is the faster end. Shown as `5:45–6:00/km`.
+        A session target may have equal ends; a profile update may not (see `updateProfile`).
+      additionalProperties: false
       required: [minSecPerKm, maxSecPerKm]
       properties:
         minSecPerKm:
@@ -1112,6 +1128,8 @@ components:
           maximum: 1200
     HeartRateRange:
       type: object
+      description: "Beats per minute. A session target may have equal ends; a profile update may not (see `updateProfile`)."
+      additionalProperties: false
       required: [minBpm, maxBpm]
       properties:
         minBpm:
@@ -1241,7 +1259,10 @@ components:
           $ref: "#/components/schemas/PaceRange"
     HeartRateSettings:
       type: object
-      description: Only what the user supplied; never inferred (§6.3).
+      description: |
+        Only what the user supplied; never inferred (§6.3). In a profile update this replaces the whole
+        section, so leave out a field to clear it. Unknown fields are rejected.
+      additionalProperties: false
       properties:
         maxBpm:
           type: integer
@@ -1255,6 +1276,10 @@ components:
             $ref: "#/components/schemas/HeartRateRange"
     SchedulingPreferences:
       type: object
+      description: |
+        In a profile update this replaces the whole section, so leave out a field to clear it. Unknown
+        fields are rejected, and `longRunDay` may not be one of `unavailableDays`.
+      additionalProperties: false
       properties:
         longRunDay:
           $ref: "#/components/schemas/Weekday"
@@ -1268,6 +1293,10 @@ components:
             $ref: "#/components/schemas/Weekday"
     ReviewSettings:
       type: object
+      description: |
+        In a profile update this replaces the whole section: `frequency` is required, and leaving out
+        `day` clears it. Unknown fields are rejected.
+      additionalProperties: false
       required: [frequency]
       properties:
         frequency:
@@ -1978,7 +2007,9 @@ components:
           maximum: 5
         effortFelt:
           type: integer
-          description: Perceived effort, 1 to 10. After-session check-ins only.
+          description: |
+            Perceived effort, 1 to 10. For after-session check-ins only (`when: after`): with
+            `when: before` it is a 400.
           minimum: 1
           maximum: 10
         pain:
