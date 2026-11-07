@@ -81,7 +81,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - UI tests that touch the API pass `-auth.reset YES`, so an earlier test's sign-in (and plan) never replaces "Set a goal".
 - Screens: `NextModel`, `WeekModel` and `WholeModel` are pure (built from `PlanSchedule`) and pinned by unit tests;
   `NextView`, `WeekView` and `WholeView` only draw them. Snapshot tests render the views with `PlanFixture` (the boards'
-  plan, today Wed 2026-10-28) through `BoardSnapshot`. Left for later tasks: the review card.
+  plan, today Wed 2026-10-28) through `BoardSnapshot`.
 - VoiceOver reads paces in words through `PaceFormat.spoken` ("6 minutes 25 to 7 minutes 10 per kilometre").
 
 ## Session sheet and editor (task 4.1)
@@ -209,7 +209,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   Two runs on one day: the second is offered the day's session by hand until the first is confirmed.
 - Next has an always-visible "Import inbox" card (`next.inbox`): it is the way in to the inbox when empty and to manual entry.
   A confirmed match is merged into `PlanStore` (`replace(session:...)`) so Next and Week show the session done.
-- Not done here: calling `generateProposals` after an import (the review and proposals tasks, 4.5 on).
+- `generateProposals` is not called from the inbox: the review does it (see "Weekly review and proposals").
 
 ## Runs from any session (issue #105)
 
@@ -242,8 +242,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   `PlanStore.checkIn(sessionId:after:id:)` (id made once per visit) and closes; "Skip for now" and the back link send nothing.
   A saved check-in takes away the inbox's Undo (`finishCheckIn(saved: true)`): unmatching would leave the stored check-in
   feeding proposals for a session no longer done. Opening the inbox drops a check-in left pending from an earlier visit.
-- Not wired: a check-in from the session page or after a re-map from the all-runs list, and `generateProposals` after an
-  import (4.5 on).
+- Not wired: a check-in from the session page or after a re-map from the all-runs list.
 - UI-test request counts are for the whole run (one server), so compare before and after an action.
 
 ## Progress (DK-Progress, issue #73)
@@ -264,6 +263,35 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   Distance bars fill by ran / planned (capped at 1); Week's "plus N min cross-training" is the user's own sessions in the week
   that are not skipped (the reply cannot split running from other time); Whole shows ran / planned up to this week, and the goal card's
   "On track" badge and bar (whole weeks done plus this week's share).
+
+## Weekly review and proposals (DK-Review, issue #71)
+
+- `Features/Review/`: `ReviewModel` (header, tiles, key runs, check-in line, inbox card) and `ProposalCardModel` (title,
+  reason, before to after rows, locked rows, stale) are pure and unit-tested; `ReviewView`, `ProposalCardView` and
+  `ReviewSettingsSheet` only draw. `ReviewServing` / `APIReviewService` wrap `getWeeklyReview`, `generateProposals`,
+  `listProposals`, `acceptProposal`, `dismissProposal` and the profile's review setting.
+- The API has no user name and no per-session feel, so the headline drops the name ("A steady week") and a key run's note is
+  its outcome (Done, Missed, no make-up, Skipped, Coming up); the check-in averages become one line. A proposal has only a
+  `reason`, so `ProposalCardModel` works the title out from its changes ("Ease Saturday's long run", "Drop ...", "Swap ...").
+- `ReviewStore` (owned by `RootView`, keyed on plan id, content revision, day, scene phase and the inbox or review closing)
+  does not decide when a review is due: from this week back (at most two weeks, for a custom review day) the first week
+  whose review has `due` is shown. With none due, this week's review shows only if proposals are pending (an urgent one).
+  A due review calls `generateProposals` once per plan revision, because the review endpoint never makes proposals; every
+  import match or edit moves the revision, which is how "After every import" works without touching `InboxStore`. The
+  server raises pain proposals itself on a check-in; a missed key session is only found when `generate` runs, so with Weekly
+  plus urgent it appears with the review, not before. Next shows an amber card (`next.review`) and a badge on its tab.
+- `ProposalsStore` + `ProposalList` are the reusable proposal UI: `show(_:planId:)` takes any list, `proposeInterviewRerun`
+  makes an `interview_rerun` proposal and shows it. Goal and settings (#77) presents `ProposalList` for it and
+  `ReviewSettingsSheet` for the frequency and day.
+- Stale is compared live: `baseContentRevision` against the plan's `contentRevision` (accepting one proposal makes the others
+  stale at once). A stale card has its actions off, "This suggestion is out of date" and Refresh (generate, then re-read the
+  pending list). A 409 on accept reloads the plan; `stale_proposal` keeps the card with that reason, anything else (already
+  decided elsewhere) reloads the list. Accepting replaces the plan with the reply (`PlanStore.replace(plan:)`) and leaves an
+  "Applied" row; user-owned sessions stay locked unless "Include my own sessions" is on (`includeUserOwned`).
+- The review screen opens the inbox itself as a cover (not through `RootView`), and reloads when it or the settings sheet
+  closes. `ReviewUITests` starts a plan in the previous month so the review is due and key sessions were missed.
+- The review frequency lives on the profile (`PATCH /v1/profile`, `If-Match` the profile revision, `review` replaced whole,
+  so the day goes back with the frequency). The setting is reached from the review's footer until Goal and settings exists.
 
 ## Commands
 

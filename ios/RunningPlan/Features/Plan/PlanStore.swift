@@ -106,6 +106,12 @@ final class PlanStore {
         merge(.init(session: session, planContentRevision: planContentRevision, warnings: warnings))
     }
 
+    /// The whole plan as the server has it after an accepted proposal. Ignored when it is not the plan shown.
+    func replace(plan: Components.Schemas.PlanDetail) {
+        guard let current = self.plan, current.value1.value1.id == plan.value1.value1.id else { return }
+        state = .loaded(plan)
+    }
+
     /// Interim "Delete plan" (until Goal and settings, 3.7). On success, or when the plan is already gone, the store goes
     /// back to the "Set a goal" state. Returns a sentence for the screen when it fails; the plan then stays.
     func deletePlan() async -> String? {
