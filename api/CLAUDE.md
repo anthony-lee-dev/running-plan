@@ -41,8 +41,8 @@ entry file, not a rewrite.
   takes effect at once because each request checks the user still exists. Production secrets are set by the human with `npx wrangler secret put <NAME>`.
 - Account export (task 2.16, `POST /v1/account/export`; the spec says POST, the issue text said GET): `AccountExportStore.read`
   returns flat live lists and `src/http/account.ts` shapes them with the same views as the plan and activity routes (`planDetail`,
-  `activityView`). On D1 it is one `db.batch` of eight selects bound to the user alone, so it counts as one query however
-  much the account holds; keep it that way (no per-plan lookups). Left out: tombstones, and everything under a deleted plan
+  `activityView`). On D1 it is one `db.batch` of eight selects bound to the user alone, so the data read counts as one query however
+  much the account holds (about four with the token check, rate limit and profile read); keep it that way (no per-plan lookups). Left out: tombstones, and everything under a deleted plan
   (its sessions are not tombstoned, so each table joins the plan and requires it live), check-ins and matches of deleted
   sessions. Activities are the user's own data and stay when their plan goes. Limited to 5 an hour per account, response
   `Cache-Control: no-store`. The memory store returns `proposals: []` until the proposals endpoints (2.14) have a memory store.
