@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Deps } from "./ports";
 import type { generatePlan } from "./domain/engine";
+import { accountRoutes } from "./http/account";
 import { activityRoutes } from "./http/activities";
 import { authRoutes } from "./http/auth";
 import { matchRoutes } from "./http/matches";
@@ -17,6 +18,7 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   const app = new Hono();
   app.route("/", healthRoutes(deps));
   app.route("/", authRoutes(deps));
+  app.route("/", accountRoutes(deps));
   app.route("/", profileRoutes(deps));
   // Each route checks its own token, so the order here does not decide who may call what.
   app.route("/", generateRoutes(deps, options.generate));

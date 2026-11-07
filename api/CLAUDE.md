@@ -126,6 +126,13 @@ entry file, not a rewrite.
   runs. User-owned sessions are included but flagged `userOwned` (locked unless the user opts in); blank plans are
   off unless `adaptive`. Each draft has a stable `key` so a dismissed proposal is not made again; the API task
   (2.14) adds ids, the plan revision and the status. Numbers are starting values for the coach review (H.1).
+- Account export (task 2.16, `POST /v1/account/export`; the spec says POST, the issue text said GET): `AccountExportStore.read`
+  returns flat live lists and `src/http/account.ts` shapes them with the same views as the plan and activity routes (`planDetail`,
+  `activityView`). On D1 it is one `db.batch` of eight selects bound to the user alone, so it counts as one query however
+  much the account holds; keep it that way (no per-plan lookups). Left out: tombstones, and everything under a deleted plan
+  (its sessions are not tombstoned, so each table joins the plan and requires it live), check-ins and matches of deleted
+  sessions. Activities are the user's own data and stay when their plan goes. Limited to 5 an hour per account, response
+  `Cache-Control: no-store`. The memory store returns `proposals: []` until the proposals endpoints (2.14) have a memory store.
 - Contract tests (task 2.7): `test/support/api-contract.ts` runs the same cases against the Node app
   (`test/api-contract.test.ts`) and the Workers entry with a local D1 (`test/adapters/cloudflare/api-contract.test.ts`).
   Each response must match `spec/openapi.yaml` (documented status, documented headers such as `ETag`, content type, body schema); request bodies are checked
