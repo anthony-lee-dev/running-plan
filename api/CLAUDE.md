@@ -99,6 +99,12 @@ entry file, not a rewrite.
   time only. On track means 70% or more of the judged sessions done (at least 3 judged). A review looks back at a finished
   week: its review day is the first chosen weekday on or after the week's last day (the last day itself by default),
   and it is due for seven days from then; after an import it is also due once the week has something done. Thresholds are for the coach review (H.1).
+- Weekly review API (task 2.18, `src/http/reviews.ts`, `GET /v1/plans/{planId}/reviews/{weekIndex}`): a read that never writes. It adds
+  the plan's pending proposals (`ProposalStore.list`, so a moved plan's proposals are already stale and left out; none when reviews
+  are Off or the plan is blank and not adaptive) and `looseEnds.inboxActivities` (`ActivityStore.countInbox`, the user's whole inbox,
+  not only that week's dates) to `computeWeeklyReview`. About seven queries, in one `Promise.all` after the plan read. A week outside
+  the plan, or not a number, is a 404 (the spec documents no 400); a missing or bad `today` is a 400 the spec does not list (checked
+  after the token, so an unsigned call is still a 401; follow-up spec PR).
 - Plans and sessions (task 2.5): every query is scoped to the signed-in user, so another user's id is a 404. Writes
   compare the base revision (`If-Match`) atomically; a session write also moves the plan's `contentRevision` in the
   same D1 batch (a transaction), with later statements guarded by SQLite's `changes()` so a lost race writes
