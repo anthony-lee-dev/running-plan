@@ -10,6 +10,10 @@ struct RootView: View {
     @State private var reviews: ReviewStore
     @State private var reviewSettings: ReviewSettingsModel
     @State private var showReview = false
+    /// Goal and settings: the interview re-run, the goal edit, export, sign out and account deletion.
+    @State private var goal: GoalStore
+    /// Moves when the review setting sheet closes on Goal, so the review is looked at again under the new setting.
+    @State private var reviewSettingsChanges = 0
     /// Loaded here, once, for Next, Plan and Progress (distance done, "On track", the Progress tab).
     @State private var progress = ProgressStore(loader: APIProgressLoader(client: APIConfiguration.liveSignedInClient()))
     @State private var watchSync = WatchSyncModel()
@@ -30,6 +34,11 @@ struct RootView: View {
         let reviewService = APIReviewService(client: APIConfiguration.liveSignedInClient())
         _reviews = State(initialValue: ReviewStore(service: reviewService, proposals: ProposalsStore(service: reviewService, plans: plans)))
         _reviewSettings = State(initialValue: ReviewSettingsModel(service: reviewService))
+        _goal = State(initialValue: GoalStore(
+            service: APIGoalSettingsService(client: APIConfiguration.liveSignedInClient()), plans: plans,
+            proposals: ProposalsStore(service: reviewService, plans: plans),
+            signOut: { await APIConfiguration.liveSession.signOut() }
+        ))
     }
 
     var body: some View {
@@ -111,7 +120,7 @@ extension RootView {
     var reviewKey: String {
         guard let plan = plans.plan else { return "" }
         let active = scenePhase == .active ? "active" : "away"
-        return "\(plan.value1.value1.id) \(plan.value1.value3.contentRevision) \(PreviewViewModel.localToday()) \(active) \(showInbox) \(showReview)"
+        return "\(plan.value1.value1.id) \(plan.value1.value3.contentRevision) \(PreviewViewModel.localToday()) \(active) \(showInbox) \(showReview) \(reviewSettingsChanges)"
     }
 
     /// Changes with the plan, the local day and any session's revision, so an edit or a match reloads progress.
@@ -133,7 +142,12 @@ extension RootView {
                 onOpen: { openSession = .open(sessionId: $0) }, onAdd: { sheet = .add(date: $0) }
             )
         case .progress: ProgressScreen(plans: plans, store: progress, onSetGoal: { showOnboarding = true })
-        default: PlaceholderScreen(tab: tab)
+        case .goal:
+            GoalScreen(
+                plans: plans, store: goal, settings: reviewSettings, watchSync: watchSync,
+                isSignedIn: { await APIConfiguration.liveSession.isSignedIn }, onSetGoal: { showOnboarding = true },
+                onReviewSettingsClosed: { reviewSettingsChanges += 1 }
+            )
         }
     }
 }

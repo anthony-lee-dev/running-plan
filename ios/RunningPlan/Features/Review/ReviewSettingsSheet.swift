@@ -61,6 +61,12 @@ final class ReviewSettingsModel {
         self.service = service
     }
 
+    /// Forgets what was loaded (signing out or deleting the account), so the next account's settings are read afresh.
+    func reset() {
+        state = .loading
+        error = nil
+    }
+
     func load() async {
         do {
             state = .loaded(try await service.load())
@@ -83,12 +89,23 @@ final class ReviewSettingsModel {
         await save(setting)
     }
 
-    private func save(_ setting: ReviewSetting) async {
+    /// How targets are shown (Goal and settings): saved on its own, keeping the review setting as it is.
+    func choose(targetDisplay: Components.Schemas.TargetDisplay) async {
+        guard case .loaded(var setting) = state, setting.targetDisplay != targetDisplay else { return }
+        setting.targetDisplay = targetDisplay
+        await save(setting) { try await $0.saveTargetDisplay(setting) }
+    }
+
+    private func save(_ setting: ReviewSetting, using send: ((ReviewSettingsServing) async throws -> ReviewSetting)? = nil) async {
         saving = true
         error = nil
         defer { saving = false }
         do {
-            state = .loaded(try await service.save(setting))
+            if let send {
+                state = .loaded(try await send(service))
+            } else {
+                state = .loaded(try await service.save(setting))
+            }
         } catch ReviewError.notPending {
             // The profile changed somewhere else: show the latest and let the user choose again.
             await load()

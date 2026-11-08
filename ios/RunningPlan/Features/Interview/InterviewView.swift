@@ -3,16 +3,20 @@ import SwiftUI
 /// The interview, one question per screen (DK-Interview). Fonts are the system ones until the screen-font task.
 struct InterviewView: View {
     @State private var flow: InterviewFlow
+    /// Goal and settings re-runs the interview on a saved plan: no "build my own plan", and the privacy line is different.
+    let isRerun: Bool
     let onFinish: (InterviewAnswers, _ blankPlan: Bool) -> Void
     let onClose: () -> Void
 
     @MainActor
     init(
         flow: InterviewFlow? = nil,
+        isRerun: Bool = false,
         onFinish: @escaping (InterviewAnswers, _ blankPlan: Bool) -> Void,
         onClose: @escaping () -> Void
     ) {
         _flow = State(initialValue: flow ?? InterviewFlow())
+        self.isRerun = isRerun
         self.onFinish = onFinish
         self.onClose = onClose
     }
@@ -35,7 +39,9 @@ struct InterviewView: View {
                     }
                     .padding(.top, 8)
                     answerArea
-                    Text("Your answers stay on this phone until you choose to save your plan. No account needed yet.")
+                    Text(isRerun
+                        ? "Your answers go to your plan as a suggestion. Nothing changes until you accept it."
+                        : "Your answers stay on this phone until you choose to save your plan. No account needed yet.")
                         .font(.system(size: 13))
                         .foregroundStyle(Palette.muted.color)
                 }
@@ -96,10 +102,12 @@ struct InterviewView: View {
             .disabled(!flow.canContinue)
             .opacity(flow.canContinue ? 1 : 0.4)
 
-            Button("I'd rather build my own plan") { flow.buildOwnPlan() }
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Palette.muted.color)
-                .frame(minHeight: Metrics.minTouchTarget)
+            if !isRerun {
+                Button("I'd rather build my own plan") { flow.buildOwnPlan() }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Palette.muted.color)
+                    .frame(minHeight: Metrics.minTouchTarget)
+            }
         }
     }
 

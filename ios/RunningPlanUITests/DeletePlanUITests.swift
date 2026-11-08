@@ -1,6 +1,6 @@
 import XCTest
 
-/// Interim delete-plan action (until Goal and settings): delete the saved plan, see "Set a goal" on Plan and Next, and
+/// Delete plan on Goal and settings: delete the saved plan, see "Set a goal" on Goal and Next, and
 /// the plan stays gone after a relaunch because the server deleted it.
 final class DeletePlanUITests: XCTestCase {
     override func setUp() {
@@ -14,9 +14,10 @@ final class DeletePlanUITests: XCTestCase {
         try await LocalAPI.saveAndSignIn(app, api)
         let deletesBefore = try await LocalAPI.requestCount(api, "DELETE /v1/plans/*")
 
-        app.buttons["Plan"].firstMatch.tap()
+        app.buttons["Goal"].firstMatch.tap()
         let delete = app.buttons["plan.delete"]
         XCTAssertTrue(delete.waitForExistence(timeout: 5), app.debugDescription)
+        for _ in 0..<6 where !delete.isHittable { app.swipeUp() }
         delete.tap()
 
         let confirm = app.buttons["Yes, delete it"]

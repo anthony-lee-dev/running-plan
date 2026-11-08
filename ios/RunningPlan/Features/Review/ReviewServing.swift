@@ -33,11 +33,17 @@ struct ReviewSetting: Equatable, Sendable {
     /// Nil means the last day of the plan week.
     var day: Components.Schemas.Weekday?
     var revision: Int
+    /// How targets are shown (Goal and settings). It lives here because it shares the profile's one revision with the
+    /// review setting: two holders of that revision would conflict with each other.
+    var targetDisplay: Components.Schemas.TargetDisplay = .pace
 }
 
 protocol ReviewSettingsServing: Sendable {
     func load() async throws -> ReviewSetting
+    /// Saves the review frequency and day only; the reply carries the new revision.
     func save(_ setting: ReviewSetting) async throws -> ReviewSetting
+    /// Saves `setting.targetDisplay` only.
+    func saveTargetDisplay(_ setting: ReviewSetting) async throws -> ReviewSetting
 }
 
 /// Calls the endpoints through a client that carries the user's token (`AuthMiddleware`).
@@ -118,8 +124,15 @@ struct APIReviewService: ReviewServing, ReviewSettingsServing {
 
     func save(_ setting: ReviewSetting) async throws -> ReviewSetting {
         // `review` is replaced as a whole object, so the day goes back with the frequency (absent means the plan's last day).
-        let update = Components.Schemas.ProfileUpdate(review: .init(frequency: setting.frequency, day: setting.day))
-        let output = try await call { try await client.updateProfile(headers: .init(If_hyphen_Match: "\"\(setting.revision)\""), body: .json(update)) }
+        try await update(Components.Schemas.ProfileUpdate(review: .init(frequency: setting.frequency, day: setting.day)), revision: setting.revision)
+    }
+
+    func saveTargetDisplay(_ setting: ReviewSetting) async throws -> ReviewSetting {
+        try await update(Components.Schemas.ProfileUpdate(targetDisplay: setting.targetDisplay), revision: setting.revision)
+    }
+
+    private func update(_ update: Components.Schemas.ProfileUpdate, revision: Int) async throws -> ReviewSetting {
+        let output = try await call { try await client.updateProfile(headers: .init(If_hyphen_Match: "\"\(revision)\""), body: .json(update)) }
         switch output {
         case .ok(let ok): return Self.setting(try ok.body.json)
         case .badRequest: throw ReviewError.invalid
@@ -130,7 +143,7 @@ struct APIReviewService: ReviewServing, ReviewSettingsServing {
     }
 
     private static func setting(_ profile: Components.Schemas.Profile) -> ReviewSetting {
-        ReviewSetting(frequency: profile.review.frequency, day: profile.review.day, revision: profile.revision)
+        ReviewSetting(frequency: profile.review.frequency, day: profile.review.day, revision: profile.revision, targetDisplay: profile.targetDisplay)
     }
 
     private func call<T>(_ body: () async throws -> T) async throws -> T {
