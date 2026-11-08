@@ -206,6 +206,34 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
         { token, body: { paces: { easy: { minSecPerKm: 380, maxSecPerKm: 420 }, extra: 1 } }, headers: { "if-match": `"${latest.json.revision}"` } },
         "/paces/extra",
       );
+      // Sections and pace ranges reject unknown keys too (the spec says so since 2.20).
+      for (const [body, field] of [
+        [{ heartRate: { maxBpm: 180, extra: 1 } }, "/heartRate/extra"],
+        [{ scheduling: { longRunDay: "sat", extra: 1 } }, "/scheduling/extra"],
+        [{ review: { frequency: "weekly", extra: 1 } }, "/review/extra"],
+      ] as const) {
+        const now = await ok("GET /v1/profile", "/v1/profile", 200, { token });
+        await rejected("PATCH /v1/profile", "/v1/profile", { token, body, headers: { "if-match": `"${now.json.revision}"` } }, field);
+      }
+      // A range with an unknown key: the API reports the range's own path, so check the 400 directly.
+      for (const body of [
+        { paces: { easy: { minSecPerKm: 380, maxSecPerKm: 420, extra: 1 } } },
+        { heartRate: { zones: [1, 2, 3, 4, 5].map((n) => ({ minBpm: 100 + n, maxBpm: 110 + n, extra: 1 })) } },
+      ]) {
+        expect(requestErrors("PATCH /v1/profile", body).length).toBeGreaterThan(0);
+        const now = await ok("GET /v1/profile", "/v1/profile", 200, { token });
+        expect((await call("PATCH /v1/profile", "/v1/profile", { token, body, headers: { "if-match": `"${now.json.revision}"` } })).status).toBe(400);
+      }
+      // Equal ends are a 400 here (the schema cannot say it; the description does).
+      const flat = await ok("GET /v1/profile", "/v1/profile", 200, { token });
+      await ok("PATCH /v1/profile", "/v1/profile", 400, { token, body: { paces: { easy: { minSecPerKm: 400, maxSecPerKm: 400 } } }, headers: { "if-match": `"${flat.json.revision}"` } });
+      // A section replaces the whole stored one: leaving maxBpm out clears it.
+      const set = await ok("GET /v1/profile", "/v1/profile", 200, { token });
+      const withMax = await ok("PATCH /v1/profile", "/v1/profile", 200, { token, body: { heartRate: { maxBpm: 185 } }, headers: { "if-match": `"${set.json.revision}"` } });
+      expect(withMax.json.heartRate).toEqual({ maxBpm: 185 });
+      const zones = [1, 2, 3, 4, 5].map((n) => ({ minBpm: 100 + n * 10, maxBpm: 109 + n * 10 }));
+      const replaced = await ok("PATCH /v1/profile", "/v1/profile", 200, { token, body: { heartRate: { zones } }, headers: { "if-match": `"${withMax.json.revision}"` } });
+      expect(replaced.json.heartRate).toEqual({ zones });
     });
 
     it("generate: a draft and bad input", async () => {

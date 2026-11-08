@@ -84,7 +84,8 @@ struct APISessionWriter: SessionWriting {
         case .created, .ok: return
         case .unauthorized: throw SessionWriteError.signedOut
         case .notFound: throw SessionWriteError.notFound
-        case .badRequest: throw SessionWriteError.invalid
+        // A reused id (409, or 400 `id_in_use` until the API follows the spec) is the same failure to the user.
+        case .badRequest, .conflict: throw SessionWriteError.invalid
         case .undocumented: throw SessionWriteError.server
         }
     }

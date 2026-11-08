@@ -140,7 +140,16 @@ export interface paths {
         head?: never;
         /**
          * Update profile settings
-         * @description Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+         * @description Sections left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+         *
+         *     `paces` merges by zone: a zone you send replaces that zone, the others stay.
+         *     `heartRate`, `scheduling` and `review` replace their whole section: whatever you send becomes the
+         *     stored section, so a field left out of a section you send is cleared. Sending the section without
+         *     the field is the only way to clear it (there is no `null`). Send the fields you want to keep again.
+         *
+         *     Ranges in this body must be strictly ordered: `minSecPerKm` below `maxSecPerKm` and `minBpm` below
+         *     `maxBpm`; an equal pair is a 400 (a session target, by contrast, may have equal ends). The body and each section object reject unknown fields with a 400, and
+         *     `scheduling.longRunDay` may not be one of `scheduling.unavailableDays`.
          */
         patch: operations["updateProfile"];
         trace?: never;
@@ -301,7 +310,8 @@ export interface paths {
         /**
          * Record a before- or after-session check-in
          * @description The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
-         *     setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+         *     setting, a pain flag triggers an immediate proposal. Repeating with the same `id` and the same
+         *     body returns 200. The same `id` with another body, or an id already used by another record, is a 409.
          */
         post: operations["createCheckIn"];
         delete?: never;
@@ -568,11 +578,15 @@ export interface components {
         LocalDate: string;
         /** @enum {string} */
         Weekday: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
-        /** @description Pace range in seconds per km; `minSecPerKm` is the faster end. Shown as `5:45–6:00/km`. */
+        /**
+         * @description Pace range in seconds per km; `minSecPerKm` is the faster end. Shown as `5:45–6:00/km`.
+         *     A session target may have equal ends; a profile update may not (see `updateProfile`).
+         */
         PaceRange: {
             minSecPerKm: number;
             maxSecPerKm: number;
         };
+        /** @description Beats per minute. A session target may have equal ends; a profile update may not (see `updateProfile`). */
         HeartRateRange: {
             minBpm: number;
             maxBpm: number;
@@ -648,16 +662,27 @@ export interface components {
             tempo?: components["schemas"]["PaceRange"];
             interval?: components["schemas"]["PaceRange"];
         };
-        /** @description Only what the user supplied; never inferred (§6.3). */
+        /**
+         * @description Only what the user supplied; never inferred (§6.3). In a profile update this replaces the whole
+         *     section, so leave out a field to clear it. Unknown fields are rejected.
+         */
         HeartRateSettings: {
             maxBpm?: number;
             zones?: components["schemas"]["HeartRateRange"][];
         };
+        /**
+         * @description In a profile update this replaces the whole section, so leave out a field to clear it. Unknown
+         *     fields are rejected, and `longRunDay` may not be one of `unavailableDays`.
+         */
         SchedulingPreferences: {
             longRunDay?: components["schemas"]["Weekday"];
             restDay?: components["schemas"]["Weekday"];
             unavailableDays?: components["schemas"]["Weekday"][];
         };
+        /**
+         * @description In a profile update this replaces the whole section: `frequency` is required, and leaving out
+         *     `day` clears it. Unknown fields are rejected.
+         */
         ReviewSettings: {
             frequency: components["schemas"]["ReviewFrequency"];
             /** @description Review day; absent means the last day of the plan week. */
@@ -990,7 +1015,10 @@ export interface components {
             when: "before" | "after";
             /** @description Overall feel, 1 (awful) to 5 (great). */
             feel: number;
-            /** @description Perceived effort, 1 to 10. After-session check-ins only. */
+            /**
+             * @description Perceived effort, 1 to 10. For after-session check-ins only (`when: after`): with
+             *     `when: before` it is a 400.
+             */
             effortFelt?: number;
             /** @description Coarse pain flag. True shows "stop and seek advice" whatever the review setting. */
             pain?: boolean;
@@ -2068,6 +2096,7 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     sync: {

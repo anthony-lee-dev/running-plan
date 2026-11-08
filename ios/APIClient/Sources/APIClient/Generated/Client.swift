@@ -778,7 +778,17 @@ public struct Client: APIProtocol {
     }
     /// Update profile settings
     ///
-    /// Fields left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    /// Sections left out stay unchanged. Setting paces manually sets `paces.source` to `manual`.
+    ///
+    /// `paces` merges by zone: a zone you send replaces that zone, the others stay.
+    /// `heartRate`, `scheduling` and `review` replace their whole section: whatever you send becomes the
+    /// stored section, so a field left out of a section you send is cleared. Sending the section without
+    /// the field is the only way to clear it (there is no `null`). Send the fields you want to keep again.
+    ///
+    /// Ranges in this body must be strictly ordered: `minSecPerKm` below `maxSecPerKm` and `minBpm` below
+    /// `maxBpm`; an equal pair is a 400 (a session target, by contrast, may have equal ends). The body and each section object reject unknown fields with a 400, and
+    /// `scheduling.longRunDay` may not be one of `scheduling.unavailableDays`.
+    ///
     ///
     /// - Remark: HTTP `PATCH /v1/profile`.
     /// - Remark: Generated from `#/paths//v1/profile/patch(updateProfile)`.
@@ -2527,7 +2537,8 @@ public struct Client: APIProtocol {
     /// Record a before- or after-session check-in
     ///
     /// The pain flag is coarse (yes or no) by design (§10). With the Weekly plus urgent review
-    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` returns 200.
+    /// setting, a pain flag triggers an immediate proposal. Repeating with the same `id` and the same
+    /// body returns 200. The same `id` with another body, or an id already used by another record, is a 409.
     ///
     ///
     /// - Remark: HTTP `POST /v1/sessions/{sessionId}/checkins`.
@@ -2675,6 +2686,28 @@ public struct Client: APIProtocol {
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
                     return .notFound(.init(body: body))
+                case 409:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Components.Responses.Conflict.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .application_problem_plus_json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .conflict(.init(body: body))
                 default:
                     return .undocumented(
                         statusCode: response.status.code,
