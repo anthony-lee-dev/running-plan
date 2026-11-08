@@ -12,6 +12,8 @@ struct ProposalCardModel: Equatable, Identifiable {
         let id: String
         /// "Sat, Oct 31".
         let day: String
+        /// `YYYY-MM-DD`, for ordering.
+        let date: String
         /// The session's name, for a locked row.
         let label: String
         let before: String?
@@ -35,6 +37,8 @@ struct ProposalCardModel: Equatable, Identifiable {
     let isRerun: Bool
     let rows: [Row]
     let moreCount: Int
+    /// "and 40 more (25 added, 15 dropped)"; the counts only when both kinds are folded away.
+    let moreText: String
     let lockedCount: Int
     let stale: Bool
     /// An interview re-run's new goal and length ("10K on Jan 10 · 12 weeks").
@@ -48,9 +52,13 @@ struct ProposalCardModel: Equatable, Identifiable {
         urgent = proposal.urgent ?? false
         isRerun = proposal.kind == .interview_rerun
         stale = proposal.status == .stale || planContentRevision.map { $0 != proposal.baseContentRevision } ?? false
-        let all = proposal.changes.map(Self.row)
+        // By date (a drop before its replacement), so the rows shown mix drops and additions.
+        let all = Self.byDate(proposal.changes.map(Self.row))
         rows = Array(all.prefix(Self.maxRows))
         moreCount = max(0, all.count - Self.maxRows)
+        let folded = all.dropFirst(Self.maxRows)
+        let (added, dropped) = (folded.filter(\.added).count, folded.filter(\.dropped).count)
+        moreText = added > 0 && dropped > 0 ? "and \(moreCount) more (\(added) added, \(dropped) dropped)" : "and \(moreCount) more"
         lockedCount = all.filter(\.locked).count
         appliedCount = all.filter { !$0.locked }.count
         changeCount = all.count
@@ -65,6 +73,23 @@ struct ProposalCardModel: Equatable, Identifiable {
 
     // MARK: Rows
 
+    private typealias SortKey = (date: String, added: Int, index: Int)
+
+    /// Stable sort by date, a drop before the addition on the same day.
+    private static func byDate(_ rows: [Row]) -> [Row] {
+        var keyed: [(key: SortKey, row: Row)] = []
+        for (index, row) in rows.enumerated() {
+            let key: SortKey = (row.date, row.added ? 1 : 0, index)
+            keyed.append((key: key, row: row))
+        }
+        keyed.sort { (a: (key: SortKey, row: Row), b: (key: SortKey, row: Row)) -> Bool in
+            if a.key.date != b.key.date { return a.key.date < b.key.date }
+            if a.key.added != b.key.added { return a.key.added < b.key.added }
+            return a.key.index < b.key.index
+        }
+        return keyed.map(\.row)
+    }
+
     private static func row(_ change: Components.Schemas.ProposalChange) -> Row {
         let content = change.after ?? change.before
         let date = content?.date ?? ""
@@ -77,7 +102,7 @@ struct ProposalCardModel: Equatable, Identifiable {
         }
         return Row(
             id: change.sessionId ?? date + name,
-            day: dayLabel(date), label: name, before: text(change.before), after: change.op == .delete ? nil : text(change.after),
+            day: dayLabel(date), date: date, label: name, before: text(change.before), after: change.op == .delete ? nil : text(change.after),
             dropped: change.op == .delete, added: change.op == .create, locked: change.userOwned ?? false,
             lockedText: "\(weekday) \(name.lowercased()) is yours"
         )
@@ -171,7 +196,7 @@ struct ProposalCardModel: Equatable, Identifiable {
             if let date = goal.date, let day = monthDay(date) { text += " on \(day.month) \(day.day)" }
             parts.append(text)
         }
-        if let count = changes.weekCount { parts.append("\(count) weeks") }
+        if let count = changes.weekCount { parts.append("\(count) weeks in total") }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }

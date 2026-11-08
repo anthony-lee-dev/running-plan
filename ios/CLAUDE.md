@@ -297,6 +297,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - `ProposalsStore` + `ProposalList` are the reusable proposal UI: `show(_:planId:)` takes any list, `proposeInterviewRerun`
   makes an `interview_rerun` proposal and shows it. Goal and settings (#77) presents `ProposalList` for it and
   `ReviewSettingsSheet` for the frequency and day.
+- `ProposalCardModel` sorts rows by date itself (proposals stored before #133 list all drops first); when folded rows hold
+  both kinds, `moreText` reads "and 40 more (25 added, 15 dropped)". A re-run's goal line ends "N weeks in total".
 - Stale is compared live: `baseContentRevision` against the plan's `contentRevision` (accepting one proposal makes the others
   stale at once). A stale card has its actions off, "This suggestion is out of date" and Refresh (generate, then re-read the
   pending list). A 409 on accept reloads the plan; `stale_proposal` keeps the card with that reason, anything else (already
