@@ -74,6 +74,7 @@ struct SessionEditorView: View {
                     }
                     if let error {
                         Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("editor.error")
+                        SignInAgainButton(message: error)
                     }
                     Text("Saving marks this session as yours. Suggested changes will leave it alone.")
                         .font(.system(size: 14)).foregroundStyle(Palette.muted.color)

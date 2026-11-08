@@ -101,8 +101,9 @@ private actor FakeLoader: PlanLoading {
 }
 
 private actor Account: SignInService {
-    let isSignedIn: Bool
+    private(set) var isSignedIn: Bool
     init(_ signedIn: Bool) { isSignedIn = signedIn }
+    func set(_ signedIn: Bool) { isSignedIn = signedIn }
     func startEmailSignIn(email: String) async throws {}
     func verify(email: String, code: String) async throws {}
 }
@@ -137,6 +138,41 @@ struct PlanStoreTests {
         await store.load()
         guard case .failed(let message) = store.state else { Issue.record("expected a failure, got \(store.state)"); return }
         #expect(message.contains("connection"))
+    }
+
+    @Test func signedOutIsToldApartFromSignedInWithNoPlan() async {
+        let out = PlanStore(loader: FakeLoader(.success(nil)), account: Account(false), writer: FakeWriter())
+        await out.load()
+        #expect(out.state == .empty)
+        #expect(!out.isSignedIn, "the empty state offers Sign in")
+
+        let noPlan = PlanStore(loader: FakeLoader(.success(nil)), account: Account(true), writer: FakeWriter())
+        await noPlan.load()
+        #expect(noPlan.state == .empty)
+        #expect(noPlan.isSignedIn, "a signed-in account with no plan only offers Set a goal")
+    }
+
+    @Test func tokensTheServerRejectsCountAsSignedOut() async {
+        let store = PlanStore(loader: FakeLoader(.failure(.signedOut)), account: Account(true), writer: FakeWriter())
+        await store.load()
+        #expect(store.state == .empty)
+        #expect(!store.isSignedIn)
+    }
+
+    @Test func signingInAgainLoadsTheAccountsExistingPlan() async throws {
+        let plan = try PlanFixture.detail()
+        let account = Account(false)
+        let loader = FakeLoader(.success(plan))
+        let store = PlanStore(loader: loader, account: account, writer: FakeWriter())
+        await store.load()
+        #expect(store.state == .empty)
+
+        await account.set(true)
+        await store.load()
+
+        #expect(store.state == .loaded(plan))
+        #expect(store.isSignedIn)
+        #expect(await loader.calls == ["active"], "the plan is looked up, never created")
     }
 
     @Test func aJustSavedPlanIsLoadedById() async throws {

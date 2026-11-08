@@ -52,6 +52,7 @@ struct SessionView: View {
                 if let error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color)
                         .accessibilityIdentifier("session.error")
+                    SignInAgainButton(message: error)
                 }
                 if !model.isRest && !model.isDone { adjustments }
                 if !model.isRest && !model.isDone && !model.isSkipped { checkIn }

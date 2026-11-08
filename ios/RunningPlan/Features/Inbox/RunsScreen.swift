@@ -68,6 +68,7 @@ struct RunsScreen: View {
                 }
                 if let error = store.error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("runs.error")
+                    SignInAgainButton(message: error)
                 }
                 ForEach(model.rows) { row in
                     RunCard(row: row, busy: store.busy, store: store, onPick: { picking = row.id })

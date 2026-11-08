@@ -78,7 +78,8 @@ struct GoalScreen: View {
         case .loaded: state = "loaded"
         case .failed: state = "failed"
         }
-        return "\(plans.plan?.value1.value1.id ?? "-") \(state)"
+        // `isSignedIn` too: signing in to an account with no plan leaves the state `.empty`, but the account card is back.
+        return "\(plans.plan?.value1.value1.id ?? "-") \(state) \(plans.isSignedIn)"
     }
 
     // MARK: Content
@@ -109,6 +110,7 @@ struct GoalScreen: View {
                         .contentShape(Rectangle())
                 }
                 .accessibilityIdentifier("goal.set")
+                if !plans.isSignedIn { SignInLink() }
             }
         }
         if signedIn == true { accountCard }
@@ -126,6 +128,7 @@ struct GoalScreen: View {
                 .font(.system(size: 13)).foregroundStyle(Palette.muted.color)
             if let error = store.goalError {
                 Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("goal.error")
+                SignInAgainButton(message: error)
             }
             HStack(spacing: 10) {
                 // A plan with no goal has no date or time to edit; the interview re-run sets one.
@@ -161,6 +164,7 @@ struct GoalScreen: View {
                 }
                 if let error = settings.error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("settings.error")
+                    SignInAgainButton(message: error)
                 }
             }
             if let watchSync, watchSync.isSupported {
@@ -176,6 +180,7 @@ struct GoalScreen: View {
                 .font(.system(size: 13)).foregroundStyle(Palette.muted.color)
             if let deletePlanError {
                 Text(deletePlanError).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("plan.delete.error")
+                SignInAgainButton(message: deletePlanError)
             }
             textButton("Delete plan", id: "plan.delete", tint: Palette.accentText.color) {
                 deletePlanError = nil
@@ -195,6 +200,7 @@ struct GoalScreen: View {
             Text("Account").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.muted.color)
             if let error = store.accountError {
                 Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("account.error")
+                SignInAgainButton(message: error)
             }
             textButton("Sign out", id: "account.signOut") {
                 Task {
@@ -243,6 +249,7 @@ struct GoalScreen: View {
                     exportButton
                 case .failed(let message):
                     Text(message).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("privacy.export.error")
+                    SignInAgainButton(message: message)
                     exportButton
                 }
             }

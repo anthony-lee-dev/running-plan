@@ -17,6 +17,9 @@ final class PlanStore {
     }
 
     private(set) var state: State = .loading
+    /// Tells "signed out" from "signed in with no plan", which both show `.empty`: only the first offers "Sign in".
+    /// Set by `load()`, and false once the server refuses the tokens.
+    private(set) var isSignedIn = true
     private let loader: PlanLoading
     private let account: SignInService
     private let writer: SessionWriting
@@ -33,7 +36,8 @@ final class PlanStore {
     }
 
     func load() async {
-        guard await account.isSignedIn else {
+        isSignedIn = await account.isSignedIn
+        guard isSignedIn else {
             state = .empty
             return
         }
@@ -49,7 +53,9 @@ final class PlanStore {
         if plan == nil { state = .loading }
         do {
             state = try await fetch().map(State.loaded) ?? .empty
+            isSignedIn = true // the server answered a signed-in call
         } catch PlanLoadError.signedOut {
+            isSignedIn = false
             state = .empty
         } catch is CancellationError {
             return

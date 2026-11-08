@@ -209,6 +209,7 @@ struct MoveSheet: View {
                     }
                     if let error {
                         Text(error).foregroundStyle(Palette.accentText.color)
+                        SignInAgainButton(message: error)
                     }
                 }
             }

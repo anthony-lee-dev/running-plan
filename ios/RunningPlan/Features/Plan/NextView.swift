@@ -220,6 +220,7 @@ private struct FocusCard: View {
             }
             if let error {
                 Text(error).font(.system(size: 13)).foregroundStyle(Palette.accentText.color)
+                SignInAgainButton(message: error)
             }
         }
         .padding(20)

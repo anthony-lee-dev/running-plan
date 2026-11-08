@@ -32,6 +32,7 @@ struct ReviewView<Proposals: View>: View {
                 if let title = model.inboxTitle { inboxCard(title) }
                 if let error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("review.error")
+                    SignInAgainButton(message: error)
                 }
                 footer
             }

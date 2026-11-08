@@ -41,6 +41,7 @@ struct PlanScreen: View {
                             .foregroundStyle(.white)
                             .contentShape(Rectangle())
                     }
+                    if !plans.isSignedIn { SignInLink() }
                 }
             case .failed(let message):
                 centred {

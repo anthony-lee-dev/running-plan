@@ -51,6 +51,7 @@ struct InboxScreen: View {
                 }
                 if let error = store.error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("inbox.error")
+                    SignInAgainButton(message: error)
                 }
                 ForEach(model.cards) { card in
                     InboxCardView(card: card, busy: store.busy, store: store, onPick: { picking = card.id })

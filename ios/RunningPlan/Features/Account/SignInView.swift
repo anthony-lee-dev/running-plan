@@ -3,7 +3,11 @@ import SwiftUI
 /// Email sign-in, shown as a sheet when Save needs an account: an email, then the 6-digit code from the email.
 /// Sign in with Apple waits for the paid Apple account (backlog "Later").
 struct SignInView: View {
-    let model: SaveFlowModel
+    /// Why the sheet is up: Save needs an account, or the person asked to sign in.
+    enum Purpose { case save, signIn }
+
+    let model: any SignInFlowing
+    var purpose: Purpose = .save
     @State private var email = ""
     @State private var code = ""
     @FocusState private var focused: Bool
@@ -16,13 +20,12 @@ struct SignInView: View {
                     .foregroundStyle(Palette.muted.color)
                     .frame(minHeight: Metrics.minTouchTarget)
             }
-            switch model.step {
-            case .code(let address):
+            if let address = model.codeSentTo {
                 title("Check your email", "We sent a 6-digit code to \(address). It works for 10 minutes.")
                 field("6-digit code", text: $code, id: "signin.code")
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
-                primary("Sign in and save", id: "signin.verify", enabled: code.filter(\.isNumber).count == 6) {
+                primary(purpose == .save ? "Sign in and save" : "Sign in", id: "signin.verify", enabled: code.filter(\.isNumber).count == 6) {
                     await model.verify(code: code)
                 }
                 Button("Use a different email") {
@@ -31,8 +34,13 @@ struct SignInView: View {
                 }
                 .foregroundStyle(Palette.accentText.color)
                 .frame(minHeight: Metrics.minTouchTarget)
-            default:
-                title("Save your plan", "Enter your email and we'll send you a code to sign in. No password needed.")
+            } else {
+                title(
+                    purpose == .save ? "Save your plan" : "Sign in",
+                    purpose == .save
+                        ? "Enter your email and we'll send you a code to sign in. No password needed."
+                        : "Enter your email and we'll send you a code. Your saved plan comes back once you're in. No password needed."
+                )
                 field("name@example.com", text: $email, id: "signin.email")
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
@@ -54,7 +62,7 @@ struct SignInView: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen.signin")
         .onAppear { focused = true }
-        .onChange(of: model.step) { focused = true }
+        .onChange(of: model.codeSentTo) { focused = true }
     }
 
     private func title(_ heading: String, _ detail: String) -> some View {
