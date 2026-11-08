@@ -303,6 +303,35 @@ struct ReviewStoreTests {
         #expect(after.count == 2, "an import or an edit moves the revision, so the engine looks again")
     }
 
+    @Test func twoLoadsAtOnceAskTheEngineOnce() async throws {
+        // After an accept, RootView's task and the screen's own reload both run; two generates could store duplicates.
+        let service = FakeReview()
+        await service.set(reviews: [3: try week(3, due: true)])
+        let (plans, _, review) = try await makeStores(service)
+        let plan = try #require(plans.plan)
+
+        async let first: Void = review.load(plan: plan, today: PlanFixture.today)
+        async let second: Void = review.load(plan: plan, today: PlanFixture.today, keepingOpen: true)
+        _ = await (first, second)
+
+        let generates = await service.calls.filter { $0 == "generate" }
+        #expect(generates.count == 1)
+    }
+
+    @Test func aFailedGenerateIsAskedAgainOnTheNextLoad() async throws {
+        let service = FakeReview()
+        await service.set(reviews: [3: try week(3, due: true)])
+        await service.set(generated: [], error: .server)
+        let (plans, _, review) = try await makeStores(service)
+        let plan = try #require(plans.plan)
+
+        await review.load(plan: plan, today: PlanFixture.today)
+        await review.load(plan: plan, today: PlanFixture.today)
+
+        let generates = await service.calls.filter { $0 == "generate" }
+        #expect(generates.count == 2)
+    }
+
     @Test func aFailedGenerateStillShowsTheReview() async throws {
         let service = FakeReview()
         await service.set(reviews: [3: try week(3, due: true)])

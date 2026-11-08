@@ -63,9 +63,11 @@ final class ReviewStore {
             if let first = due {
                 let key = "\(planId)|\(first.weekIndex)|\(plan.value1.value3.contentRevision)"
                 var shown = first
-                if !generated.contains(key), (try? await service.generate(planId: planId, today: today, interview: nil)) != nil {
-                    generated.insert(key)
-                    if let again = try await service.review(planId: planId, weekIndex: first.weekIndex, today: today) { shown = again }
+                // Claimed before the call, so two loads at once (RootView's and the screen's) ask the engine only once.
+                if generated.insert(key).inserted {
+                    if (try? await service.generate(planId: planId, today: today, interview: nil)) == nil {
+                        generated.remove(key)
+                    } else if let again = try await service.review(planId: planId, weekIndex: first.weekIndex, today: today) { shown = again }
                 }
                 adopt(shown, planId: planId)
             } else if let thisWeek, !thisWeek.proposals.isEmpty {
