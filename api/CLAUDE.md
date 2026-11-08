@@ -154,7 +154,9 @@ entry file, not a rewrite.
     plan's new last day. `planChanges` carries goal, `weekCount` (start date never moves; the plan stretches or shrinks to
     the draft's end, never below the weeks already lived or a kept session, at most 52), the weeks from the boundary (notes the
     user wrote stay) and the new engine info. 400 `no_future_weeks`, `no_plan_fits` or `too_many_changes` (over the spec's 400
-    changes); 409 `plan_changed` if the plan keeps moving while it is made.
+    changes); 409 `plan_changed` if the plan keeps moving while it is made. `changes` are ordered by date, a drop before its
+    replacement on the same day (not all drops first), so a short preview shows both sides (#133). The reason names weeks
+    counted from 1 ("weeks 3 to 12"), matching the plan's total length.
   - **Stale**: reads (`list`, `usedKeys`) report a pending proposal as stale as soon as the plan's `contentRevision` moves
     past `baseContentRevision`; `markStale` writes it (sync, above). `create` writes nothing if the plan moved, so a race
     between reading the plan and storing never leaves a stale proposal pending. `accept` and `dismiss` re-check inside their

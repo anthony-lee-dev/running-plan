@@ -67,7 +67,7 @@ struct ProposalCardView: View {
             }
             ForEach(model.rows.filter { !$0.locked }) { row in changeRow(row) }
             if model.moreCount > 0 {
-                Text("and \(model.moreCount) more").font(.system(size: 13)).foregroundStyle(Palette.muted.color)
+                Text(model.moreText).font(.system(size: 13)).foregroundStyle(Palette.muted.color)
             }
             ForEach(model.rows.filter(\.locked)) { row in lockedRow(row) }
             if model.lockedCount > 0 {

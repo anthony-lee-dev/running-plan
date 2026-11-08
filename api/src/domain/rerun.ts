@@ -76,6 +76,9 @@ export function proposeRerun(input: RerunInput): RerunResult {
     changes.push({ op: "create", sessionId: input.newId(), after: { ...structuredClone(rest), ...(notes !== undefined ? { notes } : {}) } as SessionContent, userOwned: false });
   }
   if (changes.length > MAX_PROPOSAL_CHANGES) return { ok: false, reason: "too_many_changes" };
+  // By date, a drop before the session that replaces it, so a short preview shows both sides (the spec sets no order).
+  const dateOfChange = (c: ProposalChangeRecord) => (c.op === "delete" ? c.before.date : c.after.date);
+  changes.sort((a, b) => (dateOfChange(a) < dateOfChange(b) ? -1 : dateOfChange(a) > dateOfChange(b) ? 1 : a.op === b.op ? 0 : a.op === "delete" ? -1 : 1));
 
   // Each week from the boundary on takes the phase of the draft week that starts in it; notes the user wrote stay.
   const phases = new Map<number, Week["phase"]>();
@@ -91,10 +94,11 @@ export function proposeRerun(input: RerunInput): RerunResult {
   const goal: Goal = { type: draft.goal.type, ...(draft.goal.date ? { date: draft.goal.date } : {}), ...(draft.goal.targetTimeSec !== undefined ? { targetTimeSec: draft.goal.targetTimeSec } : {}) };
   if (plan.goal.label !== undefined && plan.goal.type === goal.type) goal.label = plan.goal.label;
 
-  const weeksLeft = weekCount - firstFutureWeek;
+  const firstWeekNumber = firstFutureWeek + 1; // weeks count from 1, as the goal line's total does
+  const rebuilt = firstWeekNumber >= weekCount ? `week ${weekCount}` : `weeks ${firstWeekNumber} to ${weekCount}`;
   return {
     ok: true,
-    reason: `Your new answers rebuild the ${weeksLeft} week${weeksLeft === 1 ? "" : "s"} after this one. Past weeks and sessions you made yourself stay as they are.`,
+    reason: `Your new answers rebuild ${rebuilt}. Past weeks and sessions you made yourself stay as they are.`,
     changes,
     // The interview is kept as answered (the plan stores it as plain JSON).
     planChanges: { goal, weekCount, weeks, engine: { ...draft.engine, interview: draft.engine.interview as unknown as Record<string, unknown> } },

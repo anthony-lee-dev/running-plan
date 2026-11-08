@@ -63,6 +63,27 @@ describe("proposeRerun", () => {
     expect(result.reason.length).toBeLessThanOrEqual(200);
   });
 
+  it("lists the changes by date so a short preview shows both drops and additions (#133)", () => {
+    const result = proposeRerun({ plan, sessions, answers: NEW_ANSWERS, today: "2026-11-11", newId: counter() });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const dateOfChange = (c: (typeof result.changes)[number]) => (c.op === "delete" ? c.before.date : c.op === "create" ? c.after.date : "");
+    const dates = result.changes.map(dateOfChange);
+    expect(dates).toEqual([...dates].sort());
+    const firstFive = result.changes.slice(0, 5).map((c) => c.op);
+    expect(firstFive).toContain("create");
+    expect(firstFive).toContain("delete");
+  });
+
+  it("names the weeks it rebuilds, counted from week 1 like the goal line (#133)", () => {
+    const result = proposeRerun({ plan, sessions, answers: NEW_ANSWERS, today: "2026-11-11", newId: counter() });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const last = result.planChanges.weekCount!;
+    expect(result.reason).toContain(`weeks 3 to ${last}`);
+    expect(result.reason).not.toMatch(/\d+ weeks after this one/);
+  });
+
   it("leaves user-owned, finished and skipped future sessions alone", () => {
     const future = sessions.filter((s) => s.date >= "2026-11-16");
     const [a, b, c] = future;

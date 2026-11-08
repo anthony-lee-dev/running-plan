@@ -91,6 +91,25 @@ struct ProposalCardModelTests {
 
         #expect(model.title == "Re-plan the weeks ahead")
         #expect(model.isRerun)
-        #expect(model.planNote == "10K on Jan 10 · 12 weeks")
+        #expect(model.planNote == "10K on Jan 10 · 12 weeks in total")
+    }
+
+    @Test func aRerunWithManyDropsAndAdditionsShowsBothAndCountsEach() throws {
+        func id(_ prefix: Int, _ n: Int) -> String { "00000000-0000-4000-8000-\(prefix)\(String(format: "%011d", n))" }
+        func date(_ n: Int) -> String { "2026-11-\(String(format: "%02d", n + 1))" }
+        let drops = (0..<20).map { ReviewFixture.change("delete", id: id(1, $0), date: date($0), type: "easy", title: "Easy run", before: 5000, after: nil) }
+        let adds = (0..<20).map { ReviewFixture.change("create", id: id(2, $0), date: date($0), type: "easy", title: "Easy run", before: nil, after: 6000) }
+        let model = card(try ReviewFixture.proposal(kind: "interview_rerun", changes: drops + adds))
+
+        #expect(model.rows.count == ProposalCardModel.maxRows)
+        #expect(model.rows.contains { $0.added })
+        #expect(model.rows.contains { $0.dropped })
+        #expect(model.moreCount == 35)
+        #expect(model.moreText == "and 35 more (18 added, 17 dropped)")
+    }
+
+    @Test func aRerunsGoalLineSaysTheLengthIsInTotal() throws {
+        let rerun = try ReviewFixture.proposal(kind: "interview_rerun", changes: [ReviewFixture.change(before: 8000, after: 9000)], planChanges: #"{"weekCount":10,"goal":{"type":"10k","date":"2026-12-31"}}"#)
+        #expect(card(rerun).planNote == "10K on Dec 31 \u{00B7} 10 weeks in total")
     }
 }
