@@ -4,6 +4,7 @@ import Testing
 
 private actor FakeSettings: ReviewSettingsServing {
     private(set) var saved: [ReviewSetting] = []
+    private(set) var savedDisplays: [ReviewSetting] = []
     var current = ReviewSetting(frequency: .weekly_plus_urgent, day: nil, revision: 1)
     var saveError: ReviewError?
 
@@ -17,7 +18,14 @@ private actor FakeSettings: ReviewSettingsServing {
     func save(_ setting: ReviewSetting) async throws -> ReviewSetting {
         saved.append(setting)
         if let saveError { throw saveError }
-        current = ReviewSetting(frequency: setting.frequency, day: setting.day, revision: setting.revision + 1)
+        current = ReviewSetting(frequency: setting.frequency, day: setting.day, revision: setting.revision + 1, targetDisplay: current.targetDisplay)
+        return current
+    }
+
+    func saveTargetDisplay(_ setting: ReviewSetting) async throws -> ReviewSetting {
+        savedDisplays.append(setting)
+        if let saveError { throw saveError }
+        current = ReviewSetting(frequency: current.frequency, day: current.day, revision: setting.revision + 1, targetDisplay: setting.targetDisplay)
         return current
     }
 }
@@ -71,5 +79,49 @@ struct ReviewSettingsModelTests {
 
         #expect(model.state == .loaded(ReviewSetting(frequency: .off, day: nil, revision: 9)))
         #expect(model.error?.contains("changed somewhere else") == true)
+    }
+
+    @Test func theTargetDisplayIsSavedOnItsOwnAndKeepsTheReviewSetting() async {
+        let service = FakeSettings()
+        await service.set(saveError: nil, current: ReviewSetting(frequency: .weekly, day: .sun, revision: 4))
+        let model = ReviewSettingsModel(service: service)
+        await model.load()
+
+        await model.choose(targetDisplay: .heart_rate)
+
+        #expect(await service.saved.isEmpty)
+        #expect(await service.savedDisplays == [ReviewSetting(frequency: .weekly, day: .sun, revision: 4, targetDisplay: .heart_rate)])
+        #expect(model.state == .loaded(ReviewSetting(frequency: .weekly, day: .sun, revision: 5, targetDisplay: .heart_rate)))
+    }
+
+    @Test func aReviewChangeAfterATargetDisplayChangeUsesTheNewRevision() async {
+        let service = FakeSettings()
+        let model = ReviewSettingsModel(service: service)
+        await model.load()
+
+        await model.choose(targetDisplay: .effort)
+        await model.choose(frequency: .off)
+
+        let revisions = await service.saved.map(\.revision)
+        #expect(revisions == [2])
+        #expect(model.error == nil)
+    }
+
+    @Test func reviewsCanBeTurnedBackOnAfterOff() async {
+        let service = FakeSettings()
+        await service.set(saveError: nil, current: ReviewSetting(frequency: .off, day: nil, revision: 2))
+        let model = ReviewSettingsModel(service: service)
+        await model.load()
+
+        await model.choose(frequency: .weekly_plus_urgent)
+
+        #expect(model.state == .loaded(ReviewSetting(frequency: .weekly_plus_urgent, day: nil, revision: 3)))
+    }
+
+    @Test func resettingForgetsTheLoadedSettings() async {
+        let model = ReviewSettingsModel(service: FakeSettings())
+        await model.load()
+        model.reset()
+        #expect(model.state == .loading)
     }
 }
