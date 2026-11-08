@@ -223,6 +223,9 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   Two runs on one day: the second is offered the day's session by hand until the first is confirmed.
 - Next has an always-visible "Import inbox" card (`next.inbox`): it is the way in to the inbox when empty and to manual entry.
   A confirmed match is merged into `PlanStore` (`replace(session:...)`) so Next and Week show the session done.
+- The HealthKit query has no type, name or metadata filter (issue #134). The session page reads Health through
+  `InboxStore.openSessionPage()` (`load()`, so not again within 5 minutes of an import) before "Match a run" lists.
+  `sourceLabel` cuts by UTF-16 units, the API's length: one over-long `sourceApp` makes it refuse the whole batch.
 - `generateProposals` is not called from the inbox: the review does it (see "Weekly review and proposals").
 
 ## Runs from any session (issue #105)

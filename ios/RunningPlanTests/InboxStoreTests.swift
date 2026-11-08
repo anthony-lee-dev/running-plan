@@ -26,6 +26,25 @@ struct HealthWorkoutMapperTests {
         #expect(fields.sourceApp == "Apple Watch")
     }
 
+    // Issue #134: the API refuses a whole batch when one sourceApp is over 64 UTF-16 units (JavaScript's length), and
+    // Swift's prefix(64) counts characters, so one app with an emoji name would stop every later import.
+    @Test func aSourceNameIsCutToTheServersLengthInUTF16Units() throws {
+        let label = HealthWorkoutMapper.sourceLabel(sourceName: String(repeating: "🏃", count: 60), productType: nil)
+        #expect(label.utf16.count <= 64)
+        #expect(!label.isEmpty)
+        let record = try #require(HealthWorkoutMapper.input(workout(product: nil, source: String(repeating: "🏃", count: 60)))).value1
+        #expect((record.sourceApp ?? "").utf16.count <= 64)
+    }
+
+    // The Oct 31 2026 Watch run of issue #134 (4.42 km in 30:08). Documents that nothing in the mapping depends on a
+    // workout's name; HealthKit's own name is never read.
+    @Test func aWatchRunOf442KmMapsAsARun() throws {
+        let fields = try #require(HealthWorkoutMapper.input(workout("hk-oct31", duration: 1808, distance: 4420, zone: "America/Toronto"))).value1
+        #expect(fields.workoutType == .running)
+        #expect(fields.durationSec == 1808)
+        #expect(fields.distanceM == 4420)
+    }
+
     @Test func otherAppsKeepTheirName() {
         #expect(HealthWorkoutMapper.sourceLabel(sourceName: "Garmin Connect", productType: nil) == "Garmin Connect")
         #expect(HealthWorkoutMapper.sourceLabel(sourceName: "Nike Run Club", productType: "iPhone16,1") == "Nike Run Club")
@@ -252,6 +271,14 @@ struct InboxStoreTests {
         let (store, service, _, _) = try await make(health: FakeHealth(asks: false, found: [workout("hk-1")]))
         await store.load()
         #expect(await service.uploads == [["hk-1"]])
+    }
+
+    // Issue #134: the session page's "Match a run" listed only what the server already held, never reading Health.
+    @Test func openingASessionPageImportsFromHealthWhenAccessWasGiven() async throws {
+        let (store, service, _, _) = try await make(health: FakeHealth(asks: false, found: [workout("hk-oct31")]))
+        await store.openSessionPage()
+        #expect(await service.uploads == [["hk-oct31"]])
+        #expect(store.allRunsLoaded)
     }
 
     @Test func aManualRunIsUploadedOnceItsDateIsNotInTheFuture() async throws {
