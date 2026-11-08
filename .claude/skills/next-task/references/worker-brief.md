@@ -73,13 +73,21 @@ In a worktree, a guard refuses any command it can't prove stays inside the workt
 and of the other blocks:
 - Change files with the Edit and Write tools, not Python or `sed` scripts that rewrite them.
 - Keep shell commands plain: spell file paths out, and don't hold them in shell variables.
-- Never `sleep` to wait. Run a long command in the background, or watch with `gh pr checks <n> --watch`.
+- To wait on a long command (`bash scripts/verify.sh ios`, `gh pr checks <n> --watch`), start it once with the
+  Bash tool's `run_in_background: true`, then do other work or end your turn: its completion notice wakes you
+  when it ends, whether it passed, failed or was stopped, so there is nothing to poll. Send its output to a log
+  if you want to read more than the notice shows.
+- Write no wait loops and no timers, whether in Bash or in a Monitor: no `until` or `while` loops, no `sleep`.
+  This overrides the Bash tool's own advice to wait with a Monitor until-loop. A loop keeps running after you
+  move on: earlier workers left dozens running for hours, waiting on logs whose run had been stopped and on a
+  `grep` pattern macOS doesn't support.
+- A foreground command still running after about 3 minutes is moved to the background and keeps running. Treat
+  that like any background command: wait for its notice, and never start the same command or wait again.
+- If you stop a run of yours (TaskStop), stop anything of yours that waits on it in the same step.
 - Never `pkill` or `kill` a process you didn't start: it may be another worker's tests or the Stop hook's
-  `verify.sh`. If a test run hangs, rerun it with the Bash tool's `timeout` parameter
-  (macOS has no `timeout` command).
-- Wait on your own log line or process ID, never on `pgrep -f "<command text>"`: it also matches the Stop hook's
-  `verify.sh` and other workers' runs, so the wait never ends. Write the command's output to a log that ends with
-  an `exit <code>` line, and wait for that (`until grep -q "^exit " <log>`), or use the PID the Bash tool gave you.
+  `verify.sh`. Never wait with `pgrep -f "<command text>"` either: it also matches those runs.
+- `verify.sh ios` stops a hung `xcodebuild` itself (after `IOS_TEST_TIMEOUT` seconds, default 45 minutes) and
+  says so. Rerun it once; if it hangs again, stop and report it under Notes rather than trying a third time.
 - Don't call the app's task-list or wrap-up tools (`mcp__ccd_turn__update_plan`, `mcp__ccd_turn__wrap_up`).
   Only the main session shows them.
 

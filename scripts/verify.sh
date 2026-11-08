@@ -90,6 +90,36 @@ pick_ios_sim() {
   '
 }
 
+# Runs a command, stopping it after $1 seconds; returns 124 when it ran out of time (as GNU timeout does), 127 when
+# the command can't start, 128 + n when signal n killed it. macOS has no `timeout`, so perl runs the command as a
+# child: at the limit it sends TERM (xcodebuild then cancels its test session and the simulator's test runner), and
+# KILL if the command is still there TIME_LIMIT_GRACE seconds later. A TERM, INT or HUP sent to the run (TaskStop,
+# Ctrl-C) is passed on, so the command never outlives it.
+run_with_time_limit() {
+  local secs="$1"
+  shift
+  if [[ ! "$secs" =~ ^[1-9][0-9]*$ ]]; then echo "run_with_time_limit: '$secs' is not a number of seconds" >&2; return 2; fi
+  # shellcheck disable=SC2016 # perl code, not shell
+  perl -e '
+    use POSIX ":sys_wait_h";
+    my ($secs, $grace) = (shift, $ENV{TIME_LIMIT_GRACE} || 15);
+    my $pid = fork() // die "fork failed: $!\n";
+    if ($pid == 0) { exec { $ARGV[0] } @ARGV or do { print STDERR "cannot run $ARGV[0]: $!\n"; POSIX::_exit(127) } }
+    sub status { my $s = shift; ($s & 127) ? 128 + ($s & 127) : $s >> 8 }
+    sub stop { # TERM, then KILL after the grace period; returns the wait status
+      kill "TERM", $pid;
+      for (1 .. $grace * 10) { return $? if waitpid($pid, WNOHANG) == $pid; select(undef, undef, undef, 0.1) }
+      kill "KILL", $pid; waitpid($pid, 0); return $?;
+    }
+    $SIG{$_} = sub { kill $_[0], $pid } for qw(TERM INT HUP);
+    $SIG{ALRM} = sub { stop(); print STDERR "stopped after ${secs}s\n"; exit 124 };
+    alarm $secs;
+    while (waitpid($pid, 0) != $pid) { die "lost the child: $!\n" unless $!{EINTR} } # a forwarded signal interrupts the wait
+    alarm 0;
+    exit status($?);
+  ' "$secs" "$@"
+}
+
 UI_TEST_API_URL=""
 UI_TEST_API_PID=""
 
@@ -165,9 +195,17 @@ verify_ios() {
   fi
   start_ui_test_api
   echo "== ios: test on ${dest}"
+  # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
+  # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes about 10 locally and 25 in CI, where
+  # ios-ci.yml sets 35 so the job's own 45-minute limit doesn't cut the run off first).
+  local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0
   # TEST_RUNNER_ variables reach the UI test process without the prefix.
-  TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-    xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" -quiet
+  run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
+    xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" -quiet || rc=$?
+  if [[ $rc -eq 124 ]]; then
+    echo "== ios: xcodebuild test ran past ${limit}s and was stopped (a hung simulator?); run verify again" >&2
+  fi
+  [[ $rc -eq 0 ]] || return "$rc"
   check_ui_tests_used_local_api
   stop_ui_test_api
 }
