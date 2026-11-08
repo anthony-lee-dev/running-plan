@@ -17,7 +17,14 @@ struct RunPicker: View {
                 ForEach(runs) { run in
                     Button { onPick(run) } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(run.headline).font(.system(size: 16, weight: .semibold)).monospacedDigit().foregroundStyle(Palette.ink.color)
+                            HStack(spacing: 8) {
+                                Text(run.headline).font(.system(size: 16, weight: .semibold)).monospacedDigit().foregroundStyle(Palette.ink.color)
+                                if let tag = run.tag {
+                                    Text(tag).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.blueText.color)
+                                        .padding(.vertical, 5).padding(.horizontal, 10).background(Palette.blueSoft.color, in: Capsule())
+                                        .accessibilityIdentifier("runpicker.tag")
+                                }
+                            }
                             Text(run.heading).font(.system(size: 13)).foregroundStyle(Palette.muted.color)
                         }
                         .frame(minHeight: Metrics.minTouchTarget, alignment: .leading)

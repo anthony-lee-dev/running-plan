@@ -35,6 +35,18 @@ struct RunMatchModelTests {
         #expect(ids == expected)
     }
 
+    @Test func extraAndIgnoredRunsAreOfferedAndTaggedButMatchedOnesAreNot() throws {
+        let monday = try easy("2026-10-26")
+        let inbox = try activityFixture(id: "inbox", date: "2026-10-26")
+        let extra = try activityFixture(id: "extra", date: "2026-10-27", disposition: "extra")
+        let ignored = try activityFixture(id: "ignored", date: "2026-10-28", disposition: "ignored")
+        let gym = try activityFixture(id: "gym", date: "2026-10-26", type: "strength", disposition: "extra")
+        let taken = try activityFixture(id: "taken", date: "2026-10-26", matchedSession: "x", disposition: "matched")
+        let found = RunMatchModel.candidates(for: monday, in: [taken, gym, ignored, extra, inbox])
+        #expect(found.map(\.value2.id) == ["inbox", "extra", "ignored"])
+        #expect(found.map { RunMatchModel.row(for: $0).tag } == [nil, "Extra run", "Ignored"])
+    }
+
     @Test func theRunsListShowsWhereEachRunStands() throws {
         let monday = try easy("2026-10-26")
         let matched = try activityFixture(id: "a1", date: "2026-10-26", matchedSession: monday.value1.id, disposition: "matched")

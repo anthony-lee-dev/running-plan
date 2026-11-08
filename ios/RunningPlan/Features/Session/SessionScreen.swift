@@ -66,7 +66,7 @@ struct SessionScreen: View {
             .sheet(isPresented: $pickingRun) {
                 if let inbox {
                     RunPicker(
-                        runs: RunMatchModel.candidates(for: session, in: inbox.activities).map(RunMatchModel.row(for:)),
+                        runs: inbox.matchCandidates(for: session).map(RunMatchModel.row(for:)),
                         onPick: { run in
                             pickingRun = false
                             Task { await inbox.rematch(activityId: run.id, sessionId: sessionId, label: InboxModel.label(session)) }
