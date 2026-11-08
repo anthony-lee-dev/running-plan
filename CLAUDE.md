@@ -70,6 +70,10 @@ set up each session on their watch by hand, then import results and review. Live
   without filling its context. Workers follow `.claude/skills/next-task/references/worker-brief.md`. A worker
   removes its worktree once its branch is pushed and its PR is open, so the human can check the branch out in the
   main checkout to verify it.
+- Merging doesn't deploy. Applying D1 migrations to the remote database and `wrangler deploy` are production changes:
+  an agent runs them only after the human says yes to each in chat (migrations first), then runs `npm run smoke -w api`
+  at once. `settings.json` denies `wrangler deploy`, so the human relaxes that rule or runs it themselves; never work
+  around a blocked command (`/next-task` step 5a).
 - After a PR merges, `git pull` on main removes its local branch and worktree (`scripts/prune-merged.sh`, run by the
   post-merge hook; it needs `git config core.hooksPath scripts/githooks`). Run the script by hand if the hook did not.
 - When the human corrects you, add the correction to the relevant `CLAUDE.md` in the same PR.
