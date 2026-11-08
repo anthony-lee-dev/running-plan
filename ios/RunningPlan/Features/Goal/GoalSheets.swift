@@ -61,7 +61,10 @@ struct GoalEditSheet: View {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("goalEdit.error")
                 }
                 Button {
-                    Task { if await store.editGoal(date: hasDate ? Self.format(date) : nil, targetMinutes: hasTime ? minutes : nil) { onClose() } }
+                    Task {
+                        let seconds = hasTime ? GoalModel.targetSeconds(original: goal.targetTimeSec, minutes: minutes) : nil
+                        if await store.editGoal(date: hasDate ? Self.format(date) : nil, targetSeconds: seconds) { onClose() }
+                    }
                 } label: {
                     Text("Save goal")
                         .font(.system(size: 17, weight: .semibold))

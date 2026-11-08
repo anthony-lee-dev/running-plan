@@ -109,7 +109,7 @@ struct GoalStoreTests {
         updated.value1.value1.revision = 4
         await rig.service.set(goal: .success(updated))
 
-        let saved = await rig.store.editGoal(date: "2027-01-10", targetMinutes: 50)
+        let saved = await rig.store.editGoal(date: "2027-01-10", targetSeconds: 3000)
 
         #expect(saved)
         #expect(await rig.service.calls == ["updateGoal 3"])
@@ -122,7 +122,7 @@ struct GoalStoreTests {
         let rig = try await Rig()
         await rig.service.set(goal: .failure(.conflict))
 
-        let saved = await rig.store.editGoal(date: nil, targetMinutes: nil)
+        let saved = await rig.store.editGoal(date: nil, targetSeconds: nil)
 
         #expect(!saved)
         #expect(await rig.loader.calls == ["plan \(PlanFixture.planID)"])
@@ -132,7 +132,7 @@ struct GoalStoreTests {
     @Test func aRefusedGoalSaysWhichInputsToChange() async throws {
         let rig = try await Rig()
         await rig.service.set(goal: .failure(.invalid))
-        _ = await rig.store.editGoal(date: "2020-01-01", targetMinutes: 50)
+        _ = await rig.store.editGoal(date: "2020-01-01", targetSeconds: 3000)
         #expect(rig.store.goalError?.contains("date or time") == true)
     }
 

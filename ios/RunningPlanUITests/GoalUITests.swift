@@ -57,6 +57,7 @@ final class GoalUITests: XCTestCase {
         let rerun = app.buttons["goal.rerun"]
         reveal(rerun, in: app)
         let postsBefore = try await LocalAPI.requestCount(api, "POST /v1/plans/*")
+        let proposalCallsBefore = try await LocalAPI.requestCount(api, "POST /v1/proposals/*")
         rerun.tap()
         XCTAssertTrue(app.staticTexts["screen.interview"].waitForExistence(timeout: 10), app.debugDescription)
         XCTAssertFalse(app.buttons["I'd rather build my own plan"].exists, "A saved plan is not replaced by a blank one")
@@ -78,9 +79,9 @@ final class GoalUITests: XCTestCase {
         XCTAssertEqual(postsAfter, postsBefore + 1, "One call asked the engine to plan again")
         XCTAssertFalse(app.staticTexts["goal.error"].exists)
 
-        // Nothing changed until accepted: no proposal was accepted.
-        let accepted = try await LocalAPI.requestCount(api, "POST /v1/proposals/*")
-        XCTAssertEqual(accepted, 0)
+        // Nothing changed until accepted: no proposal was accepted or dismissed by the re-run.
+        let proposalCallsAfter = try await LocalAPI.requestCount(api, "POST /v1/proposals/*")
+        XCTAssertEqual(proposalCallsAfter, proposalCallsBefore)
         app.buttons["goalProposals.done"].tap()
         XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 5))
     }

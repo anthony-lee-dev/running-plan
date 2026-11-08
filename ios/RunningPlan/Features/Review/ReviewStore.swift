@@ -91,6 +91,14 @@ final class ReviewStore {
         }
     }
 
+    /// No plan to review (signed out, account or plan deleted): forget the review, so no badge outlives it.
+    func clear() {
+        review = nil
+        error = nil
+        generated = []
+        proposals.show([], planId: "")
+    }
+
     private func adopt(_ review: Review?, planId: String) {
         self.review = review
         proposals.show(review?.proposals ?? [], planId: planId)

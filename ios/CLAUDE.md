@@ -302,9 +302,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - One profile revision, one holder: the target display lives in `ReviewSetting` and is saved by `ReviewSettingsModel.choose(targetDisplay:)`,
   so it and the review setting never send a stale `If-Match`. A second model holding the profile revision would 409 against it.
   The sheet closing on Goal bumps `RootView.reviewSettingsChanges` (part of `reviewKey`), so Next's review card looks at the new setting.
-- Re-run the interview: `InterviewView(isRerun: true)` (no "build my own plan", its own privacy line) starts from the plan's goal and the
+- Re-run the interview: `InterviewView(isRerun: true)` (no "build my own plan", its own privacy line) starts from the answers the plan was made
+  from (`engine.interview`, so runs per week, weekly km, history, pain and strength are not reset), then the plan's goal as it is now, then the
   profile's target display, heart rate max, days off and long-run day. The interview accepts less than the plan and profile hold (goal time
-  10 min to 6 h, at most 4 days off, no past date), so out-of-range values are left out; a custom or no goal starts it fresh. Continue keeps a
+  10 min to 6 h, at most 4 days off, no past date), so out-of-range values are left out; a custom or no goal with no stored answers starts it fresh.
+  Edit goal keeps the target time's seconds unless the minutes are changed (`GoalModel.targetSeconds`). Continue keeps a
   prefilled answer and Skip clears it. The answers go to `ProposalsStore.proposeInterviewRerun` on the store of `GoalStore` (not the review's
   list) and `RerunProposalsSheet` shows `ProposalList`; nothing changes until accepted.
 - Edit goal changes the date and target time only (`updatePlan`, `If-Match` the plan revision, reply replaces the plan); the distance and
@@ -312,7 +314,8 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Export (`POST /v1/account/export`) writes `running-plan-export.json` to the temporary folder (complete file protection) and offers it with
   `ShareLink`; it is the typed reply encoded again, so fields outside the spec are not in it. The file is removed before the next export and on
   sign-out. Sign out and Delete account (confirmed) end in `AuthSession.signOut()`, `PlanStore.load()` (the empty state, which clears the watch)
-  and `ReviewSettingsModel.reset()`. A 401 on delete counts as already signed out.
+  and `ReviewSettingsModel.reset()`; `RootView` clears the `ReviewStore` when the plan is gone, so no review badge outlives the account.
+  A 401 on delete counts as already signed out.
 - The Apple Watch row shows only where `WorkoutScheduler.isSupported`, and opens `WatchSettingsSheet`.
 
 ## Commands

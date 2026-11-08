@@ -59,7 +59,11 @@ struct RootView: View {
         }
         .task(id: reviewKey) {
             // Which review Next offers; the server decides when one is due. Not while the app is away.
-            guard scenePhase == .active, let plan = plans.plan else { return }
+            guard scenePhase == .active else { return }
+            guard let plan = plans.plan else {
+                if case .empty = plans.state { reviews.clear() }
+                return
+            }
             await reviews.load(plan: plan, today: PreviewViewModel.localToday(), keepingOpen: showReview)
         }
         .task(id: progressKey) {

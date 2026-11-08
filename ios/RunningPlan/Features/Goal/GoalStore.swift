@@ -44,13 +44,13 @@ final class GoalStore {
     // MARK: Goal
 
     /// Saves a new date and target time for the goal. True when the plan now shows it.
-    func editGoal(date: String?, targetMinutes: Int?) async -> Bool {
+    func editGoal(date: String?, targetSeconds: Int?) async -> Bool {
         guard let detail = plans.plan, !busy else { return false }
         busy = true
         goalError = nil
         defer { busy = false }
         let id = detail.value1.value1.id
-        let goal = GoalModel.edited(detail.value1.value2.goal, date: date, targetMinutes: targetMinutes)
+        let goal = GoalModel.edited(detail.value1.value2.goal, date: date, targetSeconds: targetSeconds)
         do {
             plans.replace(plan: try await service.updateGoal(planId: id, revision: detail.value1.value1.revision, goal: goal))
             return true
@@ -69,9 +69,9 @@ final class GoalStore {
 
     /// The answers the interview starts from when it is re-run: the plan's goal and what the profile holds. Nil starts it fresh.
     func rerunAnswers(today: String) async -> InterviewAnswers? {
-        guard let goal = plans.plan?.value1.value2.goal else { return nil }
+        guard let fields = plans.plan?.value1.value2 else { return nil }
         let profile = try? await service.profile()
-        return GoalModel.answers(goal: goal, profile: profile, today: today)
+        return GoalModel.answers(goal: fields.goal, interview: fields.engine?.interview, profile: profile, today: today)
     }
 
     /// Re-runs the interview with `answers`: the server answers with one proposal, shown by `ProposalList` and never applied
