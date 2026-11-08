@@ -60,8 +60,8 @@ struct SessionScreen: View {
             )
             .task {
                 guard let inbox else { return }
-                await inbox.refresh()
-                await inbox.loadAllRuns()
+                // Read Health first (when access was already given), so a run newer than the last import can be matched.
+                await inbox.openSessionPage()
             }
             .sheet(isPresented: $pickingRun) {
                 if let inbox {

@@ -24,7 +24,13 @@ enum HealthWorkoutMapper {
     /// "Apple Watch" for Apple's own watches, else the name of the app that wrote the record (Garmin Connect, Nike Run Club).
     static func sourceLabel(sourceName: String, productType: String?) -> String {
         if let productType, productType.hasPrefix("Watch") { return "Apple Watch" }
-        return String(sourceName.prefix(64))
+        // The API counts UTF-16 units (JavaScript length), so cut by those, never splitting a character.
+        var label = ""
+        for character in sourceName {
+            guard label.utf16.count + String(character).utf16.count <= 64 else { break }
+            label.append(character)
+        }
+        return label
     }
 
     static func input(_ w: HealthWorkout) -> Components.Schemas.ActivityInput? {

@@ -66,6 +66,13 @@ final class InboxStore {
         if error == nil { error = importError }
     }
 
+    /// Opening a session page: reads Health first (when access was already given) so a run newer than the last import
+    /// can be matched, then reads the inbox and every run. Issue #134.
+    func openSessionPage() async {
+        await load()
+        await loadAllRuns()
+    }
+
     func refresh() async {
         await run { self.activities = try await self.service.inbox(); self.loaded = true }
     }
