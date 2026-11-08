@@ -6,6 +6,10 @@ struct RootView: View {
     @State private var plans: PlanStore
     @State private var inbox: InboxStore
     @State private var showInbox = false
+    /// The weekly review (DK-Review): loaded here so Next can offer it, shown over the tabs.
+    @State private var reviews: ReviewStore
+    @State private var reviewSettings: ReviewSettingsModel
+    @State private var showReview = false
     /// Loaded here, once, for Next, Plan and Progress (distance done, "On track", the Progress tab).
     @State private var progress = ProgressStore(loader: APIProgressLoader(client: APIConfiguration.liveSignedInClient()))
     @State private var watchSync = WatchSyncModel()
@@ -23,6 +27,9 @@ struct RootView: View {
         )
         _plans = State(initialValue: plans)
         _inbox = State(initialValue: InboxStore(service: APIInboxService(client: APIConfiguration.liveSignedInClient()), health: LiveHealthImporter(), plans: plans))
+        let reviewService = APIReviewService(client: APIConfiguration.liveSignedInClient())
+        _reviews = State(initialValue: ReviewStore(service: reviewService, proposals: ProposalsStore(service: reviewService, plans: plans)))
+        _reviewSettings = State(initialValue: ReviewSettingsModel(service: reviewService))
     }
 
     var body: some View {
@@ -30,6 +37,7 @@ struct RootView: View {
             ForEach(AppTab.allCases) { tab in
                 screen(tab)
                     .tabItem { Label(tab.title, systemImage: tab.systemImage) }
+                    .badge(tab == .next && reviews.isWaiting ? 1 : 0)
                     .tag(tab)
             }
         }
@@ -39,6 +47,11 @@ struct RootView: View {
         .task(id: plans.plan?.value1.value1.id) {
             // The count on Next's inbox card; the inbox screen shows any error itself.
             if plans.plan != nil { await inbox.refresh() }
+        }
+        .task(id: reviewKey) {
+            // Which review Next offers; the server decides when one is due. Not while the app is away.
+            guard scenePhase == .active, let plan = plans.plan else { return }
+            await reviews.load(plan: plan, today: PreviewViewModel.localToday(), keepingOpen: showReview)
         }
         .task(id: progressKey) {
             guard let plan = plans.plan else { return }
@@ -59,6 +72,9 @@ struct RootView: View {
         }
         .fullScreenCover(isPresented: $showInbox) {
             InboxScreen(store: inbox, plans: plans, onClose: { showInbox = false })
+        }
+        .fullScreenCover(isPresented: $showReview) {
+            ReviewScreen(plans: plans, review: reviews, inbox: inbox, settings: reviewSettings, onClose: { showReview = false })
         }
         .fullScreenCover(item: $openSession) { route in
             if case .open(let id) = route {
@@ -90,6 +106,14 @@ extension RootView {
         }
     }
 
+    /// Changes with the plan and its content revision (every edit, import match and accepted proposal moves it), the local
+    /// day, the app coming to the front, and the inbox or review closing, so Next's review card is looked at again.
+    var reviewKey: String {
+        guard let plan = plans.plan else { return "" }
+        let active = scenePhase == .active ? "active" : "away"
+        return "\(plan.value1.value1.id) \(plan.value1.value3.contentRevision) \(PreviewViewModel.localToday()) \(active) \(showInbox) \(showReview)"
+    }
+
     /// Changes with the plan, the local day and any session's revision, so an edit or a match reloads progress.
     var progressKey: String {
         plans.plan.map(ProgressScreen.refreshKey) ?? ""
@@ -101,7 +125,7 @@ extension RootView {
             NextScreen(
                 plans: plans, progress: progress, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onMove: { sheet = .move(sessionId: $0) },
-                inboxCount: inbox.count, onInbox: { showInbox = true }, watchSync: watchSync
+                inboxCount: inbox.count, onInbox: { showInbox = true }, review: reviews, onReview: { showReview = true }, watchSync: watchSync
             )
         case .plan:
             PlanScreen(

@@ -10,6 +10,9 @@ struct NextScreen: View {
     var onMove: (String) -> Void = { _ in }
     var inboxCount = 0
     var onInbox: () -> Void = {}
+    /// The weekly review store: its card shows when a review is waiting.
+    var review: ReviewStore?
+    var onReview: () -> Void = {}
     /// Where the one-time watch card and Watch settings come from; nil in previews and tests.
     var watchSync: WatchSyncModel?
     @State private var showWatchSettings = false
@@ -23,6 +26,7 @@ struct NextScreen: View {
                 NextView(
                     model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday()), progress: progress?.loaded), onSetGoal: onSetGoal,
                     onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox,
+                    reviewCard: review?.model, onReview: onReview,
                     offerWatch: watchSync?.shouldOfferTurnOn == true,
                     onWatchTurnOn: {
                         Task { await watchSync?.turnOn(sessions: plan.value2.sessions, today: PreviewViewModel.localToday()) }

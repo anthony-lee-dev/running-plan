@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// DK-Next: today's session (or the next one) with Open workout, Make it easier and Move or skip, this week day by day,
-/// and what comes after. The review card and the inbox card arrive with their own tasks. System fonts until the font task.
+/// and what comes after. The weekly review card shows when one is waiting. System fonts until the font task.
 struct NextView: View {
     let model: NextModel
     let onSetGoal: () -> Void
@@ -11,6 +11,9 @@ struct NextView: View {
     /// Workouts waiting in the import inbox, and the way into it (also how a run is added by hand).
     var inboxCount = 0
     var onInbox: () -> Void = {}
+    /// The weekly review waiting (due, or with an urgent suggestion), and the way into it (DK-Review).
+    var reviewCard: ReviewModel?
+    var onReview: () -> Void = {}
     /// Show the one-time watch card (issue #112).
     var offerWatch = false
     var onWatchTurnOn: () -> Void = {}
@@ -35,6 +38,7 @@ struct NextView: View {
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier(AppTab.next.screenIdentifier)
                 }
+                if let reviewCard { reviewNotice(reviewCard) }
                 if let focus = model.focus {
                     FocusCard(focus: focus, busy: busy, error: error, onOpen: onOpen, onEasier: onEasier, onMove: onMove)
                 } else if let nothing = model.nothingToDo {
@@ -50,6 +54,27 @@ struct NextView: View {
             .padding(.bottom, 24)
         }
         .background(Palette.bg.color.ignoresSafeArea())
+    }
+
+    /// The "Review ready" notice card (docs/design-notes.md): amber, opens the weekly review.
+    private func reviewNotice(_ review: ReviewModel) -> some View {
+        Button(action: onReview) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(review.nextCardTitle).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.amberTitle.color)
+                    Text(review.due ? "How the week went, and suggestions for the weeks ahead" : "Take a look before your next run")
+                        .font(.system(size: 13)).foregroundStyle(Palette.amberText.color)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Palette.amberLink.color)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: Metrics.minTouchTarget, alignment: .leading)
+            .background(Palette.amberSoft.color, in: RoundedRectangle(cornerRadius: 20))
+            .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("next.review")
     }
 
     /// The one-time "Put your runs on your Apple Watch?" card, shown after the first plan is saved until answered.
