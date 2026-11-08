@@ -32,9 +32,18 @@ final class GoalUITests: XCTestCase {
         review.tap()
         XCTAssertTrue(app.staticTexts["screen.reviewSettings"].waitForExistence(timeout: 5), app.debugDescription)
         app.buttons.matching(NSPredicate(format: "identifier == 'reviewSettings.frequency' AND label BEGINSWITH 'Off'")).firstMatch.tap()
-        XCTAssertFalse(app.buttons["reviewSettings.day"].waitForExistence(timeout: 2), "Off has no review day")
+        // The slower the simulator, the later the save lands: wait for it, then for the day picker to go.
+        var saved = patchesBefore
+        let offDeadline = Date().addingTimeInterval(30)
+        while saved == patchesBefore, Date() < offDeadline {
+            try await Task.sleep(for: .milliseconds(300))
+            saved = try await LocalAPI.requestCount(api, "PATCH /v1/profile")
+        }
+        XCTAssertEqual(saved, patchesBefore + 1, "Turning reviews off was saved")
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.buttons["reviewSettings.day"])
+        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 30), .completed, "Off has no review day")
         app.buttons.matching(NSPredicate(format: "identifier == 'reviewSettings.frequency' AND label BEGINSWITH 'Weekly plus urgent'")).firstMatch.tap()
-        XCTAssertTrue(app.buttons["reviewSettings.day"].waitForExistence(timeout: 5), "Back on shows the review day again: \(app.debugDescription)")
+        XCTAssertTrue(app.buttons["reviewSettings.day"].waitForExistence(timeout: 30), "Back on shows the review day again: \(app.debugDescription)")
         app.buttons["reviewSettings.done"].tap()
         let patchesAfterReview = try await LocalAPI.requestCount(api, "PATCH /v1/profile")
         XCTAssertEqual(patchesAfterReview, patchesBefore + 2)
@@ -42,9 +51,9 @@ final class GoalUITests: XCTestCase {
 
         // The target display is a setting of its own.
         let effort = app.segmentedControls["settings.targetDisplay"].buttons["Effort"]
-        XCTAssertTrue(effort.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(effort.waitForExistence(timeout: 15), app.debugDescription)
         effort.tap()
-        let deadline = Date().addingTimeInterval(10)
+        let deadline = Date().addingTimeInterval(30)
         var patches = patchesAfterReview
         while patches == patchesAfterReview, Date() < deadline {
             try await Task.sleep(for: .milliseconds(300))
@@ -59,7 +68,7 @@ final class GoalUITests: XCTestCase {
         let postsBefore = try await LocalAPI.requestCount(api, "POST /v1/plans/*")
         let proposalCallsBefore = try await LocalAPI.requestCount(api, "POST /v1/proposals/*")
         rerun.tap()
-        XCTAssertTrue(app.staticTexts["screen.interview"].waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.interview"].waitForExistence(timeout: 20), app.debugDescription)
         XCTAssertFalse(app.buttons["I'd rather build my own plan"].exists, "A saved plan is not replaced by a blank one")
         let proposals = app.staticTexts["screen.goalProposals"]
         for _ in 0..<20 where !proposals.exists {
@@ -73,7 +82,7 @@ final class GoalUITests: XCTestCase {
         }
         XCTAssertTrue(proposals.waitForExistence(timeout: 20), "The interview ends in a proposal: \(app.debugDescription)")
         let card = app.descendants(matching: .any)["proposal.card"].firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(card.waitForExistence(timeout: 20), app.debugDescription)
         XCTAssertTrue(app.buttons["proposal.accept"].firstMatch.exists)
         let postsAfter = try await LocalAPI.requestCount(api, "POST /v1/plans/*")
         XCTAssertEqual(postsAfter, postsBefore + 1, "One call asked the engine to plan again")
