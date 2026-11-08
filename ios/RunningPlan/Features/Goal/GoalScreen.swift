@@ -52,7 +52,11 @@ struct GoalScreen: View {
             if let watchSync { WatchSettingsSheet(sync: watchSync, plans: plans, onClose: { showWatchSettings = false }) }
         }
         .sheet(isPresented: $showGoalEdit) {
-            if let goal = plans.plan?.value1.value2.goal { GoalEditSheet(goal: goal, store: store, onClose: { showGoalEdit = false }) }
+            if let plan = plans.plan {
+                // Rebuilt when the plan reloads (a conflict), so the sheet starts from the latest goal.
+                GoalEditSheet(goal: plan.value1.value2.goal, store: store, onClose: { showGoalEdit = false })
+                    .id(plan.value1.value1.revision)
+            }
         }
         .sheet(isPresented: $showProposals) {
             RerunProposalsSheet(store: store, onClose: { showProposals = false })
@@ -124,7 +128,8 @@ struct GoalScreen: View {
                 Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("goal.error")
             }
             HStack(spacing: 10) {
-                pillButton("Edit goal", id: "goal.edit", filled: false) { showGoalEdit = true }
+                // A plan with no goal has no date or time to edit; the interview re-run sets one.
+                if goal._type != .none { pillButton("Edit goal", id: "goal.edit", filled: false) { showGoalEdit = true } }
                 pillButton("Re-run the interview", id: "goal.rerun", filled: true) { startRerun() }
             }
             .disabled(store.busy)

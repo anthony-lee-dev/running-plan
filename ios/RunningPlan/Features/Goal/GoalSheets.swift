@@ -19,7 +19,7 @@ struct GoalEditSheet: View {
         _hasDate = State(initialValue: stored != nil)
         _date = State(initialValue: stored ?? Calendar.current.date(byAdding: .weekOfYear, value: 12, to: .now) ?? .now)
         _hasTime = State(initialValue: goal.targetTimeSec != nil)
-        _minutes = State(initialValue: (goal.targetTimeSec ?? 3000) / 60)
+        _minutes = State(initialValue: max((goal.targetTimeSec ?? 3000) / 60, 1))
     }
 
     var body: some View {
