@@ -78,6 +78,9 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   signed out" message must start with that prefix and show the button. The action closes the Inbox, Review, session and
   editor covers first (a sheet cannot open over them) and opens sign-in once they are gone. A sign-in bumps
   `AccountChanges`, which is part of the review, progress, inbox and watch keys so they reload even for the same plan.
+  `.environment(\.requestSignIn, ...)` is the last modifier on `RootView`'s body so its covers inherit it. A sheet that
+  Goal presents itself (review settings, re-run proposals) is not tracked by `RootView`, so it must not show
+  `SignInAgainButton`: the sign-in sheet could not open over it.
 - The UI-test API has no sign-in rate limit (every UI test shares one address, and the real per-IP limit of 15 an hour ran out).
 
 ## The saved plan (task 3.5)

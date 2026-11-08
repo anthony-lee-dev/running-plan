@@ -49,7 +49,9 @@ final class SignInAgainUITests: XCTestCase {
         XCTAssertTrue(delete.waitForExistence(timeout: 5), app.debugDescription)
         for _ in 0..<6 where !delete.isHittable { app.swipeUp() }
         delete.tap()
-        app.buttons["Yes, delete it"].tap()
+        let confirm = app.buttons["Yes, delete it"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), app.debugDescription)
+        confirm.tap()
         XCTAssertTrue(app.buttons["goal.set"].waitForExistence(timeout: 10), app.debugDescription)
         signOut(app)
         try await LocalAPI.signInAgain(app, api, email: email)

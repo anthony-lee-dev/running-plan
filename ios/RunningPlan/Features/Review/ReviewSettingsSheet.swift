@@ -161,7 +161,6 @@ struct ReviewSettingsSheet: View {
                     if setting.frequency != .off { dayPicker(setting.day) }
                     if let error = model.error {
                         Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("reviewSettings.error")
-                        SignInAgainButton(message: error)
                     }
                 }
             }

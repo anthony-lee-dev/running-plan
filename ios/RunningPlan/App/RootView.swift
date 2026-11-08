@@ -65,7 +65,6 @@ struct RootView: View {
         }
         .tint(Palette.accentText.color)
         .preferredColorScheme(.dark)
-        .environment(\.requestSignIn, { requestSignIn() })
         .task { await plans.load() }
         .onChange(of: coversOpen) {
             guard !coversOpen, signInWaiting else { return }
@@ -127,6 +126,8 @@ struct RootView: View {
             case .open: EmptyView()
             }
         }
+        // Last, so the covers and sheets above inherit it too.
+        .environment(\.requestSignIn, { requestSignIn() })
     }
 }
 
