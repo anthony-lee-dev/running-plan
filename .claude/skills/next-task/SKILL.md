@@ -122,6 +122,35 @@ Stop when the next step needs the human: a PR to merge, a manual-gate box, the s
 an `ask-first` plan, or nothing left unblocked. Say plainly what is waiting and on whom, with PR links, and
 which issues the merged PRs closed.
 
+## 5a. Deploy the API (only with the human's yes)
+
+A merge doesn't deploy: the Worker and its D1 database only change when someone runs the migrations and
+`wrangler deploy`. A device check against the deployed API then fails with 404s on routes that merged. So before you
+hand the human a device check, or whenever merged PRs touched `api/` or `api/migrations/`, find out whether production
+is behind. Neither command below changes production data (the smoke test only moves rate-limit counters). Run them
+from `api/` on an up-to-date `main`; `wrangler.toml` lives there:
+
+```bash
+npm run smoke -w api
+npx wrangler d1 migrations list running-plan --remote
+```
+
+If the smoke test fails on built operations, or migrations are pending, say so and ask the human in chat for **two
+separate permissions**, naming what each will do:
+
+1. `npx wrangler d1 migrations apply running-plan --remote` (list the pending names);
+2. `npx wrangler deploy`.
+
+Run a command only after the human says yes to that one; a yes to one doesn't cover the other, or a later deploy.
+Run them in that order (migrations first: the new code reads the new columns), then run `npm run smoke -w api` at
+once without asking again, and report what it says. Stop at the first failure.
+
+`.claude/settings.json` denies `npx wrangler deploy *` and `npm run deploy *`, and a deny beats an allow, so a yes in
+chat doesn't unblock the deploy: the human has to relax that rule, or run it themselves (give them the commands).
+Migrations are allowed by the `npx wrangler *` rule, so the human's yes is the only gate on them; the permission
+check may still block one, and then the human adds a rule. Never find another way to run a blocked command. Only the
+`running-plan` database and this repo's Worker; secrets stay the human's (`wrangler secret put`).
+
 ## 6. Clean up worktrees
 
 A worker removes its own worktree as soon as its PR is pushed and open (the brief's step 7), so the human can
