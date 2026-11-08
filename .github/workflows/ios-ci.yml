@@ -70,6 +70,9 @@ jobs:
             deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-
       - name: Verify
         if: steps.changes.outputs.run == 'true'
+        env:
+          # Under the job's 45-minute limit, so a hung xcodebuild is stopped with verify's message, not cut off.
+          IOS_TEST_TIMEOUT: "2100"
         run: bash scripts/verify.sh ios
       - uses: actions/cache/save@v6
         if: github.event_name == 'push' && steps.changes.outputs.run == 'true'

@@ -86,7 +86,18 @@ When a worker reports, check its PR yourself:
 gh pr view <n> --json state,mergedAt,autoMergeRequest,mergeable,mergeStateStatus,statusCheckRollup
 ```
 
-Don't rely on the report alone. Then:
+Don't rely on the report alone. Also check that the worker left nothing running: its background commands outlive
+it, and a wait loop whose run has ended waits for ever (the brief's "Commands that work in a worktree" says why).
+List the app's background tasks for this session, or search the processes for ones naming that worker's worktree,
+this session's folder (the directory of the Agent result's `output_file`, which holds `tasks/` and `scratchpad/`)
+or its PR:
+
+```bash
+ps -ax -o pid,etime,command | grep -E "until |sleep [0-9]" | grep -E "<worktree path>|<session folder>|pr checks <n>"
+```
+
+Stop only that worker's loops (`kill <pid>`), and only once what they wait on has ended. Leave a running
+`verify.sh` alone, since it may be the Stop hook's, and leave other sessions' processes alone. Then:
 
 - **Merged:** check the issue closed (`gh issue view <n> --json state`; a `Refs` PR leaves it open on purpose),
   clean up (step 6) and go back to step 1.
