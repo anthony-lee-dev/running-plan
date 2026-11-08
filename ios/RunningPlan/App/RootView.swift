@@ -23,13 +23,26 @@ struct RootView: View {
     /// The editor for a new session, or the move sheet.
     @State private var sheet: SessionRoute?
 
+    /// Plain sign-in (no save), from "Sign in" on the signed-out screens and the "Sign in again" messages.
+    @State private var signIn: SignInModel
+    @State private var accountChanges: AccountChanges
+    /// Set when sign-in was asked for while a cover or sheet was up: it opens once they have closed.
+    @State private var signInWaiting = false
+
     init() {
+        let changes = AccountChanges()
+        _accountChanges = State(initialValue: changes)
         let plans = PlanStore(
             loader: APIPlanLoader(client: APIConfiguration.liveSignedInClient()),
             account: APIConfiguration.liveSession,
             writer: APISessionWriter(client: APIConfiguration.liveSignedInClient())
         )
         _plans = State(initialValue: plans)
+        // Loads the account's own plan (never creates one); the counter makes the other screens look again.
+        _signIn = State(initialValue: SignInModel(signIn: APIConfiguration.liveSession, onSignedIn: {
+            await plans.load()
+            changes.signedIn()
+        }))
         _inbox = State(initialValue: InboxStore(service: APIInboxService(client: APIConfiguration.liveSignedInClient()), health: LiveHealthImporter(), plans: plans))
         let reviewService = APIReviewService(client: APIConfiguration.liveSignedInClient())
         _reviews = State(initialValue: ReviewStore(service: reviewService, proposals: ProposalsStore(service: reviewService, plans: plans)))
@@ -52,8 +65,21 @@ struct RootView: View {
         }
         .tint(Palette.accentText.color)
         .preferredColorScheme(.dark)
+        .environment(\.requestSignIn, { requestSignIn() })
         .task { await plans.load() }
-        .task(id: plans.plan?.value1.value1.id) {
+        .onChange(of: coversOpen) {
+            guard !coversOpen, signInWaiting else { return }
+            signInWaiting = false
+            Task {
+                // Let the cover finish leaving: a sheet presented during its dismissal is dropped.
+                try? await Task.sleep(for: .milliseconds(600))
+                signIn.begin()
+            }
+        }
+        .sheet(isPresented: Binding(get: { signIn.isPresented }, set: { if !$0 && signIn.isPresented { signIn.cancelSignIn() } })) {
+            SignInView(model: signIn, purpose: .signIn)
+        }
+        .task(id: "\(plans.plan?.value1.value1.id ?? "") \(accountChanges.count)") {
             // The count on Next's inbox card; the inbox screen shows any error itself.
             if plans.plan != nil { await inbox.refresh() }
         }
@@ -106,10 +132,28 @@ struct RootView: View {
 
 @MainActor
 extension RootView {
+    /// Something presented over the tabs that a sign-in sheet cannot appear on top of (onboarding has its own sign-in).
+    var coversOpen: Bool {
+        showInbox || showReview || openSession != nil || sheet != nil
+    }
+
+    /// Opens the sign-in sheet, closing any cover or sheet that is up first.
+    func requestSignIn() {
+        guard coversOpen else {
+            signIn.begin()
+            return
+        }
+        signInWaiting = true
+        showInbox = false
+        showReview = false
+        openSession = nil
+        sheet = nil
+    }
+
     /// Changes when the app comes to the front, the plan loads or empties, or the sessions kept on the watch change,
     /// so the schedule is refreshed then and not on every edit.
     var watchKey: String {
-        let active = scenePhase == .active ? "active" : "away"
+        let active = (scenePhase == .active ? "active" : "away") + "\(accountChanges.count)"
         switch plans.state {
         case .loaded(let plan):
             let today = PreviewViewModel.localToday()
@@ -124,12 +168,12 @@ extension RootView {
     var reviewKey: String {
         guard let plan = plans.plan else { return "" }
         let active = scenePhase == .active ? "active" : "away"
-        return "\(plan.value1.value1.id) \(plan.value1.value3.contentRevision) \(PreviewViewModel.localToday()) \(active) \(showInbox) \(showReview) \(reviewSettingsChanges)"
+        return "\(plan.value1.value1.id) \(plan.value1.value3.contentRevision) \(PreviewViewModel.localToday()) \(active) \(showInbox) \(showReview) \(reviewSettingsChanges) \(accountChanges.count)"
     }
 
     /// Changes with the plan, the local day and any session's revision, so an edit or a match reloads progress.
     var progressKey: String {
-        plans.plan.map(ProgressScreen.refreshKey) ?? ""
+        plans.plan.map { ProgressScreen.refreshKey($0) + "|\(accountChanges.count)" } ?? ""
     }
 
     @ViewBuilder func screen(_ tab: AppTab) -> some View {

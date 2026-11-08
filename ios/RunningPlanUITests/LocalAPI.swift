@@ -76,8 +76,9 @@ enum LocalAPI {
     }
 
     /// From the preview: Save, sign in with a fresh address and its emailed code, and wait for Next to show the plan.
-    @MainActor
-    static func saveAndSignIn(_ app: XCUIApplication, _ api: URL) async throws {
+    /// Returns the address, for a test that signs in to the same account again.
+    @MainActor @discardableResult
+    static func saveAndSignIn(_ app: XCUIApplication, _ api: URL) async throws -> String {
         // A new address each run, so no earlier code or rate limit gets in the way.
         let email = "ui-\(UUID().uuidString.prefix(8).lowercased())@example.com"
         app.buttons["preview.save"].tap()
@@ -96,5 +97,29 @@ enum LocalAPI {
         app.buttons["signin.verify"].tap()
 
         XCTAssertTrue(app.staticTexts["next.plan"].waitForExistence(timeout: 15), app.debugDescription)
+        return email
+    }
+
+    /// From a signed-out screen: tap "Sign in" (`account.signin`), enter `email` and its emailed code, and wait for the
+    /// sheet to close.
+    @MainActor
+    static func signInAgain(_ app: XCUIApplication, _ api: URL, email: String) async throws {
+        let signIn = app.buttons["account.signin"].firstMatch
+        XCTAssertTrue(signIn.waitForExistence(timeout: 10), app.debugDescription)
+        signIn.tap()
+
+        let emailField = app.textFields["signin.email"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5), app.debugDescription)
+        emailField.tap()
+        emailField.typeText(email)
+        app.buttons["signin.send"].tap()
+
+        let codeField = app.textFields["signin.code"]
+        XCTAssertTrue(codeField.waitForExistence(timeout: 10), app.debugDescription)
+        let code = try await latestCode(api, email: email)
+        codeField.tap()
+        codeField.typeText(code)
+        app.buttons["signin.verify"].tap()
+        XCTAssertTrue(codeField.waitForNonExistence(timeout: 15), app.debugDescription)
     }
 }

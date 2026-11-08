@@ -36,6 +36,7 @@ struct ProgressScreen: View {
                             .foregroundStyle(.white)
                             .contentShape(Rectangle())
                     }
+                    if !plans.isSignedIn { SignInLink() }
                 }
             case .failed(let message):
                 retry(message) { await plans.load() }
@@ -70,6 +71,7 @@ struct ProgressScreen: View {
     private func retry(_ message: String, action: @escaping () async -> Void) -> some View {
         centred {
             Text(message).font(.system(size: 15)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
+            SignInAgainButton(message: message)
             Button { Task { await action() } } label: {
                 Text("Try again")
                     .font(.system(size: 15, weight: .semibold))

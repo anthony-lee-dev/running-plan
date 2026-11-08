@@ -80,6 +80,7 @@ struct ProposalCardView: View {
             }
             if let error {
                 Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("proposal.error")
+                SignInAgainButton(message: error)
             }
             if model.stale { staleFooter } else { actions }
         }

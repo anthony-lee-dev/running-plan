@@ -15,7 +15,7 @@ extension AuthSession: SignInService {}
 /// same flow saves a blank plan ("I'd rather build my own plan").
 @MainActor
 @Observable
-final class SaveFlowModel {
+final class SaveFlowModel: SignInFlowing {
     enum Step: Equatable {
         case idle
         case email
@@ -47,6 +47,11 @@ final class SaveFlowModel {
         self.saver = saver
         self.store = store
         self.now = now
+    }
+
+    var codeSentTo: String? {
+        if case .code(let email) = step { return email }
+        return nil
     }
 
     var showsSignIn: Bool {
@@ -151,7 +156,7 @@ final class SaveFlowModel {
         }
     }
 
-    private static func looksLikeEmail(_ text: String) -> Bool {
+    static func looksLikeEmail(_ text: String) -> Bool {
         let parts = text.split(separator: "@", omittingEmptySubsequences: false)
         return parts.count == 2 && !parts[0].isEmpty && parts[1].contains(".") && !text.contains(" ") && text.count <= 254
     }

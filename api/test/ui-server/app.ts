@@ -13,7 +13,10 @@ export interface UiTestServer {
 
 export function buildUiTestServer(): UiTestServer {
   const email = new MemoryEmailSender();
-  const api = createApp(memoryDeps({ email }));
+  // Every UI test comes from one address, so the per-IP sign-in limit (15 an hour) would stop the run after a dozen
+  // tests; the limits themselves are covered by the API's own tests.
+  const rateLimiter = { hit: async () => ({ allowed: true, retryAfterSec: 1 }) };
+  const api = createApp(memoryDeps({ email, rateLimiter }));
   const counts = new Map<string, number>();
   const app = new Hono();
 
