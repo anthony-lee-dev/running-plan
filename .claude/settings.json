@@ -6,6 +6,8 @@
       "Bash(npm test *)",
       "Bash(npm install *)",
       "Bash(npx wrangler *)",
+      "Bash(npx wrangler deploy *)",
+      "Bash(npx wrangler d1 migrations *)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
@@ -48,9 +50,7 @@
       "Bash(git push origin HEAD:main *)",
       "Bash(git push --force *)",
       "Bash(git push -f *)",
-      "Bash(git push)",
-      "Bash(npx wrangler deploy *)",
-      "Bash(npm run deploy *)"
+      "Bash(git push)"
     ]
   },
   "hooks": {
