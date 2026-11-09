@@ -42,7 +42,12 @@ struct RunDetailsModelTests {
         #expect(model.limitedDataNote != nil)
     }
 
-    @Test func aMatchedSessionGivesAChipAndPlanVsActual() throws {
+    @Test func aMatchedRunWhoseSessionIsGoneSaysSo() {
+        let model = RunDetailsModel(activity: fields(), session: nil, splitsMissing: false, matchedSessionMissing: true)
+        #expect(model.planChip == "Matched to a session no longer in your plan")
+    }
+
+    @Test func aMatchedSessionGivesAChipAndPlanVsActual()throws {
         let session = try CheckInModelTests.session(on: "2026-10-26")
         let model = RunDetailsModel(activity: fields(), session: session, splitsMissing: false)
         #expect(model.planChip.hasPrefix("Matched · "))

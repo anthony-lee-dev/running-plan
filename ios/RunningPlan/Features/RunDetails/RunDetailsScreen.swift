@@ -54,7 +54,7 @@ struct RunDetailsScreen: View {
         let session = activity.value2.disposition == .matched
             ? activity.value2.match.flatMap { match in plans.plan?.value2.sessions.first { $0.value1.id == match.sessionId && $0.value1.deletedAt == nil }?.value2 }
             : nil
-        let model = RunDetailsModel(activity: activity.value1, session: session, splitsMissing: store.splitsMissing)
+        let model = RunDetailsModel(activity: activity.value1, session: session, splitsMissing: store.splitsMissing, matchedSessionMissing: activity.value2.disposition == .matched && session == nil)
         VStack(alignment: .leading, spacing: 6) {
             Text(model.title)
                 .font(.system(size: 32, weight: .bold)).tracking(-0.6).foregroundStyle(Palette.ink.color)

@@ -21,7 +21,7 @@ struct RunDetailsModel: Equatable {
     let planVsActual: CheckInModel?
 
     /// `splitsMissing`: Health was read and gave no per-kilometre data for this run.
-    init(activity a: Components.Schemas.ActivityFields, session: Components.Schemas.SessionContent?, splitsMissing: Bool) {
+    init(activity a: Components.Schemas.ActivityFields, session: Components.Schemas.SessionContent?, splitsMissing: Bool, matchedSessionMissing: Bool = false) {
         title = LocalDay.heading(a.localDate)
         source = a.sourceApp ?? "Apple Health"
         let isRun = a.workoutType == .running
@@ -48,7 +48,7 @@ struct RunDetailsModel: Equatable {
             planChip = "Matched · " + name + (planned > 0 ? " · \(PlanPreview.kilometres(planned / 1000)) km" : "")
             planVsActual = CheckInModel(session: session, activity: a)
         } else {
-            planChip = "Not part of a plan"
+            planChip = matchedSessionMissing ? "Matched to a session no longer in your plan" : "Not part of a plan"
             planVsActual = nil
         }
     }
