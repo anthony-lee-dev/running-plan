@@ -345,6 +345,14 @@ describe("progress", () => {
     expect(screen.queryByLabelText("Plan week")).not.toBeInTheDocument();
   });
 
+  it("returns to sign-in, showing no totals, when the session has ended", async () => {
+    const listActivitiesSince = vi.fn().mockRejectedValue(new ApiError(401, { type: "unauthorized", title: "x", status: 401 }));
+    render(<App api={fakeApi({ listActivitiesSince })} />);
+    await open();
+    expect(await screen.findByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Your running")).not.toBeInTheDocument();
+  });
+
   it("offers a retry when the runs cannot be loaded", async () => {
     const listActivitiesSince = vi.fn().mockRejectedValueOnce(new ApiError(500, { type: "x", title: "x", status: 500 })).mockResolvedValue([ran("a")]);
     render(<App api={fakeApi({ listActivitiesSince })} />);

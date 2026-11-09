@@ -58,7 +58,7 @@ final class ProgressUITests: XCTestCase {
         app.buttons["Progress"].firstMatch.tap()
         let card = app.descendants(matching: .any)["progress.running"].firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), app.debugDescription)
-        let distance5 = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS '5 km'")).firstMatch
+        let distance5 = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH '5 km'")).firstMatch
         XCTAssertTrue(distance5.waitForExistence(timeout: 10), app.debugDescription)
         let pace = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS '6:00/km'")).firstMatch
         XCTAssertTrue(pace.exists, app.debugDescription)

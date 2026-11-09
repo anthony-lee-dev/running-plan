@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "./api/client";
 import type { Activity, Session } from "./api/types";
-import { planVsActual } from "./sessionMath";
-
 import { clock, pace } from "./format";
+import { planVsActual } from "./sessionMath";
 
 export { pace };
 
