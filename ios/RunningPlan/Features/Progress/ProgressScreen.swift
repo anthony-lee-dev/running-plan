@@ -21,7 +21,8 @@ struct ProgressScreen: View {
 
     /// The run totals for the calendar week and month, once the runs are loaded; nil before (nothing is guessed).
     private func runningCard(planWeek: RunningStatsModel.PlanWeek?) -> AnyView {
-        guard inbox.allRunsLoaded else { return AnyView(EmptyView()) }
+        // Signed out, the store may still hold the last account's runs: show none of them.
+        guard inbox.allRunsLoaded, plans.isSignedIn else { return AnyView(EmptyView()) }
         return AnyView(RunningStatsCard(totals: RunTotals(activities: inbox.allRuns, today: PreviewViewModel.localToday()), planWeek: planWeek))
     }
 
@@ -34,7 +35,7 @@ struct ProgressScreen: View {
                 centred { SwiftUI.ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your plan") }
             case .empty:
                 // A runner with no plan still sees what they ran: the totals sit under "Set a goal".
-                if inbox.allRunsLoaded && !inbox.allRuns.isEmpty {
+                if inbox.allRunsLoaded && !inbox.allRuns.isEmpty && plans.isSignedIn {
                     ZStack {
                         Palette.bg.color.ignoresSafeArea()
                         ScrollView {
