@@ -135,7 +135,7 @@ start_ui_test_api() {
   log="$(mktemp "${TMPDIR:-/tmp}/ui-test-api.XXXXXX")"
   (cd api && UI_TEST_PORT=0 exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"$log" 2>&1 &
   UI_TEST_API_PID=$!
-  trap stop_ui_test_api EXIT # the only EXIT trap in this script; chain it if another is added
+  trap 'stop_ui_test_api; release_sim_lock' EXIT # the only EXIT trap in this script; chain it if another is added
   for _ in $(seq 1 60); do
     UI_TEST_API_URL="$(ui_test_api_url_from_log <"$log")"
     if [[ -n "$UI_TEST_API_URL" ]] && curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then
@@ -171,6 +171,74 @@ check_ui_tests_used_local_api() {
   fi
 }
 
+# Prints the xcodebuild test-selection flags, one per line, for IOS_TEST_SCOPE (empty or "full" = the whole suite,
+# which is what CI and the Stop hook run; "quick" = the unit tests plus the UI test classes named in IOS_UI_TESTS,
+# separated by commas or spaces). A name without a "/" is a class of RunningPlanUITests; one with a "/" is used as given
+# (a whole target, a class or Class/testMethod). Fails on any other scope.
+ios_test_filters() {
+  local scope="${IOS_TEST_SCOPE:-full}" name
+  case "$scope" in
+    full) ;;
+    quick)
+      echo "-only-testing:RunningPlanTests"
+      for name in ${IOS_UI_TESTS//,/ }; do
+        [[ "$name" == */* ]] || name="RunningPlanUITests/$name"
+        echo "-only-testing:$name"
+      done
+      ;;
+    *) echo "IOS_TEST_SCOPE must be 'full' or 'quick', not '$scope'" >&2; return 2 ;;
+  esac
+}
+
+# Two iOS test runs on one simulator disturb each other (snapshot and UI tests fail at random, both run slower), and
+# several workers verifying at once is normal. So a run claims its simulator with a lock directory holding its pid;
+# a lock whose pid is gone is stale and taken over. Not used when IOS_SIM_DEST names the simulator.
+SIM_LOCK_DIR=""
+
+sim_lock_path() { echo "${TMPDIR:-/tmp}/running-plan-sim-$1.lock"; }
+
+# Succeeds, and records the lock in SIM_LOCK_DIR, when this run now holds the simulator $1.
+try_lock_sim() {
+  local dir pid
+  dir="$(sim_lock_path "$1")"
+  if ! mkdir "$dir" 2>/dev/null; then
+    pid="$(cat "$dir/pid" 2>/dev/null || true)"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then return 1; fi
+    rm -rf "$dir"
+    mkdir "$dir" 2>/dev/null || return 1
+  fi
+  echo $$ >"$dir/pid"
+  SIM_LOCK_DIR="$dir"
+}
+
+release_sim_lock() {
+  [[ -n "$SIM_LOCK_DIR" ]] || return 0
+  rm -rf "$SIM_LOCK_DIR"
+  SIM_LOCK_DIR=""
+}
+
+# Sets CLAIMED_SIM to a simulator no other run holds, and locks it: $1 (the one pick_ios_sim chose) if free, else a clone
+# of it named "RunningPlan verify <n>", made once and reused afterwards.
+claim_ios_sim() {
+  local base="$1" n name id list
+  if try_lock_sim "$base"; then CLAIMED_SIM="$base"; return 0; fi
+  for n in 2 3 4 5 6; do
+    name="RunningPlan verify $n"
+    list="$(xcrun simctl list devices available)"
+    id="$(sed -n "s/^ *${name} (\([0-9A-Fa-f-]*\)) (.*/\1/p" <<<"$list" | head -n 1)"
+    if [[ -z "$id" ]]; then
+      id="$(xcrun simctl clone "$base" "$name")" || continue
+    fi
+    if try_lock_sim "$id"; then
+      echo "== ios: $base is in use by another run; using the clone '$name' ($id)" >&2
+      CLAIMED_SIM="$id"
+      return 0
+    fi
+  done
+  echo "== ios: every simulator is in use by another run; wait for one to finish or set IOS_SIM_DEST" >&2
+  return 1
+}
+
 verify_ios() {
   if [[ "$(uname)" != "Darwin" ]]; then
     echo "== ios: skipped (needs macOS with Xcode)"; return 0
@@ -178,6 +246,9 @@ verify_ios() {
   if [[ ! -f ios/project.yml ]]; then
     echo "== ios: skipped (no ios/project.yml yet, see docs/backlog.md task 1.3)"; return 0
   fi
+  local filters=() f scope="${IOS_TEST_SCOPE:-full}"
+  ios_test_filters >/dev/null || return 2
+  while IFS= read -r f; do filters+=("$f"); done < <(ios_test_filters)
   echo "== ios: api client matches the spec"
   bash scripts/generate-api-client.sh --check
   echo "== ios: generate project"
@@ -191,22 +262,28 @@ verify_ios() {
       echo "== ios: no iPhone simulator available; install one in Xcode > Settings > Components" >&2
       return 1
     fi
+    claim_ios_sim "$id" || return 1
+    id="$CLAIMED_SIM"
     dest="platform=iOS Simulator,id=${id}"
   fi
   start_ui_test_api
+  if [[ "$scope" == quick ]]; then
+    echo "== ios: QUICK scope (${filters[*]}); the rest of the UI suite runs in CI, and 'bash scripts/verify.sh ios' runs it all"
+  fi
   echo "== ios: test on ${dest}"
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
-  # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes about 10 locally and 25 in CI, where
+  # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
   # ios-ci.yml sets 35 so the job's own 45-minute limit doesn't cut the run off first).
   local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0
   # TEST_RUNNER_ variables reach the UI test process without the prefix.
   run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-    xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" -quiet || rc=$?
+    xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} -quiet || rc=$?
   if [[ $rc -eq 124 ]]; then
     echo "== ios: xcodebuild test ran past ${limit}s and was stopped (a hung simulator?); run verify again" >&2
   fi
   [[ $rc -eq 0 ]] || return "$rc"
-  check_ui_tests_used_local_api
+  # Only the full suite is sure to ask the API for a plan; a quick run may name no UI test, or one that doesn't.
+  [[ "$scope" == quick ]] || check_ui_tests_used_local_api
   stop_ui_test_api
 }
 

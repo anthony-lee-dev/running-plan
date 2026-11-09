@@ -76,7 +76,12 @@ def main():
                 return 0  # this exact state already passed
 
     result = subprocess.run(
-        ["bash", "scripts/verify.sh", *pkgs], cwd=cwd, capture_output=True, text=True
+        ["bash", "scripts/verify.sh", *pkgs],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        # The hook always runs the full iOS suite, even if the session exported IOS_TEST_SCOPE=quick.
+        env={k: v for k, v in os.environ.items() if k not in ("IOS_TEST_SCOPE", "IOS_UI_TESTS")},
     )
     counter = os.path.join(tempfile.gettempdir(), f"running-plan-stop-gate-{session}")
     if result.returncode == 0:
