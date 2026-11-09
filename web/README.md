@@ -10,6 +10,9 @@ It will not upload running-session data. React + Vite, TypeScript, Vitest with T
 - `src/api/client.ts` is the only code that talks to the API: bearer token, one shared refresh on a 401, and the
   base revision in `If-Match` on every edit. A conflict (409) is shown to the user and the plan reloaded, never merged.
 - Tokens live in `sessionStorage` (they end with the tab). The access token is never put in a URL.
+- Runs tab (issue #131): the newest 100 imported runs (`GET /v1/activities`, readable with a web token) and a summary of one:
+  distance, time, pace, heart rate and climb, each left out when the source did not record it. Splits, heart-rate zones and
+  routes exist only on the phone (nothing more is uploaded), so the page says so.
 - Progress is not built yet: it needs `GET /v1/plans/{id}/progress` (backlog 2.15). The Progress tab says so.
 - `public/_headers` sets a strict Content-Security-Policy (`connect-src 'self'`: the API must be on the same origin)
   and the other security headers; the refresh token is in `sessionStorage`, so the CSP is a second layer behind

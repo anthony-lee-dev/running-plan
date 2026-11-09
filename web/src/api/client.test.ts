@@ -76,6 +76,13 @@ describe("authorised requests", () => {
     expect(calls).toHaveLength(3);
   });
 
+  it("read the newest runs with the web token, never writing any", async () => {
+    const { fetcher, calls } = fakeFetch(() => json({ activities: [{ id: "a1" }] }));
+    const runs = await createApi({ fetch: fetcher, tokens: new MemoryTokens({ accessToken: "t", refreshToken: "r" }) }).listActivities();
+    expect(runs.map((r) => r.id)).toEqual(["a1"]);
+    expect(calls[0]).toMatchObject({ url: "/v1/activities?limit=100", method: "GET" });
+  });
+
   it("get a plan by id", async () => {
     const { fetcher, calls } = fakeFetch(() => json({ id: "p1", sessions: [] }));
     await createApi({ fetch: fetcher, tokens: new MemoryTokens({ accessToken: "t", refreshToken: "r" }) }).getPlan("p1");

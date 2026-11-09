@@ -88,7 +88,7 @@ struct InboxScreen: View {
             CheckInScreen(plans: plans, target: target, onClose: { store.finishCheckIn(saved: $0) })
         }
         .sheet(isPresented: $manual) { ManualRunSheet(store: store, onClose: { manual = false }) }
-        .fullScreenCover(isPresented: $showAllRuns) { RunsScreen(store: store, onClose: { showAllRuns = false }) }
+        .fullScreenCover(isPresented: $showAllRuns) { RunsScreen(store: store, plans: plans, onClose: { showAllRuns = false }) }
     }
 
     private var footer: some View {

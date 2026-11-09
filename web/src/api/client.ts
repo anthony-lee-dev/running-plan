@@ -1,6 +1,6 @@
 // A small typed client for the Running Planner API (spec/openapi.yaml). The web app is online-first (design §9):
 // every change goes to the server with the revision it was made against, and a conflict is shown, never merged.
-import type { PlanDetail, PlanSummary, Problem, Session, SessionUpdate, SessionWriteResult } from "./types";
+import type { Activity, PlanDetail, PlanSummary, Problem, Session, SessionUpdate, SessionWriteResult } from "./types";
 
 export interface Tokens {
   accessToken: string;
@@ -49,6 +49,8 @@ export interface Api {
   signOut(): void;
   listPlans(): Promise<PlanSummary[]>;
   getPlan(id: string): Promise<PlanDetail>;
+  /** The newest imported runs (one page of up to 100), each with its match. Read only: the web app never uploads runs. */
+  listActivities(): Promise<Activity[]>;
   /** Edits a session against the revision the caller loaded it at. */
   updateSession(session: Pick<Session, "id" | "revision">, body: SessionUpdate): Promise<SessionWriteResult>;
 }
@@ -140,6 +142,9 @@ export function createApi(options: ApiOptions): Api {
       return plans;
     },
     getPlan: (id) => authorised<PlanDetail>(`/v1/plans/${encodeURIComponent(id)}`, "GET"),
+    async listActivities() {
+      return (await authorised<{ activities: Activity[] }>("/v1/activities?limit=100", "GET")).activities;
+    },
     updateSession: (session, body) =>
       authorised<SessionWriteResult>(`/v1/sessions/${encodeURIComponent(session.id)}`, "PATCH", body, { "if-match": `"${session.revision}"` }),
   };

@@ -26,6 +26,17 @@ struct HealthWorkoutMapperTests {
         #expect(fields.sourceApp == "Apple Watch")
     }
 
+    // Issue #131: the climb comes from the workout's metadata; a bad value is dropped, not sent.
+    @Test func elevationGainIsUploadedWhenInRangeAndDroppedOtherwise() throws {
+        var w = workout()
+        w.elevationGainM = 41.6
+        #expect(try #require(HealthWorkoutMapper.input(w)).value1.elevationGainM == 42)
+        w.elevationGainM = 20_000
+        #expect(try #require(HealthWorkoutMapper.input(w)).value1.elevationGainM == nil)
+        w.elevationGainM = nil
+        #expect(try #require(HealthWorkoutMapper.input(w)).value1.elevationGainM == nil)
+    }
+
     // Issue #134: the API refuses a whole batch when one sourceApp is over 64 UTF-16 units (JavaScript's length), and
     // Swift's prefix(64) counts characters, so one app with an emoji name would stop every later import.
     @Test func aSourceNameIsCutToTheServersLengthInUTF16Units() throws {
@@ -153,6 +164,8 @@ private struct FakeHealth: HealthImporting {
     var isAvailable = true
     var asks = true
     var found: [HealthWorkout] = []
+    var byId: [String: HealthWorkout] = [:]
+    func workout(uuid: String) async throws -> HealthWorkout? { byId[uuid] }
     func needsAccess() async -> Bool { asks }
     func requestAccess() async throws {}
     func workouts(since: Date) async throws -> [HealthWorkout] { found }
@@ -279,6 +292,31 @@ struct InboxStoreTests {
         await store.openSessionPage()
         #expect(await service.uploads == [["hk-oct31"]])
         #expect(store.allRunsLoaded)
+    }
+
+    // Issue #131: opening a run's details re-reads it from Health and uploads only when Health now has a field the
+    // stored run lacks (the server keeps the match and fills the gap).
+    @Test func backfillUploadsARunThatGainedAFieldAndSkipsOneThatDidNot() async throws {
+        var richer = workout("hk-a1")
+        richer.elevationGainM = 55
+        let (store, service, _, _) = try await make(health: FakeHealth(asks: false, byId: ["hk-a1": richer, "hk-a2": workout("hk-a2", avg: 148, max: nil)]))
+        let stored = try activityFixture(id: "a1", date: "2026-10-26")
+        let complete = try activityFixture(id: "a2", date: "2026-10-26")
+        await service.setEverything([stored, complete])
+        await store.loadAllRuns()
+
+        await store.backfill(activityId: "a1")
+        #expect(await service.uploads == [["hk-a1"]])
+        await store.backfill(activityId: "a2")
+        #expect(await service.uploads == [["hk-a1"]], "nothing new to fill in")
+    }
+
+    @Test func backfillNeverAsksForAccess()async throws {
+        let (store, service, _, _) = try await make(health: FakeHealth(asks: true, byId: ["hk-a1": workout("hk-a1")]))
+        await service.setEverything([try activityFixture(id: "a1", date: "2026-10-26", heartRate: nil)])
+        await store.loadAllRuns()
+        await store.backfill(activityId: "a1")
+        #expect(await service.uploads.isEmpty)
     }
 
     // Issue #134: the inbox list leaves out extra runs, so the picker must read the full run list.
