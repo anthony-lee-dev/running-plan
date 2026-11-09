@@ -1,6 +1,6 @@
 // A small typed client for the Running Planner API (spec/openapi.yaml). The web app is online-first (design §9):
 // every change goes to the server with the revision it was made against, and a conflict is shown, never merged.
-import type { Activity, PlanDetail, PlanSummary, Problem, Session, SessionUpdate, SessionWriteResult } from "./types";
+import type { Activity, PlanDetail, PlanSummary, Problem, Progress, Session, SessionUpdate, SessionWriteResult } from "./types";
 
 export interface Tokens {
   accessToken: string;
@@ -51,6 +51,10 @@ export interface Api {
   getPlan(id: string): Promise<PlanDetail>;
   /** The newest imported runs (one page of up to 100), each with its match. Read only: the web app never uploads runs. */
   listActivities(): Promise<Activity[]>;
+  /** Every run from a local day on (`YYYY-MM-DD`), newest first, following the cursor. Read only. */
+  listActivitiesSince(from: string): Promise<Activity[]>;
+  /** The plan's progress on the user's local day. */
+  getProgress(planId: string, today: string): Promise<Progress>;
   /** Edits a session against the revision the caller loaded it at. */
   updateSession(session: Pick<Session, "id" | "revision">, body: SessionUpdate): Promise<SessionWriteResult>;
 }
@@ -145,6 +149,20 @@ export function createApi(options: ApiOptions): Api {
     async listActivities() {
       return (await authorised<{ activities: Activity[] }>("/v1/activities?limit=100", "GET")).activities;
     },
+    async listActivitiesSince(from) {
+      const runs: Activity[] = [];
+      let cursor: string | undefined;
+      // A cap on pages so a misbehaving cursor cannot loop forever (2000 runs).
+      for (let page = 0; page < 10; page++) {
+        const query = `from=${encodeURIComponent(from)}&limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+        const reply = await authorised<{ activities: Activity[]; nextCursor?: string }>(`/v1/activities?${query}`, "GET");
+        runs.push(...reply.activities);
+        cursor = reply.nextCursor;
+        if (!cursor) break;
+      }
+      return runs;
+    },
+    getProgress: (planId, today) => authorised<Progress>(`/v1/plans/${encodeURIComponent(planId)}/progress?today=${encodeURIComponent(today)}`, "GET"),
     updateSession: (session, body) =>
       authorised<SessionWriteResult>(`/v1/sessions/${encodeURIComponent(session.id)}`, "PATCH", body, { "if-match": `"${session.revision}"` }),
   };

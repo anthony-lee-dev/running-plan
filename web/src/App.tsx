@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import type { Api } from "./api/client";
 import { PlanView } from "./PlanView";
+import { ProgressView } from "./ProgressView";
 import { RunsView } from "./RunsView";
 import { SignIn } from "./SignIn";
 
@@ -33,10 +34,7 @@ export function App({ api }: { api: Api }) {
         ) : tab === "runs" ? (
           <RunsView api={api} onSignedOut={signedOut} />
         ) : (
-          <section className="card">
-            <h2>Progress</h2>
-            <p className="muted">Progress is not available yet. It arrives once the server can calculate it; nothing here is estimated in the meantime.</p>
-          </section>
+          <ProgressView api={api} onSignedOut={signedOut} />
         )}
       </main>
     </div>

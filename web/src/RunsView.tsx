@@ -3,17 +3,9 @@ import type { Api } from "./api/client";
 import type { Activity, Session } from "./api/types";
 import { planVsActual } from "./sessionMath";
 
-export const pace = (secPerKm: number): string => {
-  const whole = Math.round(secPerKm); // round first, so 359.6 s reads 6:00 and never 5:60
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}/km`;
-};
+import { clock, pace } from "./format";
 
-function clock(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
-}
+export { pace };
 
 /** The summary of one run. A stat the source did not record is left out, never shown as 0 or a dash. */
 export function summaryOf(run: Activity): { label: string; value: string }[] {

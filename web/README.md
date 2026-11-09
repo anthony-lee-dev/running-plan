@@ -13,7 +13,13 @@ It will not upload running-session data. React + Vite, TypeScript, Vitest with T
 - Runs tab (issue #131): the newest 100 imported runs (`GET /v1/activities`, readable with a web token) and a summary of one:
   distance, time, pace, heart rate and climb, each left out when the source did not record it. Splits, heart-rate zones and
   routes exist only on the phone (nothing more is uploaded), so the page says so.
-- Progress is not built yet: it needs `GET /v1/plans/{id}/progress` (backlog 2.15). The Progress tab says so.
+- Progress tab (issue #137): "Your running" shows distance, time, run count and average pace for this week or month, a bar per
+  period (8 weeks, 6 months) and how it compares with the period before. `runTotals.ts` works it out from the run summaries
+  (`listActivitiesSince`, which follows the cursor from the earliest day shown, so the totals are not cut at 100 runs) with the
+  same rules as the iPhone: calendar weeks Monday to Sunday on `localDate`, ignored runs and other workout types left out, pace
+  from the runs that have a distance, today from the local clock (`localToday`, never the UTC date). For a week it adds the plan
+  week from `GET /v1/plans/{id}/progress`, labelled apart because plan weeks start on the plan's own start date and the server
+  counts only matched runs. No plan, or a failed plan read, leaves the totals alone.
 - `public/_headers` sets a strict Content-Security-Policy (`connect-src 'self'`: the API must be on the same origin)
   and the other security headers; the refresh token is in `sessionStorage`, so the CSP is a second layer behind
   React's escaping of all server text.
