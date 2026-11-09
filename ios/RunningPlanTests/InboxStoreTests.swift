@@ -319,6 +319,16 @@ struct InboxStoreTests {
         #expect(await service.uploads.isEmpty)
     }
 
+    // Issue #134: the inbox list leaves out extra runs, so the picker must read the full run list.
+    @Test func matchCandidatesComeFromEveryRunNotOnlyTheInbox() async throws {
+        let (store, service, plans, mondayId) = try await make(activities: [])
+        let monday = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
+        await service.setEverything([try activityFixture(id: "oct31", date: "2026-10-27", disposition: "extra")])
+        await store.openSessionPage()
+        #expect(store.activities.isEmpty)
+        #expect(store.matchCandidates(for: monday).map(\.value2.id) == ["oct31"])
+    }
+
     @Test func aManualRunIsUploadedOnceItsDateIsNotInTheFuture() async throws {
         let (store, service, _, _) = try await make()
         #expect(await store.addManual(id: "m-1", localDate: "2026-10-26", distanceKm: 5, minutes: 30))

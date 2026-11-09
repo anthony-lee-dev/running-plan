@@ -235,7 +235,9 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   returns every run with its `match`.
 - The session page shows the matched run with Change and Unmatch (`session.run.change`, `session.run.unmatch`), or
   "Match a run" (`session.run.match`) for a live non-rest session dated today or earlier with no run. The picker lists
-  unmatched inbox runs of a fitting type, nearest the session's day first (`RunMatchModel`, pure).
+  unmatched runs of a fitting type, nearest the session's day first (`RunMatchModel`, pure). That includes extra and
+  ignored runs, tagged "Extra run" / "Ignored" (issue #134), because the all-runs list lets the user match those too. It
+  reads `InboxStore.allRuns` (`matchCandidates(for:)`), never `activities`: the inbox endpoint leaves extra and ignored runs out.
 - "All imported runs" (`inbox.allRuns`, `RunsScreen`) lists matched, inbox, extra and ignored runs; re-map with
   "Match to a session" / "Change session", "Unmatch", "Back to inbox". `InboxStore.allRuns` is loaded on demand.
 - A move changes a second session the reply does not carry, so `InboxStore` reloads the plan when the match displaces

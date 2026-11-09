@@ -101,6 +101,11 @@ final class InboxStore {
         return try? await health.samples(forWorkout: activity.value1.externalId)
     }
 
+    /// What "Match a run" offers a session: from every run, since the inbox list leaves out extra and ignored ones.
+    func matchCandidates(for session: Components.Schemas.Session) -> [Activity] {
+        RunMatchModel.candidates(for: session, in: allRuns)
+    }
+
     func runs(today: String) -> RunsModel {
         RunsModel(activities: allRuns, sessions: plans.plan?.value2.sessions ?? [], today: today)
     }

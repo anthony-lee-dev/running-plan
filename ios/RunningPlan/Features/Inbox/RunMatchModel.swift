@@ -13,15 +13,23 @@ enum RunMatchModel {
         let heading: String
         let headline: String
         let detail: String
+        /// "Extra run" or "Ignored" for a run the user put aside, so the picker tells it from an inbox run; nil otherwise.
+        var tag: String? = nil
     }
 
     static func row(for activity: Activity) -> RunRow {
         let fields = activity.value1
+        let tag: String? = switch activity.value2.disposition {
+        case .extra: "Extra run"
+        case .ignored: "Ignored"
+        default: nil
+        }
         return RunRow(
             id: activity.value2.id,
             heading: "\(LocalDay.heading(fields.localDate)) · \(fields.sourceApp ?? "Apple Health")",
             headline: InboxModel.headline(fields),
-            detail: InboxModel.detail(fields)
+            detail: InboxModel.detail(fields),
+            tag: tag
         )
     }
 
@@ -35,11 +43,13 @@ enum RunMatchModel {
         session.value1.deletedAt == nil && session.value2._type != .rest && session.value2.date <= today
     }
 
-    /// Runs still in the inbox that fit this session's type, the one nearest its day first.
+    /// Runs not matched to a session (inbox, extra and ignored: the all-runs list lets the user match those too) that
+    /// fit this session's type, the one nearest its day first. Needs the full run list: the inbox endpoint leaves
+    /// extra and ignored runs out. Issue #134.
     static func candidates(for session: Session, in activities: [Activity]) -> [Activity] {
         let day = PlanPreview.dayNumber(session.value2.date)
         return activities
-            .filter { $0.value2.disposition == .inbox && InboxMatching.fits($0.value1.workoutType, session.value2._type) }
+            .filter { $0.value2.disposition != .matched && InboxMatching.fits($0.value1.workoutType, session.value2._type) }
             .sorted {
                 let a = abs(PlanPreview.dayNumber($0.value1.localDate) - day), b = abs(PlanPreview.dayNumber($1.value1.localDate) - day)
                 return a != b ? a < b : $0.value1.localDate > $1.value1.localDate
