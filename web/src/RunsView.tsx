@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import type { Api } from "./api/client";
 import type { Activity } from "./api/types";
 
-const pace = (secPerKm: number): string => `${Math.floor(secPerKm / 60)}:${String(Math.round(secPerKm % 60)).padStart(2, "0")}/km`;
+export const pace = (secPerKm: number): string => {
+  const whole = Math.round(secPerKm); // round first, so 359.6 s reads 6:00 and never 5:60
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}/km`;
+};
 
 function clock(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -85,6 +88,7 @@ export function RunsView({ api, onSignedOut }: { api: Api; onSignedOut: () => vo
   return (
     <section>
       <h2>Runs</h2>
+      {runs.length >= 100 && <p className="muted">Showing your latest 100 runs.</p>}
       <ul className="sessions">
         {runs.map((r) => (
           <li key={r.id} className="session">

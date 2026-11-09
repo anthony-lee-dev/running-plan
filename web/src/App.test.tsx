@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { pace } from "./RunsView";
 import { ApiError, type Api } from "./api/client";
 import type { Activity, PlanDetail, PlanSummary, Session, SessionWriteResult } from "./api/types";
 
@@ -202,6 +203,18 @@ describe("runs", () => {
     expect(screen.queryByText(/heart rate/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/elevation/i)).not.toBeInTheDocument();
     expect(screen.getByText(/limited data from garmin connect/i)).toBeInTheDocument();
+  });
+
+  it("never writes a pace of 5:60", () => {
+    expect(pace(359.6)).toBe("6:00/km");
+    expect(pace(389)).toBe("6:29/km");
+  });
+
+  it("says when the list is cut at 100 runs", async () => {
+    const many = Array.from({ length: 100 }, (_, i) => run({ id: `r${i}` }));
+    render(<App api={fakeApi({ listActivities: vi.fn(async () => many) })} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    expect(await screen.findByText(/latest 100 runs/i)).toBeInTheDocument();
   });
 
   it("shows an empty state", async () => {
