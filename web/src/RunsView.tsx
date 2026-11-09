@@ -91,7 +91,7 @@ function RunDetail({ api, run, onBack, onSignedOut }: { api: Api; run: Activity;
           {compared.verdict && <p>{compared.verdict}</p>}
         </section>
       )}
-      {run.disposition === "matched" && session === null && <p className="muted">Matched to a session no longer in your plan.</p>}
+      {run.disposition === "matched" && session === null && <p className="muted">Matched to a session that is not in your latest plan.</p>}
       {limited(run) && <p className="muted">Limited data from {run.sourceApp ?? "Apple Health"}: the stats it didn't record are left out.</p>}
       <p className="muted">Splits and heart-rate zones are in the iPhone app.</p>
     </section>

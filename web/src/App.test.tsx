@@ -229,7 +229,7 @@ describe("runs", () => {
     render(<App api={api} />);
     await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
     await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
-    expect(await screen.findByText(/no longer in your plan/i)).toBeInTheDocument();
+    expect(await screen.findByText(/not in your latest plan/i)).toBeInTheDocument();
     expect(screen.getByText("5.00 km")).toBeInTheDocument();
   });
 
