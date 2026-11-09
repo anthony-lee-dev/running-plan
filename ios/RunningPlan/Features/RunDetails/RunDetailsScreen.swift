@@ -12,6 +12,7 @@ struct RunDetailsScreen: View {
 
     @State private var store: RunDetailsStore
     @State private var typedMax = ""
+    @State private var picking = false
 
     init(inbox: InboxStore, plans: PlanStore, activityId: String, heart: MaxHeartRateServing?, onClose: @escaping () -> Void) {
         self.inbox = inbox
@@ -19,7 +20,9 @@ struct RunDetailsScreen: View {
         self.activityId = activityId
         self.heart = heart
         self.onClose = onClose
-        _store = State(initialValue: RunDetailsStore(inbox: inbox, heart: heart))
+        let expects = inbox.allRuns.first { $0.value2.id == activityId }
+            .map { RunDetailsStore.expectsSamples($0, healthAvailable: inbox.healthAvailable) } ?? false
+        _store = State(initialValue: RunDetailsStore(inbox: inbox, heart: heart, expectsSamples: expects))
     }
 
     var body: some View {
@@ -47,6 +50,61 @@ struct RunDetailsScreen: View {
         .background(Palette.bg.color.ignoresSafeArea())
         .accessibilityIdentifier("screen.rundetails")
         .task { await store.open(activityId: activityId) }
+        .sheet(isPresented: $picking) {
+            let choices = inbox.runs(today: PreviewViewModel.localToday()).choices(for: activityId)
+            SessionPicker(
+                choices: choices,
+                emptyNote: choices.isEmpty ? "Your plan has no open session of this type left to match it to." : nil,
+                onPick: { choice in
+                    picking = false
+                    Task { await inbox.rematch(activityId: activityId, sessionId: choice.id, label: choice.title) }
+                },
+                onClose: { picking = false }
+            )
+        }
+    }
+
+    /// Match, Change session, Unmatch and Back to inbox, as on the all-runs list (same store calls).
+    @ViewBuilder
+    private func actions(sessionExists: Bool) -> some View {
+        if let row = inbox.runs(today: PreviewViewModel.localToday()).rows.first(where: { $0.id == activityId }) {
+            let list = RunMatchModel.actions(for: row.status, sessionExists: sessionExists)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) {
+                    ForEach(list, id: \.self) { action in
+                        switch action {
+                        case .match: SecondaryButton(title: "Match to a session") { picking = true }.accessibilityIdentifier("rundetails.match")
+                        case .change: SecondaryButton(title: "Change session") { picking = true }.accessibilityIdentifier("rundetails.change")
+                        case .unmatch:
+                            if case .matched(let sessionId, _) = row.status {
+                                SecondaryButton(title: "Unmatch") { Task { await inbox.unmatch(sessionId: sessionId) } }.accessibilityIdentifier("rundetails.unmatch")
+                            }
+                        case .backToInbox: SecondaryButton(title: "Back to inbox") { Task { await inbox.backToInbox(activityId) } }.accessibilityIdentifier("rundetails.inbox")
+                        }
+                    }
+                }
+                .disabled(inbox.busy)
+                if let error = inbox.error {
+                    Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("rundetails.error")
+                    SignInAgainButton(message: error)
+                }
+            }
+        }
+    }
+
+    private var splitsSkeleton: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Splits").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink.color)
+            ForEach(0..<4, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 6).fill(Palette.muted.color.opacity(0.25)).frame(height: 14)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loading splits")
+        .accessibilityIdentifier("rundetails.splits.loading")
     }
 
     @ViewBuilder
@@ -91,11 +149,17 @@ struct RunDetailsScreen: View {
             .accessibilityIdentifier("rundetails.grid")
         }
         if let plan = model.planVsActual { planVsActual(plan) }
-        splits(activity.value1)
+        if store.loading { splitsSkeleton } else { splits(activity.value1) }
         zones(activity.value1)
         if let note = model.limitedDataNote {
             Text(note).font(.system(size: 13)).foregroundStyle(Palette.muted.color).accessibilityIdentifier("rundetails.limited")
         }
+        if let weather = store.weather?.text {
+            Text(weather).font(.system(size: 14)).foregroundStyle(Palette.muted.color)
+                .accessibilityLabel("Weather: \(weather)")
+                .accessibilityIdentifier("rundetails.weather")
+        }
+        actions(sessionExists: session != nil)
     }
 
     private func planVsActual(_ plan: CheckInModel) -> some View {

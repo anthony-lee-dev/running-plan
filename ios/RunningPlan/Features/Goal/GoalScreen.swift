@@ -12,6 +12,8 @@ struct GoalScreen: View {
     let onSetGoal: () -> Void
     /// Called when the review setting sheet closes, so the weekly review looks at the new setting.
     var onReviewSettingsClosed: () -> Void = {}
+    /// Opens the list of every imported run (a cover `RootView` owns, so sign-in can close it).
+    var onRuns: () -> Void = {}
 
     @State private var signedIn: Bool?
     @State private var showReviewSettings = false
@@ -167,6 +169,7 @@ struct GoalScreen: View {
                     SignInAgainButton(message: error)
                 }
             }
+            row("Your runs", value: "All imported", id: "settings.runs", action: onRuns)
             if let watchSync, watchSync.isSupported {
                 row("Apple Watch", value: watchSync.wantsSync ? "On" : "Off", id: "settings.watch") { showWatchSettings = true }
             }

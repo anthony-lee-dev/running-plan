@@ -10,6 +10,7 @@ struct NextScreen: View {
     var onMove: (String) -> Void = { _ in }
     var inboxCount = 0
     var onInbox: () -> Void = {}
+    var onRuns: () -> Void = {}
     /// The weekly review store: its card shows when a review is waiting.
     var review: ReviewStore?
     var onReview: () -> Void = {}
@@ -25,7 +26,7 @@ struct NextScreen: View {
             case .loaded(let plan):
                 NextView(
                     model: NextModel(schedule: PlanSchedule(plan: plan, today: PreviewViewModel.localToday()), progress: progress?.loaded), onSetGoal: onSetGoal,
-                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox,
+                    onOpen: onOpen, onEasier: makeEasier, onMove: onMove, inboxCount: inboxCount, onInbox: onInbox, onRuns: onRuns,
                     reviewCard: review?.model, onReview: onReview,
                     offerWatch: watchSync?.shouldOfferTurnOn == true,
                     onWatchTurnOn: {

@@ -265,6 +265,15 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   because the section is replaced whole). "Not now" is remembered in UserDefaults (`rundetails.maxhr.declined`); a saved value always
   shows zones. Writing the profile bumps its revision, so a review-settings sheet opened earlier may 409 once on its next save.
 
+- Part 2 (#131): Run details has a weather footer (`RunWeather`, from the workout's metadata on the same read as splits; never
+  uploaded; HealthKit's `HKWeatherCondition` is mapped by raw value because the Swift case names differ from the header), a
+  splits skeleton (`RunDetailsStore.loading`, only for a Health running run on a device with Health), and the run-side actions
+  (`RunMatchModel.actions`: Match, Change session, Unmatch, Back to inbox; a run whose session is gone gets Change only) using
+  `SessionPicker` and the store's `rematch`/`unmatch`. The runs list has more doors than the inbox: Next's "Your runs"
+  (`next.runs`) and Goal and settings' "Your runs" (`settings.runs`), both opening `RunsScreen` as a `RootView` cover
+  (`showRuns`, closed by `requestSignIn`).
+- UI tests: an identifier put on a `ScrollView` is not in `otherElements`; look it up with `app.descendants(matching: .any)[id]`.
+
 ## Plan vs actual and check-in (DK-CheckIn, issue #68)
 
 - `Features/CheckIn/`: `CheckInModel` (pure, unit-tested) compares the session with the matched run as a whole (no rep

@@ -9,6 +9,9 @@ import Observation
 final class RunDetailsStore {
     private(set) var splits: [RunSplits.Split] = []
     private(set) var samplesLoaded = false
+    /// True from the start until Health has been read, so the splits show a skeleton; only for a run that can have readings.
+    private(set) var loading: Bool
+    private(set) var weather: RunWeather?
     private(set) var zones: ZonesSection = .hidden
     private(set) var error: String?
     private(set) var saving = false
@@ -20,7 +23,13 @@ final class RunDetailsStore {
     private var samples: RunSamples?
     private static let declinedKey = "rundetails.maxhr.declined"
 
-    init(inbox: InboxStore, heart: MaxHeartRateServing?, defaults: UserDefaults = .standard) {
+    /// A run read from Health on a device with Health: the only kind that has splits to wait for.
+    static func expectsSamples(_ activity: Components.Schemas.Activity, healthAvailable: Bool) -> Bool {
+        healthAvailable && activity.value1.source == .apple_health && activity.value1.workoutType == .running
+    }
+
+    init(inbox: InboxStore, heart: MaxHeartRateServing?, expectsSamples: Bool, defaults: UserDefaults = .standard) {
+        loading = expectsSamples
         self.inbox = inbox
         self.heart = heart
         self.defaults = defaults
@@ -31,6 +40,7 @@ final class RunDetailsStore {
     var splitsMissing: Bool { samplesLoaded && splits.isEmpty }
 
     func open(activityId: String) async {
+        defer { loading = false }
         await inbox.backfill(activityId: activityId)
         guard let activity = inbox.allRuns.first(where: { $0.value2.id == activityId }) else { return }
         async let read = inbox.samples(for: activity)
@@ -38,6 +48,7 @@ final class RunDetailsStore {
         samples = await read
         settings = await profile
         samplesLoaded = samples != nil
+        weather = samples?.weather
         splits = RunSplits.make(samples: samples?.distance ?? [])
         refreshZones(durationSec: activity.value1.durationSec)
     }

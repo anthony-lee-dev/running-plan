@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "./api/client";
-import type { Activity } from "./api/types";
+import type { Activity, Session } from "./api/types";
+import { planVsActual } from "./sessionMath";
 
 export const pace = (secPerKm: number): string => {
   const whole = Math.round(secPerKm); // round first, so 359.6 s reads 6:00 and never 5:60
@@ -29,6 +30,73 @@ export function summaryOf(run: Activity): { label: string; value: string }[] {
 
 const limited = (run: Activity): boolean =>
   run.workoutType === "running" && (run.avgHeartRate === undefined || run.maxHeartRate === undefined || run.elevationGainM === undefined);
+
+/** The session a matched run belongs to: undefined while loading, null when it is gone or the plan cannot be read. */
+function useMatchedSession(api: Api, run: Activity, onSignedOut: () => void): Session | null | undefined {
+  const sessionId = run.disposition === "matched" ? run.match?.sessionId : undefined;
+  const [found, setFound] = useState<Session | null | undefined>(sessionId ? undefined : null);
+  useEffect(() => {
+    if (!sessionId) return setFound(null);
+    let cancelled = false;
+    setFound(undefined);
+    (async () => {
+      try {
+        const newest = (await api.listPlans())[0];
+        const plan = newest ? await api.getPlan(newest.id) : undefined;
+        const session = plan?.sessions.find((s) => s.id === sessionId && !s.deletedAt) ?? null;
+        if (!cancelled) setFound(session);
+      } catch (e) {
+        if ((e as { status?: number }).status === 401) return onSignedOut();
+        if (!cancelled) setFound(null); // the summary stands on its own
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, sessionId, onSignedOut]);
+  return found;
+}
+
+function RunDetail({ api, run, onBack, onSignedOut }: { api: Api; run: Activity; onBack: () => void; onSignedOut: () => void }) {
+  const session = useMatchedSession(api, run, onSignedOut);
+  const compared = session ? planVsActual(session, run) : undefined;
+  return (
+    <section className="card" aria-label="Run details">
+      <button type="button" className="text" onClick={onBack}>Back to runs</button>
+      <h2>{run.localDate}</h2>
+      <p className="muted">
+        {run.sourceApp ?? "Apple Health"} · {run.disposition !== "matched" ? "Not part of a plan" : session ? `Matched · ${session.title ?? session.type}` : "Matched to a session"}
+      </p>
+      <dl>
+        {summaryOf(run).map((s) => (
+          <div key={s.label}>
+            <dt className="muted">{s.label}</dt>
+            <dd>{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+      {compared && compared.lines.length > 0 && (
+        <section aria-label="Plan vs actual">
+          <h3>Plan vs actual</h3>
+          <dl>
+            {compared.lines.map((l) => (
+              <div key={l.label}>
+                <dt className="muted">{l.label}</dt>
+                <dd>
+                  <span>{l.planned}</span> → <span>{l.actual}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          {compared.verdict && <p>{compared.verdict}</p>}
+        </section>
+      )}
+      {run.disposition === "matched" && session === null && <p className="muted">Matched to a session that is not in your latest plan.</p>}
+      {limited(run) && <p className="muted">Limited data from {run.sourceApp ?? "Apple Health"}: the stats it didn't record are left out.</p>}
+      <p className="muted">Splits and heart-rate zones are in the iPhone app.</p>
+    </section>
+  );
+}
 
 /** Every imported run, newest first, each opening a summary. Splits, zones and routes stay on the phone. */
 export function RunsView({ api, onSignedOut }: { api: Api; onSignedOut: () => void }) {
@@ -66,25 +134,7 @@ export function RunsView({ api, onSignedOut }: { api: Api; onSignedOut: () => vo
     );
   }
   const open = runs.find((r) => r.id === openId);
-  if (open) {
-    return (
-      <section className="card" aria-label="Run details">
-        <button type="button" className="text" onClick={() => setOpenId(undefined)}>Back to runs</button>
-        <h2>{open.localDate}</h2>
-        <p className="muted">{open.sourceApp ?? "Apple Health"} · {open.disposition === "matched" ? "Matched to a session" : "Not part of a plan"}</p>
-        <dl>
-          {summaryOf(open).map((s) => (
-            <div key={s.label}>
-              <dt className="muted">{s.label}</dt>
-              <dd>{s.value}</dd>
-            </div>
-          ))}
-        </dl>
-        {limited(open) && <p className="muted">Limited data from {open.sourceApp ?? "Apple Health"}: the stats it didn't record are left out.</p>}
-        <p className="muted">Splits and heart-rate zones are in the iPhone app.</p>
-      </section>
-    );
-  }
+  if (open) return <RunDetail api={api} run={open} onBack={() => setOpenId(undefined)} onSignedOut={onSignedOut} />;
   return (
     <section>
       <h2>Runs</h2>

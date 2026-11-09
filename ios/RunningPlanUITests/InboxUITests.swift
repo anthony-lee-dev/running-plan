@@ -121,4 +121,37 @@ final class InboxUITests: XCTestCase {
         let matches = try await LocalAPI.requestCount(api, "PUT /v1/sessions/*")
         XCTAssertGreaterThanOrEqual(matches, 2, "Both matches went to the API")
     }
+
+    /// Issue #131: Runs opens from Next, a run opens its details, and Unmatch and Match work there.
+    @MainActor
+    func testRunDetailsOpensFromNextAndMatchesAndUnmatches() async throws {
+        let api = try LocalAPI.url()
+        let app = LocalAPI.openPreview(api)
+        try await LocalAPI.saveAndSignIn(app, api)
+
+        addAndConfirmARun(app)
+        app.buttons["checkin.skip"].tap()
+        XCTAssertTrue(app.staticTexts["inbox.empty"].waitForExistence(timeout: 10), app.debugDescription)
+        app.buttons["Back to Next"].tap()
+
+        let runs = app.buttons["next.runs"]
+        XCTAssertTrue(runs.waitForExistence(timeout: 10), app.debugDescription)
+        runs.tap()
+        XCTAssertTrue(app.staticTexts["screen.runs"].waitForExistence(timeout: 5), app.debugDescription)
+        let details = app.buttons["runs.details"].firstMatch
+        XCTAssertTrue(details.waitForExistence(timeout: 10), app.debugDescription)
+        details.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["screen.rundetails"].waitForExistence(timeout: 5), app.debugDescription)
+
+        let unmatch = app.buttons["rundetails.unmatch"]
+        XCTAssertTrue(unmatch.waitForExistence(timeout: 10), app.debugDescription)
+        unmatch.tap()
+        let match = app.buttons["rundetails.match"]
+        XCTAssertTrue(match.waitForExistence(timeout: 10), app.debugDescription)
+        match.tap()
+        let pick = app.buttons["inbox.pick"].firstMatch
+        XCTAssertTrue(pick.waitForExistence(timeout: 5), app.debugDescription)
+        pick.tap()
+        XCTAssertTrue(app.buttons["rundetails.change"].waitForExistence(timeout: 10), app.debugDescription)
+    }
 }

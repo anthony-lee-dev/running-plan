@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { pace } from "./RunsView";
 import { ApiError, type Api } from "./api/client";
+import { planVsActual } from "./sessionMath";
 import type { Activity, PlanDetail, PlanSummary, Session, SessionWriteResult } from "./api/types";
 
 const session = (over: Partial<Session>): Session => ({
@@ -203,6 +204,58 @@ describe("runs", () => {
     expect(screen.queryByText(/heart rate/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/elevation/i)).not.toBeInTheDocument();
     expect(screen.getByText(/limited data from garmin connect/i)).toBeInTheDocument();
+  });
+
+  const matchedRun = (over: Partial<Activity> = {}) =>
+    run({ id: "a9", disposition: "matched", match: { sessionId: "s1", activityId: "a9", status: "confirmed", updatedAt: "2026-11-03T09:00:00.000Z" }, ...over });
+  const pacedSession = (over: Partial<Session> = {}) =>
+    session({ steps: [{ kind: "work", goal: { type: "distance", value: 5000 }, target: { type: "pace", range: { minSecPerKm: 330, maxSecPerKm: 390 } } }], ...over });
+
+  it("shows plan vs actual on a matched run, from the matched session", async () => {
+    const api = fakeApi({ listActivities: vi.fn(async () => [matchedRun()]), getPlan: vi.fn(async () => detail([pacedSession()])) });
+    render(<App api={api} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
+    const plan = await screen.findByLabelText("Plan vs actual");
+    expect(within(plan).getByText("5.0 km planned")).toBeInTheDocument();
+    expect(within(plan).getByText("5.0 km")).toBeInTheDocument();
+    expect(within(plan).getByText("5:30–6:30/km target")).toBeInTheDocument();
+    expect(within(plan).getByText("6:00/km")).toBeInTheDocument();
+    expect(within(plan).getByText("In your easy range")).toBeInTheDocument();
+  });
+
+  it("says when the matched session is no longer in the plan, and keeps the summary", async () => {
+    const api = fakeApi({ listActivities: vi.fn(async () => [matchedRun()]), getPlan: vi.fn(async () => detail([session({ id: "other" })])) });
+    render(<App api={api} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
+    expect(await screen.findByText(/not in your latest plan/i)).toBeInTheDocument();
+    expect(screen.getByText("5.00 km")).toBeInTheDocument();
+  });
+
+  it("still shows the summary when the plan cannot be loaded", async () => {
+    const api = fakeApi({ listActivities: vi.fn(async () => [matchedRun()]), getPlan: vi.fn(async () => { throw new Error("offline"); }) });
+    render(<App api={api} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
+    expect(await screen.findByText("5.00 km")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Plan vs actual")).not.toBeInTheDocument();
+  });
+
+  it("does not load the plan for a run that is not matched", async () => {
+    const api = fakeApi({ listActivities: vi.fn(async () => [run({})]) });
+    render(<App api={api} />);
+    await screen.findByText("Easy run"); // the Plan tab has loaded its own plan
+    const before = vi.mocked(api.getPlan).mock.calls.length;
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
+    expect(screen.queryByLabelText("Plan vs actual")).not.toBeInTheDocument();
+    expect(api.getPlan).toHaveBeenCalledTimes(before);
+  });
+
+  it("calls a faster run faster than the range", () => {
+    const result = planVsActual(pacedSession(), run({ durationSec: 1500 }));
+    expect(result.verdict).toBe("Faster than your easy range");
   });
 
   it("never writes a pace of 5:60", () => {
