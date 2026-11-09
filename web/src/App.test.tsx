@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { ApiError, type Api } from "./api/client";
-import type { PlanDetail, PlanSummary, Session, SessionWriteResult } from "./api/types";
+import type { Activity, PlanDetail, PlanSummary, Session, SessionWriteResult } from "./api/types";
 
 const session = (over: Partial<Session>): Session => ({
   id: "s1", revision: 1, updatedAt: "2026-10-29T09:00:00Z", deletedAt: null, planId: "p1", date: "2026-11-03", type: "easy",
@@ -24,6 +24,7 @@ function fakeApi(over: Partial<Api> = {}, signedIn = true): Api {
       in_ = false;
     }),
     listPlans: vi.fn(async () => [summary]),
+    listActivities: vi.fn(async () => []),
     getPlan: vi.fn(async () => detail([session({}), session({ id: "s2", date: "2026-11-05", type: "long", title: "Long run" }), session({ id: "s3", date: "2026-11-12", title: "Next week run" })])),
     updateSession: vi.fn(async (s, body) => ({ session: session({ id: s.id, revision: s.revision + 1, ...(body as object) }), planContentRevision: 4, warnings: [] })),
     ...over,
@@ -170,6 +171,43 @@ describe("the plan", () => {
     render(<App api={fakeApi({ getPlan: vi.fn(async () => warned) })} />);
     expect(await screen.findByText(/back to back/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /mark done/i })).toBeEnabled();
+  });
+});
+
+describe("runs", () => {
+  const run = (over: Partial<Activity>): Activity => ({
+    id: "a1", source: "apple_health", externalId: "hk-1", workoutType: "running", startedAt: "2026-11-03T07:00:00.000Z", localDate: "2026-11-03",
+    durationSec: 1800, distanceM: 5000, avgHeartRate: 150, maxHeartRate: 172, elevationGainM: 42, sourceApp: "Apple Watch",
+    importedAt: "2026-11-03T08:00:00.000Z", disposition: "inbox", ...over,
+  });
+
+  it("lists every run and opens a summary with the stats the source recorded", async () => {
+    render(<App api={fakeApi({ listActivities: vi.fn(async () => [run({}), run({ id: "a2", localDate: "2026-11-01", disposition: "matched" })]) })} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    expect(await screen.findByRole("button", { name: "Open run: 2026-11-01" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open run: 2026-11-03" }));
+    const details = screen.getByLabelText("Run details");
+    expect(within(details).getByText("5.00 km")).toBeInTheDocument();
+    expect(within(details).getByText("6:00/km")).toBeInTheDocument();
+    expect(within(details).getByText("150 bpm")).toBeInTheDocument();
+    expect(within(details).getByText("42 m")).toBeInTheDocument();
+    expect(within(details).queryByText(/limited data/i)).not.toBeInTheDocument();
+  });
+
+  it("hides a stat the source did not record and says the data is limited", async () => {
+    const thin = run({ avgHeartRate: undefined, maxHeartRate: undefined, elevationGainM: undefined, sourceApp: "Garmin Connect" });
+    render(<App api={fakeApi({ listActivities: vi.fn(async () => [thin]) })} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
+    expect(screen.queryByText(/heart rate/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/elevation/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/limited data from garmin connect/i)).toBeInTheDocument();
+  });
+
+  it("shows an empty state", async () => {
+    render(<App api={fakeApi()} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    expect(await screen.findByText(/no runs yet/i)).toBeInTheDocument();
   });
 });
 

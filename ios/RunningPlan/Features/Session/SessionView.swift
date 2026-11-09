@@ -23,6 +23,7 @@ struct SessionView: View {
     var canMatchRun = false
     var onPickRun: () -> Void = {}
     var onUnmatchRun: () -> Void = {}
+    var onRunDetails: () -> Void = {}
 
     @State private var ticked: Set<Int> = []
     @State private var copied = false
@@ -77,6 +78,7 @@ struct SessionView: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
+                SecondaryButton(title: "Run details", action: onRunDetails).accessibilityIdentifier("session.run.details")
                 HStack(spacing: 10) {
                     SecondaryButton(title: "Change", action: onPickRun).accessibilityIdentifier("session.run.change")
                     SecondaryButton(title: "Unmatch", action: onUnmatchRun).accessibilityIdentifier("session.run.unmatch")

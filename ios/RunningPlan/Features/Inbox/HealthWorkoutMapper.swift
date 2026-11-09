@@ -14,6 +14,8 @@ struct HealthWorkout: Equatable {
     let maxHeartRate: Double?
     let sourceName: String
     let productType: String?
+    /// Whole-workout climb from Health's metadata (no extra permission); nil when the source did not record it.
+    var elevationGainM: Double? = nil
 }
 
 /// Health workouts to upload records, and manual entries. The API refuses a whole batch when one field is out of
@@ -51,8 +53,16 @@ enum HealthWorkoutMapper {
             durationSec: duration,
             distanceM: within(w.distanceM, 0...400_000),
             avgHeartRate: within(w.avgHeartRate, 30...250),
-            maxHeartRate: within(w.maxHeartRate, 30...250)
+            maxHeartRate: within(w.maxHeartRate, 30...250),
+            elevationGainM: within(w.elevationGainM, 0...10_000)
         ))
+    }
+
+    /// True when `new` has a value the stored run lacks. Backfill uploads only then: the server never erases a field
+    /// and keeps the run's match, so a run that gained nothing is not written again.
+    static func fillsGap(stored: Components.Schemas.ActivityFields, with new: Components.Schemas.ActivityFields) -> Bool {
+        (stored.distanceM == nil && new.distanceM != nil) || (stored.avgHeartRate == nil && new.avgHeartRate != nil)
+            || (stored.maxHeartRate == nil && new.maxHeartRate != nil) || (stored.elevationGainM == nil && new.elevationGainM != nil)
     }
 
     /// Batches of at most 200, the API's limit, skipping records that cannot be sent.

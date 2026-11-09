@@ -39,8 +39,11 @@ struct RunPicker: View {
 /// Every imported run, matched or not, so a run can be moved to another session (or taken off one) from the run's side.
 struct RunsScreen: View {
     let store: InboxStore
+    let plans: PlanStore
     let onClose: () -> Void
     @State private var picking: String?
+    /// The run whose details are open (issue #131).
+    @State private var details: String?
 
     var body: some View {
         let model = store.runs(today: PreviewViewModel.localToday())
@@ -71,7 +74,7 @@ struct RunsScreen: View {
                     SignInAgainButton(message: error)
                 }
                 ForEach(model.rows) { row in
-                    RunCard(row: row, busy: store.busy, store: store, onPick: { picking = row.id })
+                    RunCard(row: row, busy: store.busy, store: store, onPick: { picking = row.id }, onDetails: { details = row.id })
                 }
             }
             .padding(.horizontal, 20)
@@ -80,6 +83,11 @@ struct RunsScreen: View {
         .background(Palette.bg.color.ignoresSafeArea())
         .task { await store.loadAllRuns() }
         .refreshable { await store.loadAllRuns() }
+        .fullScreenCover(isPresented: Binding(get: { details != nil }, set: { if !$0 { details = nil } })) {
+            if let id = details {
+                RunDetailsScreen(inbox: store, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), onClose: { details = nil })
+            }
+        }
         .sheet(isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } })) {
             if let id = picking {
                 let choices = model.choices(for: id)
@@ -102,6 +110,7 @@ private struct RunCard: View {
     let busy: Bool
     let store: InboxStore
     let onPick: () -> Void
+    let onDetails: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -114,6 +123,7 @@ private struct RunCard: View {
             }
             Text(row.status.text).font(.system(size: 15, weight: .semibold)).foregroundStyle(statusColor)
                 .accessibilityIdentifier("runs.status")
+            SecondaryButton(title: "Run details", action: onDetails).accessibilityIdentifier("runs.details")
             HStack(spacing: 10) {
                 switch row.status {
                 case .matched(let sessionId, _):

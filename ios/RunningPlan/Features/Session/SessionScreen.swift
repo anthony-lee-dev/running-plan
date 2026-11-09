@@ -28,6 +28,7 @@ struct SessionScreen: View {
 
     @State private var editing = false
     @State private var pickingRun = false
+    @State private var runDetails: String?
     @State private var moving = false
     @State private var showWatchSettings = false
     @State private var busy = false
@@ -56,8 +57,14 @@ struct SessionScreen: View {
                 matchedRun: matched.map(RunMatchModel.row(for:)),
                 canMatchRun: inbox?.allRunsLoaded == true && matched == nil && RunMatchModel.canMatch(session, today: today),
                 onPickRun: { pickingRun = true },
-                onUnmatchRun: { if let inbox { Task { await inbox.unmatch(sessionId: sessionId) } } }
+                onUnmatchRun: { if let inbox { Task { await inbox.unmatch(sessionId: sessionId) } } },
+                onRunDetails: { runDetails = matched?.value2.id }
             )
+            .fullScreenCover(isPresented: Binding(get: { runDetails != nil }, set: { if !$0 { runDetails = nil } })) {
+                if let inbox, let id = runDetails {
+                    RunDetailsScreen(inbox: inbox, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), onClose: { runDetails = nil })
+                }
+            }
             .task {
                 guard let inbox else { return }
                 // Read Health first (when access was already given), so a run newer than the last import can be matched.

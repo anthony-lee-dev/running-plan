@@ -82,6 +82,25 @@ final class InboxStore {
         await run { self.allRuns = try await self.service.allRuns(); self.allRunsLoaded = true }
     }
 
+    /// Opening a run's details (issue #131): reads the workout from Health again and, if it now has a field the stored
+    /// run lacks (say the climb, which early imports did not send), uploads it. The server fills the gap and keeps the
+    /// run's match. Silent: only when access was already given, and a failure leaves the run as it was.
+    func backfill(activityId: String) async {
+        guard let activity = allRuns.first(where: { $0.value2.id == activityId }), activity.value1.source == .apple_health,
+              health.isAvailable, !(await health.needsAccess()),
+              let workout = try? await health.workout(uuid: activity.value1.externalId),
+              let input = HealthWorkoutMapper.input(workout),
+              HealthWorkoutMapper.fillsGap(stored: activity.value1, with: input.value1) else { return }
+        guard (try? await service.upload([input])) != nil else { return }
+        allRuns = (try? await service.allRuns()) ?? allRuns
+    }
+
+    /// The readings behind a run's splits and zones; nil without Health access or for a run not from Health.
+    func samples(for activity: Activity) async -> RunSamples? {
+        guard activity.value1.source == .apple_health, health.isAvailable, !(await health.needsAccess()) else { return nil }
+        return try? await health.samples(forWorkout: activity.value1.externalId)
+    }
+
     func runs(today: String) -> RunsModel {
         RunsModel(activities: allRuns, sessions: plans.plan?.value2.sessions ?? [], today: today)
     }
