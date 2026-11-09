@@ -9,11 +9,21 @@ struct ProgressScreen: View {
     let onSetGoal: () -> Void
     /// Shared with Next and Plan (owned by `RootView`).
     let store: ProgressStore
+    /// Where the imported runs come from for "Your running" (issue #137).
+    let inbox: InboxStore
 
-    init(plans: PlanStore, store: ProgressStore, onSetGoal: @escaping () -> Void) {
+    init(plans: PlanStore, store: ProgressStore, inbox: InboxStore, onSetGoal: @escaping () -> Void) {
         self.plans = plans
         self.store = store
+        self.inbox = inbox
         self.onSetGoal = onSetGoal
+    }
+
+    /// The run totals for the calendar week and month, once the runs are loaded; nil before (nothing is guessed).
+    private func runningCard(planWeek: RunningStatsModel.PlanWeek?) -> AnyView {
+        // Signed out, the store may still hold the last account's runs: show none of them.
+        guard inbox.allRunsLoaded, plans.isSignedIn else { return AnyView(EmptyView()) }
+        return AnyView(RunningStatsCard(totals: RunTotals(activities: inbox.allRuns, today: PreviewViewModel.localToday()), planWeek: planWeek))
     }
 
     var body: some View {
@@ -24,19 +34,25 @@ struct ProgressScreen: View {
             case .loading:
                 centred { SwiftUI.ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your plan") }
             case .empty:
-                centred {
-                    Text("Set a goal and your progress shows here.")
-                        .font(.system(size: 15)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
-                    Button(action: onSetGoal) {
-                        Text("Set a goal")
-                            .font(.system(size: 17, weight: .semibold))
-                            .padding(.horizontal, 28)
-                            .frame(minHeight: 56)
-                            .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
-                            .foregroundStyle(.white)
-                            .contentShape(Rectangle())
+                // A runner with no plan still sees what they ran: the totals sit under "Set a goal".
+                if inbox.allRunsLoaded && !inbox.allRuns.isEmpty && plans.isSignedIn {
+                    ZStack {
+                        Palette.bg.color.ignoresSafeArea()
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                Text(AppTab.progress.title)
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundStyle(Palette.ink.color)
+                                    .accessibilityIdentifier(AppTab.progress.screenIdentifier)
+                                setGoal
+                                runningCard(planWeek: nil)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 24)
+                        }
                     }
-                    if !plans.isSignedIn { SignInLink() }
+                } else {
+                    centred { setGoal }
                 }
             case .failed(let message):
                 retry(message) { await plans.load() }
@@ -44,14 +60,40 @@ struct ProgressScreen: View {
         }
         .toolbarBackground(Palette.tabBar.color, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+        // The runs behind "Your running": read when the tab shows and again when the plan, the day or a match changes.
+        .task(id: runsKey) { if plans.isSignedIn { await inbox.loadAllRuns() } }
+    }
+
+    private var runsKey: String {
+        (plans.plan.map { Self.refreshKey($0) } ?? "none") + "|\(plans.isSignedIn)"
+    }
+
+    @ViewBuilder private var setGoal: some View {
+        Text("Set a goal and your progress shows here.")
+            .font(.system(size: 15)).multilineTextAlignment(.center).foregroundStyle(Palette.muted.color)
+        Button(action: onSetGoal) {
+            Text("Set a goal")
+                .font(.system(size: 17, weight: .semibold))
+                .padding(.horizontal, 28)
+                .frame(minHeight: 56)
+                .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 18))
+                .foregroundStyle(.white)
+                .contentShape(Rectangle())
+        }
+        if !plans.isSignedIn { SignInLink() }
     }
 
     @ViewBuilder private func loaded(_ plan: Components.Schemas.PlanDetail) -> some View {
         let id = plan.value1.value1.id
         switch store.state {
         case .loaded(let progress):
-            ProgressOverview(model: ProgressModel(progress: progress, plan: plan))
-                .refreshable { await store.load(planId: id, today: PreviewViewModel.localToday()) }
+            let schedule = PlanSchedule(plan: plan, today: progress.asOf)
+            let planWeek = RunningStatsModel.planWeek(schedule: schedule, done: DistanceDone(progress: progress, schedule: schedule))
+            ProgressOverview(model: ProgressModel(progress: progress, plan: plan), footer: runningCard(planWeek: planWeek))
+                .refreshable {
+                    await store.load(planId: id, today: PreviewViewModel.localToday())
+                    await inbox.loadAllRuns()
+                }
         case .loading:
             centred { SwiftUI.ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your progress") }
         case .failed(let message):

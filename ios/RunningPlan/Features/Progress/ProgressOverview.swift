@@ -4,6 +4,8 @@ import SwiftUI
 /// `ProgressModel`. System fonts until the font task.
 struct ProgressOverview: View {
     let model: ProgressModel
+    /// Below the board's content, so the board's layout above it does not move (the run totals, issue #137).
+    var footer: AnyView = AnyView(EmptyView())
 
     var body: some View {
         ScrollView {
@@ -40,6 +42,7 @@ struct ProgressOverview: View {
                     .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 20))
                     .accessibilityElement(children: .combine)
                 }
+                footer
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)

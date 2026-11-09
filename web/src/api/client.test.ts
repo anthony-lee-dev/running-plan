@@ -83,6 +83,21 @@ describe("authorised requests", () => {
     expect(calls[0]).toMatchObject({ url: "/v1/activities?limit=100", method: "GET" });
   });
 
+  it("read every run since a day by following the cursor (issue #137)", async () => {
+    const { fetcher, calls } = fakeFetch((req) =>
+      req.url.includes("cursor=c1") ? json({ activities: [{ id: "a3" }] }) : json({ activities: [{ id: "a1" }, { id: "a2" }], nextCursor: "c1" }),
+    );
+    const runs = await createApi({ fetch: fetcher, tokens: new MemoryTokens({ accessToken: "t", refreshToken: "r" }) }).listActivitiesSince("2026-06-01");
+    expect(runs.map((r) => r.id)).toEqual(["a1", "a2", "a3"]);
+    expect(calls.map((c) => c.url)).toEqual(["/v1/activities?from=2026-06-01&limit=200", "/v1/activities?from=2026-06-01&limit=200&cursor=c1"]);
+  });
+
+  it("read the plan's progress for the user's local day", async () => {
+    const { fetcher, calls } = fakeFetch(() => json({ planId: "p1", weeks: [] }));
+    await createApi({ fetch: fetcher, tokens: new MemoryTokens({ accessToken: "t", refreshToken: "r" }) }).getProgress("p1", "2026-11-04");
+    expect(calls[0]).toMatchObject({ url: "/v1/plans/p1/progress?today=2026-11-04", method: "GET" });
+  });
+
   it("get a plan by id", async () => {
     const { fetcher, calls } = fakeFetch(() => json({ id: "p1", sessions: [] }));
     await createApi({ fetch: fetcher, tokens: new MemoryTokens({ accessToken: "t", refreshToken: "r" }) }).getPlan("p1");

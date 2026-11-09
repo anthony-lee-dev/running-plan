@@ -5,7 +5,8 @@ import { App } from "./App";
 import { pace } from "./RunsView";
 import { ApiError, type Api } from "./api/client";
 import { planVsActual } from "./sessionMath";
-import type { Activity, PlanDetail, PlanSummary, Session, SessionWriteResult } from "./api/types";
+import type { Activity, PlanDetail, PlanSummary, Progress, Session, SessionWriteResult } from "./api/types";
+import { dateOf, dayNumber, earliestShown, localToday } from "./runTotals";
 
 const session = (over: Partial<Session>): Session => ({
   id: "s1", revision: 1, updatedAt: "2026-10-29T09:00:00Z", deletedAt: null, planId: "p1", date: "2026-11-03", type: "easy",
@@ -27,6 +28,8 @@ function fakeApi(over: Partial<Api> = {}, signedIn = true): Api {
     }),
     listPlans: vi.fn(async () => [summary]),
     listActivities: vi.fn(async () => []),
+    listActivitiesSince: vi.fn(async () => []),
+    getProgress: vi.fn(async (planId: string, asOf: string) => ({ planId, asOf, weeks: [] }) as unknown as Progress),
     getPlan: vi.fn(async () => detail([session({}), session({ id: "s2", date: "2026-11-05", type: "long", title: "Long run" }), session({ id: "s3", date: "2026-11-12", title: "Next week run" })])),
     updateSession: vi.fn(async (s, body) => ({ session: session({ id: s.id, revision: s.revision + 1, ...(body as object) }), planContentRevision: 4, warnings: [] })),
     ...over,
@@ -277,12 +280,90 @@ describe("runs", () => {
   });
 });
 
-describe("progress and signing out", () => {
-  it("says progress is not here yet instead of showing made-up numbers", async () => {
-    render(<App api={fakeApi()} />);
-    await userEvent.click(await screen.findByRole("button", { name: /progress/i }));
-    expect(screen.getByText(/not available yet/i)).toBeInTheDocument();
+describe("progress", () => {
+  const today = localToday();
+  const ran = (id: string, over: Partial<Activity> = {}): Activity => ({
+    id, source: "apple_health", externalId: id, workoutType: "running", startedAt: `${today}T07:00:00.000Z`, localDate: today,
+    durationSec: 1800, distanceM: 5000, importedAt: `${today}T08:00:00.000Z`, disposition: "inbox", ...over,
   });
+  const open = async () => userEvent.click(await screen.findByRole("button", { name: /progress/i }));
+
+  it("shows this week's totals from the imported runs, matched or not", async () => {
+    render(<App api={fakeApi({ listActivitiesSince: vi.fn(async () => [ran("a"), ran("b", { disposition: "matched", distanceM: 10000, durationSec: 3600 })]) })} />);
+    await open();
+    const card = await screen.findByLabelText("Your running");
+    expect(within(card).getByRole("heading", { name: "This week" })).toBeInTheDocument();
+    expect(within(card).getAllByText("15 km")).toHaveLength(2); // the total, and this week's bar
+    expect(within(card).getByText("1 h 30 min")).toBeInTheDocument();
+    expect(within(card).getByText("2")).toBeInTheDocument();
+    expect(within(card).getByText("6:00/km")).toBeInTheDocument();
+  });
+
+  it("loads only the runs the shown periods need", async () => {
+    const listActivitiesSince = vi.fn(async () => []);
+    render(<App api={fakeApi({ listActivitiesSince })} />);
+    await open();
+    await screen.findByLabelText("Your running");
+    expect(listActivitiesSince).toHaveBeenCalledWith(earliestShown(today));
+  });
+
+  it("switches to the month", async () => {
+    render(<App api={fakeApi({ listActivitiesSince: vi.fn(async () => [ran("a")]) })} />);
+    await open();
+    await userEvent.click(await screen.findByRole("button", { name: "Month" }));
+    expect(screen.getByRole("heading", { name: "This month" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Month" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("says so, with no pace, when nothing was run", async () => {
+    render(<App api={fakeApi()} />);
+    await open();
+    expect(await screen.findByText("No runs yet this week.")).toBeInTheDocument();
+    expect(screen.queryByText("Avg pace")).not.toBeInTheDocument();
+  });
+
+  it("puts the plan week beside the totals, labelled apart", async () => {
+    const start = dateOf(dayNumber(today) - 2); // the plan's week 1 holds today
+    const plan = { ...detail([session({ id: "s1", date: today, status: "done" }), session({ id: "s2", date: today, type: "long" })]), startDate: start, weekCount: 8 };
+    const progress = { planId: plan.id, asOf: today, weeks: [{ index: 0, plannedDistanceM: 10000, actualDistanceM: 5000, plannedTimeSec: 3600, actualTimeSec: 1800 }] } as unknown as Progress;
+    const getProgress = vi.fn(async () => progress);
+    render(<App api={fakeApi({ getPlan: vi.fn(async () => plan), getProgress, listActivitiesSince: vi.fn(async () => [ran("a")]) })} />);
+    await open();
+    const planWeek = await screen.findByLabelText("Plan week");
+    expect(within(planWeek).getByRole("heading", { name: "Plan week 1" })).toBeInTheDocument();
+    expect(within(planWeek).getByText("5 of 10 km planned")).toBeInTheDocument();
+    expect(within(planWeek).getByText("1 of 2 sessions done")).toBeInTheDocument();
+    expect(getProgress).toHaveBeenCalledWith("p1", today);
+    await userEvent.click(screen.getByRole("button", { name: "Month" }));
+    expect(screen.queryByLabelText("Plan week")).not.toBeInTheDocument();
+  });
+
+  it("keeps the totals when the plan cannot be read", async () => {
+    render(<App api={fakeApi({ getProgress: vi.fn().mockRejectedValue(new ApiError(500, { type: "x", title: "x", status: 500 })), listActivitiesSince: vi.fn(async () => [ran("a")]) })} />);
+    await open();
+    expect((await screen.findAllByText("5 km")).length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Plan week")).not.toBeInTheDocument();
+  });
+
+  it("returns to sign-in, showing no totals, when the session has ended", async () => {
+    const listActivitiesSince = vi.fn().mockRejectedValue(new ApiError(401, { type: "unauthorized", title: "x", status: 401 }));
+    render(<App api={fakeApi({ listActivitiesSince })} />);
+    await open();
+    expect(await screen.findByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Your running")).not.toBeInTheDocument();
+  });
+
+  it("offers a retry when the runs cannot be loaded", async () => {
+    const listActivitiesSince = vi.fn().mockRejectedValueOnce(new ApiError(500, { type: "x", title: "x", status: 500 })).mockResolvedValue([ran("a")]);
+    render(<App api={fakeApi({ listActivitiesSince })} />);
+    await open();
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't load your progress/i);
+    await userEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect((await screen.findAllByText("5 km")).length).toBeGreaterThan(0);
+  });
+});
+
+describe("signing out", () => {
 
   it("signs out and returns to the sign-in form", async () => {
     const api = fakeApi();

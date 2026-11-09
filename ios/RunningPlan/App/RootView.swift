@@ -195,7 +195,7 @@ extension RootView {
                 plans: plans, progress: progress, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onAdd: { sheet = .add(date: $0) }
             )
-        case .progress: ProgressScreen(plans: plans, store: progress, onSetGoal: { showOnboarding = true })
+        case .progress: ProgressScreen(plans: plans, store: progress, inbox: inbox, onSetGoal: { showOnboarding = true })
         case .goal:
             GoalScreen(
                 plans: plans, store: goal, settings: reviewSettings, watchSync: watchSync,

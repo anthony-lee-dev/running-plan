@@ -312,6 +312,20 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   that are not skipped (the reply cannot split running from other time); Whole shows ran / planned up to this week, and the goal card's
   "On track" badge and bar (whole weeks done plus this week's share).
 
+## Your running on Progress (issue #137)
+
+- No API or spec change: totals are worked out on the device from `InboxStore.allRuns` (every run, `listActivities`), the same
+  rules as the web (`web/src/runTotals.ts`; change both together). `RunTotals` (pure) buckets running workouts on `localDate` into
+  calendar weeks (Monday to Sunday, 8 shown) and months (6 shown); matched, inbox and extra runs count, ignored ones and other
+  workout types do not. Pace is total time over total distance of the runs that have a distance; with none it is hidden.
+  `RunningStatsModel` (pure) builds the card (tiles, comparison with the period before, bars, spoken summary, plan week) and
+  `RunningStatsCard` draws it; `ProgressOverview` takes it as a `footer` so the DK-Progress layout above is unchanged.
+- The plan week ("Plan week 4: 18.5 of 25 km planned") is labelled apart from "This week": a plan's weeks start on its own start
+  date and the server's ran distance counts only matched runs. It shows for the week period only, when the plan is under way.
+- `ProgressScreen` loads the runs itself (`inbox.loadAllRuns()`, keyed on the plan, day and session revisions, and on pull to
+  refresh). That shares `InboxStore.busy` and `error` with the inbox and runs screens. A runner with no plan still sees the card
+  under "Set a goal" once runs exist.
+
 ## Weekly review and proposals (DK-Review, issue #71)
 
 - `Features/Review/`: `ReviewModel` (header, tiles, key runs, check-in line, inbox card) and `ProposalCardModel` (title,

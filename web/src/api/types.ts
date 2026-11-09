@@ -7,5 +7,6 @@ export type Session = Schemas["Session"];
 export type SessionUpdate = Schemas["SessionUpdate"];
 export type SessionWriteResult = Schemas["SessionWriteResult"];
 export type Activity = Schemas["Activity"];
+export type Progress = Schemas["Progress"];
 export type Problem = Schemas["Problem"];
 export type Warning = Schemas["Warning"];
