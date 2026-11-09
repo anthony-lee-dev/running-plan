@@ -122,6 +122,14 @@ Stop when the next step needs the human: a PR to merge, a manual-gate box, the s
 an `ask-first` plan, or nothing left unblocked. Say plainly what is waiting and on whom, with PR links, and
 which issues the merged PRs closed.
 
+**Device checks run alongside CI.** Don't hold the human's device check until CI finishes: iOS CI takes 18-28
+minutes and the check is a separate wait. When a worker reports a PR with a device check, pass the ask on to the
+human straight away (PR link and steps), even if its checks are still running. The PR merges only after CI is green
+and the human has passed the check. If CI then fails and the worker's fix changes app behavior, tell the human the
+check has to be redone. Workers run iOS locally in the quick mode (`IOS_TEST_SCOPE=quick`, see the brief); the full
+suite runs in CI, so a green local run doesn't replace the required `ios` check. Before the ask goes out, check that
+production has the routes the check uses (5a).
+
 ## 5a. Deploy the API (only with the human's yes)
 
 A merge doesn't deploy: the Worker and its D1 database only change when someone runs the migrations and

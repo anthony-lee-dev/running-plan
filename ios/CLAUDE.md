@@ -347,6 +347,13 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   from the Mac's Xcode 27.1; keep the deployment target at iOS 17 so both build.
   It picks the first iPhone on the newest installed iOS runtime (older runtimes may not match the
   installed Xcode). Override with `IOS_SIM_DEST='platform=iOS Simulator,id=<udid>'`.
+- Workers run the quick mode instead: `IOS_TEST_SCOPE=quick IOS_UI_TESTS="GoalUITests InboxUITests" bash scripts/verify.sh ios`
+  does the same spec check, project generation and build, runs all of `RunningPlanTests` and only the UI test classes
+  named (none if `IOS_UI_TESTS` is unset), and skips the "UI tests reached the local API" check. CI and the Stop hook
+  run the full suite. Name the UI test classes of the screens you changed.
+- Without `IOS_SIM_DEST`, `verify.sh` locks the simulator it picks (`$TMPDIR/running-plan-sim-<udid>.lock`, holding
+  the run's pid) so two runs never share one; when it is held, the run uses a clone named `RunningPlan verify <n>`,
+  created on first need. Runs started by an older `verify.sh` don't take the lock.
 - The `ios` check builds only when `ios/` changes beyond Markdown (or `spec/`, `api/`, `scripts/verify.sh` or the workflow
   does). It caches the API client generator build and DerivedData; a cache miss only makes it slower.
 

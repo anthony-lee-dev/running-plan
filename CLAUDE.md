@@ -39,7 +39,12 @@ set up each session on their watch by hand, then import results and review. Live
 
 ## Definition of done
 
-1. `bash scripts/verify.sh <package>` exits 0 for every package you touched (`api`, `spec`, `web`, `ios`).
+1. `bash scripts/verify.sh <package>` exits 0 for every package you touched (`api`, `spec`, `web`, `ios`). For `ios`,
+   a worker runs the quick mode locally: `IOS_TEST_SCOPE=quick IOS_UI_TESTS="<UI test classes for the screens you
+   touched>" bash scripts/verify.sh ios` (unit tests plus those classes). iOS CI and the Stop hook run the full suite,
+   and the PR doesn't merge until the required `ios` check passes. `api`, `spec` and `web` always run in full.
+   When a PR needs a device check, ask for it as soon as the PR is pushed and the quick verify passes, while CI runs.
+   It merges only after CI is green and the human has passed the check; redo the check if a CI fix changes app behavior.
 2. Work is on a branch named `agent/<short-task>` with a PR opened by `/ship`, marked ready for review, and its body
    says `Closes #<issue>` (`Refs #<issue>` for a contract-only PR).
 3. Manual-gate items (real device, Apple account) are listed as unticked boxes in the PR body, never faked.

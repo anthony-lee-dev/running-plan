@@ -46,7 +46,19 @@ From the human: <corrections or choices from the conversation that apply, or non
    tell it to run git as `git -C <path>` and to read files by absolute path. Otherwise it may review the main
    checkout, where your branch isn't checked out, and find an empty diff.
    - The repo's Stop hook doesn't run for you. You aren't done until `bash scripts/verify.sh <packages>`
-     exits 0.
+     exits 0, with one difference for iOS: run it as
+     `IOS_TEST_SCOPE=quick IOS_UI_TESTS="<classes>" bash scripts/verify.sh ios`. That checks the api client against
+     the spec, builds, runs all the unit tests and only the UI test classes you name, for the screens you changed or
+     added (`IOS_UI_TESTS="GoalUITests InboxUITests"`; names are `ios/RunningPlanUITests` classes, space or comma
+     separated, `Class/testMethod` also works). It takes minutes, not the 16-18 of the full suite. Don't run the
+     full `bash scripts/verify.sh ios` yourself: iOS CI runs the whole suite on the PR, and the PR doesn't merge
+     until the required `ios` check passes. Every other package (`api`, `spec`, `web`) still runs its full
+     `bash scripts/verify.sh <package>` locally. If a change touches shared iOS code (networking, navigation, app
+     state), name more UI classes rather than fewer.
+   - Other workers run iOS tests at the same time, and two runs on one simulator make each other fail at random
+     (snapshot tests especially). Without `IOS_SIM_DEST`, `verify.sh` locks the simulator it uses and takes a clone
+     (`RunningPlan verify <n>`) when another run holds it. If you set `IOS_SIM_DEST` yourself, pick a simulator
+     nobody else is using. If a test fails that your change can't explain, rerun once before debugging.
    - If your branch conflicts with `main`, run `git merge origin/main`, fix the conflict, commit, then run
      `git push origin <Branch>`. A bare `git push` is denied. Never rebase a pushed branch or force-push.
    - Never run `gh pr merge`, never edit `autonomy.json`, never tick a `## Manual gates` box, and never
@@ -54,6 +66,16 @@ From the human: <corrections or choices from the conversation that apply, or non
    - If this PR closes the last open issue in its milestone (or "From the human" says it is the slice's last), put
      the slice's device check against the deployed API under `## Manual gates` as an unticked box
      (`docs/backlog.md`: "End-to-end check for every slice", item 3). The milestone's description has its **Done when**.
+   - **Device check: ask while CI runs.** If the PR needs the human on a device (the box above, or the issue says
+     so), don't wait for CI first. As soon as the PR is pushed and the quick verify has passed, put the ask in
+     your report (and in the PR as a comment) with the PR link and the steps to follow on the device, then
+     carry on with `/ship`'s CI watch. The human's check and the ~25 minutes of iOS CI then run at the same time.
+     Before you ask, check that the production API routes the check uses are deployed (`/next-task` step 5a:
+     `npm run smoke -w api`, `wrangler d1 migrations list`); if production is behind, say so in the ask.
+   - The PR merges only after both CI is green and the human has passed the device check. If CI fails and your fix
+     changes what the app does, the earlier device check no longer covers the PR: say so plainly in the report
+     and the PR, and ask for the device check again. A fix that doesn't change app behavior (a flaky test, a
+     lint fix) doesn't need one.
 7. Remove your worktree once `/ship` is finished: the PR is open and ready for review, and `git status` shows
    nothing to commit and says the branch is up to date with `origin/<Branch>`. The human checks branches out in the
    main checkout to verify them, and git refuses to check out a branch that a worktree still holds.
