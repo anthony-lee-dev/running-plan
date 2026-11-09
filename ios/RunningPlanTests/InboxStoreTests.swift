@@ -165,7 +165,9 @@ private struct FakeHealth: HealthImporting {
     var asks = true
     var found: [HealthWorkout] = []
     var byId: [String: HealthWorkout] = [:]
+    var samples: RunSamples?
     func workout(uuid: String) async throws -> HealthWorkout? { byId[uuid] }
+    func samples(forWorkout uuid: String) async throws -> RunSamples? { samples }
     func needsAccess() async -> Bool { asks }
     func requestAccess() async throws {}
     func workouts(since: Date) async throws -> [HealthWorkout] { found }
@@ -309,6 +311,41 @@ struct InboxStoreTests {
         #expect(await service.uploads == [["hk-a1"]])
         await store.backfill(activityId: "a2")
         #expect(await service.uploads == [["hk-a1"]], "nothing new to fill in")
+    }
+
+    // Issue #131: the splits skeleton shows while Health is read, then goes; weather comes from the same read.
+    @Test func detailsLoadSplitsAndWeatherThenStopLoading() async throws {
+        var samples = RunSamples()
+        samples.distance = (0..<20).map { DistanceSample(start: Double($0) * 100, end: Double($0 + 1) * 100, meters: 250) }
+        samples.weather = RunWeather(temperatureC: 12, humidityPercent: 70, condition: "Cloudy")
+        let (store, service, _, _) = try await make(health: FakeHealth(asks: false, samples: samples))
+        await service.setEverything([try activityFixture(id: "a1", date: "2026-10-26")])
+        await store.loadAllRuns()
+        let details = RunDetailsStore(inbox: store, heart: nil, expectsSamples: true)
+        #expect(details.loading)
+        await details.open(activityId: "a1")
+        #expect(!details.loading)
+        #expect(!details.splits.isEmpty)
+        #expect(details.weather?.text == "Cloudy · 12°C · 70% humidity")
+    }
+
+    @Test func detailsStopLoadingWhenHealthHasNothing() async throws {
+        let (store, service, _, _) = try await make(health: FakeHealth(asks: true))
+        await service.setEverything([try activityFixture(id: "a1", date: "2026-10-26")])
+        await store.loadAllRuns()
+        let details = RunDetailsStore(inbox: store, heart: nil, expectsSamples: true)
+        await details.open(activityId: "a1")
+        #expect(!details.loading)
+        #expect(details.splits.isEmpty)
+        #expect(details.weather == nil)
+    }
+
+    @Test func onlyAHealthRunOnADeviceWithHealthStartsWithASkeleton() throws {
+        let health = try activityFixture(id: "a1", date: "2026-10-26")
+        #expect(RunDetailsStore.expectsSamples(health, healthAvailable: true))
+        #expect(!RunDetailsStore.expectsSamples(health, healthAvailable: false))
+        let walk = try activityFixture(id: "a2", date: "2026-10-26", type: "walking")
+        #expect(!RunDetailsStore.expectsSamples(walk, healthAvailable: true))
     }
 
     @Test func backfillNeverAsksForAccess()async throws {

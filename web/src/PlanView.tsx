@@ -1,20 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, type Api } from "./api/client";
 import type { PlanDetail, Session } from "./api/types";
+import { plannedMetres } from "./sessionMath";
 
 const STATUS_LABEL: Record<Session["status"], string> = { planned: "Planned", done: "Done", skipped: "Skipped" };
 
-type Step = NonNullable<Session["steps"]>[number];
-
-const distanceOf = (goal: { type: string; value?: number }): number => (goal.type === "distance" ? (goal.value ?? 0) : 0);
-
-function stepMetres(step: Step): number {
-  if (step.kind === "repeat") return step.count * step.steps.reduce((sum, inner) => sum + distanceOf(inner.goal), 0);
-  return step.kind === "exercise" ? 0 : distanceOf(step.goal);
-}
-
 function describe(session: Session): string {
-  const metres = (session.steps ?? []).reduce((sum, step) => sum + stepMetres(step), 0);
+  const metres = plannedMetres(session);
   return metres > 0 ? `${(metres / 1000).toFixed(1)} km` : session.type;
 }
 

@@ -25,6 +25,7 @@ extension HealthImporting {
 struct RunSamples: Equatable, Sendable {
     var distance: [DistanceSample] = []
     var heart: [HeartSample] = []
+    var weather: RunWeather?
 }
 
 struct LiveHealthImporter: HealthImporting, @unchecked Sendable {
@@ -74,7 +75,33 @@ struct LiveHealthImporter: HealthImporting, @unchecked Sendable {
         let heart = try await quantitySamples(HKQuantityType(.heartRate), inWorkout).map {
             HeartSample(offset: $0.startDate.timeIntervalSince(start), bpm: $0.quantity.doubleValue(for: beats))
         }
-        return RunSamples(distance: distance, heart: heart)
+        return RunSamples(distance: distance, heart: heart, weather: Self.weather(workout))
+    }
+
+    /// Weather from the workout's metadata (no extra permission). Nil when the source wrote none.
+    private static func weather(_ w: HKWorkout) -> RunWeather? {
+        let temperature = (w.metadata?[HKMetadataKeyWeatherTemperature] as? HKQuantity)?.doubleValue(for: .degreeCelsius())
+        let humidity = (w.metadata?[HKMetadataKeyWeatherHumidity] as? HKQuantity).flatMap { RunWeather.percent(fromFraction: $0.doubleValue(for: .percent())) }
+        let condition = (w.metadata?[HKMetadataKeyWeatherCondition] as? NSNumber).flatMap { conditionName($0.intValue) }
+        let weather = RunWeather(temperatureC: temperature, humidityPercent: humidity, condition: condition)
+        return weather.text == nil ? nil : weather
+    }
+
+    /// By the raw value of `HKWeatherCondition` (the Swift case names differ from the header's); 0 and unknown give nil.
+    private static func conditionName(_ raw: Int) -> String? {
+        switch raw {
+        case 1, 2: "Clear"
+        case 3: "Partly cloudy"
+        case 4, 5: "Cloudy"
+        case 6: "Foggy"
+        case 7, 10, 11: "Hazy"
+        case 8, 9: "Windy"
+        case 12, 14, 18, 19, 20: "Snow"
+        case 13: "Hail"
+        case 15, 16, 17, 21, 22, 23: "Rain"
+        case 24, 25, 26, 27: "Stormy"
+        default: nil
+        }
     }
 
     private func healthWorkout(uuid: String) async throws -> HKWorkout? {

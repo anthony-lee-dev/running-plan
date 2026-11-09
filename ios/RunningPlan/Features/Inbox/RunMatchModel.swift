@@ -57,6 +57,23 @@ enum RunMatchModel {
     }
 }
 
+/// A button on a run (the all-runs list and Run details).
+enum RunAction: Equatable {
+    case match, change, unmatch, backToInbox
+}
+
+extension RunMatchModel {
+    /// What can be done with a run that stands as `status`. A run matched to a session that is gone can only be moved:
+    /// unmatching asks the server about a session it may no longer hold.
+    static func actions(for status: RunsModel.Status, sessionExists: Bool) -> [RunAction] {
+        switch status {
+        case .matched: sessionExists ? [.change, .unmatch] : [.change]
+        case .inbox: [.match]
+        case .extra, .ignored: [.match, .backToInbox]
+        }
+    }
+}
+
 /// Every imported run, matched and not, for re-mapping from the run's side.
 struct RunsModel {
     typealias Session = Components.Schemas.Session

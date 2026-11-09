@@ -47,6 +47,24 @@ struct RunMatchModelTests {
         #expect(found.map { RunMatchModel.row(for: $0).tag } == [nil, "Extra run", "Ignored"])
     }
 
+    // Issue #131: Match / Change / Unmatch inside Run details.
+    @Test func runDetailsOffersTheActionsForWhereTheRunStands() {
+        let matched = RunsModel.Status.matched(sessionId: "s1", label: "Easy run")
+        let changeAndUnmatch: [RunAction] = [.change, .unmatch]
+        #expect(RunMatchModel.actions(for: matched, sessionExists: true) == changeAndUnmatch)
+        let onlyMatch: [RunAction] = [.match]
+        #expect(RunMatchModel.actions(for: .inbox, sessionExists: false) == onlyMatch)
+        let matchAndBack: [RunAction] = [.match, .backToInbox]
+        #expect(RunMatchModel.actions(for: .extra, sessionExists: false) == matchAndBack)
+        #expect(RunMatchModel.actions(for: .ignored, sessionExists: false) == matchAndBack)
+    }
+
+    @Test func aRunMatchedToAGoneSessionCanBeMovedButNotUnmatched() {
+        let gone = RunsModel.Status.matched(sessionId: "s1", label: "a session no longer in your plan")
+        let onlyChange: [RunAction] = [.change]
+        #expect(RunMatchModel.actions(for: gone, sessionExists: false) == onlyChange)
+    }
+
     @Test func theRunsListShowsWhereEachRunStands() throws {
         let monday = try easy("2026-10-26")
         let matched = try activityFixture(id: "a1", date: "2026-10-26", matchedSession: monday.value1.id, disposition: "matched")

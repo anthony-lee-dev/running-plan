@@ -11,6 +11,8 @@ struct NextView: View {
     /// Workouts waiting in the import inbox, and the way into it (also how a run is added by hand).
     var inboxCount = 0
     var onInbox: () -> Void = {}
+    /// The way into every imported run (Runs list), not only the ones waiting.
+    var onRuns: () -> Void = {}
     /// The weekly review waiting (due, or with an urgent suggestion), and the way into it (DK-Review).
     var reviewCard: ReviewModel?
     var onReview: () -> Void = {}
@@ -49,6 +51,7 @@ struct NextView: View {
                 }
                 if offerWatch { watchCard }
                 inboxCard
+                runsCard
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -110,6 +113,24 @@ struct NextView: View {
         .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 20))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("next.watch")
+    }
+
+    private var runsCard: some View {
+        Button(action: onRuns) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Your runs").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink.color)
+                    Text("Stats and splits for every imported run").font(.system(size: 13)).foregroundStyle(Palette.muted.color)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Palette.muted.color)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: Metrics.minTouchTarget, alignment: .leading)
+            .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 20))
+            .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("next.runs")
     }
 
     private var inboxCard: some View {

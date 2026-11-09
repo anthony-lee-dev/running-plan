@@ -6,6 +6,7 @@ struct RootView: View {
     @State private var plans: PlanStore
     @State private var inbox: InboxStore
     @State private var showInbox = false
+    @State private var showRuns = false
     /// The weekly review (DK-Review): loaded here so Next can offer it, shown over the tabs.
     @State private var reviews: ReviewStore
     @State private var reviewSettings: ReviewSettingsModel
@@ -111,6 +112,9 @@ struct RootView: View {
         .fullScreenCover(isPresented: $showInbox) {
             InboxScreen(store: inbox, plans: plans, onClose: { showInbox = false })
         }
+        .fullScreenCover(isPresented: $showRuns) {
+            RunsScreen(store: inbox, plans: plans, onClose: { showRuns = false }, backTitle: "Back")
+        }
         .fullScreenCover(isPresented: $showReview) {
             ReviewScreen(plans: plans, review: reviews, inbox: inbox, settings: reviewSettings, onClose: { showReview = false })
         }
@@ -135,7 +139,7 @@ struct RootView: View {
 extension RootView {
     /// Something presented over the tabs that a sign-in sheet cannot appear on top of (onboarding has its own sign-in).
     var coversOpen: Bool {
-        showInbox || showReview || openSession != nil || sheet != nil
+        showInbox || showRuns || showReview || openSession != nil || sheet != nil
     }
 
     /// Opens the sign-in sheet, closing any cover or sheet that is up first.
@@ -146,6 +150,7 @@ extension RootView {
         }
         signInWaiting = true
         showInbox = false
+        showRuns = false
         showReview = false
         openSession = nil
         sheet = nil
@@ -183,7 +188,7 @@ extension RootView {
             NextScreen(
                 plans: plans, progress: progress, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onMove: { sheet = .move(sessionId: $0) },
-                inboxCount: inbox.count, onInbox: { showInbox = true }, review: reviews, onReview: { showReview = true }, watchSync: watchSync
+                inboxCount: inbox.count, onInbox: { showInbox = true }, onRuns: { showRuns = true }, review: reviews, onReview: { showReview = true }, watchSync: watchSync
             )
         case .plan:
             PlanScreen(
@@ -195,7 +200,8 @@ extension RootView {
             GoalScreen(
                 plans: plans, store: goal, settings: reviewSettings, watchSync: watchSync,
                 isSignedIn: { await APIConfiguration.liveSession.isSignedIn }, onSetGoal: { showOnboarding = true },
-                onReviewSettingsClosed: { reviewSettingsChanges += 1 }
+                onReviewSettingsClosed: { reviewSettingsChanges += 1 },
+                onRuns: { showRuns = true }
             )
         }
     }

@@ -54,3 +54,25 @@ struct RunDetailsModelTests {
         #expect(model.planVsActual?.distance?.actual == "5.0 km")
     }
 }
+
+struct RunWeatherTests {
+    @Test func weatherReadsAsOneShortLine() {
+        let weather = RunWeather(temperatureC: 17.6, humidityPercent: 62, condition: "Clear")
+        #expect(weather.text == "Clear · 18°C · 62% humidity")
+    }
+
+    @Test func missingPartsAreLeftOut() {
+        #expect(RunWeather(temperatureC: 4, humidityPercent: nil, condition: nil).text == "4°C")
+        #expect(RunWeather(temperatureC: nil, humidityPercent: nil, condition: "Rain").text == "Rain")
+    }
+
+    @Test func noReadingsMeansNoFooter() {
+        #expect(RunWeather(temperatureC: nil, humidityPercent: nil, condition: nil).text == nil)
+    }
+
+    @Test func aZeroToOneHumidityIsScaledToPercent() {
+        #expect(RunWeather.percent(fromFraction: 0.62) == 62)
+        #expect(RunWeather.percent(fromFraction: 1.4) == nil)
+        #expect(RunWeather.percent(fromFraction: -0.1) == nil)
+    }
+}

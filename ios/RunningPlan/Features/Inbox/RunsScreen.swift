@@ -48,6 +48,8 @@ struct RunsScreen: View {
     let store: InboxStore
     let plans: PlanStore
     let onClose: () -> Void
+    /// What the back link says: "Import inbox" from the inbox, "Back" from Next or Goal and settings.
+    var backTitle = "Import inbox"
     @State private var picking: String?
     /// The run whose details are open (issue #131).
     @State private var details: String?
@@ -59,13 +61,14 @@ struct RunsScreen: View {
                 Button(action: onClose) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold))
-                        Text("Import inbox").font(.system(size: 16, weight: .semibold))
+                        Text(backTitle).font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundStyle(Palette.ink.color)
                     .frame(minHeight: Metrics.minTouchTarget)
                     .contentShape(Rectangle())
                 }
-                .accessibilityLabel("Back to Import inbox")
+                .accessibilityLabel(backTitle == "Back" ? "Back" : "Back to \(backTitle)")
+                .accessibilityIdentifier("runs.back")
                 Text("All imported runs")
                     .font(.system(size: 32, weight: .bold)).tracking(-0.6)
                     .foregroundStyle(Palette.ink.color)
@@ -88,7 +91,8 @@ struct RunsScreen: View {
             .padding(.bottom, 24)
         }
         .background(Palette.bg.color.ignoresSafeArea())
-        .task { await store.loadAllRuns() }
+        // Also reads Health when access was given, so a run newer than the last import shows when opened from Next.
+        .task { await store.openSessionPage() }
         .refreshable { await store.loadAllRuns() }
         .fullScreenCover(isPresented: Binding(get: { details != nil }, set: { if !$0 { details = nil } })) {
             if let id = details {
