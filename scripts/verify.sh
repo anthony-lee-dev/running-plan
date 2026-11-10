@@ -190,28 +190,34 @@ ios_test_filters() {
   esac
 }
 
-# CI splits the suite over parallel runners. IOS_SHARD=unit runs the unit test target; IOS_SHARD=ui:<i>/<n> (1-based)
-# runs the i-th of n groups of UI test classes. The classes are found in ios/RunningPlanUITests (every `final class
-# ...: XCTestCase`), so a new class lands in some shard by itself, and are dealt out largest first (by test count) to
-# the lightest group so the shards finish together. Prints the -only-testing flags, one per line.
+# CI splits the suite over parallel runners. IOS_SHARD=<i>/<n> (1-based) runs the i-th of n groups of tests. The items
+# dealt out are the unit test target and every UI test class in ios/RunningPlanUITests (each `final class ...:
+# XCTestCase`, found by name, so a new class lands in some shard by itself). Each item has a weight, the seconds it
+# took on a CI runner (IOS_SHARD_WEIGHTS below; an unlisted class counts 80 s per test), and items go largest first to
+# the lightest group, so the shards finish together. Re-measure when the shards drift apart (the CI log of each shard
+# lists every test's time). Prints the -only-testing flags, one per line.
+IOS_SHARD_WEIGHTS="RunningPlanTests=300 InboxUITests=440 PreviewUITests=370 SignInAgainUITests=190 GoalUITests=165 ProgressUITests=135 ReviewUITests=130 DeletePlanUITests=95 WatchUITests=70 SessionEditorUITests=70 TabBarUITests=20 InterviewUITests=20"
+
 ios_shard_filters() {
   local shard="$1" i n
-  case "$shard" in
-    unit) echo "-only-testing:RunningPlanTests"; return 0 ;;
-    ui:*/*) i="${shard#ui:}"; n="${i#*/}"; i="${i%/*}" ;;
-    *) echo "IOS_SHARD must be 'unit' or 'ui:<i>/<n>', not '$shard'" >&2; return 2 ;;
-  esac
-  if [[ ! "$i" =~ ^[1-9][0-9]*$ || ! "$n" =~ ^[1-9][0-9]*$ || $i -gt $n ]]; then
-    echo "IOS_SHARD '$shard' needs 1 <= i <= n" >&2; return 2
+  if [[ ! "$shard" =~ ^([1-9][0-9]*)/([1-9][0-9]*)$ ]] || (( BASH_REMATCH[1] > BASH_REMATCH[2] )); then
+    echo "IOS_SHARD must be <i>/<n> with 1 <= i <= n, not '$shard'" >&2; return 2
   fi
+  i="${BASH_REMATCH[1]}"; n="${BASH_REMATCH[2]}"
   local f cls count
-  for f in ios/RunningPlanUITests/*.swift; do
-    cls="$(sed -n 's/^final class \([A-Za-z0-9_]*\): XCTestCase.*/\1/p' "$f" | head -n 1)"
-    [[ -n "$cls" ]] || continue
-    count="$(grep -c 'func test' "$f" || true)"
-    printf '%s %s\n' "$count" "$cls"
-  done | sort -k1,1nr -k2,2 | awk -v n="$n" -v i="$i" '
-    { g = 1; for (k = 2; k <= n; k++) if (load[k] < load[g]) g = k; load[g] += $1; if (g == i) print "-only-testing:RunningPlanUITests/" $2 }'
+  {
+    for f in ios/RunningPlanUITests/*.swift; do
+      cls="$(sed -n 's/^final class \([A-Za-z0-9_]*\): XCTestCase.*/\1/p' "$f" | head -n 1)"
+      [[ -n "$cls" ]] || continue
+      count="$(grep -c 'func test' "$f" || true)"
+      printf 'RunningPlanUITests/%s %s\n' "$cls" "$((count * 80))"
+    done
+    echo "RunningPlanTests 0"
+  } | awk -v n="$n" -v i="$i" -v w="$IOS_SHARD_WEIGHTS" '
+    BEGIN { m = split(w, kv, " "); for (k = 1; k <= m; k++) { split(kv[k], p, "="); weight[p[1]] = p[2] } }
+    { name = $1; short = name; sub(".*/", "", short); wt = (short in weight) ? weight[short] : $2; print wt, name }' \
+    | sort -k1,1nr -k2,2 | awk -v n="$n" -v i="$i" '
+    { g = 1; for (k = 2; k <= n; k++) if (load[k] < load[g]) g = k; load[g] += $1; if (g == i) print "-only-testing:" $2 }'
 }
 
 # Two iOS test runs on one simulator disturb each other (snapshot and UI tests fail at random, both run slower), and
@@ -281,8 +287,8 @@ verify_ios() {
   else
     while IFS= read -r f; do filters+=("$f"); done < <(ios_test_filters)
   fi
-  # The generated client is checked once per CI run (the unit shard), not by every UI shard.
-  if [[ -z "$shard" || "$shard" == unit ]]; then
+  # The generated client is checked once per CI run (the last shard, the lightest), not by every shard.
+  if [[ -z "$shard" || "${shard%/*}" == "${shard#*/}" ]]; then
     echo "== ios: api client matches the spec"
     bash scripts/generate-api-client.sh --check
   fi
