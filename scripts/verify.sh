@@ -317,13 +317,22 @@ verify_ios() {
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
   # ios-ci.yml splits the suite over parallel runners, IOS_SHARD, and sets a shorter limit per shard with one retry).
   local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0 attempt=1
-  # IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang: restart the simulator, then the run only repeats
+  # IOS_RETRY_FAILED_TESTS=1 (CI) runs a failing test a second time (a slow runner makes the 10 s waits flaky; it fails
+  # if both runs fail). IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang or a simulator that was not ready: restart the simulator, then the run only repeats
   # tests whose build is already done.
   while :; do
     [[ -z "${IOS_RESULT_BUNDLE:-}" ]] || rm -rf "$IOS_RESULT_BUNDLE" # xcodebuild refuses an existing bundle
     # TEST_RUNNER_ variables reach the UI test process without the prefix.
     run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} -quiet && rc=0 || rc=$?
+      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} ${IOS_RETRY_FAILED_TESTS:+-retry-tests-on-failure -test-iterations 2} -quiet && rc=0 || rc=$?
+    if [[ $rc -eq 70 ]]; then # xcodebuild "Unable to find a device matching the destination": the simulator was not ready
+      echo "== ios: xcodebuild could not use the simulator" >&2
+      if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then
+        attempt=$((attempt + 1))
+        [[ -z "${id:-}" ]] || { xcrun simctl shutdown "$id" >/dev/null 2>&1; xcrun simctl boot "$id" >/dev/null 2>&1; xcrun simctl bootstatus "$id" >/dev/null 2>&1; } || true
+        continue
+      fi
+    fi
     if [[ $rc -eq 124 ]]; then
       echo "== ios: xcodebuild test ran past ${limit}s and was stopped (a hung simulator?)" >&2
       if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then

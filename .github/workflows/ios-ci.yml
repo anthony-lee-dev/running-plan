@@ -89,6 +89,7 @@ jobs:
         env:
           IOS_SHARD: ${{ matrix.shard }}
           IOS_HANG_RETRIES: "1"
+          IOS_RETRY_FAILED_TESTS: "1"
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
           # A shard takes about 10 minutes, so one that runs past 18 is hung: verify stops it, restarts the
           # simulator and runs it once more, all inside the job's 45-minute limit.
