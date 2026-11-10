@@ -110,7 +110,9 @@ final class PreviewUITests: XCTestCase {
         XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
         for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
         picker.buttons.firstMatch.tap()
-        app.buttons["Next Month"].tap()
+        let nextMonth = app.buttons["Next Month"]
+        XCTAssertTrue(nextMonth.waitForExistence(timeout: 15), app.debugDescription)
+        nextMonth.tap()
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
         let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch

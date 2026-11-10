@@ -31,7 +31,7 @@ jobs:
           # from, the in-memory API the UI tests run against (api/test/ui-server imports only api/src), its
           # migrations and packages, and the scripts that run it. Markdown never counts.
           if git diff --quiet "$BASE" HEAD -- \
-            ios spec api/src api/test/ui-server api/migrations api/package.json api/tsconfig.json \
+            ios spec designs/dark/png api/src api/test/ui-server api/migrations api/package.json api/tsconfig.json \
             package.json package-lock.json scripts/verify.sh scripts/generate-api-client.sh .github/workflows/ios-ci.yml \
             ':(exclude,glob)**/*.md' 2>/dev/null; then
             echo "iOS untouched."; echo "run=false" >> "$GITHUB_OUTPUT"
@@ -89,11 +89,11 @@ jobs:
         env:
           IOS_SHARD: ${{ matrix.shard }}
           IOS_HANG_RETRIES: "1"
-          IOS_RETRY_FAILED_TESTS: "1"
+          IOS_TEST_ALLOWANCE: "300"
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
-          # A shard takes about 10 minutes, so one that runs past 18 is hung: verify stops it, restarts the
+          # A shard takes 10 to 17 minutes and one test is stopped after 5 (IOS_TEST_ALLOWANCE), so a shard past 25 is hung: verify stops it, restarts the
           # simulator and runs it once more, all inside the job's 45-minute limit.
-          IOS_TEST_TIMEOUT: "1080"
+          IOS_TEST_TIMEOUT: "1500"
         run: bash scripts/verify.sh ios
       # Per-test times and failure messages (xcodebuild -quiet prints neither).
       - name: Slowest tests and failures

@@ -205,6 +205,11 @@ ios_shard_filters() {
   fi
   i="${BASH_REMATCH[1]}"; n="${BASH_REMATCH[2]}"
   local f cls count
+  for f in ios/RunningPlanUITests/*.swift; do # a test file the class pattern misses would silently run in no shard
+    if grep -q 'func test' "$f" && ! grep -q '^final class [A-Za-z0-9_]*: XCTestCase' "$f"; then
+      echo "ios_shard_filters: $f has tests but no 'final class X: XCTestCase' line, so no shard would run it" >&2; return 2
+    fi
+  done
   {
     for f in ios/RunningPlanUITests/*.swift; do
       cls="$(sed -n 's/^final class \([A-Za-z0-9_]*\): XCTestCase.*/\1/p' "$f" | head -n 1)"
@@ -312,19 +317,21 @@ verify_ios() {
   if [[ "$scope" == quick ]]; then
     echo "== ios: QUICK scope (${filters[*]}); the rest of the UI suite runs in CI, and 'bash scripts/verify.sh ios' runs it all"
   fi
+  # Wait for the boot started above, so xcodebuild never races a booting device.
+  [[ -z "$id" ]] || xcrun simctl bootstatus "$id" >/dev/null 2>&1 || true
   echo "== ios: test on ${dest}"
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
   # ios-ci.yml splits the suite over parallel runners, IOS_SHARD, and sets a shorter limit per shard with one retry).
   local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0 attempt=1
-  # IOS_RETRY_FAILED_TESTS=1 (CI) runs a failing test a second time (a slow runner makes the 10 s waits flaky; it fails
-  # if both runs fail). IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang or a simulator that was not ready: restart the simulator, then the run only repeats
+  # IOS_TEST_ALLOWANCE=<seconds> (CI) fails a single test that runs longer, naming it, instead of waiting for the
+  # whole-run limit. IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang or a simulator that was not ready: restart the simulator, then the run only repeats
   # tests whose build is already done.
   while :; do
     [[ -z "${IOS_RESULT_BUNDLE:-}" ]] || rm -rf "$IOS_RESULT_BUNDLE" # xcodebuild refuses an existing bundle
     # TEST_RUNNER_ variables reach the UI test process without the prefix.
     run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} ${IOS_RETRY_FAILED_TESTS:+-retry-tests-on-failure -test-iterations 2} -quiet && rc=0 || rc=$?
+      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} ${IOS_TEST_ALLOWANCE:+-test-timeouts-enabled YES -default-test-execution-time-allowance "$IOS_TEST_ALLOWANCE" -maximum-test-execution-time-allowance "$IOS_TEST_ALLOWANCE"} -quiet && rc=0 || rc=$?
     if [[ $rc -eq 70 ]]; then # xcodebuild "Unable to find a device matching the destination": the simulator was not ready
       echo "== ios: xcodebuild could not use the simulator" >&2
       if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then
