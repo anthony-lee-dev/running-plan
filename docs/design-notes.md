@@ -153,6 +153,7 @@ operation ids; `scripts/test/design-notes.test.sh` checks this section against `
 | DK-CheckIn | The confirmed match and session from the local store | Save: `createCheckIn` (`checkin.create`); with Weekly plus urgent, a pain flag makes the server propose at once (no extra call). After every import: the app calls `generateProposals` after each import sync |
 | DK-Review | `getWeeklyReview` (summary, pending proposals, loose ends); `listProposals` | Accept: `acceptProposal`; Dismiss: `dismissProposal`; on the review day the app calls `generateProposals` first if the week has none |
 | Goal and settings (no board, task 3.7) | `getProfile`, `listPlans` | `updateProfile` (target display, review frequency and day); edit goal: `updatePlan`; re-run the interview: `generateProposals` with `interview`; delete plan: `deletePlan` (`plan.delete`); export data: `exportAccount`; delete account: `deleteAccount` |
+| Run details (no board, #132) | Local store for the run; `getRunSummary` on open | `generateRunSummary` once when the summary says it can be generated; the "AI run summaries" switch in settings: `updateProfile` |
 
 Weekly plus urgent also proposes at once when a key session is missed; the backend does this when the session
 becomes missed (task 2.14), so no screen calls it.

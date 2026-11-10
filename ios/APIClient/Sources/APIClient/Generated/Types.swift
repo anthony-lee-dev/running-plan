@@ -207,6 +207,44 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PATCH /v1/activities/{activityId}`.
     /// - Remark: Generated from `#/paths//v1/activities/{activityId}/patch(updateActivity)`.
     func updateActivity(_ input: Operations.updateActivity.Input) async throws -> Operations.updateActivity.Output
+    /// The written summary of a run (cached AI text, or the template text)
+    ///
+    /// Returns the stored AI summary when one exists for the run's current data, otherwise the template
+    /// summary built from the same facts. It never calls the model and never writes, so it is safe to call on
+    /// every open of Run details. When `canGenerate` is true the client calls `generateRunSummary` once.
+    ///
+    /// Only running activities that are not `ignored` have a summary; anything else, and another user's
+    /// activity, is a 404.
+    ///
+    ///
+    /// - Remark: HTTP `GET /v1/activities/{activityId}/summary`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)`.
+    func getRunSummary(_ input: Operations.getRunSummary.Input) async throws -> Operations.getRunSummary.Output
+    /// Write the AI summary of a run (once per change of the run's data)
+    ///
+    /// Returns the cached AI summary when the run's data has not changed since it was written. Otherwise it
+    /// asks the model to reword facts computed by the server, checks the result (every number must come from
+    /// the facts; no medical or advice wording; a stricter check when the run has a pain flag) and stores it.
+    /// Whenever the model is not used or its text fails the checks, the response is the template summary with a
+    /// `reason`. A failed attempt may be remembered for the same data (`canGenerate` false on the next GET), so
+    /// reopening the run does not spend more model calls on text that already failed.
+    ///
+    /// There is no body and no way to force a new text: a summary changes only when the run's data does
+    /// (a match, an unmatch, a check-in, a new prompt version). The next planned session is not part of that
+    /// data: `nextStep` is built on every read, see `RunSummary`.
+    ///
+    /// **Pain.** When the run's check-in flags pain, the paragraph may be AI text but must not mention the
+    /// pain, and `nextStep` is the fixed guidance (`pain` is true) instead of the next planned session.
+    ///
+    /// **Limits.** The per-account limit (30 generations an hour, 60 a day) answers 429 with `Retry-After`;
+    /// the client keeps the template it already has from the GET. The daily cap across all accounts (kept
+    /// under the Workers AI free allowance), an exhausted allowance and the off switches answer 200 with the
+    /// template and a `reason` (`over_limit`, `ai_unavailable`, `disabled`).
+    ///
+    ///
+    /// - Remark: HTTP `POST /v1/activities/{activityId}/summary:generate`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)`.
+    func generateRunSummary(_ input: Operations.generateRunSummary.Input) async throws -> Operations.generateRunSummary.Output
     /// Run the proposal engine, or re-run the interview, for a plan
     ///
     /// Without `interview`, runs `propose_adjustments` (§6.6) on matches, plan-versus-actual and check-ins
@@ -631,6 +669,64 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The written summary of a run (cached AI text, or the template text)
+    ///
+    /// Returns the stored AI summary when one exists for the run's current data, otherwise the template
+    /// summary built from the same facts. It never calls the model and never writes, so it is safe to call on
+    /// every open of Run details. When `canGenerate` is true the client calls `generateRunSummary` once.
+    ///
+    /// Only running activities that are not `ignored` have a summary; anything else, and another user's
+    /// activity, is a 404.
+    ///
+    ///
+    /// - Remark: HTTP `GET /v1/activities/{activityId}/summary`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)`.
+    public func getRunSummary(
+        path: Operations.getRunSummary.Input.Path,
+        query: Operations.getRunSummary.Input.Query,
+        headers: Operations.getRunSummary.Input.Headers = .init()
+    ) async throws -> Operations.getRunSummary.Output {
+        try await getRunSummary(Operations.getRunSummary.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Write the AI summary of a run (once per change of the run's data)
+    ///
+    /// Returns the cached AI summary when the run's data has not changed since it was written. Otherwise it
+    /// asks the model to reword facts computed by the server, checks the result (every number must come from
+    /// the facts; no medical or advice wording; a stricter check when the run has a pain flag) and stores it.
+    /// Whenever the model is not used or its text fails the checks, the response is the template summary with a
+    /// `reason`. A failed attempt may be remembered for the same data (`canGenerate` false on the next GET), so
+    /// reopening the run does not spend more model calls on text that already failed.
+    ///
+    /// There is no body and no way to force a new text: a summary changes only when the run's data does
+    /// (a match, an unmatch, a check-in, a new prompt version). The next planned session is not part of that
+    /// data: `nextStep` is built on every read, see `RunSummary`.
+    ///
+    /// **Pain.** When the run's check-in flags pain, the paragraph may be AI text but must not mention the
+    /// pain, and `nextStep` is the fixed guidance (`pain` is true) instead of the next planned session.
+    ///
+    /// **Limits.** The per-account limit (30 generations an hour, 60 a day) answers 429 with `Retry-After`;
+    /// the client keeps the template it already has from the GET. The daily cap across all accounts (kept
+    /// under the Workers AI free allowance), an exhausted allowance and the off switches answer 200 with the
+    /// template and a `reason` (`over_limit`, `ai_unavailable`, `disabled`).
+    ///
+    ///
+    /// - Remark: HTTP `POST /v1/activities/{activityId}/summary:generate`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)`.
+    public func generateRunSummary(
+        path: Operations.generateRunSummary.Input.Path,
+        query: Operations.generateRunSummary.Input.Query,
+        headers: Operations.generateRunSummary.Input.Headers = .init()
+    ) async throws -> Operations.generateRunSummary.Output {
+        try await generateRunSummary(Operations.generateRunSummary.Input(
+            path: path,
+            query: query,
+            headers: headers
         ))
     }
     /// Run the proposal engine, or re-run the interview, for a plan
@@ -1436,6 +1532,10 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/Profile`.
         public struct Profile: Codable, Hashable, Sendable {
+            /// Write run summaries with AI. Absent means on (the default). Off means the template text only and no model call.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/aiSummaries`.
+            public var aiSummaries: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/Profile/targetDisplay`.
             public var targetDisplay: Components.Schemas.TargetDisplay
             /// - Remark: Generated from `#/components/schemas/Profile/paces`.
@@ -1453,6 +1553,7 @@ public enum Components {
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
+            ///   - aiSummaries: Write run summaries with AI. Absent means on (the default). Off means the template text only and no model call.
             ///   - targetDisplay:
             ///   - paces:
             ///   - heartRate:
@@ -1461,6 +1562,7 @@ public enum Components {
             ///   - revision:
             ///   - updatedAt:
             public init(
+                aiSummaries: Swift.Bool? = nil,
                 targetDisplay: Components.Schemas.TargetDisplay,
                 paces: Components.Schemas.DerivedPaces,
                 heartRate: Components.Schemas.HeartRateSettings,
@@ -1469,6 +1571,7 @@ public enum Components {
                 revision: Swift.Int,
                 updatedAt: Foundation.Date
             ) {
+                self.aiSummaries = aiSummaries
                 self.targetDisplay = targetDisplay
                 self.paces = paces
                 self.heartRate = heartRate
@@ -1478,6 +1581,7 @@ public enum Components {
                 self.updatedAt = updatedAt
             }
             public enum CodingKeys: String, CodingKey {
+                case aiSummaries
                 case targetDisplay
                 case paces
                 case heartRate
@@ -1489,6 +1593,8 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/ProfileUpdate`.
         public struct ProfileUpdate: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileUpdate/aiSummaries`.
+            public var aiSummaries: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/ProfileUpdate/targetDisplay`.
             public var targetDisplay: Components.Schemas.TargetDisplay?
             /// Manual pace ranges.
@@ -1566,18 +1672,21 @@ public enum Components {
             /// Creates a new `ProfileUpdate`.
             ///
             /// - Parameters:
+            ///   - aiSummaries:
             ///   - targetDisplay:
             ///   - paces: Manual pace ranges.
             ///   - heartRate:
             ///   - scheduling:
             ///   - review:
             public init(
+                aiSummaries: Swift.Bool? = nil,
                 targetDisplay: Components.Schemas.TargetDisplay? = nil,
                 paces: Components.Schemas.ProfileUpdate.pacesPayload? = nil,
                 heartRate: Components.Schemas.HeartRateSettings? = nil,
                 scheduling: Components.Schemas.SchedulingPreferences? = nil,
                 review: Components.Schemas.ReviewSettings? = nil
             ) {
+                self.aiSummaries = aiSummaries
                 self.targetDisplay = targetDisplay
                 self.paces = paces
                 self.heartRate = heartRate
@@ -1585,6 +1694,7 @@ public enum Components {
                 self.review = review
             }
             public enum CodingKeys: String, CodingKey {
+                case aiSummaries
                 case targetDisplay
                 case paces
                 case heartRate
@@ -1593,6 +1703,10 @@ public enum Components {
             }
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.aiSummaries = try container.decodeIfPresent(
+                    Swift.Bool.self,
+                    forKey: .aiSummaries
+                )
                 self.targetDisplay = try container.decodeIfPresent(
                     Components.Schemas.TargetDisplay.self,
                     forKey: .targetDisplay
@@ -1614,6 +1728,7 @@ public enum Components {
                     forKey: .review
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "aiSummaries",
                     "targetDisplay",
                     "paces",
                     "heartRate",
@@ -4188,6 +4303,113 @@ public enum Components {
                 try self.value2.encode(to: encoder)
             }
         }
+        /// A short written summary of one run, shown on Run details (iOS and web). `text` and `nextStep` are the
+        /// two parts of the card. The server computes every number; the model only rewords them.
+        ///
+        ///
+        /// - Remark: Generated from `#/components/schemas/RunSummary`.
+        public struct RunSummary: Codable, Hashable, Sendable {
+            /// The paragraph. Plain text, no markdown. Never discusses pain, injury or recovery.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/text`.
+            public var text: Swift.String
+            /// The "what to do next" line. Written by the server on every read (never by the model, never stored),
+            /// from the user's plan relative to `today`: it names the next planned session dated after `today`, with
+            /// its type and planned distance or time as the plan has them ("Next planned session: Easy run, 6 km, on
+            /// Thursday."). It never invents a workout or changes the plan, so editing the plan does not make a
+            /// stored paragraph out of date. When `pain` is true it is instead the fixed guidance, word for word:
+            /// "If something hurts, stop and talk to a qualified professional. This app can't give medical advice."
+            /// Absent when the run has no plan or the plan has no later session.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/nextStep`.
+            public var nextStep: Swift.String?
+            /// `ai` is model text that passed the checks (the client labels it "Generated summary"); `template` is
+            /// the text the server builds without a model.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/source`.
+            @frozen public enum sourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case ai = "ai"
+                case template = "template"
+            }
+            /// `ai` is model text that passed the checks (the client labels it "Generated summary"); `template` is
+            /// the text the server builds without a model.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/source`.
+            public var source: Components.Schemas.RunSummary.sourcePayload
+            /// Why `source` is `template`. `not_generated` the model has not been asked yet for this data (a GET);
+            /// `disabled` the account's switch (`aiSummaries`) or the server's `AI_SUMMARIES` switch is off;
+            /// `over_limit` a request limit or the daily cap of model calls is used up; `check_failed` the model
+            /// text failed the checks twice; `ai_unavailable` the model failed or timed out. Absent for `ai`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/reason`.
+            @frozen public enum reasonPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case not_generated = "not_generated"
+                case disabled = "disabled"
+                case over_limit = "over_limit"
+                case check_failed = "check_failed"
+                case ai_unavailable = "ai_unavailable"
+            }
+            /// Why `source` is `template`. `not_generated` the model has not been asked yet for this data (a GET);
+            /// `disabled` the account's switch (`aiSummaries`) or the server's `AI_SUMMARIES` switch is off;
+            /// `over_limit` a request limit or the daily cap of model calls is used up; `check_failed` the model
+            /// text failed the checks twice; `ai_unavailable` the model failed or timed out. Absent for `ai`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/reason`.
+            public var reason: Components.Schemas.RunSummary.reasonPayload?
+            /// True only for a GET that returned the template because nothing is stored yet.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/canGenerate`.
+            public var canGenerate: Swift.Bool
+            /// The run's check-in flags pain, so `nextStep` is the fixed guidance.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/pain`.
+            public var pain: Swift.Bool
+            /// When the stored AI text was written. Absent for `template`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RunSummary/generatedAt`.
+            public var generatedAt: Foundation.Date?
+            /// Creates a new `RunSummary`.
+            ///
+            /// - Parameters:
+            ///   - text: The paragraph. Plain text, no markdown. Never discusses pain, injury or recovery.
+            ///   - nextStep: The "what to do next" line. Written by the server on every read (never by the model, never stored),
+            ///   - source: `ai` is model text that passed the checks (the client labels it "Generated summary"); `template` is
+            ///   - reason: Why `source` is `template`. `not_generated` the model has not been asked yet for this data (a GET);
+            ///   - canGenerate: True only for a GET that returned the template because nothing is stored yet.
+            ///   - pain: The run's check-in flags pain, so `nextStep` is the fixed guidance.
+            ///   - generatedAt: When the stored AI text was written. Absent for `template`.
+            public init(
+                text: Swift.String,
+                nextStep: Swift.String? = nil,
+                source: Components.Schemas.RunSummary.sourcePayload,
+                reason: Components.Schemas.RunSummary.reasonPayload? = nil,
+                canGenerate: Swift.Bool,
+                pain: Swift.Bool,
+                generatedAt: Foundation.Date? = nil
+            ) {
+                self.text = text
+                self.nextStep = nextStep
+                self.source = source
+                self.reason = reason
+                self.canGenerate = canGenerate
+                self.pain = pain
+                self.generatedAt = generatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case text
+                case nextStep
+                case source
+                case reason
+                case canGenerate
+                case pain
+                case generatedAt
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/ActivityUpdate`.
         public struct ActivityUpdate: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ActivityUpdate/disposition`.
@@ -5956,6 +6178,8 @@ public enum Components {
     }
     /// Types generated from the `#/components/parameters` section of the OpenAPI document.
     public enum Parameters {
+        /// - Remark: Generated from `#/components/parameters/ActivityId`.
+        public typealias ActivityId = Swift.String
         /// - Remark: Generated from `#/components/parameters/PlanId`.
         public typealias PlanId = Swift.String
         /// - Remark: Generated from `#/components/parameters/SessionId`.
@@ -11225,6 +11449,453 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "notFound",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case application_problem_plus_json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .application_problem_plus_json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .application_problem_plus_json:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .application_problem_plus_json
+                ]
+            }
+        }
+    }
+    /// The written summary of a run (cached AI text, or the template text)
+    ///
+    /// Returns the stored AI summary when one exists for the run's current data, otherwise the template
+    /// summary built from the same facts. It never calls the model and never writes, so it is safe to call on
+    /// every open of Run details. When `canGenerate` is true the client calls `generateRunSummary` once.
+    ///
+    /// Only running activities that are not `ignored` have a summary; anything else, and another user's
+    /// activity, is a 404.
+    ///
+    ///
+    /// - Remark: HTTP `GET /v1/activities/{activityId}/summary`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)`.
+    public enum getRunSummary {
+        public static let id: Swift.String = "getRunSummary"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/path/activityId`.
+                public var activityId: Components.Parameters.ActivityId
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - activityId:
+                public init(activityId: Components.Parameters.ActivityId) {
+                    self.activityId = activityId
+                }
+            }
+            public var path: Operations.getRunSummary.Input.Path
+            /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// The user's local date, so "this week", missed sessions and countdowns follow the device, not UTC.
+                ///
+                /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/query/today`.
+                public var today: Components.Parameters.Today
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - today: The user's local date, so "this week", missed sessions and countdowns follow the device, not UTC.
+                public init(today: Components.Parameters.Today) {
+                    self.today = today
+                }
+            }
+            public var query: Operations.getRunSummary.Input.Query
+            /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.getRunSummary.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.getRunSummary.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.getRunSummary.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.getRunSummary.Input.Path,
+                query: Operations.getRunSummary.Input.Query,
+                headers: Operations.getRunSummary.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.RunSummary)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.RunSummary {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.getRunSummary.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.getRunSummary.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// The summary
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.getRunSummary.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.getRunSummary.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Missing, expired or invalid token or code
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)/responses/401`.
+            ///
+            /// HTTP response code: `401 unauthorized`.
+            case unauthorized(Components.Responses.Unauthorized)
+            /// The associated value of the enum case if `self` is `.unauthorized`.
+            ///
+            /// - Throws: An error if `self` is not `.unauthorized`.
+            /// - SeeAlso: `.unauthorized`.
+            public var unauthorized: Components.Responses.Unauthorized {
+                get throws {
+                    switch self {
+                    case let .unauthorized(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unauthorized",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Not found, or not the caller's
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)/responses/404`.
+            ///
+            /// HTTP response code: `404 notFound`.
+            case notFound(Components.Responses.NotFound)
+            /// The associated value of the enum case if `self` is `.notFound`.
+            ///
+            /// - Throws: An error if `self` is not `.notFound`.
+            /// - SeeAlso: `.notFound`.
+            public var notFound: Components.Responses.NotFound {
+                get throws {
+                    switch self {
+                    case let .notFound(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "notFound",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case application_problem_plus_json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .application_problem_plus_json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .application_problem_plus_json:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .application_problem_plus_json
+                ]
+            }
+        }
+    }
+    /// Write the AI summary of a run (once per change of the run's data)
+    ///
+    /// Returns the cached AI summary when the run's data has not changed since it was written. Otherwise it
+    /// asks the model to reword facts computed by the server, checks the result (every number must come from
+    /// the facts; no medical or advice wording; a stricter check when the run has a pain flag) and stores it.
+    /// Whenever the model is not used or its text fails the checks, the response is the template summary with a
+    /// `reason`. A failed attempt may be remembered for the same data (`canGenerate` false on the next GET), so
+    /// reopening the run does not spend more model calls on text that already failed.
+    ///
+    /// There is no body and no way to force a new text: a summary changes only when the run's data does
+    /// (a match, an unmatch, a check-in, a new prompt version). The next planned session is not part of that
+    /// data: `nextStep` is built on every read, see `RunSummary`.
+    ///
+    /// **Pain.** When the run's check-in flags pain, the paragraph may be AI text but must not mention the
+    /// pain, and `nextStep` is the fixed guidance (`pain` is true) instead of the next planned session.
+    ///
+    /// **Limits.** The per-account limit (30 generations an hour, 60 a day) answers 429 with `Retry-After`;
+    /// the client keeps the template it already has from the GET. The daily cap across all accounts (kept
+    /// under the Workers AI free allowance), an exhausted allowance and the off switches answer 200 with the
+    /// template and a `reason` (`over_limit`, `ai_unavailable`, `disabled`).
+    ///
+    ///
+    /// - Remark: HTTP `POST /v1/activities/{activityId}/summary:generate`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)`.
+    public enum generateRunSummary {
+        public static let id: Swift.String = "generateRunSummary"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/path/activityId`.
+                public var activityId: Components.Parameters.ActivityId
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - activityId:
+                public init(activityId: Components.Parameters.ActivityId) {
+                    self.activityId = activityId
+                }
+            }
+            public var path: Operations.generateRunSummary.Input.Path
+            /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/query`.
+            public struct Query: Sendable, Hashable {
+                /// The user's local date, so "this week", missed sessions and countdowns follow the device, not UTC.
+                ///
+                /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/query/today`.
+                public var today: Components.Parameters.Today
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - today: The user's local date, so "this week", missed sessions and countdowns follow the device, not UTC.
+                public init(today: Components.Parameters.Today) {
+                    self.today = today
+                }
+            }
+            public var query: Operations.generateRunSummary.Input.Query
+            /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.generateRunSummary.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.generateRunSummary.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.generateRunSummary.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.generateRunSummary.Input.Path,
+                query: Operations.generateRunSummary.Input.Query,
+                headers: Operations.generateRunSummary.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/v1/activities/{activityId}/summary:generate/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.RunSummary)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.RunSummary {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.generateRunSummary.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.generateRunSummary.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// The AI summary, or the template summary with the reason it was used
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.generateRunSummary.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.generateRunSummary.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Missing, expired or invalid token or code
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)/responses/401`.
+            ///
+            /// HTTP response code: `401 unauthorized`.
+            case unauthorized(Components.Responses.Unauthorized)
+            /// The associated value of the enum case if `self` is `.unauthorized`.
+            ///
+            /// - Throws: An error if `self` is not `.unauthorized`.
+            /// - SeeAlso: `.unauthorized`.
+            public var unauthorized: Components.Responses.Unauthorized {
+                get throws {
+                    switch self {
+                    case let .unauthorized(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unauthorized",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Not found, or not the caller's
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)/responses/404`.
+            ///
+            /// HTTP response code: `404 notFound`.
+            case notFound(Components.Responses.NotFound)
+            /// The associated value of the enum case if `self` is `.notFound`.
+            ///
+            /// - Throws: An error if `self` is not `.notFound`.
+            /// - SeeAlso: `.notFound`.
+            public var notFound: Components.Responses.NotFound {
+                get throws {
+                    switch self {
+                    case let .notFound(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "notFound",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Rate limited
+            ///
+            /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)/responses/429`.
+            ///
+            /// HTTP response code: `429 tooManyRequests`.
+            case tooManyRequests(Components.Responses.TooManyRequests)
+            /// The associated value of the enum case if `self` is `.tooManyRequests`.
+            ///
+            /// - Throws: An error if `self` is not `.tooManyRequests`.
+            /// - SeeAlso: `.tooManyRequests`.
+            public var tooManyRequests: Components.Responses.TooManyRequests {
+                get throws {
+                    switch self {
+                    case let .tooManyRequests(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "tooManyRequests",
                             response: self
                         )
                     }

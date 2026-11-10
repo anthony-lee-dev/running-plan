@@ -410,6 +410,72 @@ export interface paths {
         patch: operations["updateActivity"];
         trace?: never;
     };
+    "/v1/activities/{activityId}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: components["parameters"]["ActivityId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The written summary of a run (cached AI text, or the template text)
+         * @description Returns the stored AI summary when one exists for the run's current data, otherwise the template
+         *     summary built from the same facts. It never calls the model and never writes, so it is safe to call on
+         *     every open of Run details. When `canGenerate` is true the client calls `generateRunSummary` once.
+         *
+         *     Only running activities that are not `ignored` have a summary; anything else, and another user's
+         *     activity, is a 404.
+         */
+        get: operations["getRunSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/activities/{activityId}/summary:generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: components["parameters"]["ActivityId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write the AI summary of a run (once per change of the run's data)
+         * @description Returns the cached AI summary when the run's data has not changed since it was written. Otherwise it
+         *     asks the model to reword facts computed by the server, checks the result (every number must come from
+         *     the facts; no medical or advice wording; a stricter check when the run has a pain flag) and stores it.
+         *     Whenever the model is not used or its text fails the checks, the response is the template summary with a
+         *     `reason`. A failed attempt may be remembered for the same data (`canGenerate` false on the next GET), so
+         *     reopening the run does not spend more model calls on text that already failed.
+         *
+         *     There is no body and no way to force a new text: a summary changes only when the run's data does
+         *     (a match, an unmatch, a check-in, a new prompt version). The next planned session is not part of that
+         *     data: `nextStep` is built on every read, see `RunSummary`.
+         *
+         *     **Pain.** When the run's check-in flags pain, the paragraph may be AI text but must not mention the
+         *     pain, and `nextStep` is the fixed guidance (`pain` is true) instead of the next planned session.
+         *
+         *     **Limits.** The per-account limit (30 generations an hour, 60 a day) answers 429 with `Retry-After`;
+         *     the client keeps the template it already has from the GET. The daily cap across all accounts (kept
+         *     under the Workers AI free allowance), an exhausted allowance and the off switches answer 200 with the
+         *     template and a `reason` (`over_limit`, `ai_unavailable`, `disabled`).
+         */
+        post: operations["generateRunSummary"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/plans/{planId}/proposals:generate": {
         parameters: {
             query?: never;
@@ -689,6 +755,8 @@ export interface components {
             day?: components["schemas"]["Weekday"];
         };
         Profile: {
+            /** @description Write run summaries with AI. Absent means on (the default). Off means the template text only and no model call. */
+            aiSummaries?: boolean;
             targetDisplay: components["schemas"]["TargetDisplay"];
             paces: components["schemas"]["DerivedPaces"];
             heartRate: components["schemas"]["HeartRateSettings"];
@@ -699,6 +767,7 @@ export interface components {
             updatedAt: string;
         };
         ProfileUpdate: {
+            aiSummaries?: boolean;
             targetDisplay?: components["schemas"]["TargetDisplay"];
             /** @description Manual pace ranges. */
             paces?: {
@@ -1095,6 +1164,47 @@ export interface components {
              */
             disposition: "inbox" | "matched" | "extra" | "ignored";
             match?: components["schemas"]["Match"];
+        };
+        /**
+         * @description A short written summary of one run, shown on Run details (iOS and web). `text` and `nextStep` are the
+         *     two parts of the card. The server computes every number; the model only rewords them.
+         */
+        RunSummary: {
+            /** @description The paragraph. Plain text, no markdown. Never discusses pain, injury or recovery. */
+            text: string;
+            /**
+             * @description The "what to do next" line. Written by the server on every read (never by the model, never stored),
+             *     from the user's plan relative to `today`: it names the next planned session dated after `today`, with
+             *     its type and planned distance or time as the plan has them ("Next planned session: Easy run, 6 km, on
+             *     Thursday."). It never invents a workout or changes the plan, so editing the plan does not make a
+             *     stored paragraph out of date. When `pain` is true it is instead the fixed guidance, word for word:
+             *     "If something hurts, stop and talk to a qualified professional. This app can't give medical advice."
+             *     Absent when the run has no plan or the plan has no later session.
+             */
+            nextStep?: string;
+            /**
+             * @description `ai` is model text that passed the checks (the client labels it "Generated summary"); `template` is
+             *     the text the server builds without a model.
+             * @enum {string}
+             */
+            source: "ai" | "template";
+            /**
+             * @description Why `source` is `template`. `not_generated` the model has not been asked yet for this data (a GET);
+             *     `disabled` the account's switch (`aiSummaries`) or the server's `AI_SUMMARIES` switch is off;
+             *     `over_limit` a request limit or the daily cap of model calls is used up; `check_failed` the model
+             *     text failed the checks twice; `ai_unavailable` the model failed or timed out. Absent for `ai`.
+             * @enum {string}
+             */
+            reason?: "not_generated" | "disabled" | "over_limit" | "check_failed" | "ai_unavailable";
+            /** @description True only for a GET that returned the template because nothing is stored yet. */
+            canGenerate: boolean;
+            /** @description The run's check-in flags pain, so `nextStep` is the fixed guidance. */
+            pain: boolean;
+            /**
+             * Format: date-time
+             * @description When the stored AI text was written. Absent for `template`.
+             */
+            generatedAt?: string;
         };
         ActivityUpdate: {
             /** @enum {string} */
@@ -1498,6 +1608,7 @@ export interface components {
         };
     };
     parameters: {
+        ActivityId: string;
         PlanId: string;
         SessionId: string;
         ProposalId: string;
@@ -2213,6 +2324,61 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    getRunSummary: {
+        parameters: {
+            query: {
+                /** @description The user's local date, so "this week", missed sessions and countdowns follow the device, not UTC. */
+                today: components["parameters"]["Today"];
+            };
+            header?: never;
+            path: {
+                activityId: components["parameters"]["ActivityId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    generateRunSummary: {
+        parameters: {
+            query: {
+                /** @description The user's local date, so "this week", missed sessions and countdowns follow the device, not UTC. */
+                today: components["parameters"]["Today"];
+            };
+            header?: never;
+            path: {
+                activityId: components["parameters"]["ActivityId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The AI summary, or the template summary with the reason it was used */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     generateProposals: {

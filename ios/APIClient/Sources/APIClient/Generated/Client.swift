@@ -3307,6 +3307,290 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// The written summary of a run (cached AI text, or the template text)
+    ///
+    /// Returns the stored AI summary when one exists for the run's current data, otherwise the template
+    /// summary built from the same facts. It never calls the model and never writes, so it is safe to call on
+    /// every open of Run details. When `canGenerate` is true the client calls `generateRunSummary` once.
+    ///
+    /// Only running activities that are not `ignored` have a summary; anything else, and another user's
+    /// activity, is a 404.
+    ///
+    ///
+    /// - Remark: HTTP `GET /v1/activities/{activityId}/summary`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary/get(getRunSummary)`.
+    public func getRunSummary(_ input: Operations.getRunSummary.Input) async throws -> Operations.getRunSummary.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.getRunSummary.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/v1/activities/{}/summary",
+                    parameters: [
+                        input.path.activityId
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "today",
+                    value: input.query.today
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.getRunSummary.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.RunSummary.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                case 401:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Components.Responses.Unauthorized.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .application_problem_plus_json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .unauthorized(.init(body: body))
+                case 404:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Components.Responses.NotFound.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .application_problem_plus_json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .notFound(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Write the AI summary of a run (once per change of the run's data)
+    ///
+    /// Returns the cached AI summary when the run's data has not changed since it was written. Otherwise it
+    /// asks the model to reword facts computed by the server, checks the result (every number must come from
+    /// the facts; no medical or advice wording; a stricter check when the run has a pain flag) and stores it.
+    /// Whenever the model is not used or its text fails the checks, the response is the template summary with a
+    /// `reason`. A failed attempt may be remembered for the same data (`canGenerate` false on the next GET), so
+    /// reopening the run does not spend more model calls on text that already failed.
+    ///
+    /// There is no body and no way to force a new text: a summary changes only when the run's data does
+    /// (a match, an unmatch, a check-in, a new prompt version). The next planned session is not part of that
+    /// data: `nextStep` is built on every read, see `RunSummary`.
+    ///
+    /// **Pain.** When the run's check-in flags pain, the paragraph may be AI text but must not mention the
+    /// pain, and `nextStep` is the fixed guidance (`pain` is true) instead of the next planned session.
+    ///
+    /// **Limits.** The per-account limit (30 generations an hour, 60 a day) answers 429 with `Retry-After`;
+    /// the client keeps the template it already has from the GET. The daily cap across all accounts (kept
+    /// under the Workers AI free allowance), an exhausted allowance and the off switches answer 200 with the
+    /// template and a `reason` (`over_limit`, `ai_unavailable`, `disabled`).
+    ///
+    ///
+    /// - Remark: HTTP `POST /v1/activities/{activityId}/summary:generate`.
+    /// - Remark: Generated from `#/paths//v1/activities/{activityId}/summary:generate/post(generateRunSummary)`.
+    public func generateRunSummary(_ input: Operations.generateRunSummary.Input) async throws -> Operations.generateRunSummary.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.generateRunSummary.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/v1/activities/{}/summary:generate",
+                    parameters: [
+                        input.path.activityId
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "today",
+                    value: input.query.today
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.generateRunSummary.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.RunSummary.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                case 401:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Components.Responses.Unauthorized.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .application_problem_plus_json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .unauthorized(.init(body: body))
+                case 404:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Components.Responses.NotFound.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .application_problem_plus_json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .notFound(.init(body: body))
+                case 429:
+                    let headers: Components.Responses.TooManyRequests.Headers = .init(Retry_hyphen_After: try converter.getOptionalHeaderFieldAsURI(
+                        in: response.headerFields,
+                        name: "Retry-After",
+                        as: Swift.Int.self
+                    ))
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Components.Responses.TooManyRequests.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .application_problem_plus_json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Run the proposal engine, or re-run the interview, for a plan
     ///
     /// Without `interview`, runs `propose_adjustments` (§6.6) on matches, plan-versus-actual and check-ins
