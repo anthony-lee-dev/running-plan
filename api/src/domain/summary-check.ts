@@ -2,9 +2,9 @@
 // facts the server computed, so a paragraph with a number the facts do not hold, medical or advice wording, a superlative
 // the data cannot back, or the wrong shape is refused and the template is shown instead. A run with a pain flag gets a
 // stricter wording check. Pure: no I/O.
-import { allowedNumbers, numbersIn, type RunFacts } from "./run-facts";
+import { allowedDirections, allowedNumbers, allowedQuantities, numbersIn, quantitiesIn, type RunFacts } from "./run-facts";
 
-export type CheckFailure = "empty" | "shape" | "number" | "wording" | "strict_wording";
+export type CheckFailure = "empty" | "shape" | "number" | "claim" | "wording" | "strict_wording";
 
 const MEDICAL =
   /\b(inj\w*|pain\w*|hurt\w*|ach(?:e|es|ed|ing)|strain\w*|sprain\w*|tendon\w*|tendin\w*|fractur\w*|doctors?|physio\w*|diagnos\w*|medic\w*|clinic\w*|overtrain\w*|over-train\w*|overuse|risks?|risky|danger\w*|symptom\w*|sore\w*|sick\w*|illness|niggles?|discomfort|condition|health\w*|treat\w*|rehab\w*|recover\w*|burn-?out)\b/i;
@@ -35,6 +35,11 @@ export function checkParagraph(text: string, facts: RunFacts): { ok: true } | { 
   }
   const allowed = allowedNumbers(facts);
   if (numbersIn(trimmed).some((n) => !allowed.has(n))) return { ok: false, reason: "number" };
+  // A right number can still be attached to the wrong thing: "13 s/km slower" for a faster run, or "152 km".
+  const quantities = allowedQuantities(facts);
+  if (quantitiesIn(trimmed).some((q) => !quantities.has(q))) return { ok: false, reason: "claim" };
+  const directions = allowedDirections(facts);
+  if ((trimmed.toLowerCase().match(/\b(quicker|faster|slower|higher|lower)\b/g) ?? []).some((w) => !directions.has(w))) return { ok: false, reason: "claim" };
   if (MEDICAL.test(trimmed) || ADVICE.test(trimmed) || SUPERLATIVE.test(trimmed)) return { ok: false, reason: "wording" };
   if (facts.pain && STRICT.test(trimmed)) return { ok: false, reason: "strict_wording" };
   return { ok: true };

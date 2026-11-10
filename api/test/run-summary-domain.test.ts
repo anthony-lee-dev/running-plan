@@ -130,6 +130,10 @@ describe("checkParagraph", () => {
   it.each([
     ["an invented number", good.replace("152 bpm", "158 bpm"), "number"],
     ["a mis-rounded pace", good.replace("5:41/km", "5:42/km"), "number"],
+    ["an inverted pace claim", good.replace("quicker than", "slower than"), "claim"],
+    ["an inverted heart rate claim", good.replace("3 bpm lower", "3 bpm higher"), "claim"],
+    ["a swapped unit", good.replace("10.2 km", "10.2 bpm"), "claim"],
+    ["a number on the wrong thing", good.replace("152 bpm", "155 km"), "claim"],
     ["an injury word", `${good} That sounds like an injury.`, "wording"],
     ["advice", `${good} You should rest tomorrow.`, "wording"],
     ["a personal best", `${good} A personal best for you.`, "wording"],
@@ -142,6 +146,11 @@ describe("checkParagraph", () => {
     ["nothing", "   ", "empty"],
     ["two lines", good.replace(". You", ".\nYou"), "shape"],
   ])("refuses %s", (_name, text, reason) => expect(checkParagraph(text, facts)).toEqual({ ok: false, reason }));
+
+  it("refuses a comparison the facts do not make", () => {
+    const alone = buildRunFacts({ run: run(), others: [] });
+    expect(checkParagraph(`${templateParagraph(alone)} That was faster than usual.`, alone)).toEqual({ ok: false, reason: "claim" });
+  });
 
   it("holds a run with pain to a stricter check", () => {
     const text = "10.2 km in 58 min at 5:41/km, with an average heart rate of 152 bpm. You ran 13 s/km quicker than your 3 other runs of about this length in the last 4 weeks.";

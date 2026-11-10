@@ -160,3 +160,34 @@ export function allowedNumbers(facts: RunFacts): Set<string> {
   if (facts.effort !== undefined) parts.push(String(facts.effort), "10");
   return new Set(parts.flatMap(numbersIn));
 }
+
+/** A number with its unit ("10.2 km", "5:41/km", "13 s/km", "152 bpm", "58 min", "1 h"), padding-free. */
+export function quantitiesIn(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(/(\d+(?::\d+)+|\d+(?:\.\d+)?)\s?(s\/km|\/km|km|bpm|min|h)\b/g)) out.push(`${numbersIn(m[1]!)[0]} ${m[2]}`);
+  return out;
+}
+
+/** The comparison words a text about these facts may use: the fact's direction, never its opposite. */
+export function allowedDirections(facts: RunFacts): Set<string> {
+  const out = new Set<string>();
+  const pace = facts.vsRecent?.pace.dir;
+  if (pace === "quicker") out.add("quicker").add("faster");
+  if (pace === "slower") out.add("slower");
+  const hr = facts.vsRecent?.hr?.dir;
+  if (hr === "higher") out.add("higher");
+  if (hr === "lower") out.add("lower");
+  return out;
+}
+
+/** Every number-with-unit a text about these facts may contain. */
+export function allowedQuantities(facts: RunFacts): Set<string> {
+  const parts: string[] = [facts.distance, facts.time, facts.pace, facts.avgHr].filter((x): x is string => x !== undefined);
+  if (facts.vsRecent) {
+    parts.push(facts.vsRecent.avgPace, facts.vsRecent.pace.text);
+    if (facts.vsRecent.avgHr) parts.push(facts.vsRecent.avgHr);
+    if (facts.vsRecent.hr) parts.push(facts.vsRecent.hr.text);
+  }
+  if (facts.plan) parts.push(...[facts.plan.distance, facts.plan.time].filter((x): x is string => x !== undefined));
+  return new Set(parts.flatMap(quantitiesIn));
+}
