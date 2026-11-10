@@ -753,6 +753,112 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /v1/activities/{activityId}/summary:
+    parameters:
+      - $ref: "#/components/parameters/ActivityId"
+    get:
+      operationId: getRunSummary
+      summary: The written summary of a run (cached AI text, or the template text)
+      description: |
+        Returns the stored AI summary when one exists for the run's current data, otherwise the template
+        summary built from the same facts. It never calls the model and never writes, so it is safe to call on
+        every open of Run details. When `canGenerate` is true the client calls `generateRunSummary` once.
+
+        Only running activities that are not `ignored` have a summary; anything else, and another user's
+        activity, is a 404.
+      tags: [activities]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/Today"
+      responses:
+        "200":
+          description: The summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunSummary"
+              examples:
+                template:
+                  summary: Template text, not generated yet
+                  value:
+                    text: "10.2 km in 58 min at 5:41/km, with an average heart rate of 152 bpm. Your other runs of about this length in the last 4 weeks averaged 5:50/km at 155 bpm."
+                    nextStep: "Next planned session: Easy run, 6 km, on Thursday."
+                    source: template
+                    reason: not_generated
+                    canGenerate: true
+                    pain: false
+                ai:
+                  summary: Stored AI text
+                  value:
+                    text: "A steady 10.2 km in 58 min at 5:41/km, a little quicker than your recent runs of this length. Your average heart rate was 152 bpm, 3 bpm lower than usual."
+                    nextStep: "Next planned session: Easy run, 6 km, on Thursday."
+                    source: ai
+                    canGenerate: false
+                    pain: false
+                    generatedAt: "2026-11-10T18:20:00.000Z"
+                pain:
+                  summary: Pain flagged on the run
+                  value:
+                    text: "10.2 km in 58 min at 5:41/km, with an average heart rate of 152 bpm."
+                    nextStep: "If something hurts, stop and talk to a qualified professional. This app can't give medical advice."
+                    source: template
+                    reason: not_generated
+                    canGenerate: true
+                    pain: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/activities/{activityId}/summary:generate:
+    parameters:
+      - $ref: "#/components/parameters/ActivityId"
+    post:
+      operationId: generateRunSummary
+      summary: Write the AI summary of a run (once per change of the run's data)
+      description: |
+        Returns the cached AI summary when the run's data has not changed since it was written. Otherwise it
+        asks the model to reword facts computed by the server, checks the result (every number must come from
+        the facts; no medical or advice wording; a stricter check when the run has a pain flag) and stores it.
+        Whenever the model is not used or its text fails the checks, the response is the template summary with a
+        `reason`. A failed attempt may be remembered for the same data (`canGenerate` false on the next GET), so
+        reopening the run does not spend more model calls on text that already failed.
+
+        There is no body and no way to force a new text: a summary changes only when the run's data does
+        (a match, an unmatch, a check-in, a new prompt version). The next planned session is not part of that
+        data: `nextStep` is built on every read, see `RunSummary`.
+
+        **Pain.** When the run's check-in flags pain, the paragraph may be AI text but must not mention the
+        pain, and `nextStep` is the fixed guidance (`pain` is true) instead of the next planned session.
+
+        **Limits.** The per-account limit (30 generations an hour, 60 a day) answers 429 with `Retry-After`;
+        the client keeps the template it already has from the GET. The daily cap across all accounts (kept
+        under the Workers AI free allowance), an exhausted allowance and the off switches answer 200 with the
+        template and a `reason` (`over_limit`, `ai_unavailable`, `disabled`).
+      tags: [activities]
+      security:
+        - bearerAuth: [app]
+      parameters:
+        - $ref: "#/components/parameters/Today"
+      responses:
+        "200":
+          description: The AI summary, or the template summary with the reason it was used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   /v1/plans/{planId}/proposals:generate:
     parameters:
       - $ref: "#/components/parameters/PlanId"
@@ -946,6 +1052,13 @@ components:
         pattern: '^"[0-9]+"$'
 
   parameters:
+    ActivityId:
+      name: activityId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     PlanId:
       name: planId
       in: path
@@ -1308,6 +1421,9 @@ components:
       type: object
       required: [targetDisplay, paces, heartRate, scheduling, review, revision, updatedAt]
       properties:
+        aiSummaries:
+          type: boolean
+          description: Write run summaries with AI. Absent means on (the default). Off means the template text only and no model call.
         targetDisplay:
           $ref: "#/components/schemas/TargetDisplay"
         paces:
@@ -1329,6 +1445,8 @@ components:
       additionalProperties: false
       minProperties: 1
       properties:
+        aiSummaries:
+          type: boolean
         targetDisplay:
           $ref: "#/components/schemas/TargetDisplay"
         paces:
@@ -2151,6 +2269,52 @@ components:
               enum: [inbox, matched, extra, ignored]
             match:
               $ref: "#/components/schemas/Match"
+    RunSummary:
+      type: object
+      description: |
+        A short written summary of one run, shown on Run details (iOS and web). `text` and `nextStep` are the
+        two parts of the card. The server computes every number; the model only rewords them.
+      required: [text, source, canGenerate, pain]
+      properties:
+        text:
+          type: string
+          maxLength: 1200
+          description: The paragraph. Plain text, no markdown. Never discusses pain, injury or recovery.
+        nextStep:
+          type: string
+          maxLength: 400
+          description: |
+            The "what to do next" line. Written by the server on every read (never by the model, never stored),
+            from the user's plan relative to `today`: it names the next planned session dated after `today`, with
+            its type and planned distance or time as the plan has them ("Next planned session: Easy run, 6 km, on
+            Thursday."). It never invents a workout or changes the plan, so editing the plan does not make a
+            stored paragraph out of date. When `pain` is true it is instead the fixed guidance, word for word:
+            "If something hurts, stop and talk to a qualified professional. This app can't give medical advice."
+            Absent when the run has no plan or the plan has no later session.
+        source:
+          type: string
+          description: |
+            `ai` is model text that passed the checks (the client labels it "Generated summary"); `template` is
+            the text the server builds without a model.
+          enum: [ai, template]
+        reason:
+          type: string
+          description: |
+            Why `source` is `template`. `not_generated` the model has not been asked yet for this data (a GET);
+            `disabled` the account's switch (`aiSummaries`) or the server's `AI_SUMMARIES` switch is off;
+            `over_limit` a request limit or the daily cap of model calls is used up; `check_failed` the model
+            text failed the checks twice; `ai_unavailable` the model failed or timed out. Absent for `ai`.
+          enum: [not_generated, disabled, over_limit, check_failed, ai_unavailable]
+        canGenerate:
+          type: boolean
+          description: True only for a GET that returned the template because nothing is stored yet.
+        pain:
+          type: boolean
+          description: The run's check-in flags pain, so `nextStep` is the fixed guidance.
+        generatedAt:
+          type: string
+          format: date-time
+          description: When the stored AI text was written. Absent for `template`.
     ActivityUpdate:
       type: object
       additionalProperties: false
