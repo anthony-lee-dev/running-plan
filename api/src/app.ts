@@ -13,6 +13,7 @@ import { profileRoutes } from "./http/profile";
 import { proposalRoutes } from "./http/proposals";
 import { progressRoutes } from "./http/progress";
 import { reviewRoutes } from "./http/reviews";
+import { summaryRoutes } from "./http/summaries";
 import { syncRoutes } from "./http/sync";
 
 /** Builds the HTTP app from its dependencies. Runtime-agnostic: no Cloudflare or Node APIs here. */
@@ -31,6 +32,7 @@ export function createApp(deps: Deps, options: { generate?: typeof generatePlan 
   app.route("/", proposalRoutes(deps));
   app.route("/", syncRoutes(deps));
   app.route("/", activityRoutes(deps));
+  app.route("/", summaryRoutes(deps));
   app.notFound((c) => c.json({ error: "not_found" }, 404));
   app.onError((error, c) => {
     // Name and message only: adapters keep addresses and codes out of their error messages.

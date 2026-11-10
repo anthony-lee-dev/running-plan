@@ -249,11 +249,35 @@ export interface StoredCheckIn extends CheckInFields {
 
 /** Before- and after-session check-ins, on the user's live sessions. */
 export interface CheckInStore {
+  /** The live check-ins of one of the user's live sessions, oldest first. Empty for a session that is not theirs. */
+  forSession(userId: string, sessionId: string): Promise<StoredCheckIn[]>;
   /** Idempotent on the id: an existing id is reported with the stored check-in when it is this user's. */
   create(
     userId: string,
     checkIn: StoredCheckIn,
   ): Promise<{ status: "created"; checkIn: StoredCheckIn } | { status: "exists"; mine: true; checkIn: StoredCheckIn } | { status: "exists"; mine: false } | { status: "no_session" }>;
+}
+
+/** Why a stored summary is the template: a remembered failed attempt. */
+export type SummaryReason = "check_failed" | "ai_unavailable";
+
+/** One run's stored summary. `text` is the model's paragraph, or the template for a remembered failure. */
+export interface StoredSummary {
+  activityId: string;
+  factsHash: string;
+  promptVersion: string;
+  model: string;
+  source: "ai" | "template";
+  reason?: SummaryReason;
+  text: string;
+  createdAt: string;
+}
+
+/** Cached run summaries (derived data; not synced or exported). Scoped to the user: another user's activity has none. */
+export interface SummaryStore {
+  get(userId: string, activityId: string): Promise<StoredSummary | undefined>;
+  /** Replaces the activity's summary. Nothing is written when the activity is not the user's (or is gone). */
+  put(userId: string, summary: StoredSummary): Promise<void>;
 }
 
 export type ProposalAccept = { ok: true; planId: string } | ProposalFailure;
@@ -371,6 +395,7 @@ export interface Deps {
   activities: ActivityStore;
   matches: MatchStore;
   checkIns: CheckInStore;
+  summaries: SummaryStore;
   proposals: ProposalStore;
   sync: SyncStore;
   email: EmailSender;

@@ -88,6 +88,16 @@ describe("PATCH /v1/profile", () => {
     expect(await res.json()).toMatchObject({ heartRate: { maxBpm: 190 }, targetDisplay: "heart_rate", revision: 3 });
   });
 
+  it("turns AI run summaries off and on, on by default", async () => {
+    const token = await signIn();
+    expect(((await (await get(token)).json()) as { aiSummaries: boolean }).aiSummaries).toBe(true);
+    const off = await patch(token, { aiSummaries: false }, '"1"');
+    expect(((await off.json()) as { aiSummaries: boolean }).aiSummaries).toBe(false);
+    expect(((await (await get(token)).json()) as { aiSummaries: boolean }).aiSummaries).toBe(false);
+    const on = await patch(token, { aiSummaries: true }, '"2"');
+    expect(((await on.json()) as { aiSummaries: boolean }).aiSummaries).toBe(true);
+  });
+
   it("sets manual paces and marks them manual", async () => {
     const token = await signIn();
     const res = await patch(token, { paces: { easy: { minSecPerKm: 380, maxSecPerKm: 420 } } }, '"1"');
