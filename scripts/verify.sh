@@ -309,7 +309,7 @@ verify_ios() {
   echo "== ios: test on ${dest}"
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
-  # ios-ci.yml sets 35 so the job's own 45-minute limit doesn't cut the run off first).
+  # ios-ci.yml splits the suite over parallel runners, IOS_SHARD, and sets a shorter limit per shard with one retry).
   local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0 attempt=1
   # IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang: restart the simulator, then the run only repeats
   # tests whose build is already done.
