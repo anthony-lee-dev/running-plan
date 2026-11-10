@@ -96,7 +96,7 @@ struct RunsScreen: View {
         .refreshable { await store.loadAllRuns() }
         .fullScreenCover(isPresented: Binding(get: { details != nil }, set: { if !$0 { details = nil } })) {
             if let id = details {
-                RunDetailsScreen(inbox: store, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), onClose: { details = nil })
+                RunDetailsScreen(inbox: store, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), summaries: APIRunSummaryService(client: APIConfiguration.liveSignedInClient()), onClose: { details = nil })
             }
         }
         .sheet(isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } })) {

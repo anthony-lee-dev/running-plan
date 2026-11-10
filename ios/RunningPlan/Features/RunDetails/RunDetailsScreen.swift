@@ -8,21 +8,25 @@ struct RunDetailsScreen: View {
     let plans: PlanStore
     let activityId: String
     let heart: MaxHeartRateServing?
+    let summaries: RunSummaryServing
     let onClose: () -> Void
 
     @State private var store: RunDetailsStore
+    @State private var summary: RunSummaryStore
     @State private var typedMax = ""
     @State private var picking = false
 
-    init(inbox: InboxStore, plans: PlanStore, activityId: String, heart: MaxHeartRateServing?, onClose: @escaping () -> Void) {
+    init(inbox: InboxStore, plans: PlanStore, activityId: String, heart: MaxHeartRateServing?, summaries: RunSummaryServing, onClose: @escaping () -> Void) {
         self.inbox = inbox
         self.plans = plans
         self.activityId = activityId
         self.heart = heart
+        self.summaries = summaries
         self.onClose = onClose
         let expects = inbox.allRuns.first { $0.value2.id == activityId }
             .map { RunDetailsStore.expectsSamples($0, healthAvailable: inbox.healthAvailable) } ?? false
         _store = State(initialValue: RunDetailsStore(inbox: inbox, heart: heart, expectsSamples: expects))
+        _summary = State(initialValue: RunSummaryStore(service: summaries))
     }
 
     var body: some View {
@@ -50,6 +54,7 @@ struct RunDetailsScreen: View {
         .background(Palette.bg.color.ignoresSafeArea())
         .accessibilityIdentifier("screen.rundetails")
         .task { await store.open(activityId: activityId) }
+        .task { await summary.open(activityId: activityId, today: PreviewViewModel.localToday()) }
         .sheet(isPresented: $picking) {
             let choices = inbox.runs(today: PreviewViewModel.localToday()).choices(for: activityId)
             SessionPicker(
@@ -148,6 +153,7 @@ struct RunDetailsScreen: View {
             .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
             .accessibilityIdentifier("rundetails.grid")
         }
+        if activity.value1.workoutType == .running, activity.value2.disposition != .ignored, let result = summary.result { RunSummaryCard(result: result) }
         if let plan = model.planVsActual { planVsActual(plan) }
         if store.loading { splitsSkeleton } else { splits(activity.value1) }
         zones(activity.value1)
