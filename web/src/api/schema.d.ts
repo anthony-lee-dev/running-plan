@@ -2349,6 +2349,7 @@ export interface operations {
                     "application/json": components["schemas"]["RunSummary"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
         };
@@ -2376,6 +2377,7 @@ export interface operations {
                     "application/json": components["schemas"]["RunSummary"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
