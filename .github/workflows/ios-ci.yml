@@ -88,10 +88,22 @@ jobs:
         env:
           IOS_SHARD: ${{ matrix.shard }}
           IOS_HANG_RETRIES: "1"
+          IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
           # A shard takes about 10 minutes, so one that runs past 18 is hung: verify stops it, restarts the
           # simulator and runs it once more, all inside the job's 45-minute limit.
           IOS_TEST_TIMEOUT: "1080"
         run: bash scripts/verify.sh ios
+      # Per-test times and failure messages (xcodebuild -quiet prints neither).
+      - name: Test results
+        if: always()
+        run: |
+          b="$RUNNER_TEMP/ios.xcresult"
+          [[ -d "$b" ]] || exit 0
+          xcrun xcresulttool get test-results tests --path "$b" | jq -r '
+            [.. | objects | select(.nodeType == "Test Case")] | sort_by(.durationInSeconds // 0) | reverse[]
+            | "\(.result)\t\(.durationInSeconds // 0)s\t\(.name)" ' || true
+          xcrun xcresulttool get test-results tests --path "$b" | jq -r '
+            [.. | objects | select(.nodeType == "Failure Message")] | .[] | "FAILURE: \(.name)"' || true
       - uses: actions/cache/save@v6
         if: github.event_name == 'push' && matrix.shard == 'unit'
         with:

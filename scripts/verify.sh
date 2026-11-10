@@ -136,7 +136,7 @@ start_ui_test_api() {
   (cd api && UI_TEST_PORT=0 exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"$log" 2>&1 &
   UI_TEST_API_PID=$!
   trap 'stop_ui_test_api; release_sim_lock' EXIT # the only EXIT trap in this script; chain it if another is added
-  for _ in $(seq 1 60); do
+  for _ in $(seq 1 240); do # up to 2 minutes: a busy CI runner takes over a minute to start it
     UI_TEST_API_URL="$(ui_test_api_url_from_log <"$log")"
     if [[ -n "$UI_TEST_API_URL" ]] && curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then
       echo "== ios: UI-test API on $UI_TEST_API_URL"
@@ -314,9 +314,10 @@ verify_ios() {
   # IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang: restart the simulator, then the run only repeats
   # tests whose build is already done.
   while :; do
+    [[ -z "${IOS_RESULT_BUNDLE:-}" ]] || rm -rf "$IOS_RESULT_BUNDLE" # xcodebuild refuses an existing bundle
     # TEST_RUNNER_ variables reach the UI test process without the prefix.
     run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} -quiet && rc=0 || rc=$?
+      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} -quiet && rc=0 || rc=$?
     if [[ $rc -eq 124 ]]; then
       echo "== ios: xcodebuild test ran past ${limit}s and was stopped (a hung simulator?)" >&2
       if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then
