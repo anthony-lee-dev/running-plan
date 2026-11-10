@@ -12,7 +12,7 @@ export interface ContractTarget {
 }
 
 /** Spec operations with no route yet. Remove one when its slice builds it, and add its cases. */
-export const NOT_BUILT = new Set<string>([]);
+export const NOT_BUILT = new Set<string>(["POST /v1/activities/{activityId}/summary:generate"]);
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
