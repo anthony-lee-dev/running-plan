@@ -22,7 +22,7 @@ export interface SummaryContext {
 }
 
 /**
- * Everything a summary is built from, read in about six queries: the run, the user's recent runs, its match, the matched
+ * Everything a summary is built from, read in about a dozen D1 round trips: the run, the user's recent runs, its match, the matched
  * session with its after-run check-ins, and the plan's sessions. Undefined when the user has no such running activity
  * (another user's, missing, not a run, or ignored).
  */
@@ -48,12 +48,16 @@ export async function loadSummaryContext(deps: Deps, userId: string, activityId:
     ...(matched ? { session: { type: matched.session.type, steps: matched.session.steps } } : {}),
     ...(latest ? { checkIn: { feel: latest.feel, ...(latest.effortFelt !== undefined ? { effortFelt: latest.effortFelt } : {}), pain } } : {}),
   });
-  const factsHash = await canonicalHash(facts);
+  // The run's own data and whether and which way it compares: importing one more similar run does not write the paragraph again.
+  const { vsRecent, ...own } = facts;
+  const factsHash = await canonicalHash({ ...own, vs: vsRecent ? { pace: vsRecent.pace.dir, hr: vsRecent.hr?.dir ?? null } : null });
 
   let nextStep: string | undefined;
   if (pain) nextStep = PAIN_GUIDANCE;
   else {
-    const planId = matched?.plan.id ?? (await deps.plans.listPlans(userId, 1))[0]?.id;
+    // The matched session's plan, else the plan that covers today (a future or finished plan names no "next" session).
+    const covering = async () => (await deps.plans.listPlans(userId, 10)).find((p) => p.startDate <= today && today <= shiftDate(p.startDate, p.weekCount * 7 - 1));
+    const planId = matched?.plan.id ?? (await covering())?.id;
     const plan = planId ? await deps.plans.getPlan(userId, planId) : undefined;
     nextStep = plan ? nextStepLine(plan.sessions, today) : undefined;
   }

@@ -27,7 +27,7 @@ export function templateParagraph(facts: RunFacts): string {
     if (v.hr && v.avgHr) {
       sentences.push(v.hr.dir === "same" ? `Your heart rate was about the same as their average of ${v.avgHr}.` : `Your heart rate was ${v.hr.text} than their average of ${v.avgHr}.`);
     }
-  } else {
+  } else if (facts.fewRuns) {
     sentences.push("There are not yet enough runs of about this length in the last 4 weeks to compare this one with.");
   }
 

@@ -190,7 +190,7 @@ entry file, not a rewrite.
   repeats `APIConfiguration.deployedURL` in the iOS app; change both together.
 - Run summaries (issue #132, `src/http/summaries.ts`): `GET /v1/activities/{id}/summary?today=` never calls a model and never
   writes. `loadSummaryContext` reads the run, the user's runs of the 28 days before it, its confirmed match, the matched session's
-  after-run check-ins and the plan's sessions (about eight queries with the token check), and `domain/run-facts.ts` turns them into
+  after-run check-ins and the plan's sessions (about a dozen D1 round trips with the token check, well under 50), and `domain/run-facts.ts` turns them into
   ready-formatted facts: every number a summary may contain. Never put free text (check-in notes, titles, source apps), ids or
   absolute dates in the facts: they are what a model would see. `domain/run-summary-text.ts` is the template (also the oracle for
   the model's text), `domain/summary-check.ts` the number, wording and shape checks (stricter when pain is flagged). The facts are
@@ -198,7 +198,7 @@ entry file, not a rewrite.
   `PROMPT_VERSION` still match; bump `PROMPT_VERSION` with any change to the prompt or the facts' meaning. `nextStep` is written by
   the server on every read from the plan relative to `today` and is never stored or sent to a model; with a pain flag on any
   after-run check-in it is `PAIN_GUIDANCE`, word for word (the iOS check-in screen shows the same sentence: change both together).
-  Intervals/tempo runs are not compared with other runs; fewer than 3 similar runs (distance within 20%, 28 days) say so.
+  For a run with no matched session the "next" session comes from the plan that covers `today`. The hash covers the run's own facts and which way the comparison goes, not its aggregates, so importing another similar run does not write the paragraph again. Intervals/tempo runs are not compared with other runs; fewer than 3 similar runs (distance within 20%, 28 days) say so.
   Derived data: summaries stay out of the account export and sync (the cascade deletes them with the account). The profile's
   `aiSummaries` (on by default, migration 0006) turns the AI off per account: the GET then answers the template with reason `disabled`.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.

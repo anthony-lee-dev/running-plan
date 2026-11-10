@@ -78,7 +78,9 @@ describe("buildRunFacts", () => {
       { kind: "repeat" as const, count: 4, steps: [{ kind: "work" as const, goal: { type: "distance" as const, value: 1000 } }] },
     ];
     const f = buildRunFacts({ run: run(), others: [], session: { type: "intervals", steps } });
-    expect(f.plan).toEqual({ type: "intervals", distance: "4.0 km", time: "10 min" });
+    expect(f.plan).toEqual({ type: "intervals" }); // a time warm-up plus distance reps has no single honest total
+    const reps = buildRunFacts({ run: run(), others: [], session: { type: "intervals", steps: [steps[1]!] } });
+    expect(reps.plan).toEqual({ type: "intervals", distance: "4.0 km" });
     const open = buildRunFacts({ run: run(), others: [], session: { type: "easy", steps: [{ kind: "work", goal: { type: "open" } }] } });
     expect(open.plan).toEqual({ type: "easy" });
   });
@@ -132,8 +134,20 @@ describe("checkParagraph", () => {
     ["a mis-rounded pace", good.replace("5:41/km", "5:42/km"), "number"],
     ["an inverted pace claim", good.replace("quicker than", "slower than"), "claim"],
     ["an inverted heart rate claim", good.replace("3 bpm lower", "3 bpm higher"), "claim"],
-    ["a swapped unit", good.replace("10.2 km", "10.2 bpm"), "claim"],
-    ["a number on the wrong thing", good.replace("152 bpm", "155 km"), "claim"],
+    ["a swapped unit", good.replace("10.2 km", "10.2 bpm"), "number"],
+    ["a number on the wrong thing", good.replace("152 bpm", "155 km"), "number"],
+    ["miles", good.replace("10.2 km", "10.2 miles"), "number"],
+    ["hours", good.replace("58 min", "58 hours"), "number"],
+    ["beats", good.replace("152 bpm", "152 beats"), "number"],
+    ["a wrong time span", `${good} Your last run was 4 days ago.`, "number"],
+    ["three weeks", good.replace("last 4 weeks", "last 3 weeks"), "number"],
+    ["swapped feel and effort", good.replace("felt 4 out of 5 and the effort 6 out of 10", "felt 6 out of 5 and the effort 4 out of 10"), "number"],
+    ["a spelled-out number", `${good} That is ten percent better.`, "number"],
+    ["a plan claim", `${good} You hit the planned distance.`, "wording"],
+    ["better than usual", `${good} That is better than usual.`, "claim"],
+    ["a negated comparison", good.replace("You ran 13 s/km quicker", "You ran no 13 s/km quicker"), "claim"],
+    ["a curly-apostrophe advice", `${good} Don\u2019t go out too fast.`, "wording"],
+    ["a body part", `${good} No swelling in the knee.`, "wording"],
     ["an injury word", `${good} That sounds like an injury.`, "wording"],
     ["advice", `${good} You should rest tomorrow.`, "wording"],
     ["a personal best", `${good} A personal best for you.`, "wording"],
@@ -156,6 +170,8 @@ describe("checkParagraph", () => {
     const text = "10.2 km in 58 min at 5:41/km, with an average heart rate of 152 bpm. You ran 13 s/km quicker than your 3 other runs of about this length in the last 4 weeks.";
     expect(checkParagraph(text, painFacts)).toEqual({ ok: true });
     expect(checkParagraph(`${text} A good, solid effort.`, painFacts)).toEqual({ ok: false, reason: "strict_wording" });
+    expect(checkParagraph(`${text} An excellent, quick run.`, painFacts).ok).toBe(false);
+    expect(checkParagraph(`${text} Slow down and relax.`, painFacts).ok).toBe(false);
     expect(checkParagraph(`${text} A good, solid effort.`, facts)).toEqual({ ok: true });
     expect(checkParagraph(`${text} Keep it gentle next time.`, painFacts).ok).toBe(false);
   });

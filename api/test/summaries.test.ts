@@ -83,7 +83,7 @@ describe("GET /v1/activities/{id}/summary", () => {
     await call("POST", `/v1/plans/${P}/sessions`, session(id(203), "2026-10-29", "intervals", 8));
     const ids = await upload([run(1, "2026-10-29"), run(2, "2026-10-25"), run(3, "2026-10-20"), run(4, "2026-10-15")]);
     await call("PUT", `/v1/sessions/${id(203)}/match`, { activityId: ids[0], status: "confirmed" });
-    expect(((await (await summary(ids[0]!)).json()) as Json).text).toContain("not yet enough runs");
+    expect(((await (await summary(ids[0]!)).json()) as Json).text).not.toMatch(/other runs|not yet enough/);
   });
 
   it("with pain flagged: the fixed guidance replaces the next step, and the check-in numbers stay out", async () => {

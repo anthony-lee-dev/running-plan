@@ -31,6 +31,8 @@ export interface RunFacts {
   /** The after-run check-in's feel (1 to 5) and effort (1 to 10). Not carried for a run with pain. */
   feel?: number;
   effort?: number;
+  /** A comparison was possible (a run with a distance, not an interval or tempo session) but fewer than 3 similar runs exist. */
+  fewRuns?: boolean;
   /** The check-in flags pain. The facts never describe it beyond this flag. */
   pain: boolean;
 }
@@ -61,10 +63,14 @@ export function formatPace(secPerKm: number): string {
 const paceOf = (a: Pick<StoredActivity, "durationSec" | "distanceM">): number | undefined =>
   a.distanceM !== undefined && a.distanceM > 0 ? a.durationSec / (a.distanceM / 1000) : undefined;
 
-/** The distance and time a session's steps state outright (repeats counted out); a missing goal is left out, never guessed. */
+/**
+ * The distance or the time a session's run steps state outright, repeats counted out. Only when every run step states the
+ * same kind of goal: a warm-up by time plus intervals by distance, or a step left open, has no honest single total.
+ */
 export function statedGoals(steps: Step[]): { distanceM?: number; timeSec?: number } {
   let distanceM = 0;
   let timeSec = 0;
+  let mixed = false;
   const add = (step: Step, times: number) => {
     if (step.kind === "exercise") return;
     if (step.kind === "repeat") {
@@ -72,9 +78,11 @@ export function statedGoals(steps: Step[]): { distanceM?: number; timeSec?: numb
       return;
     }
     if (step.goal.type === "distance") distanceM += (step.goal.value ?? 0) * times;
-    if (step.goal.type === "time") timeSec += (step.goal.value ?? 0) * times;
+    else if (step.goal.type === "time") timeSec += (step.goal.value ?? 0) * times;
+    else mixed = true;
   };
   for (const step of steps) add(step, 1);
+  if (mixed || (distanceM > 0 && timeSec > 0)) return {};
   return { ...(distanceM > 0 ? { distanceM } : {}), ...(timeSec > 0 ? { timeSec } : {}) };
 }
 
@@ -93,9 +101,8 @@ export function buildRunFacts(input: RunFactsInput): RunFacts {
   if (pace !== undefined) facts.pace = formatPace(pace);
   if (run.avgHeartRate !== undefined) facts.avgHr = `${Math.round(run.avgHeartRate)} bpm`;
 
-  if (input.session && COMPARABLE.has(input.session.type) === false) {
-    // intervals, tempo and anything else: no comparison with other runs
-  } else if (run.distanceM !== undefined && run.distanceM > 0 && pace !== undefined) {
+  // Intervals, tempo and anything else are not compared with other runs.
+  if ((!input.session || COMPARABLE.has(input.session.type)) && run.distanceM !== undefined && run.distanceM > 0 && pace !== undefined) {
     const day = dayNumber(run.localDate);
     const similar = input.others.filter((o) => {
       if (o.id === run.id || o.workoutType !== "running" || o.disposition === "ignored") return false;
@@ -104,7 +111,8 @@ export function buildRunFacts(input: RunFactsInput): RunFacts {
       if (o.distanceM === undefined || o.distanceM <= 0) return false;
       return Math.abs(o.distanceM - run.distanceM!) <= SIMILAR_SHARE * run.distanceM!;
     });
-    if (similar.length >= MIN_SIMILAR) {
+    if (similar.length < MIN_SIMILAR) facts.fewRuns = true;
+    else {
       const totalSec = similar.reduce((n, o) => n + o.durationSec, 0);
       const totalKm = similar.reduce((n, o) => n + o.distanceM! / 1000, 0);
       const avg = totalSec / totalKm;
