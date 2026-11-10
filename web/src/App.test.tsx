@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { pace } from "./RunsView";
@@ -309,6 +310,49 @@ describe("runs", () => {
       await waitFor(() => expect(api.getRunSummary).toHaveBeenCalled());
       expect(screen.queryByLabelText("Run summary")).not.toBeInTheDocument();
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("asks for the AI text once even under StrictMode", async () => {
+      const api = withRun();
+      render(<StrictMode><App api={api} /></StrictMode>);
+      await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+      await userEvent.click(await screen.findByRole("button", { name: /open run/i }));
+      expect(await screen.findByText("A steady 5.0 km in 30 min.")).toBeInTheDocument();
+      expect(api.generateRunSummary).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows the AI text and the fixed guidance together for a run with pain", async () => {
+      const guidance = "If something hurts, stop and talk to a qualified professional. This app can't give medical advice.";
+      const api = withRun({ getRunSummary: vi.fn(async () => ({ text: "10.0 km in 58 min.", nextStep: guidance, source: "ai", canGenerate: false, pain: true }) as RunSummary) });
+      await open(api);
+      expect(await screen.findByText("10.0 km in 58 min.")).toBeInTheDocument();
+      expect(screen.getByText(guidance)).toHaveClass("notice");
+      expect(screen.getByText("Generated summary")).toBeInTheDocument();
+    });
+
+    it("signs out when the summary call is refused as unauthorised", async () => {
+      const api = withRun({ getRunSummary: vi.fn(async () => { throw new ApiError(401); }) });
+      await open(api);
+      await waitFor(() => expect(api.getRunSummary).toHaveBeenCalled());
+    });
+
+    it("keeps the card and the switch when the switch call hits a stale profile (409), and reloads the profile", async () => {
+      const api = withRun({ setAiSummaries: vi.fn(async () => { throw new ApiError(409); }) });
+      await open(api);
+      const before = vi.mocked(api.getProfile).mock.calls.length;
+      await userEvent.click(await screen.findByRole("button", { name: "Turn off AI run summaries" }));
+      await waitFor(() => expect(vi.mocked(api.getProfile).mock.calls.length).toBeGreaterThan(before));
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(await screen.findByRole("button", { name: "Turn off AI run summaries" })).toBeEnabled();
+    });
+
+    it("keeps the switch when the summary cannot be read again after turning it off", async () => {
+      const api = withRun();
+      await open(api);
+      const turnOff = await screen.findByRole("button", { name: "Turn off AI run summaries" });
+      vi.mocked(api.getRunSummary).mockRejectedValue(new ApiError(500));
+      await userEvent.click(turnOff);
+      expect(await screen.findByRole("button", { name: /AI run summaries/ })).toBeInTheDocument();
     });
 
     it.each([
