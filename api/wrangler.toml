@@ -21,3 +21,13 @@ directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = ["/v1/*"]
+
+# Workers AI rewords run summaries (issue #132). Free pool: 10,000 neurons a day, one pool for all models, resets 00:00 UTC.
+# Local `wrangler dev` calls it remotely and spends neurons; tests use a stub and never reach it.
+[ai]
+binding = "AI"
+
+[vars]
+# Kill switch for AI run summaries: "on" or "off". Off shows the template text and never calls the model.
+# AI_DAILY_CAP (model calls a day across all accounts, default 600) stays under the free pool; raise it only on Workers Paid.
+AI_SUMMARIES = "on"

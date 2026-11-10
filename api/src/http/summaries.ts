@@ -4,9 +4,11 @@
 import { Hono } from "hono";
 import { isLocalDate } from "../domain/activities";
 import { canonicalHash } from "../domain/plan-hash";
+import { buildPrompt, parseNarration } from "../domain/run-summary-prompt";
+import { checkParagraph } from "../domain/summary-check";
 import { buildRunFacts, RECENT_DAYS, type RunFacts } from "../domain/run-facts";
 import { nextStepLine, PAIN_GUIDANCE, PROMPT_VERSION, templateParagraph } from "../domain/run-summary-text";
-import type { Deps, StoredSummary, SummaryReason } from "../ports";
+import { NarratorError, type Deps, type StoredSummary, type SummaryReason } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
 import { problem } from "./problem";
 
@@ -90,6 +92,14 @@ export function summaryView(ctx: SummaryContext, parts: { text: string; source: 
 export const currentStored = (stored: StoredSummary | undefined, ctx: SummaryContext): StoredSummary | undefined =>
   stored && stored.factsHash === ctx.factsHash && stored.promptVersion === PROMPT_VERSION ? stored : undefined;
 
+const HOUR = 3600;
+const DAY = 86_400;
+/** Per account: 30 generations an hour and 60 a day. A cached summary or a refusal before the model costs none of it. */
+const PER_USER_HOUR = 30;
+const PER_USER_DAY = 60;
+/** The model is asked once, and once more when its text fails the checks. */
+const ATTEMPTS = 2;
+
 export function summaryRoutes(deps: Deps) {
   const app = new Hono<{ Variables: AuthVariables }>();
 
@@ -102,12 +112,72 @@ export function summaryRoutes(deps: Deps) {
 
     const template = templateParagraph(ctx.facts);
     const profile = await deps.profiles.get(userId);
-    if (profile && !profile.aiSummaries) return c.json(summaryView(ctx, { text: template, source: "template", reason: "disabled", canGenerate: false }));
+    if ((profile && !profile.aiSummaries) || !deps.summaryConfig.aiEnabled) return c.json(summaryView(ctx, { text: template, source: "template", reason: "disabled", canGenerate: false }));
 
     const stored = currentStored(await deps.summaries.get(userId, c.req.param("activityId")), ctx);
     if (stored?.source === "ai") return c.json(summaryView(ctx, { text: stored.text, source: "ai", canGenerate: false, generatedAt: stored.createdAt }));
     if (stored?.reason) return c.json(summaryView(ctx, { text: template, source: "template", reason: stored.reason satisfies SummaryReason, canGenerate: false }));
     return c.json(summaryView(ctx, { text: template, source: "template", reason: "not_generated", canGenerate: true }));
+  });
+
+  app.post("/v1/activities/:activityId/summary:generate", requireScope(deps, "app"), async (c) => {
+    const today = c.req.query("today");
+    if (!isLocalDate(today)) return problem(c, 400, "bad_request", "today is the local date, YYYY-MM-DD");
+    const userId = c.get("userId");
+    const activityId = c.req.param("activityId");
+    const ctx = await loadSummaryContext(deps, userId, activityId, today);
+    if (!ctx) return problem(c, 404, "not_found", "Not found");
+
+    const template = templateParagraph(ctx.facts);
+    const asTemplate = (reason: NonNullable<SummaryView["reason"]>) => c.json(summaryView(ctx, { text: template, source: "template", reason, canGenerate: false }));
+
+    const profile = await deps.profiles.get(userId);
+    if ((profile && !profile.aiSummaries) || !deps.summaryConfig.aiEnabled) return asTemplate("disabled");
+
+    const stored = currentStored(await deps.summaries.get(userId, activityId), ctx);
+    if (stored?.source === "ai") return c.json(summaryView(ctx, { text: stored.text, source: "ai", canGenerate: false, generatedAt: stored.createdAt }));
+    if (stored?.reason) return asTemplate(stored.reason);
+    if (!deps.narrator) return asTemplate("ai_unavailable");
+
+    // Per-account limits come first and answer 429; they count only a request that would reach the model.
+    const now = deps.clock.now();
+    for (const [key, limit, window] of [
+      [`summary:user:${userId}:hour`, PER_USER_HOUR, HOUR],
+      [`summary:user:${userId}:day`, PER_USER_DAY, DAY],
+    ] as const) {
+      const hit = await deps.rateLimiter.hit(key, limit, window, now);
+      if (!hit.allowed) return problem(c, 429, "rate_limited", "Too many summaries. Try again later.", { "Retry-After": String(hit.retryAfterSec) });
+    }
+
+    const prompt = buildPrompt(ctx.facts);
+    let failure: "check_failed" | undefined;
+    for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+      // One count per model call, in a fixed one-day window (UTC midnight, like the Workers AI allowance), across all accounts.
+      const global = await deps.rateLimiter.hit("summary:global:day", deps.summaryConfig.dailyCallCap, DAY, now);
+      if (!global.allowed) return asTemplate("over_limit");
+      let raw: unknown;
+      try {
+        raw = await deps.narrator.narrate(prompt);
+      } catch (error) {
+        const kind = error instanceof NarratorError ? error.kind : "unavailable";
+        // Reason codes only: neither the facts nor the model's text are ever logged.
+        console.warn(`run summary: narrator ${kind}`);
+        return asTemplate(kind === "quota" ? "over_limit" : "ai_unavailable");
+      }
+      const paragraph = parseNarration(raw);
+      const checked = paragraph === undefined ? ({ ok: false, reason: "malformed" } as const) : checkParagraph(paragraph, ctx.facts);
+      if (paragraph !== undefined && checked.ok) {
+        const text = paragraph.trim();
+        const createdAt = now.toISOString();
+        await deps.summaries.put(userId, { activityId, factsHash: ctx.factsHash, promptVersion: PROMPT_VERSION, model: deps.narrator.model, source: "ai", text, createdAt });
+        return c.json(summaryView(ctx, { text, source: "ai", canGenerate: false, generatedAt: createdAt }));
+      }
+      console.warn(`run summary: check failed (${checked.ok ? "unknown" : checked.reason})`);
+      failure = "check_failed";
+    }
+    // Remember the failure for this data, so reopening the run does not spend two more model calls on it.
+    await deps.summaries.put(userId, { activityId, factsHash: ctx.factsHash, promptVersion: PROMPT_VERSION, model: deps.narrator.model, source: "template", reason: failure ?? "check_failed", text: template, createdAt: now.toISOString() });
+    return asTemplate("check_failed");
   });
 
   return app;

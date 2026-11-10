@@ -12,6 +12,7 @@ import { D1PlanStore } from "./adapters/cloudflare/d1-plan-store";
 import { D1SummaryStore } from "./adapters/cloudflare/d1-summary-store";
 import { D1ProposalStore } from "./adapters/cloudflare/d1-proposal-store";
 import { D1SyncStore } from "./adapters/cloudflare/d1-sync-store";
+import { WorkersAiNarrator, type AiBinding } from "./adapters/cloudflare/workers-ai-narrator";
 import { D1RateLimiter } from "./adapters/cloudflare/d1-rate-limiter";
 import { LogEmailSender, systemClock, webIdSource } from "./adapters/memory";
 
@@ -25,7 +26,16 @@ export interface Env {
   MAIL_FROM?: string;
   /** Local dev only (`api/.dev.vars`): print sign-in codes instead of emailing them. Never set in production. */
   ALLOW_LOG_EMAIL?: string;
+  /** Workers AI binding (`[ai]` in wrangler.toml): rewords run summaries. Without it the template is shown. */
+  AI?: AiBinding;
+  /** The kill switch for AI run summaries: "on" or "off" (anything else is off). */
+  AI_SUMMARIES?: string;
+  /** Model calls a day across all accounts. Default 600, about 60% of the Workers Free allowance at about 10 neurons a call. */
+  AI_DAILY_CAP?: string;
 }
+
+const DEFAULT_DAILY_CAP = 600;
+const dailyCap = (value: string | undefined) => (value !== undefined && /^\d{1,6}$/.test(value) ? Number(value) : DEFAULT_DAILY_CAP);
 
 const misconfigured = () =>
   new Response(JSON.stringify({ type: "misconfigured", title: "Server is not configured", status: 500 }), {
@@ -59,6 +69,8 @@ export default {
           : new LogEmailSender(),
       ids: webIdSource,
       authConfig: { jwtSecret: env.JWT_SECRET },
+      ...(env.AI ? { narrator: new WorkersAiNarrator(env.AI) } : {}),
+      summaryConfig: { aiEnabled: env.AI_SUMMARIES === "on", dailyCallCap: dailyCap(env.AI_DAILY_CAP) },
     });
     return app.fetch(request, env, ctx);
   },

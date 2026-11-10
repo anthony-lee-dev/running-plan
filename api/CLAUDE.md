@@ -201,6 +201,21 @@ entry file, not a rewrite.
   For a run with no matched session the "next" session comes from the plan that covers `today`. The hash covers the run's own facts and which way the comparison goes, not its aggregates, so importing another similar run does not write the paragraph again. Intervals/tempo runs are not compared with other runs; fewer than 3 similar runs (distance within 20%, 28 days) say so.
   Derived data: summaries stay out of the account export and sync (the cascade deletes them with the account). The profile's
   `aiSummaries` (on by default, migration 0006) turns the AI off per account: the GET then answers the template with reason `disabled`.
+- Run summaries, the model (issue #132, `POST .../summary:generate`): the Workers AI binding (`[ai]` in wrangler.toml, `env.AI`) is
+  touched only by `adapters/cloudflare/workers-ai-narrator.ts` behind the `RunNarrator` port (default model
+  `@cf/meta/llama-3.1-8b-instruct-fp8-fast`, 300 output tokens, 8 s timeout, JSON-schema output); a Claude adapter is a one-file
+  swap. The domain builds the prompt (`run-summary-prompt.ts`: facts only, strict extra rule for pain) and reads the answer
+  (`{"paragraph": "..."}`); every answer goes through `checkParagraph`, one retry, then the template. Order in the route: 404, off
+  switches (account `aiSummaries`, `AI_SUMMARIES` var) -> `disabled`, stored paragraph (or remembered `check_failed`), no model wired
+  -> `ai_unavailable`, per-account limits (30 an hour, 60 a day; 429 + `Retry-After`; only requests that would reach the model count),
+  then each model call counts once against the global day cap (`AI_DAILY_CAP`, default 600, a fixed UTC-day window like the Workers AI
+  allowance; over it `over_limit`). A quota error from the model also gives `over_limit`; timeouts and failures give `ai_unavailable`
+  and store nothing; two failed checks store a template row so reopening does not spend more. Logs carry reason codes only: never the
+  facts, the prompt or the model's text. Workers Free: the allowance is 10,000 neurons a day (about 10 a call), a daily cap of 600
+  leaves headroom; on Workers Paid overage is billed, so raise the cap deliberately. `AI_SUMMARIES` is a plain var ("on" in wrangler.toml; "off" is the
+  kill switch; a deploy resets a dashboard edit). Tests use `FakeNarrator`; the adapter test uses a stub binding. `wrangler dev` calls Workers AI
+  remotely and spends neurons. `npm run eval-summary -w api` (manual, needs the human's account id and token, never in CI) runs 30
+  fixtures through candidate models and prints the share of AI text that passes the checks and the neurons spent.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.
 - The Worker also serves the built web app from `../web/dist` (`[assets]` in `wrangler.toml`, `run_worker_first = ["/v1/*"]`),

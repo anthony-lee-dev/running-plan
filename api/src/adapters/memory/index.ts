@@ -1,3 +1,4 @@
+
 import type { Profile, ProfileFields } from "../../domain/profile";
 import type { SessionContent } from "../../domain/plan-input";
 import type { StoredActivity } from "../../domain/activities";
@@ -25,6 +26,7 @@ import type {
   PlanStore,
   PlanWriteFields,
   RateLimiter,
+  RunNarrator,
   RefreshRecord,
   StoredPlan,
   StoredSession,
@@ -610,6 +612,26 @@ export class MemoryCheckInStore implements CheckInStore {
   }
 }
 
+/**
+ * A scripted RunNarrator for tests: each call takes the next answer (a string or value is returned, an Error is thrown);
+ * when the script runs out it repeats the last one. Records every prompt it was given.
+ */
+export class FakeNarrator implements RunNarrator {
+  readonly prompts: { system: string; user: string }[] = [];
+  private i = 0;
+  constructor(
+    private readonly script: (unknown | Error)[],
+    readonly model = "fake-model",
+  ) {}
+
+  async narrate(prompt: { system: string; user: string }): Promise<unknown> {
+    this.prompts.push(prompt);
+    const next = this.script[Math.min(this.i++, this.script.length - 1)];
+    if (next instanceof Error) throw next;
+    return next;
+  }
+}
+
 /** Run summaries in memory. Scoped through the activity store, so another user's activity has none. */
 export class MemorySummaryStore implements SummaryStore {
   private rows = new Map<string, StoredSummary>();
@@ -824,6 +846,7 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
     rateLimiter: new MemoryRateLimiter(),
     ids: webIdSource,
     authConfig: { jwtSecret: "dev-only-secret-change-me-dev-only-secret" },
+    summaryConfig: { aiEnabled: true, dailyCallCap: 600 },
     ...overrides,
   };
 }
