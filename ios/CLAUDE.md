@@ -397,8 +397,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - Without `IOS_SIM_DEST`, `verify.sh` locks the simulator it picks (`$TMPDIR/running-plan-sim-<udid>.lock`, holding
   the run's pid) so two runs never share one; when it is held, the run uses a clone named `RunningPlan verify <n>`,
   created on first need. Runs started by an older `verify.sh` don't take the lock.
-- The `ios` check builds only when `ios/` changes beyond Markdown (or `spec/`, `api/`, `scripts/verify.sh` or the workflow
-  does). It caches the API client generator build and DerivedData; a cache miss only makes it slower.
+- The required `ios` check always reports, but builds only when something the iOS build or UI tests use changed: `ios/`
+  (not Markdown), `spec/`, `designs/dark/png` (the snapshot tests read it), `api/src`, `api/test/ui-server`,
+  `api/migrations`, the API and root package files, `scripts/verify.sh`, `scripts/generate-api-client.sh` or the
+  workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step with what
+  `api/test/ui-server` imports. It caches the API client generator build and DerivedData; a cache miss only makes it slower.
 
 ## Manual gates (agents list these in the PR body, the human ticks them)
 
