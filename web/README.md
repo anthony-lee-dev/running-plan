@@ -13,6 +13,11 @@ It will not upload running-session data. React + Vite, TypeScript, Vitest with T
 - Runs tab (issue #131): the newest 100 imported runs (`GET /v1/activities`, readable with a web token) and a summary of one:
   distance, time, pace, heart rate and climb, each left out when the source did not record it. Splits, heart-rate zones and
   routes exist only on the phone (nothing more is uploaded), so the page says so.
+- Run summary (issue #132): Run details of a running activity that is not ignored shows `RunSummaryCard`. It reads
+  `GET .../summary?today=` (the local day), shows that at once (stored AI text, or the template), calls `POST .../summary:generate` once when
+  the server says `canGenerate`, and swaps the reply in with a "Generated summary" label. A 429 or any failure keeps what is shown; no
+  refresh button. `nextStep` (the next planned session, or the fixed pain guidance as a notice) is written by the server. The card's
+  link turns AI run summaries off or on (`aiSummaries` on the profile, shared with the iPhone app).
 - Progress tab (issue #137): "Your running" shows distance, time, run count and average pace for this week or month, a bar per
   period (8 weeks, 6 months) and how it compares with the period before. `runTotals.ts` works it out from the run summaries
   (`listActivitiesSince`, which follows the cursor from the earliest day shown, so the totals are not cut at 100 runs) with the
