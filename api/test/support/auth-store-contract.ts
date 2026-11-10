@@ -118,6 +118,15 @@ export function rateLimiterContract(name: string, make: () => Promise<{ limiter:
       expect(blocked.retryAfterSec).toBeLessThanOrEqual(60);
     });
 
+    it("peeks at the count without counting", async () => {
+      expect(await limiter.peek("p", 60, at(0))).toBe(0);
+      await limiter.hit("p", 3, 60, at(1));
+      await limiter.hit("p", 3, 60, at(2));
+      expect(await limiter.peek("p", 60, at(3))).toBe(2);
+      expect(await limiter.peek("p", 60, at(4))).toBe(2);
+      expect(await limiter.peek("p", 60, at(61))).toBe(0);
+    });
+
     it("counts keys separately and starts a new window later", async () => {
       for (let i = 0; i < 3; i++) await limiter.hit("a", 3, 60, at(i));
       expect((await limiter.hit("b", 3, 60, at(5))).allowed).toBe(true);

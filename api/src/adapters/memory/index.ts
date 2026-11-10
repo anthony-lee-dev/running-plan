@@ -1,4 +1,3 @@
-
 import type { Profile, ProfileFields } from "../../domain/profile";
 import type { SessionContent } from "../../domain/plan-input";
 import type { StoredActivity } from "../../domain/activities";
@@ -810,6 +809,12 @@ export class MemorySyncStore implements SyncStore {
 
 export class MemoryRateLimiter implements RateLimiter {
   private windows = new Map<string, { start: number; count: number }>();
+
+  async peek(key: string, windowSec: number, now: Date) {
+    const nowSec = Math.floor(now.getTime() / 1000);
+    const current = this.windows.get(key);
+    return current && current.start === nowSec - (nowSec % windowSec) ? current.count : 0;
+  }
 
   async hit(key: string, limit: number, windowSec: number, now: Date) {
     const nowSec = Math.floor(now.getTime() / 1000);

@@ -30,12 +30,17 @@ export interface Env {
   AI?: AiBinding;
   /** The kill switch for AI run summaries: "on" or "off" (anything else is off). */
   AI_SUMMARIES?: string;
-  /** Model calls a day across all accounts. Default 600, about 60% of the Workers Free allowance at about 10 neurons a call. */
+  /** Model calls a day across all accounts. Default 600, about 60% of the Workers Free allowance at about 10 neurons a call; a value over 900 is ignored (raise FREE_POOL_CEILING with a move to Workers Paid). */
   AI_DAILY_CAP?: string;
 }
 
 const DEFAULT_DAILY_CAP = 600;
-const dailyCap = (value: string | undefined) => (value !== undefined && /^\d{1,6}$/.test(value) ? Number(value) : DEFAULT_DAILY_CAP);
+/** The ceiling for the Workers Free pool (about 10 neurons a call against 10,000 a day): a larger value is ignored, not trusted. */
+const FREE_POOL_CEILING = 900;
+const dailyCap = (value: string | undefined) => {
+  const n = value !== undefined && /^\d{1,6}$/.test(value) ? Number(value) : DEFAULT_DAILY_CAP;
+  return n > FREE_POOL_CEILING ? DEFAULT_DAILY_CAP : n;
+};
 
 const misconfigured = () =>
   new Response(JSON.stringify({ type: "misconfigured", title: "Server is not configured", status: 500 }), {

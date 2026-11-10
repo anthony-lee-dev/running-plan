@@ -23,6 +23,7 @@ describe("wrangler.toml", () => {
   // Issue #132: run summaries on Workers AI, with a kill switch the human can flip without a code change.
   it("binds Workers AI and sets the AI_SUMMARIES switch", () => {
     expect(wranglerToml).toMatch(/^\[ai\]\nbinding = "AI"$/m);
-    expect(wranglerToml).toMatch(/^AI_SUMMARIES = "(on|off)"$/m);
+    // Ships off: the human turns it on after the legal wording review (#82) and the device check.
+    expect(wranglerToml).toMatch(/^AI_SUMMARIES = "off"$/m);
   });
 });

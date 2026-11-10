@@ -21,6 +21,7 @@ export class WorkersAiNarrator implements RunNarrator {
   ) {}
 
   async narrate(prompt: { system: string; user: string }): Promise<unknown> {
+    // On a timeout the call itself is not aborted and may still spend neurons; the global cap counts it, so the cap holds.
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new NarratorError("timeout")), this.timeoutMs);
@@ -43,7 +44,7 @@ export class WorkersAiNarrator implements RunNarrator {
       if (error instanceof NarratorError) throw error;
       // The allowance used up is reported as a 4006 error ("you have used up your daily free allocation"); anything else is a failure.
       const message = error instanceof Error ? error.message : "";
-      throw new NarratorError(/4006|daily free allocation|neurons|quota/i.test(message) ? "quota" : "unavailable");
+      throw new NarratorError(/4006|daily free allocation/i.test(message) ? "quota" : "unavailable");
     } finally {
       if (timer !== undefined) clearTimeout(timer);
     }

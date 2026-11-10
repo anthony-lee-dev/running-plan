@@ -1,6 +1,7 @@
 // Manual eval of the run summary model (issue #132): runs fixture runs through candidate Workers AI models and prints how often
 // the text passes the checks (the share that would show instead of the template) and the neurons spent. Never run in CI: it
-// calls the real model, which spends the free daily pool (about 10 neurons a call; 30 fixtures x 3 models is about 900).
+// calls the real model and spends the account's free daily pool (about 10 neurons a call, up to 2 calls per fixture: 30 fixtures x 3
+// models can reach 2,000 to 5,000 neurons). Run it right after 00:00 UTC so the live cap is not starved, or pass one model.
 //
 //   CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... npx tsx api/scripts/eval-summary.ts [model ...]
 //
@@ -52,9 +53,9 @@ async function ask(model: string, system: string, user: string) {
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`, {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-    body: JSON.stringify({ messages: [{ role: "system", content: system }, { role: "user", content: user }], max_tokens: 300, temperature: 0.2 }),
+    body: JSON.stringify({ messages: [{ role: "system", content: system }, { role: "user", content: user }], max_tokens: 300, temperature: 0.2, response_format: { type: "json_schema", json_schema: { type: "object", properties: { paragraph: { type: "string" } }, required: ["paragraph"], additionalProperties: false } } }),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}${(await res.text()).includes("4006") ? " (daily allowance used up: stop and rerun after 00:00 UTC)" : ""}`);
   const body = (await res.json()) as { result?: { response?: unknown; usage?: { prompt_tokens?: number; completion_tokens?: number } } };
   return { raw: body.result?.response, usage: body.result?.usage ?? {} };
 }

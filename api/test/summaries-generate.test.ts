@@ -154,15 +154,35 @@ describe("POST /v1/activities/{id}/summary:generate", () => {
     expect(narrator.prompts).toHaveLength(2);
   });
 
-  it("holds the global daily cap: each model call counts, and over it the template is shown", async () => {
-    await start([answer(GOOD.replace("155", "158")), answer(GOOD)], { summaryConfig: { aiEnabled: true, dailyCallCap: 3 } });
-    const ids = await upload([run(1, "2026-10-30"), run(2, "2026-10-29", { distanceM: 20000 }), run(3, "2026-10-28", { distanceM: 30000 })]);
-    // The first run uses two calls (a failed answer, then a good one) and the second the last call.
+  it("holds the global daily cap: each model call counts, and over it the template is shown and nothing is stored", async () => {
+    const bad = answer(GOOD.replace("155", "158"));
+    await start([bad, answer(GOOD), bad, answer(GOOD)], { summaryConfig: { aiEnabled: true, dailyCallCap: 3 } });
+    const ids = await upload([run(1, "2026-10-30"), run(2, "2026-10-29", { distanceM: 20000 })]);
+    // Call 1 fails the checks, call 2 is good: the first run is written with two calls.
     expect(await (await generate(ids[0]!)).json()).toMatchObject({ source: "ai" });
     expect(narrator.prompts).toHaveLength(2);
-    expect(await (await generate(ids[1]!)).json()).toMatchObject({ source: "template" });
-    expect(await (await generate(ids[2]!)).json()).toMatchObject({ source: "template", reason: "over_limit" });
-    expect(narrator.prompts.length).toBeLessThanOrEqual(3);
+    // Call 3 fails the checks; the retry would be call 4, over the cap of 3: template, over_limit, nothing remembered.
+    expect(await (await generate(ids[1]!)).json()).toMatchObject({ source: "template", reason: "over_limit" });
+    expect(narrator.prompts).toHaveLength(3);
+    expect(await (await read(ids[1]!)).json()).toMatchObject({ reason: "not_generated", canGenerate: true });
+    // Further requests do not reach the model at all.
+    await generate(ids[1]!);
+    expect(narrator.prompts).toHaveLength(3);
+  });
+
+  it("after the model's allowance is used up, later requests do not call it", async () => {
+    await start([new NarratorError("quota"), answer(GOOD)]);
+    const [a, b] = await upload([run(1, "2026-10-30"), run(2, "2026-10-29", { distanceM: 20000 })]);
+    expect(await (await generate(a!)).json()).toMatchObject({ source: "template", reason: "over_limit" });
+    expect(await (await generate(b!)).json()).toMatchObject({ source: "template", reason: "over_limit" });
+    expect(narrator.prompts).toHaveLength(1);
+  });
+
+  it("a request over the account's limit does not touch the global cap", async () => {
+    await start([answer(GOOD)], { summaryConfig: { aiEnabled: true, dailyCallCap: 600 } });
+    const batch = Array.from({ length: 31 }, (_v, i) => run(i + 1, "2026-10-30", { startedAt: `2026-10-30T${String(i % 24).padStart(2, "0")}:${i < 24 ? "00" : "30"}:00-05:00` }));
+    for (const x of await upload(batch)) await generate(x);
+    expect(await deps.rateLimiter.peek("summary:global:day", 86_400, new Date())).toBe(30);
   });
 
   it("limits an account to 30 generations an hour with a 429", async () => {

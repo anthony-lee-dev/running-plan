@@ -28,6 +28,7 @@ run_worker_first = ["/v1/*"]
 binding = "AI"
 
 [vars]
-# Kill switch for AI run summaries: "on" or "off". Off shows the template text and never calls the model.
+# AI run summaries: "on" or "off". Off until the human turns it on (after #82 covers the wording and the device check).
+# Off is also the kill switch. Off shows the template text and never calls the model.
 # AI_DAILY_CAP (model calls a day across all accounts, default 600) stays under the free pool; raise it only on Workers Paid.
-AI_SUMMARIES = "on"
+AI_SUMMARIES = "off"

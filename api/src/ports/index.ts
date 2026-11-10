@@ -392,6 +392,8 @@ export interface EmailSender {
 export interface RateLimiter {
   /** Counts a hit in a fixed window. When over the limit, says how many seconds until the window ends. */
   hit(key: string, limit: number, windowSec: number, now: Date): Promise<{ allowed: boolean; retryAfterSec: number }>;
+  /** How many hits the key has in the current window, without counting one. */
+  peek(key: string, windowSec: number, now: Date): Promise<number>;
 }
 
 /** Randomness, kept behind a port so domain code and tests stay deterministic where they need to be. */

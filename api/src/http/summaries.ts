@@ -99,6 +99,9 @@ const PER_USER_HOUR = 30;
 const PER_USER_DAY = 60;
 /** The model is asked once, and once more when its text fails the checks. */
 const ATTEMPTS = 2;
+/** How long a quota error pauses all model calls. */
+const QUOTA_MARKER = "summary:quota";
+const QUOTA_PAUSE = 900;
 
 export function summaryRoutes(deps: Deps) {
   const app = new Hono<{ Variables: AuthVariables }>();
@@ -139,8 +142,12 @@ export function summaryRoutes(deps: Deps) {
     if (stored?.reason) return asTemplate(stored.reason);
     if (!deps.narrator) return asTemplate("ai_unavailable");
 
-    // Per-account limits come first and answer 429; they count only a request that would reach the model.
+    // After the model reported its allowance used up, nothing calls it again for a while: on Workers Free every further call
+    // would only fail until 00:00 UTC. The marker is a counter in the rate limiter, set by a quota error below.
     const now = deps.clock.now();
+    if ((await deps.rateLimiter.peek(QUOTA_MARKER, QUOTA_PAUSE, now)) > 0) return asTemplate("over_limit");
+
+    // Per-account limits come first and answer 429; they count only a request that would reach the model.
     for (const [key, limit, window] of [
       [`summary:user:${userId}:hour`, PER_USER_HOUR, HOUR],
       [`summary:user:${userId}:day`, PER_USER_DAY, DAY],
@@ -162,6 +169,7 @@ export function summaryRoutes(deps: Deps) {
         const kind = error instanceof NarratorError ? error.kind : "unavailable";
         // Reason codes only: neither the facts nor the model's text are ever logged.
         console.warn(`run summary: narrator ${kind}`);
+        if (kind === "quota") await deps.rateLimiter.hit(QUOTA_MARKER, 1, QUOTA_PAUSE, now);
         return asTemplate(kind === "quota" ? "over_limit" : "ai_unavailable");
       }
       const paragraph = parseNarration(raw);
