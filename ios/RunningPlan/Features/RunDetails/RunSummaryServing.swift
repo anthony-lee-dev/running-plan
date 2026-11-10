@@ -18,6 +18,8 @@ enum RunSummaryError: Error, Equatable {
     case notFound
     /// 429: the per-account limit. The template already shown stays.
     case rateLimited
+    /// 409 twice running: the profile keeps changing elsewhere.
+    case conflict
     case offline
     case server
 }
@@ -60,14 +62,19 @@ struct APIRunSummaryService: RunSummaryServing {
         try await profile().aiSummaries ?? true
     }
 
-    /// Reads the profile first for its revision: only `aiSummaries` is sent, the other sections stay as they are.
+    /// Reads the profile first for its revision: only `aiSummaries` is sent, the other sections stay as they are. A 409 (the profile
+    /// moved, for example from the web app) reads it again and tries once more.
     func setAIEnabled(_ on: Bool) async throws {
-        let current = try await profile()
-        let output = try await call { try await client.updateProfile(headers: .init(If_hyphen_Match: "\"\(current.revision)\""), body: .json(.init(aiSummaries: on))) }
-        switch output {
-        case .ok: return
-        case .unauthorized: throw RunSummaryError.signedOut
-        case .badRequest, .conflict, .undocumented: throw RunSummaryError.server
+        for attempt in 0..<2 {
+            let current = try await profile()
+            let output = try await call { try await client.updateProfile(headers: .init(If_hyphen_Match: "\"\(current.revision)\""), body: .json(.init(aiSummaries: on))) }
+            switch output {
+            case .ok: return
+            case .unauthorized: throw RunSummaryError.signedOut
+            case .conflict where attempt == 0: continue
+            case .conflict: throw RunSummaryError.conflict
+            case .badRequest, .undocumented: throw RunSummaryError.server
+            }
         }
     }
 

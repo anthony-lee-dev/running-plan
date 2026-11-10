@@ -285,8 +285,9 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - The numbers and wording are the server's: the app never builds, edits or re-checks the paragraph, and sends no phone-only data
   (splits, zones, weather stay on the phone).
 - The switch is a toggle in Goal and settings (`settings.aiSummaries`, `AISummarySwitch`): `aiSummaries` on the profile, on by default,
-  shared with the web app. It reads the profile for its revision and sends only `aiSummaries`; like the max-heart-rate save, it bumps the
-  profile revision, so a review-settings sheet opened earlier may 409 once on its next save. Off makes the server answer the template
+  shared with the web app. It reads the profile for its revision and sends only `aiSummaries` (a 409 reads again and retries once); it bumps the
+  profile revision, so Goal reloads the review settings after a successful switch (otherwise "Show targets as" would 409), and a
+  review-settings sheet opened earlier may 409 once on its next save. The card reloads when the run's match changes. Off makes the server answer the template
   with reason `disabled` and never call the model.
 - The UI-test API has a stand-in model (`api/test/ui-server/app.ts`) so the UI test sees the template first and the AI text after.
 

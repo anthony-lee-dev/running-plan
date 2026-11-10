@@ -29,6 +29,10 @@ struct RunDetailsScreen: View {
         _summary = State(initialValue: RunSummaryStore(service: summaries))
     }
 
+    private var matchedSessionId: String? {
+        inbox.allRuns.first(where: { $0.value2.id == activityId })?.value2.match?.sessionId
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -54,7 +58,11 @@ struct RunDetailsScreen: View {
         .background(Palette.bg.color.ignoresSafeArea())
         .accessibilityIdentifier("screen.rundetails")
         .task { await store.open(activityId: activityId) }
-        .task { await summary.open(activityId: activityId, today: PreviewViewModel.localToday()) }
+        // Again after a match or unmatch: the facts and the next session depend on it.
+        .task(id: matchedSessionId) {
+            guard let activity = inbox.allRuns.first(where: { $0.value2.id == activityId }), RunSummaryStore.applies(to: activity) else { return }
+            await summary.open(activityId: activityId, today: PreviewViewModel.localToday())
+        }
         .sheet(isPresented: $picking) {
             let choices = inbox.runs(today: PreviewViewModel.localToday()).choices(for: activityId)
             SessionPicker(
@@ -153,7 +161,7 @@ struct RunDetailsScreen: View {
             .background(Palette.card.color, in: RoundedRectangle(cornerRadius: 24))
             .accessibilityIdentifier("rundetails.grid")
         }
-        if activity.value1.workoutType == .running, activity.value2.disposition != .ignored, let result = summary.result { RunSummaryCard(result: result) }
+        if RunSummaryStore.applies(to: activity), let result = summary.result { RunSummaryCard(result: result) }
         if let plan = model.planVsActual { planVsActual(plan) }
         if store.loading { splitsSkeleton } else { splits(activity.value1) }
         zones(activity.value1)

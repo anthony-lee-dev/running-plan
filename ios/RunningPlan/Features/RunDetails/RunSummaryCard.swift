@@ -8,6 +8,7 @@ struct RunSummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Summary").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink.color)
+                .accessibilityAddTraits(.isHeader)
             Text(result.text)
                 .font(.system(size: 15)).foregroundStyle(Palette.ink.color)
                 .fixedSize(horizontal: false, vertical: true)

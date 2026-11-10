@@ -100,6 +100,19 @@ struct AISummarySwitchTests {
     }
 }
 
+@MainActor
+struct AISummarySwitchConflictTests {
+    @Test func aConflictIsReportedAsAChangeElsewhereNotAConnectionProblem() async {
+        let service = StubSummaries(first: .success(template))
+        service.setResult = .failure(RunSummaryError.conflict)
+        let model = AISummarySwitch(service: service)
+        await model.load()
+        await model.set(false)
+        #expect(model.isOn == true)
+        #expect(model.error?.contains("changed somewhere else") == true)
+    }
+}
+
 struct RunSummaryMappingTests {
     @Test func theAPIReplyBecomesTheCardsResult() {
         let summary = Components.Schemas.RunSummary(text: "t", nextStep: "n", source: .ai, canGenerate: false, pain: true)

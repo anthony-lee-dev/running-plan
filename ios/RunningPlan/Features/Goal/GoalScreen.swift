@@ -182,7 +182,7 @@ struct GoalScreen: View {
     @ViewBuilder
     private var aiSummariesRow: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle(isOn: Binding(get: { aiSwitch.isOn ?? true }, set: { new in Task { await aiSwitch.set(new) } })) {
+            Toggle(isOn: Binding(get: { aiSwitch.isOn ?? true }, set: { new in Task { await aiSwitch.set(new); await settings.load() } })) {
                 Text("AI run summaries").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink.color)
             }
             .tint(Palette.accentText.color)

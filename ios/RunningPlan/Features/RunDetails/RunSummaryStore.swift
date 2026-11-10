@@ -1,3 +1,4 @@
+import APIClient
 import Foundation
 import Observation
 
@@ -13,6 +14,11 @@ final class RunSummaryStore {
 
     init(service: RunSummaryServing) {
         self.service = service
+    }
+
+    /// Only a running workout that is not ignored has a summary; anything else would only waste a request.
+    static func applies(to activity: Components.Schemas.Activity) -> Bool {
+        activity.value1.workoutType == .running && activity.value2.disposition != .ignored
     }
 
     func open(activityId: String, today: String) async {
@@ -56,6 +62,9 @@ final class AISummarySwitch {
             isOn = on
         } catch is CancellationError {
             return
+        } catch RunSummaryError.conflict {
+            self.error = "Your settings changed somewhere else. We've loaded the latest; try again."
+            await load()
         } catch {
             self.error = "We couldn't save that. Check your connection and try again."
             await load()
