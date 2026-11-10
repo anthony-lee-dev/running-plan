@@ -11,4 +11,12 @@ describe("wrangler.toml", () => {
       /^database_id = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"$/m,
     );
   });
+
+  // The web app and /v1 must share one origin (no CORS, CSP connect-src 'self'), so the API Worker serves web/dist.
+  it("serves the built web app, running the Worker first only for /v1/*", () => {
+    const block = wranglerToml.split("[assets]")[1] ?? "";
+    expect(block).toMatch(/^directory = "\.\.\/web\/dist"$/m);
+    expect(block).toMatch(/^not_found_handling = "single-page-application"$/m);
+    expect(block).toMatch(/^run_worker_first = \["\/v1\/\*"\]$/m);
+  });
 });

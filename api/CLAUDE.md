@@ -190,3 +190,5 @@ entry file, not a rewrite.
   repeats `APIConfiguration.deployedURL` in the iOS app; change both together.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.
+- The Worker also serves the built web app from `../web/dist` (`[assets]` in `wrangler.toml`, `run_worker_first = ["/v1/*"]`),
+  so deploys need `npm run build -w web` first. Only `/v1/*` reaches `src/index.ts`; do not widen that or the web CSP breaks.

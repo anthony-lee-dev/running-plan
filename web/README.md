@@ -23,5 +23,32 @@ It will not upload running-session data. React + Vite, TypeScript, Vitest with T
 - `public/_headers` sets a strict Content-Security-Policy (`connect-src 'self'`: the API must be on the same origin)
   and the other security headers; the refresh token is in `sessionStorage`, so the CSP is a second layer behind
   React's escaping of all server text.
-- Hosting is Cloudflare Workers static assets (`wrangler.jsonc`). The API has no CORS headers, so deploy both on one
-  domain (`/v1/*` routed to the API worker, everything else to these assets), or set `VITE_API_URL` only after adding CORS and the API origin to `connect-src`.
+- Hosting: the API Worker serves the built app itself (`[assets]` in `api/wrangler.toml`: `/v1/*` runs the Worker, every other
+  path is a static file from `web/dist` with the SPA fallback to `index.html`). The page and `/v1` share one origin, so there
+  is no CORS and `_headers` keeps `connect-src 'self'`. Asset responses get the headers in `public/_headers`; API responses
+  are unchanged, so the iOS app sees the same API. A separate web Worker would need a service binding for no gain.
+
+## Deploy the web app
+
+A human step (agents do not run `wrangler deploy`). It reuses the existing Worker `running-plan-api`, so its D1 database and
+secrets (`JWT_SECRET`, `MAIL_FROM`) and the `EMAIL` binding stay as they are: sign-in codes are emailed, as for the iPhone app.
+From the repo root, after `npm ci`:
+
+```bash
+npm run build -w web
+```
+
+```bash
+cd api && npx wrangler deploy
+```
+
+```bash
+cd .. && npm run smoke -w api
+```
+
+Then open <https://running-plan-api.anthonyhklee.workers.dev/>, type your email, and enter the code that arrives by email.
+Your plan and runs load from the same account as the iPhone app. `wrangler deploy` fails if `web/dist` does not exist, so build
+first; rebuild and redeploy whenever the web app changes. No D1 migration is needed. To try it locally first:
+`npm run build -w web`, put `JWT_SECRET` (32+ characters) and `ALLOW_LOG_EMAIL=1` in `api/.dev.vars`, run
+`npx wrangler d1 migrations apply running-plan --local` and `npm run dev -w api`, and open `http://localhost:8787/`
+(the code is printed in the terminal).
