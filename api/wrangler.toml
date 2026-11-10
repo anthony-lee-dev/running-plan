@@ -12,3 +12,12 @@ migrations_dir = "migrations"
 # Cloudflare Email Sending (public beta, Workers Paid). Onboard the sender domain in the dashboard first.
 [[send_email]]
 name = "EMAIL"
+
+# The web app (web/, built with `npm run build -w web`) is served from this same Worker so the page and /v1 share one
+# origin: no CORS, and the strict CSP (connect-src 'self') stays. Only /v1/* runs the Worker; every other path is a
+# static asset (web/dist/_headers sets the security headers on them), with the SPA fallback to index.html.
+[assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/v1/*"]

@@ -399,7 +399,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   created on first need. Runs started by an older `verify.sh` don't take the lock.
 - The required `ios` check always reports, but builds only when something the iOS build or UI tests use changed: `ios/`
   (not Markdown), `spec/`, `designs/dark/png` (the snapshot tests read it), `api/src`, `api/test/ui-server`, `api/migrations`, the API and root package files,
-  `scripts/verify.sh`, `scripts/generate-api-client.sh` or the workflow (the list is in `ios-ci.yml`). Keep it in step
+  `scripts/verify.sh`, `scripts/generate-api-client.sh` or the workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step
   with what `api/test/ui-server` imports. It runs the suite as five parallel shards (`IOS_SHARD=<i>/<n>`, see
   `ios_shard_filters` in `verify.sh`): the unit tests and each UI test class are dealt out by the times in
   `IOS_SHARD_WEIGHTS`, so re-measure those (each shard's log lists its slowest tests) when a class is added or the
