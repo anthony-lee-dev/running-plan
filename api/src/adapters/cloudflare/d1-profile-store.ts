@@ -8,6 +8,7 @@ interface Row {
   scheduling: string;
   review_frequency: ReviewFrequency;
   review_day: Weekday | null;
+  ai_summaries: number;
   revision: number;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export class D1ProfileStore implements ProfileStore {
       heartRate: JSON.parse(row.heart_rate),
       scheduling: JSON.parse(row.scheduling),
       review: { frequency: row.review_frequency, ...(row.review_day ? { day: row.review_day } : {}) },
+      aiSummaries: row.ai_summaries === 1,
       revision: row.revision,
       updatedAt: row.updated_at,
     };
@@ -37,6 +39,7 @@ export class D1ProfileStore implements ProfileStore {
       JSON.stringify(fields.scheduling),
       fields.review.frequency,
       fields.review.day ?? null,
+      fields.aiSummaries ? 1 : 0,
     ];
     const next = baseRevision + 1;
     // Nothing is stored until the first save, so the default revision 1 means "insert"; anything else "update".
@@ -46,15 +49,15 @@ export class D1ProfileStore implements ProfileStore {
       baseRevision === 1
         ? await this.db
             .prepare(
-              `INSERT INTO profiles (user_id, target_display, paces, heart_rate, scheduling, review_frequency, review_day, revision, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id) DO NOTHING`,
+              `INSERT INTO profiles (user_id, target_display, paces, heart_rate, scheduling, review_frequency, review_day, ai_summaries, revision, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id) DO NOTHING`,
             )
             .bind(userId, ...values, next, now)
             .run()
         : await this.db
             .prepare(
               `UPDATE profiles SET target_display = ?, paces = ?, heart_rate = ?, scheduling = ?, review_frequency = ?,
-                 review_day = ?, revision = ?, updated_at = ? WHERE user_id = ? AND revision = ?`,
+                 review_day = ?, ai_summaries = ?, revision = ?, updated_at = ? WHERE user_id = ? AND revision = ?`,
             )
             .bind(...values, next, now, userId, baseRevision)
             .run();

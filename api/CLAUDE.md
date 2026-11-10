@@ -188,6 +188,19 @@ entry file, not a rewrite.
   up-to-date `main` (it compares the deploy with the checkout). The `smoke` vitest project exists only with `SMOKE=1`,
   so verify never needs the network; `test/smoke-local.test.ts` runs the same checks in-process. The default URL
   repeats `APIConfiguration.deployedURL` in the iOS app; change both together.
+- Run summaries (issue #132, `src/http/summaries.ts`): `GET /v1/activities/{id}/summary?today=` never calls a model and never
+  writes. `loadSummaryContext` reads the run, the user's runs of the 28 days before it, its confirmed match, the matched session's
+  after-run check-ins and the plan's sessions (about eight queries with the token check), and `domain/run-facts.ts` turns them into
+  ready-formatted facts: every number a summary may contain. Never put free text (check-in notes, titles, source apps), ids or
+  absolute dates in the facts: they are what a model would see. `domain/run-summary-text.ts` is the template (also the oracle for
+  the model's text), `domain/summary-check.ts` the number, wording and shape checks (stricter when pain is flagged). The facts are
+  hashed (`canonicalHash`) and a stored paragraph (`activity_summaries`, migration 0006) is served only while its hash and
+  `PROMPT_VERSION` still match; bump `PROMPT_VERSION` with any change to the prompt or the facts' meaning. `nextStep` is written by
+  the server on every read from the plan relative to `today` and is never stored or sent to a model; with a pain flag on any
+  after-run check-in it is `PAIN_GUIDANCE`, word for word (the iOS check-in screen shows the same sentence: change both together).
+  Intervals/tempo runs are not compared with other runs; fewer than 3 similar runs (distance within 20%, 28 days) say so.
+  Derived data: summaries stay out of the account export and sync (the cascade deletes them with the account). The profile's
+  `aiSummaries` (on by default, migration 0006) turns the AI off per account: the GET then answers the template with reason `disabled`.
 - Test routes with `app.request(...)` against `createApp(memoryDeps())`; no network in unit tests.
 - Rule engine tests are table-driven; add property tests (fast-check) for invariants such as bounded weekly load growth.
 - The Worker also serves the built web app from `../web/dist` (`[assets]` in `wrangler.toml`, `run_worker_first = ["/v1/*"]`),

@@ -11,6 +11,8 @@ import type {
   ActivityStore,
   CheckInStore,
   StoredCheckIn,
+  StoredSummary,
+  SummaryStore,
   MatchStore,
   AuthStore,
   Clock,
@@ -588,6 +590,13 @@ export class MemoryCheckInStore implements CheckInStore {
     return [...this.rows.values()].filter((r) => r.userId === userId).map((r) => structuredClone(r.checkIn));
   }
 
+  async forSession(userId: string, sessionId: string) {
+    return [...this.rows.values()]
+      .filter((r) => r.userId === userId && r.checkIn.sessionId === sessionId && r.checkIn.deletedAt === null)
+      .map((r) => structuredClone(r.checkIn))
+      .sort((a, b) => (a.updatedAt + a.id < b.updatedAt + b.id ? -1 : 1));
+  }
+
   async create(userId: string, checkIn: StoredCheckIn) {
     if (!(await this.auth.userExists(userId))) return { status: "no_session" as const };
     // The session first: one that is not the user's is simply not found, whatever the id.
@@ -598,6 +607,27 @@ export class MemoryCheckInStore implements CheckInStore {
     const stored: StoredCheckIn = { ...structuredClone(checkIn), pain: checkIn.pain ?? false };
     this.rows.set(checkIn.id, { userId, checkIn: stored });
     return { status: "created" as const, checkIn: structuredClone(stored) };
+  }
+}
+
+/** Run summaries in memory. Scoped through the activity store, so another user's activity has none. */
+export class MemorySummaryStore implements SummaryStore {
+  private rows = new Map<string, StoredSummary>();
+
+  constructor(
+    private readonly auth: AuthStore,
+    private readonly activities: MemoryActivityStore,
+  ) {}
+
+  async get(userId: string, activityId: string) {
+    if (!(await this.auth.userExists(userId)) || !this.activities.ref(userId, activityId)) return undefined;
+    const row = this.rows.get(activityId);
+    return row && structuredClone(row);
+  }
+
+  async put(userId: string, summary: StoredSummary) {
+    if (!(await this.auth.userExists(userId)) || !this.activities.ref(userId, summary.activityId)) return;
+    this.rows.set(summary.activityId, structuredClone(summary));
   }
 }
 
@@ -787,6 +817,7 @@ export function memoryDeps(overrides: Partial<Deps> = {}): Deps {
     activities,
     matches,
     checkIns,
+    summaries: new MemorySummaryStore(auth, activities),
     proposals,
     sync: new MemorySyncStore(auth, plans, checkIns, proposals),
     email: new MemoryEmailSender(),

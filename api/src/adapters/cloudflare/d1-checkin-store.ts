@@ -31,6 +31,14 @@ export const toCheckIn = (r: CheckInRow): StoredCheckIn => ({
 export class D1CheckInStore implements CheckInStore {
   constructor(private readonly db: D1Database) {}
 
+  async forSession(userId: string, sessionId: string) {
+    const { results } = await this.db
+      .prepare("SELECT * FROM checkins WHERE session_id = ? AND user_id = ? AND deleted_at IS NULL ORDER BY updated_at, id")
+      .bind(sessionId, userId)
+      .all<CheckInRow>();
+    return results.map(toCheckIn);
+  }
+
   async create(userId: string, c: StoredCheckIn) {
     const [live, inserted, read] = await this.db.batch([
       this.db
