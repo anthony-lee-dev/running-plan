@@ -53,7 +53,6 @@ export function RunSummaryCard({ api, run, onSignedOut }: { api: Api; run: Activ
       setSwitching(true);
       try {
         setProfile(await api.setAiSummaries(on, profile.revision));
-        setSummary(undefined);
         setReload((n) => n + 1);
       } catch (e) {
         if ((e as { status?: number }).status === 401) onSignedOut();
@@ -70,7 +69,7 @@ export function RunSummaryCard({ api, run, onSignedOut }: { api: Api; run: Activ
   return (
     <section aria-label="Run summary">
       <h3>Summary</h3>
-      <p>{summary.text}</p>
+      <p aria-live="polite">{summary.text}</p>
       {summary.nextStep && (summary.pain ? <p className="notice">{summary.nextStep}</p> : <p className="muted">{summary.nextStep}</p>)}
       {summary.source === "ai" && <p className="muted">Generated summary</p>}
       {profile && (
