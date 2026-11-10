@@ -9,10 +9,12 @@ concurrency:
   group: ios-ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  ios:
-    name: ios
-    runs-on: macos-latest
-    timeout-minutes: 45
+  # Decides whether the iOS build matters; cheap, so the required check can always report.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.changes.outputs.run }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -36,9 +38,23 @@ jobs:
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi
+
+  # The suite is split over parallel runners: the unit tests, and the UI test classes in three groups (see
+  # ios_shard_filters in scripts/verify.sh, which finds the classes itself, so a new class is never left out).
+  ios-test:
+    name: ios-test (${{ matrix.shard }})
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [unit, "ui:1/3", "ui:2/3", "ui:3/3"]
+    steps:
+      - uses: actions/checkout@v7
       - name: Select the newest Xcode on the runner
         id: xcode
-        if: steps.changes.outputs.run == 'true'
         run: |
           xc="$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)"
           if [[ -n "$xc" ]]; then sudo xcode-select -s "$xc"; fi
@@ -46,41 +62,60 @@ jobs:
           echo "version=$(xcodebuild -version | tr -s ' \n' '--')" >> "$GITHUB_OUTPUT"
       # The UI tests run against the API on Node (api/test/ui-server), started by verify.sh.
       - uses: actions/setup-node@v7
-        if: steps.changes.outputs.run == 'true'
         with:
           node-version: 22
           cache: npm
       - name: Install npm packages
-        if: steps.changes.outputs.run == 'true'
         run: npm ci
       - name: Install XcodeGen
-        if: steps.changes.outputs.run == 'true'
         run: brew install xcodegen
       # Caches only speed the build up; a miss rebuilds from scratch. The generator is compiled by
       # `swift run` in generate-api-client.sh (about 2 minutes cold). DerivedData restores the newest earlier
       # build, so Xcode only recompiles what changed.
       - uses: actions/cache@v6
-        if: steps.changes.outputs.run == 'true'
         with:
           path: ios/APIClientGenerator/.build
           key: apiclient-generator-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/APIClientGenerator/Package.resolved', 'ios/APIClientGenerator/Package.swift') }}
       # Every run restores the newest DerivedData for this Xcode; only main saves one, so PR runs
       # don't fill the repo's cache quota.
       - uses: actions/cache/restore@v6
-        if: steps.changes.outputs.run == 'true'
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
           restore-keys: |
             deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-
       - name: Verify
-        if: steps.changes.outputs.run == 'true'
         env:
-          # Under the job's 45-minute limit, so a hung xcodebuild is stopped with verify's message, not cut off.
-          IOS_TEST_TIMEOUT: "2100"
+          IOS_SHARD: ${{ matrix.shard }}
+          IOS_HANG_RETRIES: "1"
+          # A shard takes about 10 minutes, so one that runs past 18 is hung: verify stops it, restarts the
+          # simulator and runs it once more, all inside the job's 45-minute limit.
+          IOS_TEST_TIMEOUT: "1080"
         run: bash scripts/verify.sh ios
       - uses: actions/cache/save@v6
-        if: github.event_name == 'push' && steps.changes.outputs.run == 'true'
+        if: github.event_name == 'push' && matrix.shard == 'unit'
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: deriveddata-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('ios/project.yml', 'ios/APIClient/Package.swift') }}-${{ github.sha }}
+
+  # The required check. Passes when the iOS build did not matter, or when every shard passed.
+  ios:
+    name: ios
+    needs: [changes, ios-test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report
+        env:
+          RUN: ${{ needs.changes.outputs.run }}
+          CHANGES: ${{ needs.changes.result }}
+          TESTS: ${{ needs.ios-test.result }}
+        run: |
+          echo "changes=$CHANGES run=$RUN ios-test=$TESTS"
+          [[ "$CHANGES" == success ]] || { echo "Could not decide whether to build"; exit 1; }
+          if [[ "$RUN" == true ]]; then
+            [[ "$TESTS" == success ]] || { echo "iOS tests: $TESTS"; exit 1; }
+          else
+            echo "iOS untouched; nothing to build."
+          fi
