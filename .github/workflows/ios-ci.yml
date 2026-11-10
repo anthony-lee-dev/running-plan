@@ -26,10 +26,10 @@ jobs:
             echo "No iOS project yet; nothing to build."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           # Only what the iOS build and UI tests use: the app and its tests, the contract the client is generated
-          # from, the in-memory API the UI tests run against (api/test/ui-server imports only api/src), its
+          # from, the board PNGs the snapshot tests compare with, the in-memory API the UI tests run against (api/test/ui-server imports only api/src), its
           # migrations and packages, and the scripts that run it. Markdown never counts.
           if git diff --quiet "$BASE" HEAD -- \
-            ios spec api/src api/test/ui-server api/migrations api/package.json api/tsconfig.json \
+            ios spec designs/dark/png api/src api/test/ui-server api/migrations api/package.json api/tsconfig.json \
             package.json package-lock.json scripts/verify.sh scripts/generate-api-client.sh .github/workflows/ios-ci.yml \
             ':(exclude,glob)**/*.md' 2>/dev/null; then
             echo "iOS untouched."; echo "run=false" >> "$GITHUB_OUTPUT"
