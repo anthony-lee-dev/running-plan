@@ -10,3 +10,5 @@ export type Activity = Schemas["Activity"];
 export type Progress = Schemas["Progress"];
 export type Problem = Schemas["Problem"];
 export type Warning = Schemas["Warning"];
+export type RunSummary = Schemas["RunSummary"];
+export type Profile = Schemas["Profile"];
