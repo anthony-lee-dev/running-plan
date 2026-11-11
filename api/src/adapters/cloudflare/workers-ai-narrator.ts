@@ -1,3 +1,4 @@
+import { modelAnswer } from "../../domain/run-summary-prompt";
 import { NarratorError, type RunNarrator } from "../../ports";
 
 /** The part of the Workers AI binding this adapter uses (`env.AI`, `[ai]` in wrangler.toml). */
@@ -38,8 +39,9 @@ export class WorkersAiNarrator implements RunNarrator {
           response_format: { type: "json_schema", json_schema: SCHEMA },
         }),
         timeout,
-      ])) as { response?: unknown } | null;
-      return out?.response;
+      ])) as unknown;
+      // Models differ in shape (`response` string or object, chat-completion `choices`): the domain knows them all.
+      return modelAnswer(out);
     } catch (error) {
       if (error instanceof NarratorError) throw error;
       // The allowance used up is reported as a 4006 error ("you have used up your daily free allocation"); anything else is a failure.

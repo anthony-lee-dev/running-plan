@@ -19,6 +19,10 @@ describe("WorkersAiNarrator (stub binding, no network)", () => {
   it("passes an object response through for the caller to read", async () => {
     expect(await new WorkersAiNarrator({ run: async () => ({ response: { paragraph: "x" } }) }).narrate(prompt)).toEqual({ paragraph: "x" });
   });
+  it("reads a chat-completion style answer (Granite) too", async () => {
+    const ai = { run: async () => ({ choices: [{ message: { role: "assistant", content: '{"paragraph":"x"}' } }] }) };
+    expect(await new WorkersAiNarrator(ai).narrate(prompt)).toBe('{"paragraph":"x"}');
+  });
   it("times out", async () => {
     const slow = new WorkersAiNarrator({ run: () => new Promise(() => {}) }, "m", 20);
     await expect(slow.narrate(prompt)).rejects.toMatchObject({ kind: "timeout" });

@@ -12,6 +12,7 @@ export interface NarratorPrompt {
 const RULES = [
   "You write the summary of one run for a running app. You are given facts as JSON. Reword them as one plain paragraph of 3 to 5 sentences, about 50 to 90 words, in a calm, factual coach voice.",
   "Use only the facts given. Every number you write must be copied exactly from the facts, with its unit, and mean what the facts say it means. Never add, round, convert or work out another number.",
+  "Write ordinary words separated by single spaces, and put a space between a word and a number (for example \"in 44 min\", never \"in44\"). Write every number as digits in the same form the facts use (\"59 min\", \"5:51/km\", \"152 bpm\", \"4 weeks\"); never spell numbers out.",
   "Mention only what is present in the facts. If a part is missing, leave it out; do not mention that it is missing.",
   "Compare only in the direction the facts state (for example quicker or slower, higher or lower), and never otherwise.",
   "Do not give advice, plans, tips, goals or predictions. Do not say what the runner should do next.",
@@ -53,6 +54,25 @@ export function buildPrompt(facts: RunFacts): NarratorPrompt {
     system: [...RULES, ...(facts.pain ? PAIN_RULES : [])].join("\n"),
     user: JSON.stringify(modelFacts(facts)),
   };
+}
+
+/**
+ * The model's answer inside a Workers AI `result`. Models differ: most put it in `response` (a JSON string, or already an
+ * object when a JSON schema is set), others answer chat-completion style (`choices[0].message.content`, or `.text`). A bare
+ * answer (no wrapper) passes through. Returns undefined when there is none.
+ */
+export function modelAnswer(result: unknown): unknown {
+  if (result === null || typeof result !== "object" || Array.isArray(result)) return result;
+  const r = result as Record<string, unknown>;
+  if (r.response !== undefined && r.response !== null) return r.response;
+  const choice = Array.isArray(r.choices) ? (r.choices[0] as Record<string, unknown> | undefined) : undefined;
+  if (choice) {
+    const message = choice.message as Record<string, unknown> | undefined;
+    const content = message?.content ?? choice.text;
+    if (content !== undefined && content !== null) return content;
+  }
+  if (r.result !== undefined && r.result !== null) return modelAnswer(r.result);
+  return "paragraph" in r ? r : undefined;
 }
 
 /** The paragraph in a model's answer, or undefined when it is not the agreed JSON. Tolerates a code fence around it. */

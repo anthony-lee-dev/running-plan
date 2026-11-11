@@ -2,7 +2,7 @@
 // facts the server computed, so a paragraph with a number the facts do not hold (or one attached to the wrong unit or
 // thing), a comparison the facts do not make, medical or advice wording, a superlative the data cannot back, or the wrong
 // shape is refused and the template is shown instead. A run with a pain flag gets a stricter wording check. Pure: no I/O.
-import { allowedDirections, allowedQuantities, type RunFacts } from "./run-facts";
+import { RECENT_DAYS, allowedDirections, allowedQuantities, type RunFacts } from "./run-facts";
 import { numbersIn } from "./run-facts";
 
 export type CheckFailure = "empty" | "shape" | "number" | "claim" | "wording" | "strict_wording";
@@ -26,6 +26,9 @@ const URL = /https?:\/\/|www\.|\w+\.(com|net|org|io|app)\b/i;
 const MARKDOWN = /[*#`_[\]|<>~]|^\s*[-+]\s|\n/m;
 const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{N}\p{P}\p{S}\p{Z}]/u;
 
+/** A word stuck to the number after it ("took44"): the model dropped a space, so the text is not fit to show. Also refuses "Z2" or "HR150" on purpose (the template shows instead). */
+const RUN_TOGETHER = /[A-Za-z]\d/;
+
 export const MIN_WORDS = 4;
 export const MAX_WORDS = 130;
 export const MAX_WORDS_PAIN = 90;
@@ -33,15 +36,34 @@ export const MAX_WORDS_PAIN = 90;
 const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 const norm = (n: string) => numbersIn(n)[0]!;
 
+const PER_KM = String.raw`(?:per|a|each)\s+(?:kilomet(?:re|er)|km)\b`;
+/**
+ * Models write units in words ("59 minutes", "5:51 per kilometre", "152 beats per minute"). Rewrites those to the facts' own
+ * forms ("59 min", "5:51/km", "152 bpm") so the number check compares like with like. Only the unit is rewritten, never a
+ * value: a wrong number stays wrong. Used for the number check only.
+ */
+export function canonicalUnits(text: string): string {
+  return text
+    .replace(new RegExp(String.raw`\b(\d+) minutes?(?: and)? (\d+) seconds? ${PER_KM}`, "gi"), (_m, min: string, sec: string) => `${min}:${sec.padStart(2, "0")}/km`)
+    .replace(new RegExp(String.raw`\b(\d+) seconds? ${PER_KM}`, "gi"), "$1 s/km")
+    .replace(new RegExp(String.raw`(\d+(?::\d+)+) ${PER_KM}`, "gi"), "$1/km")
+    .replace(/(\d+:\d+)\s?(?:minutes?|mins?)\s*(?:\/|per\s+)\s*(?:km|kilomet(?:re|er)s?)\b/gi, "$1/km")
+    .replace(/(\d)[\s-]?(?:beats (?:per|a) minute|beats\/min)/gi, "$1 bpm")
+    .replace(/(\d)[\s-]?(?:kilomet(?:re|er)s?|kms?)\b/gi, "$1 km")
+    .replace(/(\d)[\s-]?(?:hours?|hrs?)\b(?: and)?/gi, "$1 h")
+    .replace(/(\d)[\s-]?(?:minutes?|mins?)\b/gi, "$1 min");
+}
+
 /**
  * Every number in the text must be one of these forms, and say what the facts say: a quantity with its unit that the facts
  * hold ("10.2 km", "5:41/km", "13 s/km", "152 bpm", "58 min"), "N out of 5" (feel) or "N out of 10" (effort), "N runs" for
- * the comparison's count, or "4 weeks". Anything else, such as "3 weeks", "152 beats" or a bare number, is invented.
+ * the comparison's count, "4 weeks" or "28 days". Anything else, such as "3 weeks", "152 beats" or a bare number, is invented.
  */
-function numbersOk(text: string, facts: RunFacts): boolean {
-  if (NUMBER_WORDS.test(text)) return false;
+function numbersOk(raw: string, facts: RunFacts): boolean {
+  if (NUMBER_WORDS.test(raw)) return false;
+  const text = canonicalUnits(raw);
   const quantities = allowedQuantities(facts);
-  const form = /(\d+(?::\d+)+|\d+(?:\.\d+)?)(?:\s?(s\/km|\/km|km|bpm|min|h)\b|\s+out of (5|10)\b|\s+(?:other\s+)?runs?\b|\s+weeks?\b)?/g;
+  const form = /(\d+(?::\d+)+|\d+(?:\.\d+)?)(?:\s?(s\/km|\/km|km|bpm|min|h)\b|\s+out of (5|10)\b|\s+(?:(?:other|similar|recent|previous|earlier)\s+){0,2}runs?\b|\s+weeks?\b|\s+days?\b)?/g;
   for (const m of text.matchAll(form)) {
     const value = norm(m[1]!);
     const whole = m[0];
@@ -54,6 +76,8 @@ function numbersOk(text: string, facts: RunFacts): boolean {
       if (facts.vsRecent?.count === undefined || String(facts.vsRecent.count) !== value) return false;
     } else if (/weeks?$/.test(whole)) {
       if (value !== "4") return false;
+    } else if (/days?$/.test(whole)) {
+      if (value !== String(RECENT_DAYS)) return false;
     } else return false;
   }
   return true;
@@ -74,7 +98,7 @@ export function checkParagraph(raw: string, facts: RunFacts): { ok: true } | { o
   if (text.length === 0) return { ok: false, reason: "empty" };
   const words = wordCount(text);
   const max = facts.pain ? MAX_WORDS_PAIN : MAX_WORDS;
-  if (words < MIN_WORDS || words > max || text.includes("!") || EMOJI.test(text) || URL.test(text) || MARKDOWN.test(text) || NON_LATIN_LETTER.test(text)) {
+  if (words < MIN_WORDS || words > max || text.includes("!") || EMOJI.test(text) || URL.test(text) || MARKDOWN.test(text) || RUN_TOGETHER.test(text) || NON_LATIN_LETTER.test(text)) {
     return { ok: false, reason: "shape" };
   }
   if (!numbersOk(text, facts)) return { ok: false, reason: "number" };
