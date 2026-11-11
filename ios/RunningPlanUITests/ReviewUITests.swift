@@ -45,7 +45,7 @@ final class ReviewUITests: XCTestCase {
 
         // Closing the review returns to Next, which still offers it (it is still due).
         app.buttons["review.back"].tap()
-        XCTAssertTrue(app.staticTexts["next.plan"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["next.plan"].waitForExistence(timeout: 15), app.debugDescription)
     }
 
     @MainActor

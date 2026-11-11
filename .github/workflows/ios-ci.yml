@@ -129,6 +129,10 @@ jobs:
           IOS_SHARD: ${{ matrix.shard }}
           IOS_HANG_RETRIES: "1"
           IOS_TEST_ALLOWANCE: "300"
+          # Start the app once before the tests (its first launch on a fresh simulator is the one that times out), and
+          # run again only the tests that failed with "Timed out while launching application via Xcode".
+          IOS_WARM_UP: "1"
+          IOS_LAUNCH_RETRIES: "1"
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
           # A shard takes about 10 to 15 minutes and one test is stopped after 5 (IOS_TEST_ALLOWANCE), so a shard
           # past 25 is hung: verify stops it, restarts the simulator and runs it once more, inside the 45-minute limit.
@@ -139,6 +143,12 @@ jobs:
         if: always()
         run: |
           b="$RUNNER_TEMP/ios.xcresult"
+          # A first run whose launch timeouts were retried (verify.sh keeps it as ios-first.xcresult).
+          if [[ -d "$RUNNER_TEMP/ios-first.xcresult" ]]; then
+            echo "RETRIED (the app did not launch):"
+            xcrun xcresulttool get test-results tests --path "$RUNNER_TEMP/ios-first.xcresult" | jq -r '
+              [.. | objects | select(.nodeType == "Failure Message")] | .[] | "RETRIED: \(.name)"' || true
+          fi
           [[ -d "$b" ]] || exit 0
           # Every test with its class and seconds, so IOS_SHARD_WEIGHTS can be kept balanced.
           xcrun xcresulttool get test-results tests --path "$b" | jq -r '

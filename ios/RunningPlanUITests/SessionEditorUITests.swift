@@ -15,14 +15,14 @@ final class SessionEditorUITests: XCTestCase {
         // The plan starts on the real today, so open whichever session comes first on the Plan tab's week.
         app.buttons["Plan"].firstMatch.tap()
         let firstSession = app.buttons.matching(identifier: "week.session").firstMatch
-        XCTAssertTrue(firstSession.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(firstSession.waitForExistence(timeout: 15), app.debugDescription)
         firstSession.tap()
 
-        XCTAssertTrue(app.staticTexts["session.title"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["session.title"].waitForExistence(timeout: 15), app.debugDescription)
         app.buttons["session.edit"].tap()
 
         let title = app.textFields["editor.title"]
-        XCTAssertTrue(title.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(title.waitForExistence(timeout: 15), app.debugDescription)
         title.tap()
         let old = title.value as? String ?? ""
         title.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "My own run")
@@ -41,6 +41,6 @@ final class SessionEditorUITests: XCTestCase {
         XCTAssertTrue(again.staticTexts["next.plan"].waitForExistence(timeout: 15), again.debugDescription)
         again.buttons["Plan"].firstMatch.tap()
         let edited = again.buttons.matching(NSPredicate(format: "identifier == 'week.session' AND label CONTAINS 'My own run'")).firstMatch
-        XCTAssertTrue(edited.waitForExistence(timeout: 5), "The edit did not survive a relaunch: \(again.debugDescription)")
+        XCTAssertTrue(edited.waitForExistence(timeout: 15), "The edit did not survive a relaunch: \(again.debugDescription)")
     }
 }

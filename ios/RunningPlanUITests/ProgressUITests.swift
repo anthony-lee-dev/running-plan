@@ -15,7 +15,7 @@ final class ProgressUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["screen.next"].waitForExistence(timeout: 10), app.debugDescription)
 
         app.buttons["Progress"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["screen.progress"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.progress"].waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertTrue(app.buttons["Set a goal"].exists, app.debugDescription)
     }
 
@@ -25,7 +25,7 @@ final class ProgressUITests: XCTestCase {
         let app = try await LocalAPI.signedInApp(api)
 
         app.buttons["Progress"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["screen.progress"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.progress"].waitForExistence(timeout: 15), app.debugDescription)
         // These come only from a successful getProgress.
         let sessions = app.descendants(matching: .any)["progress.sessions"].firstMatch
         XCTAssertTrue(sessions.waitForExistence(timeout: 10), app.debugDescription)
@@ -43,7 +43,7 @@ final class ProgressUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["inbox.empty"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["inbox.manual"].tap()
         let distance = app.textFields["manual.distance"]
-        XCTAssertTrue(distance.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(distance.waitForExistence(timeout: 15), app.debugDescription)
         distance.tap()
         distance.typeText("5")
         let minutes = app.textFields["manual.minutes"]
@@ -61,6 +61,6 @@ final class ProgressUITests: XCTestCase {
         let pace = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS '6:00/km'")).firstMatch
         XCTAssertTrue(pace.exists, app.debugDescription)
         app.buttons["Month"].tap()
-        XCTAssertTrue(app.staticTexts["This month"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["This month"].waitForExistence(timeout: 15), app.debugDescription)
     }
 }

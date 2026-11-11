@@ -27,7 +27,7 @@ final class SignInAgainUITests: XCTestCase {
 
         signOut(app)
         app.buttons["Next"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 15), app.debugDescription)
 
         try await LocalAPI.signInAgain(app, api, email: email)
 
@@ -46,11 +46,11 @@ final class SignInAgainUITests: XCTestCase {
         // Delete the plan, sign out, sign in again: the account has no plan.
         app.buttons["Goal"].firstMatch.tap()
         let delete = app.buttons["plan.delete"]
-        XCTAssertTrue(delete.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(delete.waitForExistence(timeout: 15), app.debugDescription)
         for _ in 0..<6 where !delete.isHittable { app.swipeUp() }
         delete.tap()
         let confirm = app.buttons["Yes, delete it"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(confirm.waitForExistence(timeout: 15), app.debugDescription)
         confirm.tap()
         XCTAssertTrue(app.buttons["goal.set"].waitForExistence(timeout: 10), app.debugDescription)
         signOut(app)

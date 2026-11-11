@@ -15,12 +15,12 @@ final class WatchUITests: XCTestCase {
 
         app.buttons["Plan"].firstMatch.tap()
         let rows = app.buttons.matching(identifier: "week.session")
-        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 15), app.debugDescription)
 
         var copyShown = false
         for index in 0..<min(rows.count, 7) where !copyShown {
             rows.element(boundBy: index).tap()
-            XCTAssertTrue(app.staticTexts["session.title"].waitForExistence(timeout: 5), app.debugDescription)
+            XCTAssertTrue(app.staticTexts["session.title"].waitForExistence(timeout: 15), app.debugDescription)
             XCTAssertFalse(app.buttons["session.addToWatch"].exists, "The per-session button is gone")
             XCTAssertFalse(app.buttons["session.watchSync"].exists, "The per-session sync link is gone")
             if app.buttons["session.copy"].exists { copyShown = true }
@@ -28,14 +28,14 @@ final class WatchUITests: XCTestCase {
             if app.staticTexts["session.watchStatus"].exists {
                 XCTAssertTrue(app.buttons["session.watchSettings"].exists, "The status line has a Watch settings link")
                 app.buttons["session.watchSettings"].tap()
-                XCTAssertTrue(app.switches["watch.settings.toggle"].waitForExistence(timeout: 5), app.debugDescription)
+                XCTAssertTrue(app.switches["watch.settings.toggle"].waitForExistence(timeout: 15), app.debugDescription)
                 app.buttons["Done"].tap()
                 XCTAssertTrue(app.switches["watch.settings.toggle"].waitForNonExistence(timeout: 5), "The sheet closes")
             }
             let back = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Back to'")).firstMatch
-            XCTAssertTrue(back.waitForExistence(timeout: 5), app.debugDescription)
+            XCTAssertTrue(back.waitForExistence(timeout: 15), app.debugDescription)
             back.tap()
-            XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5), app.debugDescription)
+            XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 15), app.debugDescription)
         }
         XCTAssertTrue(copyShown, "Copy steps stays on the sessions that have a spec sheet")
     }

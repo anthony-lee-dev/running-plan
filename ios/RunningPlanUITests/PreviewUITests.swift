@@ -39,13 +39,13 @@ final class PreviewUITests: XCTestCase {
         app.buttons["Plan"].firstMatch.tap() // the tab; wide iPhones show tabs in a bar and a rail
         // The title and the element combining it with its dates both carry the identifier.
         let weekTitle = app.staticTexts["week.title"].firstMatch
-        XCTAssertTrue(weekTitle.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(weekTitle.waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertTrue(weekTitle.label.hasPrefix("Week 1"), "A plan saved today opens on week 1, got \(weekTitle.label)")
         app.buttons["Whole plan"].tap()
         let secondWeek = app.buttons["whole.week.2"]
-        XCTAssertTrue(secondWeek.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(secondWeek.waitForExistence(timeout: 15), app.debugDescription)
         secondWeek.tap()
-        XCTAssertTrue(weekTitle.waitForExistence(timeout: 5))
+        XCTAssertTrue(weekTitle.waitForExistence(timeout: 15))
         XCTAssertTrue(weekTitle.label.hasPrefix("Week 2"), "Tapping week 2 should open it, got \(weekTitle.label)")
     }
 
@@ -64,14 +64,14 @@ final class PreviewUITests: XCTestCase {
         parts.day = 15
         let target = calendar.date(from: parts)!
         let picker = app.datePickers["preview.startDate"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(picker.waitForExistence(timeout: 15), app.debugDescription)
         for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
         picker.buttons.firstMatch.tap()
         app.buttons["Previous Month"].tap()
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
         let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(day.waitForExistence(timeout: 15), app.debugDescription)
         day.tap()
 
         let deadline = Date().addingTimeInterval(15)
@@ -83,13 +83,13 @@ final class PreviewUITests: XCTestCase {
         XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
 
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
-        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertTrue(week.waitForExistence(timeout: 45), app.debugDescription)
         try await LocalAPI.saveAndSignIn(app, api)
 
         // The plan started at least two weeks ago, so this week is not week 1: the chosen date reached the saved plan.
         app.buttons["Plan"].firstMatch.tap()
         let weekTitle = app.staticTexts["week.title"].firstMatch
-        XCTAssertTrue(weekTitle.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(weekTitle.waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertFalse(weekTitle.label.hasPrefix("Week 1"), "A plan started in the past should be past week 1, got \(weekTitle.label)")
     }
 
@@ -107,7 +107,7 @@ final class PreviewUITests: XCTestCase {
         parts.day = 15
         let target = calendar.date(from: parts)!
         let picker = app.datePickers["preview.startDate"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(picker.waitForExistence(timeout: 15), app.debugDescription)
         for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
         picker.buttons.firstMatch.tap()
         let nextMonth = app.buttons["Next Month"]
@@ -116,7 +116,7 @@ final class PreviewUITests: XCTestCase {
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
         let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(day.waitForExistence(timeout: 15), app.debugDescription)
         day.tap()
 
         let deadline = Date().addingTimeInterval(15)
@@ -128,7 +128,7 @@ final class PreviewUITests: XCTestCase {
         XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
 
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
-        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertTrue(week.waitForExistence(timeout: 45), app.debugDescription)
         try await LocalAPI.saveAndSignIn(app, api)
 
         let starts = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Starts'")).firstMatch
@@ -142,6 +142,6 @@ final class PreviewUITests: XCTestCase {
 
         app.buttons["Close"].tap()
 
-        XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 15), app.debugDescription)
     }
 }

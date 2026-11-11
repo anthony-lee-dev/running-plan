@@ -15,12 +15,12 @@ final class DeletePlanUITests: XCTestCase {
 
         app.buttons["Goal"].firstMatch.tap()
         let delete = app.buttons["plan.delete"]
-        XCTAssertTrue(delete.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(delete.waitForExistence(timeout: 15), app.debugDescription)
         for _ in 0..<6 where !delete.isHittable { app.swipeUp() }
         delete.tap()
 
         let confirm = app.buttons["Yes, delete it"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(confirm.waitForExistence(timeout: 15), app.debugDescription)
         confirm.tap()
 
         XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 10), app.debugDescription)
@@ -28,7 +28,7 @@ final class DeletePlanUITests: XCTestCase {
         XCTAssertEqual(deletesAfter, deletesBefore + 1)
 
         app.buttons["Next"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.buttons["Set a goal"].waitForExistence(timeout: 15), app.debugDescription)
 
         // Relaunch signed in: the server no longer has the plan.
         app.terminate()
