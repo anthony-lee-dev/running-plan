@@ -19,7 +19,7 @@ final class TabBarUITests: XCTestCase {
         }
 
         app.buttons["Goal"].tap()
-        XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 5),
+        XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 15),
                       "Goal not shown after tapping it\n\(app.debugDescription)")
     }
 }

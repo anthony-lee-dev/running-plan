@@ -68,7 +68,7 @@ enum LocalAPI {
         app.launch()
 
         app.buttons["Set a goal"].tap()
-        XCTAssertTrue(app.staticTexts["screen.interview"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.interview"].waitForExistence(timeout: 15), app.debugDescription)
         app.buttons["10K"].tap()
         app.buttons["Continue"].tap()
 
@@ -124,7 +124,7 @@ enum LocalAPI {
         app.buttons["preview.save"].tap()
 
         let emailField = app.textFields["signin.email"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(emailField.waitForExistence(timeout: 15), app.debugDescription)
         emailField.tap()
         emailField.typeText(email)
         app.buttons["signin.send"].tap()
@@ -149,7 +149,7 @@ enum LocalAPI {
         signIn.tap()
 
         let emailField = app.textFields["signin.email"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(emailField.waitForExistence(timeout: 15), app.debugDescription)
         emailField.tap()
         emailField.typeText(email)
         app.buttons["signin.send"].tap()

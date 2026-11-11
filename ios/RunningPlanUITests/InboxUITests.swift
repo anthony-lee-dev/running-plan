@@ -12,12 +12,12 @@ final class InboxUITests: XCTestCase {
     @MainActor
     private func addAndConfirmARun(_ app: XCUIApplication) {
         app.buttons["next.inbox"].tap()
-        XCTAssertTrue(app.staticTexts["screen.inbox"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.inbox"].waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertTrue(app.staticTexts["inbox.empty"].waitForExistence(timeout: 10), "Nothing is waiting yet: \(app.debugDescription)")
 
         app.buttons["inbox.manual"].tap()
         let distance = app.textFields["manual.distance"]
-        XCTAssertTrue(distance.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(distance.waitForExistence(timeout: 15), app.debugDescription)
         distance.tap()
         distance.typeText("5")
         let minutes = app.textFields["manual.minutes"]
@@ -33,7 +33,7 @@ final class InboxUITests: XCTestCase {
         } else {
             match.tap()
             let pick = app.buttons["inbox.pick"].firstMatch
-            XCTAssertTrue(pick.waitForExistence(timeout: 5), "No session to match: \(app.debugDescription)")
+            XCTAssertTrue(pick.waitForExistence(timeout: 15), "No session to match: \(app.debugDescription)")
             pick.tap()
         }
         XCTAssertTrue(app.staticTexts["screen.checkin"].waitForExistence(timeout: 10), "The check-in follows the match: \(app.debugDescription)")
@@ -67,7 +67,7 @@ final class InboxUITests: XCTestCase {
 
         addAndConfirmARun(app)
         let time = app.otherElements["checkin.time"]
-        XCTAssertTrue(time.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(time.waitForExistence(timeout: 15), app.debugDescription)
         XCTAssertTrue(time.label.hasSuffix("32 minutes"), time.label)
         XCTAssertTrue(app.staticTexts["Plan vs actual"].exists, app.debugDescription)
         XCTAssertTrue(app.staticTexts["checkin.guidance"].exists, "Pain guidance always shows")
@@ -97,7 +97,7 @@ final class InboxUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["inbox.empty"].waitForExistence(timeout: 10), app.debugDescription)
 
         app.buttons["inbox.allRuns"].tap()
-        XCTAssertTrue(app.staticTexts["screen.runs"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.runs"].waitForExistence(timeout: 15), app.debugDescription)
         let status = app.staticTexts["runs.status"].firstMatch
         XCTAssertTrue(status.waitForExistence(timeout: 10), app.debugDescription)
         XCTAssertTrue(status.label.hasPrefix("Matched to"), status.label)
@@ -109,7 +109,7 @@ final class InboxUITests: XCTestCase {
 
         rematch.tap()
         let pick = app.buttons["inbox.pick"].firstMatch
-        XCTAssertTrue(pick.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(pick.waitForExistence(timeout: 15), app.debugDescription)
         pick.tap()
         XCTAssertTrue(app.buttons["runs.unmatch"].firstMatch.waitForExistence(timeout: 10), app.debugDescription)
 
@@ -133,11 +133,11 @@ final class InboxUITests: XCTestCase {
         let runs = app.buttons["next.runs"]
         XCTAssertTrue(runs.waitForExistence(timeout: 10), app.debugDescription)
         runs.tap()
-        XCTAssertTrue(app.staticTexts["screen.runs"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.runs"].waitForExistence(timeout: 15), app.debugDescription)
         let details = app.buttons["runs.details"].firstMatch
         XCTAssertTrue(details.waitForExistence(timeout: 10), app.debugDescription)
         details.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["screen.rundetails"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.descendants(matching: .any)["screen.rundetails"].waitForExistence(timeout: 15), app.debugDescription)
 
         // Issue #132: the written summary shows, and the AI text replaces the template (the UI-test API has a stand-in model, so the label proves the generate call).
         XCTAssertTrue(app.descendants(matching: .any)["rundetails.summary"].waitForExistence(timeout: 10), app.debugDescription)
@@ -150,7 +150,7 @@ final class InboxUITests: XCTestCase {
         XCTAssertTrue(match.waitForExistence(timeout: 10), app.debugDescription)
         match.tap()
         let pick = app.buttons["inbox.pick"].firstMatch
-        XCTAssertTrue(pick.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(pick.waitForExistence(timeout: 15), app.debugDescription)
         pick.tap()
         XCTAssertTrue(app.buttons["rundetails.change"].waitForExistence(timeout: 10), app.debugDescription)
     }

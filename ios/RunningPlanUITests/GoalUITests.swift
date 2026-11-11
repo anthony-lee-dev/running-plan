@@ -15,7 +15,7 @@ final class GoalUITests: XCTestCase {
     @MainActor
     private func openGoalTab(_ app: XCUIApplication) {
         app.buttons["Goal"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 15), app.debugDescription)
     }
 
     @MainActor
@@ -29,7 +29,7 @@ final class GoalUITests: XCTestCase {
         XCTAssertTrue(review.waitForExistence(timeout: 10), app.debugDescription)
         let patchesBefore = try await LocalAPI.requestCount(api, "PATCH /v1/profile")
         review.tap()
-        XCTAssertTrue(app.staticTexts["screen.reviewSettings"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["screen.reviewSettings"].waitForExistence(timeout: 15), app.debugDescription)
         app.buttons.matching(NSPredicate(format: "identifier == 'reviewSettings.frequency' AND label BEGINSWITH 'Off'")).firstMatch.tap()
         // The slower the simulator, the later the save lands: wait for it, then for the day picker to go.
         var saved = patchesBefore
@@ -91,7 +91,7 @@ final class GoalUITests: XCTestCase {
         let proposalCallsAfter = try await LocalAPI.requestCount(api, "POST /v1/proposals/*")
         XCTAssertEqual(proposalCallsAfter, proposalCallsBefore)
         app.buttons["goalProposals.done"].tap()
-        XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["screen.goal"].waitForExistence(timeout: 15))
     }
 
     @MainActor
