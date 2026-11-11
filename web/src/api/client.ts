@@ -1,6 +1,6 @@
 // A small typed client for the Running Planner API (spec/openapi.yaml). The web app is online-first (design §9):
 // every change goes to the server with the revision it was made against, and a conflict is shown, never merged.
-import type { Activity, PlanDetail, PlanSummary, Problem, Progress, Session, SessionUpdate, SessionWriteResult } from "./types";
+import type { Activity, PlanDetail, PlanSummary, Problem, Profile, Progress, RunSummary, Session, SessionUpdate, SessionWriteResult } from "./types";
 
 export interface Tokens {
   accessToken: string;
@@ -55,6 +55,13 @@ export interface Api {
   listActivitiesSince(from: string): Promise<Activity[]>;
   /** The plan's progress on the user's local day. */
   getProgress(planId: string, today: string): Promise<Progress>;
+  /** The written summary of a run: the stored AI text, or the template. Never calls the model. */
+  getRunSummary(activityId: string, today: string): Promise<RunSummary>;
+  /** Asks the server to write the AI summary (once per change of the run's data); the reply is the summary to show. */
+  generateRunSummary(activityId: string, today: string): Promise<RunSummary>;
+  getProfile(): Promise<Profile>;
+  /** Turns AI run summaries on or off against the profile revision the caller loaded. */
+  setAiSummaries(on: boolean, revision: number): Promise<Profile>;
   /** Edits a session against the revision the caller loaded it at. */
   updateSession(session: Pick<Session, "id" | "revision">, body: SessionUpdate): Promise<SessionWriteResult>;
 }
@@ -163,6 +170,11 @@ export function createApi(options: ApiOptions): Api {
       return runs;
     },
     getProgress: (planId, today) => authorised<Progress>(`/v1/plans/${encodeURIComponent(planId)}/progress?today=${encodeURIComponent(today)}`, "GET"),
+    getRunSummary: (activityId, today) => authorised<RunSummary>(`/v1/activities/${encodeURIComponent(activityId)}/summary?today=${encodeURIComponent(today)}`, "GET"),
+    generateRunSummary: (activityId, today) =>
+      authorised<RunSummary>(`/v1/activities/${encodeURIComponent(activityId)}/summary:generate?today=${encodeURIComponent(today)}`, "POST"),
+    getProfile: () => authorised<Profile>("/v1/profile", "GET"),
+    setAiSummaries: (on, revision) => authorised<Profile>("/v1/profile", "PATCH", { aiSummaries: on }, { "if-match": `"${revision}"` }),
     updateSession: (session, body) =>
       authorised<SessionWriteResult>(`/v1/sessions/${encodeURIComponent(session.id)}`, "PATCH", body, { "if-match": `"${session.revision}"` }),
   };
