@@ -280,6 +280,29 @@ export interface SummaryStore {
   put(userId: string, summary: StoredSummary): Promise<void>;
 }
 
+/** Why a narrator could not answer: its allowance is used up, it failed, or it took too long. Never carries text. */
+export class NarratorError extends Error {
+  override name = "NarratorError";
+  constructor(readonly kind: "quota" | "unavailable" | "timeout") {
+    super(kind);
+  }
+}
+
+/** The model behind run summaries: system and user text in, the model's raw answer out. Throws NarratorError. */
+export interface RunNarrator {
+  /** Recorded with a stored summary. */
+  readonly model: string;
+  narrate(prompt: { system: string; user: string }): Promise<unknown>;
+}
+
+/** Run summary settings that come from the deployment, not the user. */
+export interface SummaryConfig {
+  /** The `AI_SUMMARIES` kill switch: off means the template only and no model call. */
+  aiEnabled: boolean;
+  /** Model calls a day across all accounts; stays under the Workers AI free allowance. */
+  dailyCallCap: number;
+}
+
 export type ProposalAccept = { ok: true; planId: string } | ProposalFailure;
 
 /**
@@ -369,6 +392,8 @@ export interface EmailSender {
 export interface RateLimiter {
   /** Counts a hit in a fixed window. When over the limit, says how many seconds until the window ends. */
   hit(key: string, limit: number, windowSec: number, now: Date): Promise<{ allowed: boolean; retryAfterSec: number }>;
+  /** How many hits the key has in the current window, without counting one. */
+  peek(key: string, windowSec: number, now: Date): Promise<number>;
 }
 
 /** Randomness, kept behind a port so domain code and tests stay deterministic where they need to be. */
@@ -402,4 +427,7 @@ export interface Deps {
   rateLimiter: RateLimiter;
   ids: IdSource;
   authConfig: AuthConfig;
+  /** Absent means no model is wired (the Node entry): the generate endpoint answers the template with `ai_unavailable`. */
+  narrator?: RunNarrator;
+  summaryConfig: SummaryConfig;
 }
