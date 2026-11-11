@@ -196,7 +196,7 @@ ios_test_filters() {
 # took on a CI runner (IOS_SHARD_WEIGHTS below; an unlisted class counts 80 s per test), and items go largest first to
 # the lightest group, so the shards finish together. Re-measure when the shards drift apart (the CI log of each shard
 # lists every test's time). Prints the -only-testing flags, one per line.
-IOS_SHARD_WEIGHTS="RunningPlanTests=300 InboxUITests=360 GoalUITests=260 PreviewUITests=245 ReviewUITests=200 SignInAgainUITests=125 ProgressUITests=125 DeletePlanUITests=105 SessionEditorUITests=70 WatchUITests=50 InterviewUITests=15 TabBarUITests=10"
+IOS_SHARD_WEIGHTS="RunningPlanTests=90 InboxUITests=280 PreviewUITests=215 SignInAgainUITests=155 GoalUITests=120 ProgressUITests=70 ReviewUITests=40 DeletePlanUITests=40 InterviewUITests=30 SessionEditorUITests=30 WatchUITests=20 TabBarUITests=10"
 
 ios_shard_filters() {
   local shard="$1" i n
