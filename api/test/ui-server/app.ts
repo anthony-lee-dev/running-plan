@@ -4,6 +4,7 @@
 import { Hono } from "hono";
 import { createApp } from "../../src/app";
 import { MemoryEmailSender, memoryDeps } from "../../src/adapters/memory";
+import type { RunNarrator } from "../../src/ports";
 
 export interface UiTestServer {
   app: Hono;
@@ -16,7 +17,15 @@ export function buildUiTestServer(): UiTestServer {
   // Every UI test comes from one address, so the per-IP sign-in limit (15 an hour) would stop the run after a dozen
   // tests; the limits themselves are covered by the API's own tests.
   const rateLimiter = { hit: async () => ({ allowed: true, retryAfterSec: 1 }), peek: async () => 0 };
-  const api = createApp(memoryDeps({ email, rateLimiter }));
+  // Stands in for the model: rewords the facts it is given, so the app can show the template first and the AI text after.
+  const narrator: RunNarrator = {
+    model: "ui-test",
+    narrate: async ({ user }) => {
+      const facts = JSON.parse(user) as { distance?: string; duration: string; average_pace?: string };
+      return JSON.stringify({ paragraph: `Today you ran ${facts.distance ? `${facts.distance} in ` : ""}${facts.duration}${facts.average_pace ? ` at ${facts.average_pace}` : ""}.` });
+    },
+  };
+  const api = createApp(memoryDeps({ email, rateLimiter, narrator }));
   const counts = new Map<string, number>();
   const app = new Hono();
 

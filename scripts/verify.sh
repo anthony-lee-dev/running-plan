@@ -172,7 +172,7 @@ check_ui_tests_used_local_api() {
 }
 
 # Prints the xcodebuild test-selection flags, one per line, for IOS_TEST_SCOPE (empty or "full" = the whole suite,
-# which is what CI and the Stop hook run; "quick" = the unit tests plus the UI test classes named in IOS_UI_TESTS,
+# which is what CI runs; "quick" (what workers and the Stop hook run) = the unit tests plus the UI test classes named in IOS_UI_TESTS,
 # separated by commas or spaces). A name without a "/" is a class of RunningPlanUITests; one with a "/" is used as given
 # (a whole target, a class or Class/testMethod). Fails on any other scope.
 ios_test_filters() {

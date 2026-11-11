@@ -10,7 +10,7 @@ start fresh: the repo and this brief are all you have.
 
 Issue: <#number, its title and its body (`gh issue view <n>`), word for word>
 Branch: <agent/... name the orchestrator chose>
-Done so far: <the merged contract PR for this task and what was left, or none>
+Done so far: <a merged contract PR for this task and what was left, or none>
 Existing PR: <none, or "#n: fix <the failing check or conflict>" when you carry on an open PR on Branch>
 From the human: <corrections or choices from the conversation that apply, or none>
 
@@ -24,20 +24,28 @@ From the human: <corrections or choices from the conversation that apply, or non
    tests pass without them. If it asks you to approve anything, don't approve it. Stop and report what it asked.
 
 ## How to work
-1. Read `CLAUDE.md`, the `CLAUDE.md` of each package you'll touch, and what the task points to:
-   `spec/openapi.yaml`, the § sections of the system design, and the `designs/dark/DK-*` boards.
+1. Read `CLAUDE.md` and the `CLAUDE.md` of each package you'll touch. Each package guide ends its opening with an
+   index of feature notes (`api/docs/`, `ios/docs/`): read only the notes for the folders you'll change, and the
+   notes of the screens that use any shared code you change. Then read what the task points to: the § sections of
+   the system design and the `designs/dark/DK-*` boards. Don't read `spec/openapi.yaml` from top to bottom (it is
+   about 25,000 tokens): search it for the operations and schemas you need and read those parts.
 2. Plan the whole task as one PR, carrying on from "Done so far". There is no size limit: finish the task here
    rather than leaving parts for another worker, who would have to learn the code again.
-   - If the task needs an endpoint added or changed and "Done so far" has no contract PR, this PR is only that
-     `spec/openapi.yaml` change (repo rule: contract first). Use `Refs #<n>` in its body, not `Closes`, and list
-     the rest under "Left".
+   - If the task needs an endpoint added or changed (repo rule: contract first), change `spec/openapi.yaml` before
+     any code, as the branch's first commit, then check it: `git show origin/main:spec/openapi.yaml` saved to a file
+     in your scratch folder, then `node scripts/spec-additive.mjs <that file> spec/openapi.yaml`. Exit 0 (it only
+     adds): carry on and build the whole task in this PR. Exit 1 (it removes or alters something existing): this PR
+     is only that spec change, for the human to merge. Use `Refs #<n>` in its body, not `Closes`, and list the rest
+     under "Left". Never reshape a change to get past the check, and never stack a branch on an unmerged one.
    - If the issue is labelled `ask-first`, stop and report your plan instead of building.
    - If the issue is a defect (`type: defect`), first write a regression test that reproduces it and watch it
      fail; the fix makes it pass.
    - Call the advisor tool once your plan is written, before you write code, and again before you start
      `/ship`. Call it too when the same error comes back twice.
 3. Write failing tests first and run them to see them fail. Then write the code until they pass.
-4. Put `Closes #<n>` in the PR body so the issue closes on merge (`Refs #<n>` for a contract-only PR). Don't
+4. Put `Closes #<n>` in the PR body so the issue closes on merge (`Refs #<n>` for a contract-only PR). When the
+   task taught you something the next worker on this feature needs, add it to that feature's note (`api/docs/`,
+   `ios/docs/`), not to the package `CLAUDE.md`. Don't
    edit `docs/backlog.md`: it only archives the tasks finished before the move to issues.
 5. If the human corrected something in "From the human", add the correction to the relevant `CLAUDE.md` in
    this PR.
@@ -63,19 +71,13 @@ From the human: <corrections or choices from the conversation that apply, or non
      `git push origin <Branch>`. A bare `git push` is denied. Never rebase a pushed branch or force-push.
    - Never run `gh pr merge`, never edit `autonomy.json`, never tick a `## Manual gates` box, and never
      commit secrets.
-   - If this PR closes the last open issue in its milestone (or "From the human" says it is the slice's last), put
-     the slice's device check against the deployed API under `## Manual gates` as an unticked box
+   - If this PR closes the last open feature issue in its milestone (or "From the human" says it is the slice's
+     last), add the slice's journey UI test (the slice's flow across its screens, as the human walks it on the
+     device) and have `/ship` step 5 open the slice's `[Device check]` issue for that flow against the deployed API
      (`docs/backlog.md`: "End-to-end check for every slice", item 3). The milestone's description has its **Done when**.
-   - **Device check: ask while CI runs.** If the PR needs the human on a device (the box above, or the issue says
-     so), don't wait for CI first. As soon as the PR is pushed and the quick verify has passed, put the ask in
-     your report (and in the PR as a comment) with the PR link and the steps to follow on the device, then
-     carry on with `/ship`'s CI watch. The human's check and the ~25 minutes of iOS CI then run at the same time.
-     Before you ask, check that the production API routes the check uses are deployed (`/next-task` step 5a:
-     `npm run smoke -w api`, `wrangler d1 migrations list`); if production is behind, say so in the ask.
-   - The PR merges only after both CI is green and the human has passed the device check. If CI fails and your fix
-     changes what the app does, the earlier device check no longer covers the PR: say so plainly in the report
-     and the PR, and ask for the device check again. A fix that doesn't change app behavior (a flaky test, a
-     lint fix) doesn't need one.
+   - **Device check: an issue, not a wait.** If the work needs the human on a device, `/ship` step 5 opens a
+     `[Device check]` issue with the steps and lists it in the PR. The PR merges on green CI without it; don't wait
+     for the human and don't ask them to hurry. Put the issue number in your report.
 7. Remove your worktree once `/ship` is finished: the PR is open and ready for review, and `git status` shows
    nothing to commit and says the branch is up to date with `origin/<Branch>`. The human checks branches out in the
    main checkout to verify them, and git refuses to check out a branch that a worktree still holds.
@@ -114,13 +116,14 @@ and of the other blocks:
   Only the main session shows them.
 
 ## Report
-Reply with only this, in at most 10 lines:
+Reply with only this, in at most 11 lines:
 PR: <url, or "none: why" if you stopped before opening one>
 CI: <passing | failing: which check | running>
 Merge: <auto-merge queued | waiting for the human: why>
 Issue closes on merge: <yes | no (Refs only)>
 Left: <after a contract-only PR, the rest of the task; otherwise none>
 Manual gates: <the boxes in the PR body, or none>
+Device check: <#issue, or none>
 Worktree: <removed (original branch <name>) | kept: why>
 Notes: <anything the orchestrator must know, in one or two lines, or none>
 ```

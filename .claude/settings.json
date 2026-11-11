@@ -28,6 +28,7 @@
       "Bash(gh issue list *)",
       "Bash(gh issue view *)",
       "Bash(gh issue close *)",
+      "Bash(gh issue create *)",
       "Bash(python3 scripts/request-merge.py *)",
       "Bash(xcodegen *)",
       "Bash(xcodebuild *)",

@@ -7,6 +7,8 @@ set up each session on their watch by hand, then import results and review. Live
 
 - `api/` TypeScript API on Cloudflare Workers (Hono) with D1. See `api/CLAUDE.md`.
 - `ios/` SwiftUI app, iOS 17 minimum, phase 1 focus. See `ios/CLAUDE.md`.
+  Each of those two guides is a short core plus an index of per-feature notes (`api/docs/`, `ios/docs/`): read the
+  core, then only the notes for what you change. New lessons go in the feature's note, not the core.
 - `web/` phase 2 planning companion: React + Vite, hosted as Cloudflare Workers static assets. See `web/README.md`.
 - `spec/openapi.yaml` the API contract. The only place endpoints are defined.
 - `designs/` source of truth for behaviour and looks:
@@ -23,7 +25,10 @@ set up each session on their watch by hand, then import results and review. Live
 ## Rules that apply everywhere
 
 - Write the failing test first, then the code. Every PR adds or changes tests.
-- Contract first: a change to an endpoint is a PR to `spec/openapi.yaml` on its own, before any code using it.
+- Contract first: a change to an endpoint starts in `spec/openapi.yaml`, before any code using it. A change that only
+  adds (new paths, methods, schemas, optional fields or parameters, response codes, enum values) is the first commit of
+  the feature's PR. A change that removes or alters anything existing is a PR to `spec/openapi.yaml` on its own, which
+  the human merges. `node scripts/spec-additive.mjs <old> <new>` tells the two apart; `request-merge.py` runs it.
 - Portability: nothing outside `api/src/adapters/cloudflare/` and `api/src/index.ts` may reference Cloudflare
   (`cloudflare:`, `@cloudflare/`, `D1Database`, `KVNamespace`, `R2Bucket`). Domain code is pure functions, no I/O.
 - Pace is minutes per km, shown as `6:30/km`. Sessions are stored as local calendar dates (`YYYY-MM-DD`) and
@@ -41,20 +46,27 @@ set up each session on their watch by hand, then import results and review. Live
 
 1. `bash scripts/verify.sh <package>` exits 0 for every package you touched (`api`, `spec`, `web`, `ios`). For `ios`,
    a worker runs the quick mode locally: `IOS_TEST_SCOPE=quick IOS_UI_TESTS="<UI test classes for the screens you
-   touched>" bash scripts/verify.sh ios` (unit tests plus those classes). iOS CI and the Stop hook run the full suite,
-   and the PR doesn't merge until the required `ios` check passes. `api`, `spec` and `web` always run in full.
-   When a PR needs a device check, ask for it as soon as the PR is pushed and the quick verify passes, while CI runs.
-   It merges only after CI is green and the human has passed the check; redo the check if a CI fix changes app behavior.
+   touched>" bash scripts/verify.sh ios` (unit tests plus those classes). iOS CI runs the full suite, and the PR doesn't
+   merge until the required `ios` check passes. The Stop hook runs the quick scope with no UI classes (the full suite
+   doesn't fit its time limit). `api`, `spec` and `web` always run in full.
 2. Work is on a branch named `agent/<short-task>` with a PR opened by `/ship`, marked ready for review, and its body
    says `Closes #<issue>` (`Refs #<issue>` for a contract-only PR).
-3. Manual-gate items (real device, Apple account) are listed as unticked boxes in the PR body, never faked.
+3. A device check never holds a PR open (the human's call, Nov 2026: PRs waited days and went stale). `/ship` opens a
+   `[Device check] ...` issue (label `human-only`, the slice's milestone) with the steps, and lists it under
+   `## Device check` in the PR body; the PR merges on green CI. What the human finds becomes a `type: defect` issue.
+   A slice is done only when its device-check issues are closed. `## Manual gates` is only for what must happen
+   *before* the merge (the Apple account, say): unticked boxes there still block, and are never faked.
 4. **Never run `gh pr merge`.** `/ship` calls `python3 scripts/request-merge.py`, which requests auto-merge only when
    `autonomy.json` on `main` allows it (see `docs/autonomy.md` for what each level auto-merges). Never edit `autonomy.json` to get a merge.
 
 ## Working style
 
 - One PR = one issue, end to end, with no size limit (the human's call: splitting a task across sessions
-  loses context). The exception is a contract change, which is a `spec/openapi.yaml` PR of its own first.
+  loses context). The exception is a contract change that removes or alters something existing, which is a
+  `spec/openapi.yaml` PR of its own first.
+- Design before decisions: an `ask-first` issue that adds or reshapes a screen gets its review of comparable apps and
+  a `designs/dark/DK-<name>.dc.html` mock (existing tokens) in the plan *before* the questions to the human, so they
+  decide once. The approved mock is the screen's reference for the snapshot test and the reviewer.
 - Build in vertical slices: each slice is a milestone grouping the features a runner needs, with only the API and iOS
   work each needs, and an end-to-end check (contract tests, a UI test against the local API, a device check; see
   `docs/backlog.md`) before the next slice. The milestone description holds the slice's **Done when**.
@@ -67,7 +79,8 @@ set up each session on their watch by hand, then import results and review. Live
   checked>"`. A task that is only partly done stays open; say what is left in a comment.
 - Human-only issues (label `human-only`, gates, "Human, not for agents") are closed only when you did the work yourself
   in the session, the human says they did it, or a read-only check shows it is done; never on inference. Closing an
-  issue never ticks the `## Manual gates` boxes in a PR body: those stay for the human.
+  issue never ticks the `## Manual gates` boxes in a PR body: those stay for the human. `[Device check]` issues are
+  `human-only`.
 - Branch from `origin/main`, never from an unmerged branch. A stacked branch needs a rebase after its base is
   squash-merged, and that rebase needs a force-push, which is denied. To bring `main` into a pushed branch, merge
   it in and push.
