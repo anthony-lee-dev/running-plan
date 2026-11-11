@@ -10,10 +10,22 @@ enum LocalAPI {
         return url
     }
 
+    /// One request to the local API, tried a second time when the first times out: on a slow CI runner the Node server
+    /// has been seen to stall past URLSession's 60 s default once, and a request here is safe to repeat.
+    static func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        var request = request
+        request.timeoutInterval = 90
+        do {
+            return try await URLSession.shared.data(for: request)
+        } catch let error as URLError where error.code == .timedOut {
+            return try await URLSession.shared.data(for: request)
+        }
+    }
+
     /// How many successful requests the local API has served for `operation` (`METHOD /path`); a key ending in `*`
     /// counts every path that starts with what comes before it.
     static func requestCount(_ api: URL, _ operation: String) async throws -> Int {
-        let (data, _) = try await URLSession.shared.data(from: api.appending(path: "__test/stats"))
+        let (data, _) = try await send(URLRequest(url: api.appending(path: "__test/stats")))
         let stats = try JSONDecoder().decode([String: [String: Int]].self, from: data)
         let requests = stats["requests"] ?? [:]
         guard operation.hasSuffix("*") else { return requests[operation] ?? 0 }
@@ -72,6 +84,34 @@ enum LocalAPI {
         let error = app.staticTexts["preview.error"]
         XCTAssertTrue(week.waitForExistence(timeout: 15) || error.exists, app.debugDescription)
         XCTAssertFalse(error.exists, "The preview failed: \(error.label)")
+        return app
+    }
+
+    /// The app launched signed in to a fresh account that already has a saved 10K plan, waiting for Next to show it. It
+    /// skips the interview, the preview and sign-in (about 40 s a test), so use it for every test that is not about
+    /// those flows; `PreviewUITests`, `SignInAgainUITests` and `InterviewUITests` cover them in full. The account and
+    /// plan come from the UI-test API's `/__test/seed`, `startingOn` is the plan's start date (today by default).
+    @MainActor
+    static func signedInApp(_ api: URL, startingOn start: Date = Date()) async throws -> XCUIApplication {
+        let day = DateFormatter()
+        day.calendar = Calendar(identifier: .gregorian)
+        day.locale = Locale(identifier: "en_US_POSIX")
+        day.dateFormat = "yyyy-MM-dd"
+        var request = URLRequest(url: api.appending(path: "__test/seed"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        let email = "ui-\(UUID().uuidString.prefix(8).lowercased())@example.com"
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["email": email, "today": day.string(from: start)])
+        let (data, response) = try await send(request)
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200, String(decoding: data, as: UTF8.self))
+        let seed = try JSONDecoder().decode([String: String].self, from: data)
+        let tokens = [seed["accessToken"], seed["refreshToken"], seed["userId"]].compactMap { $0 }
+        XCTAssertEqual(tokens.count, 3)
+
+        let app = app(api, signedOut: true)
+        app.launchArguments += ["-auth.seed", tokens.joined(separator: "|")]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["next.plan"].waitForExistence(timeout: 30), app.debugDescription)
         return app
     }
 

@@ -11,8 +11,7 @@ final class WatchUITests: XCTestCase {
     @MainActor
     func testARunSessionHasCopyAndNoPerSessionWatchButtons() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         app.buttons["Plan"].firstMatch.tap()
         let rows = app.buttons.matching(identifier: "week.session")

@@ -9,8 +9,7 @@ final class SessionEditorUITests: XCTestCase {
     @MainActor
     func testAnEditedSessionKeepsItsChangeAfterARelaunch() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
         let editsBefore = try await LocalAPI.requestCount(api, "PATCH /v1/sessions/*")
 
         // The plan starts on the real today, so open whichever session comes first on the Plan tab's week.

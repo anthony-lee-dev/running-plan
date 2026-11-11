@@ -28,4 +28,23 @@ describe("UI-test API server", () => {
     });
     expect(res.status).toBe(200);
   });
+
+  it("seeds a signed-in account with a saved plan, so a UI test can skip the interview and sign-in", async () => {
+    const { app } = buildUiTestServer();
+    const res = await app.request("/__test/seed", { method: "POST", headers: json, body: JSON.stringify({ email: "seed@example.com", today: "2026-11-02" }) });
+    expect(res.status).toBe(200);
+    const seed = (await res.json()) as { accessToken: string; refreshToken: string; userId: string; planId: string };
+    const plans = await app.request("/v1/plans", { headers: { authorization: `Bearer ${seed.accessToken}` } });
+    expect(plans.status).toBe(200);
+    const list = (await plans.json()) as { plans: { id: string }[] };
+    expect(list.plans.map((p) => p.id)).toEqual([seed.planId]);
+    // The refresh token works too.
+    const refreshed = await app.request("/v1/auth/refresh", { method: "POST", headers: json, body: JSON.stringify({ refreshToken: seed.refreshToken }) });
+    expect(refreshed.status).toBe(200);
+  });
+
+  it("refuses a seed request without a valid body", async () => {
+    const { app } = buildUiTestServer();
+    expect((await app.request("/__test/seed", { method: "POST", headers: json, body: "{}" })).status).toBe(400);
+  });
 });
