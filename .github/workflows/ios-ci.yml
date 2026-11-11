@@ -140,9 +140,11 @@ jobs:
         run: |
           b="$RUNNER_TEMP/ios.xcresult"
           [[ -d "$b" ]] || exit 0
+          # Every test with its class and seconds, so IOS_SHARD_WEIGHTS can be kept balanced.
           xcrun xcresulttool get test-results tests --path "$b" | jq -r '
-            [.. | objects | select(.nodeType == "Test Case")] | sort_by(.durationInSeconds // 0) | reverse | .[:12][]
-            | "\(.result)\t\(.durationInSeconds // 0)s\t\(.name)" ' || true
+            def cases($suite): if .nodeType == "Test Case" then {s: $suite, r: .result, d: (.durationInSeconds // 0), n: .name}
+              else (.children // [])[] | cases(if .nodeType == "Test Suite" then .name else $suite end) end;
+            [.testNodes[] | cases("")] | sort_by(.d) | reverse | .[] | "\(.r)\t\(.d|floor)s\t\(.s)\t\(.n)" ' || true
           xcrun xcresulttool get test-results tests --path "$b" | jq -r '
             [.. | objects | select(.nodeType == "Failure Message")] | .[] | "FAILURE: \(.name)"' || true
 
