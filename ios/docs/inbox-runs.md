@@ -38,3 +38,10 @@ Part of the iOS guide (`ios/CLAUDE.md` has the index). Read this before changing
   one (known from `allRuns`); otherwise the old session would stay `done` locally and its next edit would 409.
 - The Next tab's inbox card is unchanged. The UI test covers unmatch and rematch from the runs list; the session page
   is pinned by `RunMatchModelTests` (no UI test: the first session of a fresh plan is usually in the future).
+
+## Health data probe (issue #164, slice 0)
+
+- Debug builds only: Goal and settings has a "Health data probe" row (`#if DEBUG`) opening `Features/Debug/HealthProbeScreen`. `LiveHealthProbe`
+  reads the last 12 running workouts of 60 days with the read types the app already has (no route: that is a new read type) and
+  `HealthProbeReport` (pure, tested) formats counts per source: distance and heart samples, lap/segment/other events, `workoutActivities`,
+  metadata keys. No dates, places or ids. Its result shapes the slice-2 import; delete or keep it as a diagnostic after that.

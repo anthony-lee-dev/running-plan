@@ -18,6 +18,9 @@ struct GoalScreen: View {
     @State private var signedIn: Bool?
     @State private var showReviewSettings = false
     @State private var showWatchSettings = false
+    #if DEBUG
+    @State private var showHealthProbe = false
+    #endif
     @State private var aiSwitch = AISummarySwitch(service: APIRunSummaryService(client: APIConfiguration.liveSignedInClient()))
     @State private var showGoalEdit = false
     @State private var rerunFlow: InterviewHolder?
@@ -51,6 +54,9 @@ struct GoalScreen: View {
         .sheet(isPresented: $showReviewSettings, onDismiss: onReviewSettingsClosed) {
             ReviewSettingsSheet(model: settings, onClose: { showReviewSettings = false })
         }
+        #if DEBUG
+        .sheet(isPresented: $showHealthProbe) { HealthProbeScreen() }
+        #endif
         .sheet(isPresented: $showWatchSettings) {
             if let watchSync { WatchSettingsSheet(sync: watchSync, plans: plans, onClose: { showWatchSettings = false }) }
         }
@@ -172,6 +178,9 @@ struct GoalScreen: View {
                 }
             }
             row("Your runs", value: "All imported", id: "settings.runs", action: onRuns)
+            #if DEBUG
+            row("Health data probe", value: "Debug", id: "settings.healthProbe") { showHealthProbe = true }
+            #endif
             if let watchSync, watchSync.isSupported {
                 row("Apple Watch", value: watchSync.wantsSync ? "On" : "Off", id: "settings.watch") { showWatchSettings = true }
             }
