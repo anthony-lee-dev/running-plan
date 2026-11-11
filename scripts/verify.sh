@@ -281,8 +281,28 @@ verify_ios() {
   if [[ ! -f ios/project.yml ]]; then
     echo "== ios: skipped (no ios/project.yml yet, see docs/backlog.md task 1.3)"; return 0
   fi
-  local filters=() f id="" scope="${IOS_TEST_SCOPE:-full}" shard="${IOS_SHARD:-}"
+  local filters=() f id="" scope="${IOS_TEST_SCOPE:-full}" shard="${IOS_SHARD:-}" phase="${IOS_PHASE:-all}" xctestrun=""
   ios_test_filters >/dev/null || return 2
+  # CI builds once (IOS_PHASE=build, products in IOS_DERIVED_DATA) and each shard runs from that build
+  # (IOS_PHASE=test, IOS_PRODUCTS = the build's Build/Products folder). Locally the phase is "all": build and test together.
+  case "$phase" in
+    all) ;;
+    build)
+      echo "== ios: api client matches the spec"
+      bash scripts/generate-api-client.sh --check
+      echo "== ios: generate project"
+      (cd ios && xcodegen generate --quiet)
+      echo "== ios: build for testing"
+      xcodebuild build-for-testing -project ios/RunningPlan.xcodeproj -scheme RunningPlan \
+        -destination "generic/platform=iOS Simulator" -derivedDataPath "${IOS_DERIVED_DATA:?IOS_PHASE=build needs IOS_DERIVED_DATA}" -quiet
+      return $?
+      ;;
+    test)
+      xctestrun="$(ls "${IOS_PRODUCTS:?IOS_PHASE=test needs IOS_PRODUCTS}"/*.xctestrun 2>/dev/null | head -n 1)"
+      [[ -n "$xctestrun" ]] || { echo "== ios: no .xctestrun in $IOS_PRODUCTS" >&2; return 1; }
+      ;;
+    *) echo "IOS_PHASE must be all, build or test, not '$phase'" >&2; return 2 ;;
+  esac
   if [[ -n "$shard" ]]; then
     [[ "$scope" == full ]] || { echo "IOS_SHARD needs the full scope" >&2; return 2; }
     ios_shard_filters "$shard" >/dev/null || return 2
@@ -292,13 +312,12 @@ verify_ios() {
   else
     while IFS= read -r f; do filters+=("$f"); done < <(ios_test_filters)
   fi
-  # The generated client is checked once per CI run (the last shard, the lightest), not by every shard.
-  if [[ -z "$shard" || "${shard%/*}" == "${shard#*/}" ]]; then
+  if [[ "$phase" == all ]]; then
     echo "== ios: api client matches the spec"
     bash scripts/generate-api-client.sh --check
+    echo "== ios: generate project"
+    (cd ios && xcodegen generate --quiet)
   fi
-  echo "== ios: generate project"
-  (cd ios && xcodegen generate --quiet)
   local dest="${IOS_SIM_DEST:-}"
   if [[ -z "$dest" ]]; then
     # First iPhone on the newest iOS runtime; older runtimes may not match the installed Xcode.
@@ -323,7 +342,8 @@ verify_ios() {
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
   # ios-ci.yml splits the suite over parallel runners, IOS_SHARD, and sets a shorter limit per shard with one retry).
-  local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0 attempt=1
+  local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0 attempt=1 xcb=(test -project ios/RunningPlan.xcodeproj -scheme RunningPlan)
+  [[ -z "$xctestrun" ]] || xcb=(test-without-building -xctestrun "$xctestrun")
   # IOS_TEST_ALLOWANCE=<seconds> (CI) fails a single test that runs longer, naming it, instead of waiting for the
   # whole-run limit. IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang or a simulator that was not ready: restart the simulator, then the run only repeats
   # tests whose build is already done.
@@ -331,7 +351,7 @@ verify_ios() {
     [[ -z "${IOS_RESULT_BUNDLE:-}" ]] || rm -rf "$IOS_RESULT_BUNDLE" # xcodebuild refuses an existing bundle
     # TEST_RUNNER_ variables reach the UI test process without the prefix.
     run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-      xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} ${IOS_TEST_ALLOWANCE:+-test-timeouts-enabled YES -default-test-execution-time-allowance "$IOS_TEST_ALLOWANCE" -maximum-test-execution-time-allowance "$IOS_TEST_ALLOWANCE"} -quiet && rc=0 || rc=$?
+      xcodebuild "${xcb[@]}" -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} ${IOS_TEST_ALLOWANCE:+-test-timeouts-enabled YES -default-test-execution-time-allowance "$IOS_TEST_ALLOWANCE" -maximum-test-execution-time-allowance "$IOS_TEST_ALLOWANCE"} -quiet && rc=0 || rc=$?
     if [[ $rc -eq 70 ]]; then # xcodebuild "Unable to find a device matching the destination": the simulator was not ready
       echo "== ios: xcodebuild could not use the simulator" >&2
       if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then

@@ -400,7 +400,7 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - The required `ios` check always reports, but builds only when something the iOS build or UI tests use changed: `ios/`
   (not Markdown), `spec/`, `designs/dark/png` (the snapshot tests read it), `api/src`, `api/test/ui-server`, `api/migrations`, the API and root package files,
   `scripts/verify.sh`, `scripts/generate-api-client.sh` or the workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step
-  with what `api/test/ui-server` imports. It runs the suite as five parallel shards (`IOS_SHARD=<i>/<n>`, see
+  with what `api/test/ui-server` imports. It builds once (`IOS_PHASE=build`, `build-for-testing`, products passed as an artifact) and runs the suite as three parallel shards from that build (`IOS_PHASE=test`, `IOS_SHARD=<i>/<n>`, see
   `ios_shard_filters` in `verify.sh`): the unit tests and each UI test class are dealt out by the times in
   `IOS_SHARD_WEIGHTS`, so re-measure those (each shard's log lists its slowest tests) when a class is added or the
   shards drift apart. One test running over 5 minutes is failed by name (`IOS_TEST_ALLOWANCE`), and a shard past its limit is restarted once.
