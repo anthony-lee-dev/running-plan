@@ -22,8 +22,7 @@ final class ProgressUITests: XCTestCase {
     @MainActor
     func testASavedPlanShowsItsProgress() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         app.buttons["Progress"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["screen.progress"].waitForExistence(timeout: 5), app.debugDescription)
@@ -38,8 +37,7 @@ final class ProgressUITests: XCTestCase {
     @MainActor
     func testARunAddedByHandAppearsInYourRunning() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         app.buttons["next.inbox"].tap()
         XCTAssertTrue(app.staticTexts["inbox.empty"].waitForExistence(timeout: 10), app.debugDescription)

@@ -42,8 +42,7 @@ final class InboxUITests: XCTestCase {
     @MainActor
     func testARunAddedByHandIsConfirmedToASession() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         addAndConfirmARun(app)
         // The UI-test server lives for the whole run, so counts are compared before and after.
@@ -64,8 +63,7 @@ final class InboxUITests: XCTestCase {
     @MainActor
     func testACheckInAfterAMatchShowsPlanVsActualAndIsSaved() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         addAndConfirmARun(app)
         let time = app.otherElements["checkin.time"]
@@ -92,8 +90,7 @@ final class InboxUITests: XCTestCase {
     @MainActor
     func testAMatchedRunIsUnmatchedAndRematchedFromTheRunsList() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         addAndConfirmARun(app)
         app.buttons["checkin.skip"].tap()
@@ -126,8 +123,7 @@ final class InboxUITests: XCTestCase {
     @MainActor
     func testRunDetailsOpensFromNextAndMatchesAndUnmatches() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
 
         addAndConfirmARun(app)
         app.buttons["checkin.skip"].tap()
