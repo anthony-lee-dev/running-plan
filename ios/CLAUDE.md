@@ -117,6 +117,11 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
 - `RootView` presents the sheet (`SessionScreen`, full screen) and the editor or move sheet (`SessionRoute`). Week
   rows are buttons with the identifier `week.session`, each labelled with its day.
 - UI tests share `LocalAPI` (launch, preview, sign in). A relaunch that must stay signed in leaves out `-auth.reset`.
+- A UI test that is not about the interview, preview or sign-in starts with `LocalAPI.signedInApp(api)` (optionally
+  `startingOn:` a date): it asks the UI-test API's `POST /__test/seed` for a fresh account with a saved 10K plan and
+  launches the app with `-auth.seed "<access>|<refresh>|<userId>"` (Debug builds only, read after `-auth.reset`
+  in `liveTokenStore`), so it lands on Next with the plan at once. Only `InterviewUITests`, `PreviewUITests` and
+  `SignInAgainUITests` go through the interview, preview and sign-in screens; keep one full test of each there.
 - The OpenAPI runtime percent-encodes header parameters (`If-Match: "3"` went out as `%223%22`, which the API refuses);
   `EntityTagMiddleware`, added by `APIConfiguration.client(...)`, decodes it again.
 

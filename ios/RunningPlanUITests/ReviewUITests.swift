@@ -10,44 +10,19 @@ final class ReviewUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// From the preview: sets the start date to the 15th of the previous month (14 to 46 days back, always in the past
-    /// and always a real day) and waits for the plan to be rebuilt. The popup opens on today's month.
-    @MainActor
-    private func startInThePast(_ app: XCUIApplication, _ api: URL) async throws {
-        let before = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
-        let calendar = Calendar.current
-        var parts = calendar.dateComponents([.year, .month], from: Date())
+    /// A plan that started on the 15th of the previous month (14 to 46 days back, always in the past and always a real
+    /// day), so a week has finished.
+    private func lastMonth15th() -> Date {
+        var parts = Calendar.current.dateComponents([.year, .month], from: Date())
         parts.month! -= 1
         parts.day = 15
-        let target = calendar.date(from: parts)!
-        let picker = app.datePickers["preview.startDate"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 5), app.debugDescription)
-        for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
-        picker.buttons.firstMatch.tap()
-        app.buttons["Previous Month"].tap()
-        let label = DateFormatter()
-        label.dateFormat = "EEEE, MMMM d"
-        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
-        day.tap()
-
-        let deadline = Date().addingTimeInterval(15)
-        var after = before
-        while after <= before, Date() < deadline {
-            try await Task.sleep(for: .milliseconds(300))
-            after = try await LocalAPI.requestCount(api, "POST /v1/plans/generate")
-        }
-        XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
-        let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
-        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        return Calendar.current.date(from: parts)!
     }
 
     @MainActor
     func testADueReviewOpensAndAcceptingAProposalChangesThePlan() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await startInThePast(app, api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api, startingOn: lastMonth15th())
 
         let card = app.buttons["next.review"]
         XCTAssertTrue(card.waitForExistence(timeout: 20), "Next offers the due review: \(app.debugDescription)")
@@ -76,9 +51,7 @@ final class ReviewUITests: XCTestCase {
     @MainActor
     func testADismissedProposalIsRemovedAndTheReviewStaysAvailable() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await startInThePast(app, api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api, startingOn: lastMonth15th())
 
         let card = app.buttons["next.review"]
         XCTAssertTrue(card.waitForExistence(timeout: 20), app.debugDescription)

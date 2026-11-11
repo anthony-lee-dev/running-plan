@@ -21,8 +21,7 @@ final class GoalUITests: XCTestCase {
     @MainActor
     func testChangingASettingAndRerunningTheInterviewGivesAProposal() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
         openGoalTab(app)
 
         // Turn reviews off, then back on: the way back that the review's footer never offered.
@@ -98,8 +97,7 @@ final class GoalUITests: XCTestCase {
     @MainActor
     func testExportingTheDataAndSigningOut() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
         openGoalTab(app)
 
         let export = app.buttons["privacy.export"]

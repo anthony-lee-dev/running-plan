@@ -10,8 +10,7 @@ final class DeletePlanUITests: XCTestCase {
     @MainActor
     func testDeletingThePlanReturnsToSetAGoal() async throws {
         let api = try LocalAPI.url()
-        let app = LocalAPI.openPreview(api)
-        try await LocalAPI.saveAndSignIn(app, api)
+        let app = try await LocalAPI.signedInApp(api)
         let deletesBefore = try await LocalAPI.requestCount(api, "DELETE /v1/plans/*")
 
         app.buttons["Goal"].firstMatch.tap()
