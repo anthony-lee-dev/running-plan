@@ -12,14 +12,13 @@ describe("offline eval on captured model answers (issue #160)", () => {
     expect(judge(c.result, facts(c.run))).toBe(c.expect);
   });
 
-  it("summarises the pass rate per model", () => {
-    const rate = new Map<string, string>();
+  it("accepts the real paragraphs and every correct synthetic one for each model", () => {
+    expect(CAPTURED.some((c) => c.real)).toBe(true);
     for (const model of new Set(CAPTURED.map((c) => c.model))) {
-      const all = CAPTURED.filter((c) => c.model === model);
-      const ok = all.filter((c) => judge(c.result, facts(c.run)) === "ok").length;
-      rate.set(model, `${ok}/${all.length}`);
+      const correct = CAPTURED.filter((c) => c.model === model && c.expect === "ok");
+      expect(correct.length).toBeGreaterThan(0);
+      expect(correct.every((c) => judge(c.result, facts(c.run)) === "ok")).toBe(true);
     }
-    console.log([...rate].map(([m, r]) => `${m} ${r}`).join("\n"));
   });
 });
 
@@ -65,7 +64,7 @@ describe("number check accepts spoken units, still refuses wrong numbers", () =>
     fail("The run took44 minutes and covered 10.0 km.", "shape");
   });
   it("keeps the pain rules strict", () => {
-    const p = buildRunFacts({ ...fixtures()[19]!.input }); // run 20 has pain
+    const p = buildRunFacts(fixtures().find((f) => f.name === "run 20 (pain)")!.input);
     expect(p.pain).toBe(true);
     const base = `Today's run covered ${p.distance} in ${p.time.replace(" min", " minutes")} at ${p.pace}.`;
     expect(checkParagraph(base, p)).toEqual({ ok: true });

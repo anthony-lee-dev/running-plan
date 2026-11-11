@@ -26,7 +26,7 @@ const URL = /https?:\/\/|www\.|\w+\.(com|net|org|io|app)\b/i;
 const MARKDOWN = /[*#`_[\]|<>~]|^\s*[-+]\s|\n/m;
 const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{N}\p{P}\p{S}\p{Z}]/u;
 
-/** A word stuck to the number after it ("took44"): the model dropped a space, so the text is not fit to show. */
+/** A word stuck to the number after it ("took44"): the model dropped a space, so the text is not fit to show. Also refuses "Z2" or "HR150" on purpose (the template shows instead). */
 const RUN_TOGETHER = /[A-Za-z]\d/;
 
 export const MIN_WORDS = 4;
