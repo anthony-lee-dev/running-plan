@@ -30,22 +30,22 @@ a{text-decoration:none;color:inherit}
     <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums">6:09/km</span><span style="font-size:13px;color:var(--muted)">Avg pace</span></div>
   </div>
 
-  <!-- NEW: verdict line. Fixed phrase picked by the server, with its reason. Green on target, amber when off. -->
+  <!-- NEW: verdict line (server label from a fixed list, with its reason). The paragraph below words the verdict itself from a checked word list. Green on target, amber when off. -->
   <div style="background:var(--amber-soft);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
     <span style="font-size:13px;color:var(--muted)">Intensity</span>
     <span style="font-size:16px;font-weight:600;line-height:1.3">A touch hard for this session</span>
     <span style="font-size:13px;color:var(--muted);line-height:1.4">Reps ran 12 s/km quicker than the target range, and 31% of the time was in zone 5 or above.</span>
   </div>
 
-  <!-- NEW: PB chip row, shown only when the facts back it -->
+  <!-- NEW: PB chip row, shown only when the facts back it. Whole runs within 10% of 5 / 10 / half / marathon, time scaled down to the distance; 'since' names the month the imported history starts. -->
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <span style="background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:6px">★ Fastest 1 km in your imported runs · 3:41</span>
+    <span style="background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:6px">★ Fastest 5 km in your imported runs since Mar · 25:48</span>
   </div>
 
   <!-- Existing: written summary card (#132) -->
   <section style="background:var(--card);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:8px">
     <h2 style="margin:0;font-size:17px;font-weight:600">Summary</h2>
-    <p style="margin:0;font-size:15px;line-height:1.5">Seven kilometres in 43 min at 6:09/km. Your five reps averaged 3:52/km, quicker than the 4:05 to 4:15/km target, with the last rep your fastest. Good consistency across the reps.</p>
+    <p style="margin:0;font-size:15px;line-height:1.5">Seven kilometres in 43 min at 6:09/km. For an intervals session that was a touch hard: your five reps averaged 3:52/km, quicker than the 4:05 to 4:15/km target, and the last rep was your fastest. That is the fastest 5 km in your imported runs since Mar.</p>
     <span style="font-size:12px;color:var(--muted)">Generated summary</span>
   </section>
 
@@ -88,7 +88,7 @@ a{text-decoration:none;color:inherit}
   </section>
 
   <!-- NEW: encouragement, a fixed phrase backed by a fact; absent when nothing real to say or when pain is flagged -->
-  <p style="margin:0;font-size:15px;line-height:1.4;color:var(--muted)">That is your fastest 1 km in your imported runs. Well earned.</p>
+  <p style="margin:0;font-size:15px;line-height:1.4;color:var(--muted)">A new best 5 km. Well earned.</p>
 
   <span style="font-size:13px;color:var(--muted)">Limited data from Apple Watch: no cadence.</span>
 </div>
