@@ -274,6 +274,23 @@ SwiftUI app, iOS 17 minimum (WorkoutKit), built with Xcode on the Mac. Layout:
   (`showRuns`, closed by `requestSignIn`).
 - UI tests: an identifier put on a `ScrollView` is not in `otherElements`; look it up with `app.descendants(matching: .any)[id]`.
 
+## Written run summary (issue #132)
+
+- `Features/RunDetails/RunSummaryServing` (`getRunSummary`, `generateRunSummary`, the profile's `aiSummaries`), `RunSummaryStore`
+  (pure logic, unit-tested with a stub) and `RunSummaryCard`. Run details of a running activity that is not ignored shows the card under
+  the stats: the server's text at once (stored AI text, or the template), then one `generateRunSummary` call when the server says
+  `canGenerate`, and the reply swaps in with a "Generated summary" label. A 429, offline or any failure keeps what is shown; the card
+  never errors at the user, has no refresh, and is absent when the summary cannot be read. The "what to do next" line is the server's
+  (next planned session after today, or the fixed pain guidance, shown as the same amber notice as the check-in screen).
+- The numbers and wording are the server's: the app never builds, edits or re-checks the paragraph, and sends no phone-only data
+  (splits, zones, weather stay on the phone).
+- The switch is a toggle in Goal and settings (`settings.aiSummaries`, `AISummarySwitch`): `aiSummaries` on the profile, on by default,
+  shared with the web app. It reads the profile for its revision and sends only `aiSummaries` (a 409 reads again and retries once); it bumps the
+  profile revision, so Goal reloads the review settings after a successful switch (otherwise "Show targets as" would 409), and a
+  review-settings sheet opened earlier may 409 once on its next save. The card reloads when the run's match changes. Off makes the server answer the template
+  with reason `disabled` and never call the model.
+- The UI-test API has a stand-in model (`api/test/ui-server/app.ts`) so the UI test sees the template first and the AI text after.
+
 ## Plan vs actual and check-in (DK-CheckIn, issue #68)
 
 - `Features/CheckIn/`: `CheckInModel` (pure, unit-tested) compares the session with the matched run as a whole (no rep
