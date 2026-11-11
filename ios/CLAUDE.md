@@ -104,10 +104,13 @@ feature's note. This file is only for what every iOS task needs.
   the run's pid) so two runs never share one; when it is held, the run uses a clone named `RunningPlan verify <n>`,
   created on first need. Runs started by an older `verify.sh` don't take the lock.
 - The required `ios` check always reports, but builds only when something the iOS build or UI tests use changed: `ios/`
-  (not Markdown), `spec/`, `designs/dark/png` (the snapshot tests read it), `api/src`, `api/test/ui-server`,
-  `api/migrations`, the API and root package files, `scripts/verify.sh`, `scripts/generate-api-client.sh` or the
-  workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step with what
-  `api/test/ui-server` imports. It caches the API client generator build and DerivedData; a cache miss only makes it slower.
+  (not Markdown), `spec/`, `designs/dark/png` (the snapshot tests read it), `api/src`, `api/test/ui-server`, `api/migrations`, the API and root package files,
+  `scripts/verify.sh`, `scripts/generate-api-client.sh` or the workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step
+  with what `api/test/ui-server` imports. It builds once (`IOS_PHASE=build`, `build-for-testing`, products passed as an artifact) and runs the suite as three parallel shards from that build (`IOS_PHASE=test`, `IOS_SHARD=<i>/<n>`, see
+  `ios_shard_filters` in `verify.sh`): the unit tests and each UI test class are dealt out by the times in
+  `IOS_SHARD_WEIGHTS`, so re-measure those (each shard's log lists its slowest tests) when a class is added or the
+  shards drift apart. One test running over 5 minutes is failed by name (`IOS_TEST_ALLOWANCE`), and a shard past its limit is restarted once.
+  It caches the API client generator build and DerivedData; a cache miss only makes it slower.
 
 ## Manual gates (agents list these in the PR body, the human ticks them)
 

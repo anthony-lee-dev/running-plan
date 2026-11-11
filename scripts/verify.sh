@@ -136,7 +136,7 @@ start_ui_test_api() {
   (cd api && UI_TEST_PORT=0 exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"$log" 2>&1 &
   UI_TEST_API_PID=$!
   trap 'stop_ui_test_api; release_sim_lock' EXIT # the only EXIT trap in this script; chain it if another is added
-  for _ in $(seq 1 60); do
+  for _ in $(seq 1 240); do # up to 2 minutes: a busy CI runner takes over a minute to start it
     UI_TEST_API_URL="$(ui_test_api_url_from_log <"$log")"
     if [[ -n "$UI_TEST_API_URL" ]] && curl -sf "$UI_TEST_API_URL/v1/health" >/dev/null; then
       echo "== ios: UI-test API on $UI_TEST_API_URL"
@@ -188,6 +188,41 @@ ios_test_filters() {
       ;;
     *) echo "IOS_TEST_SCOPE must be 'full' or 'quick', not '$scope'" >&2; return 2 ;;
   esac
+}
+
+# CI splits the suite over parallel runners. IOS_SHARD=<i>/<n> (1-based) runs the i-th of n groups of tests. The items
+# dealt out are the unit test target and every UI test class in ios/RunningPlanUITests (each `final class ...:
+# XCTestCase`, found by name, so a new class lands in some shard by itself). Each item has a weight, the seconds it
+# took on a CI runner (IOS_SHARD_WEIGHTS below; an unlisted class counts 80 s per test), and items go largest first to
+# the lightest group, so the shards finish together. Re-measure when the shards drift apart (the CI log of each shard
+# lists every test's time). Prints the -only-testing flags, one per line.
+IOS_SHARD_WEIGHTS="RunningPlanTests=90 InboxUITests=280 PreviewUITests=215 SignInAgainUITests=155 GoalUITests=120 ProgressUITests=70 ReviewUITests=40 DeletePlanUITests=40 InterviewUITests=30 SessionEditorUITests=30 WatchUITests=20 TabBarUITests=10"
+
+ios_shard_filters() {
+  local shard="$1" i n
+  if [[ ! "$shard" =~ ^([1-9][0-9]*)/([1-9][0-9]*)$ ]] || (( BASH_REMATCH[1] > BASH_REMATCH[2] )); then
+    echo "IOS_SHARD must be <i>/<n> with 1 <= i <= n, not '$shard'" >&2; return 2
+  fi
+  i="${BASH_REMATCH[1]}"; n="${BASH_REMATCH[2]}"
+  local f cls count
+  for f in ios/RunningPlanUITests/*.swift; do # a test file the class pattern misses would silently run in no shard
+    if grep -q 'func test' "$f" && ! grep -q '^final class [A-Za-z0-9_]*: XCTestCase' "$f"; then
+      echo "ios_shard_filters: $f has tests but no 'final class X: XCTestCase' line, so no shard would run it" >&2; return 2
+    fi
+  done
+  {
+    for f in ios/RunningPlanUITests/*.swift; do
+      cls="$(sed -n 's/^final class \([A-Za-z0-9_]*\): XCTestCase.*/\1/p' "$f" | head -n 1)"
+      [[ -n "$cls" ]] || continue
+      count="$(grep -c 'func test' "$f" || true)"
+      printf 'RunningPlanUITests/%s %s\n' "$cls" "$((count * 80))"
+    done
+    echo "RunningPlanTests 0"
+  } | awk -v n="$n" -v i="$i" -v w="$IOS_SHARD_WEIGHTS" '
+    BEGIN { m = split(w, kv, " "); for (k = 1; k <= m; k++) { split(kv[k], p, "="); weight[p[1]] = p[2] } }
+    { name = $1; short = name; sub(".*/", "", short); wt = (short in weight) ? weight[short] : $2; print wt, name }' \
+    | sort -k1,1nr -k2,2 | awk -v n="$n" -v i="$i" '
+    { g = 1; for (k = 2; k <= n; k++) if (load[k] < load[g]) g = k; load[g] += $1; if (g == i) print "-only-testing:" $2 }'
 }
 
 # Two iOS test runs on one simulator disturb each other (snapshot and UI tests fail at random, both run slower), and
@@ -246,17 +281,46 @@ verify_ios() {
   if [[ ! -f ios/project.yml ]]; then
     echo "== ios: skipped (no ios/project.yml yet, see docs/backlog.md task 1.3)"; return 0
   fi
-  local filters=() f scope="${IOS_TEST_SCOPE:-full}"
+  local filters=() f id="" scope="${IOS_TEST_SCOPE:-full}" shard="${IOS_SHARD:-}" phase="${IOS_PHASE:-all}" xctestrun=""
   ios_test_filters >/dev/null || return 2
-  while IFS= read -r f; do filters+=("$f"); done < <(ios_test_filters)
-  echo "== ios: api client matches the spec"
-  bash scripts/generate-api-client.sh --check
-  echo "== ios: generate project"
-  (cd ios && xcodegen generate --quiet)
+  # CI builds once (IOS_PHASE=build, products in IOS_DERIVED_DATA) and each shard runs from that build
+  # (IOS_PHASE=test, IOS_PRODUCTS = the build's Build/Products folder). Locally the phase is "all": build and test together.
+  case "$phase" in
+    all) ;;
+    build)
+      echo "== ios: api client matches the spec"
+      bash scripts/generate-api-client.sh --check
+      echo "== ios: generate project"
+      (cd ios && xcodegen generate --quiet)
+      echo "== ios: build for testing"
+      xcodebuild build-for-testing -project ios/RunningPlan.xcodeproj -scheme RunningPlan \
+        -destination "generic/platform=iOS Simulator" -derivedDataPath "${IOS_DERIVED_DATA:?IOS_PHASE=build needs IOS_DERIVED_DATA}" -quiet
+      return $?
+      ;;
+    test)
+      xctestrun="$(ls "${IOS_PRODUCTS:?IOS_PHASE=test needs IOS_PRODUCTS}"/*.xctestrun 2>/dev/null | head -n 1)"
+      [[ -n "$xctestrun" ]] || { echo "== ios: no .xctestrun in $IOS_PRODUCTS" >&2; return 1; }
+      ;;
+    *) echo "IOS_PHASE must be all, build or test, not '$phase'" >&2; return 2 ;;
+  esac
+  if [[ -n "$shard" ]]; then
+    [[ "$scope" == full ]] || { echo "IOS_SHARD needs the full scope" >&2; return 2; }
+    ios_shard_filters "$shard" >/dev/null || return 2
+    while IFS= read -r f; do filters+=("$f"); done < <(ios_shard_filters "$shard")
+    [[ ${#filters[@]} -gt 0 ]] || { echo "== ios: shard '$shard' has no tests" >&2; return 1; }
+    echo "== ios: shard $shard: ${filters[*]}"
+  else
+    while IFS= read -r f; do filters+=("$f"); done < <(ios_test_filters)
+  fi
+  if [[ "$phase" == all ]]; then
+    echo "== ios: api client matches the spec"
+    bash scripts/generate-api-client.sh --check
+    echo "== ios: generate project"
+    (cd ios && xcodegen generate --quiet)
+  fi
   local dest="${IOS_SIM_DEST:-}"
   if [[ -z "$dest" ]]; then
     # First iPhone on the newest iOS runtime; older runtimes may not match the installed Xcode.
-    local id
     id="$(xcrun simctl list devices available | pick_ios_sim)"
     if [[ -z "$id" ]]; then
       echo "== ios: no iPhone simulator available; install one in Xcode > Settings > Components" >&2
@@ -265,25 +329,55 @@ verify_ios() {
     claim_ios_sim "$id" || return 1
     id="$CLAIMED_SIM"
     dest="platform=iOS Simulator,id=${id}"
+    # Boot it now, while the API starts and xcodebuild plans the build (it waits for the boot otherwise).
+    xcrun simctl boot "$id" >/dev/null 2>&1 || true
   fi
   start_ui_test_api
   if [[ "$scope" == quick ]]; then
     echo "== ios: QUICK scope (${filters[*]}); the rest of the UI suite runs in CI, and 'bash scripts/verify.sh ios' runs it all"
   fi
+  # Wait for the boot started above, so xcodebuild never races a booting device.
+  [[ -z "$id" ]] || xcrun simctl bootstatus "$id" >/dev/null 2>&1 || true
   echo "== ios: test on ${dest}"
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
-  # ios-ci.yml sets 35 so the job's own 45-minute limit doesn't cut the run off first).
-  local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0
-  # TEST_RUNNER_ variables reach the UI test process without the prefix.
-  run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
-    xcodebuild test -project ios/RunningPlan.xcodeproj -scheme RunningPlan -destination "$dest" ${filters[@]+"${filters[@]}"} -quiet || rc=$?
-  if [[ $rc -eq 124 ]]; then
-    echo "== ios: xcodebuild test ran past ${limit}s and was stopped (a hung simulator?); run verify again" >&2
-  fi
+  # ios-ci.yml splits the suite over parallel runners, IOS_SHARD, and sets a shorter limit per shard with one retry).
+  local limit="${IOS_TEST_TIMEOUT:-2700}" rc=0 attempt=1 xcb=(test -project ios/RunningPlan.xcodeproj -scheme RunningPlan)
+  [[ -z "$xctestrun" ]] || xcb=(test-without-building -xctestrun "$xctestrun")
+  # IOS_TEST_ALLOWANCE=<seconds> (CI) fails a single test that runs longer, naming it, instead of waiting for the
+  # whole-run limit. IOS_HANG_RETRIES=1 (CI) runs the tests once more after a hang or a simulator that was not ready: restart the simulator, then the run only repeats
+  # tests whose build is already done.
+  while :; do
+    [[ -z "${IOS_RESULT_BUNDLE:-}" ]] || rm -rf "$IOS_RESULT_BUNDLE" # xcodebuild refuses an existing bundle
+    # TEST_RUNNER_ variables reach the UI test process without the prefix.
+    run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
+      xcodebuild "${xcb[@]}" -destination "$dest" ${filters[@]+"${filters[@]}"} ${IOS_RESULT_BUNDLE:+-resultBundlePath "$IOS_RESULT_BUNDLE"} ${IOS_TEST_ALLOWANCE:+-test-timeouts-enabled YES -default-test-execution-time-allowance "$IOS_TEST_ALLOWANCE" -maximum-test-execution-time-allowance "$IOS_TEST_ALLOWANCE"} -quiet && rc=0 || rc=$?
+    if [[ $rc -eq 70 ]]; then # xcodebuild "Unable to find a device matching the destination": the simulator was not ready
+      echo "== ios: xcodebuild could not use the simulator" >&2
+      if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then
+        attempt=$((attempt + 1))
+        [[ -z "${id:-}" ]] || { xcrun simctl shutdown "$id" >/dev/null 2>&1; xcrun simctl boot "$id" >/dev/null 2>&1; xcrun simctl bootstatus "$id" >/dev/null 2>&1; } || true
+        continue
+      fi
+    fi
+    if [[ $rc -eq 124 ]]; then
+      echo "== ios: xcodebuild test ran past ${limit}s and was stopped (a hung simulator?)" >&2
+      if [[ $attempt -le ${IOS_HANG_RETRIES:-0} ]]; then
+        attempt=$((attempt + 1))
+        echo "== ios: restarting the simulator and running once more" >&2
+        [[ -z "${id:-}" ]] || xcrun simctl shutdown "$id" >/dev/null 2>&1 || true
+        continue
+      fi
+      echo "== ios: run verify again" >&2
+    fi
+    break
+  done
   [[ $rc -eq 0 ]] || return "$rc"
   # Only the full suite is sure to ask the API for a plan; a quick run may name no UI test, or one that doesn't.
-  [[ "$scope" == quick ]] || check_ui_tests_used_local_api
+  # A shard checks it only when it holds the class that makes a plan (PreviewUITests).
+  if [[ "$scope" != quick ]] && { [[ -z "$shard" ]] || [[ " ${filters[*]} " == *"/PreviewUITests "* ]]; }; then
+    check_ui_tests_used_local_api || return 1
+  fi
   stop_ui_test_api
 }
 

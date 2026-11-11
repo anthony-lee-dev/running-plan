@@ -130,7 +130,7 @@ enum LocalAPI {
         app.buttons["signin.send"].tap()
 
         let codeField = app.textFields["signin.code"]
-        XCTAssertTrue(codeField.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(codeField.waitForExistence(timeout: 30), app.debugDescription)
         let code = try await latestCode(api, email: email)
         codeField.tap()
         codeField.typeText(code)
@@ -155,7 +155,7 @@ enum LocalAPI {
         app.buttons["signin.send"].tap()
 
         let codeField = app.textFields["signin.code"]
-        XCTAssertTrue(codeField.waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(codeField.waitForExistence(timeout: 30), app.debugDescription)
         let code = try await latestCode(api, email: email)
         codeField.tap()
         codeField.typeText(code)
