@@ -24,8 +24,8 @@ body:
   - type: textarea
     id: gates
     attributes:
-      label: Manual gates
-      description: Device or Apple-account checks the human must do. They become unticked boxes in the PR.
+      label: Device check and manual gates
+      description: What the human must check on a device (it becomes a Device check issue; the PR still merges on green CI), and anything that must happen before the merge (an unticked box in the PR).
   - type: markdown
     attributes:
       value: |
