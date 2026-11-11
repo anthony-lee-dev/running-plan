@@ -110,6 +110,9 @@ feature's note. This file is only for what every iOS task needs.
   `ios_shard_filters` in `verify.sh`): the unit tests and each UI test class are dealt out by the times in
   `IOS_SHARD_WEIGHTS`, so re-measure those (each shard's log lists its slowest tests) when a class is added or the
   shards drift apart. One test running over 5 minutes is failed by name (`IOS_TEST_ALLOWANCE`), and a shard past its limit is restarted once.
+  Before its tests each shard starts the built app once (`IOS_WARM_UP`; the first launch on a fresh simulator is what timed out), and a
+  test that fails only with "Timed out while launching application via Xcode" is run once more (`IOS_LAUNCH_RETRIES`, `launch_timeout_failures`
+  in `verify.sh`, pinned by `scripts/test/ios-launch-retry.test.sh`); any other failure, including a hang inside a test, is never retried.
   It caches the API client generator build and DerivedData; a cache miss only makes it slower.
 
 ## Manual gates (agents list these in the PR body, the human ticks them)

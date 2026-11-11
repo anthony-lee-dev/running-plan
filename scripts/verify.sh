@@ -90,6 +90,37 @@ pick_ios_sim() {
   '
 }
 
+# Reads `xcresulttool get test-results tests` JSON on stdin. When at least one test failed and EVERY failure message of
+# every failed test is "Timed out while launching application via Xcode" (the app never started; nothing in the test ran),
+# prints each failed test as `<UI test target>/<class>/<method>`, one per line, ready for -only-testing. Prints nothing
+# when anything else failed (a test that ran and failed, a hang mid-test), so only a launch timeout is ever retried.
+launch_timeout_failures() {
+  jq -r '
+    [.. | objects | select(.nodeType == "Test Case" and .result == "Failed")] as $failed
+    | ($failed | map([.. | objects | select(.nodeType == "Failure Message") | .name])) as $messages
+    | if ($failed | length) > 0
+        and ($failed | all(.nodeIdentifierURL | test("/RunningPlanUITests/")))
+        and ($messages | all(length > 0 and all(test("Timed out while launching application via Xcode"))))
+      then $failed[] | "RunningPlanUITests/" + (.nodeIdentifier | sub("^RunningPlanUITests/"; ""))
+      else empty end'
+}
+
+# Starts the built app once on the booted simulator, then stops it. The first launch of an app on a fresh CI simulator
+# (install, first-run caches) is the one that has timed out, with the first UI test of a shard failing after 2-3 minutes
+# in "Timed out while launching application via Xcode"; doing it here makes the tests' own launches warm. Never fails.
+warm_up_app() {
+  local sim="$1" products="$2" app bundle
+  app="$products/Debug-iphonesimulator/RunningPlan.app"
+  [[ -d "$app" ]] || { echo "== ios: warm-up skipped: no app at $app"; return 0; }
+  bundle="$(plutil -extract CFBundleIdentifier raw "$app/Info.plist" 2>/dev/null)" || return 0
+  echo "== ios: warming up $bundle"
+  xcrun simctl install "$sim" "$app" >/dev/null 2>&1 || { echo "== ios: warm-up install failed (ignored)"; return 0; }
+  SIMCTL_CHILD_API_BASE_URL="${UI_TEST_API_URL:-http://127.0.0.1:1}" xcrun simctl launch "$sim" "$bundle" >/dev/null 2>&1 || true
+  sleep 5
+  xcrun simctl terminate "$sim" "$bundle" >/dev/null 2>&1 || true
+  return 0
+}
+
 # Runs a command, stopping it after $1 seconds; returns 124 when it ran out of time (as GNU timeout does), 127 when
 # the command can't start, 128 + n when signal n killed it. macOS has no `timeout`, so perl runs the command as a
 # child: at the limit it sends TERM (xcodebuild then cancels its test session and the simulator's test runner), and
@@ -338,6 +369,7 @@ verify_ios() {
   fi
   # Wait for the boot started above, so xcodebuild never races a booting device.
   [[ -z "$id" ]] || xcrun simctl bootstatus "$id" >/dev/null 2>&1 || true
+  [[ "${IOS_WARM_UP:-}" != 1 || -z "$id" || -z "${IOS_PRODUCTS:-}" ]] || warm_up_app "$id" "$IOS_PRODUCTS"
   echo "== ios: test on ${dest}"
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
@@ -372,6 +404,22 @@ verify_ios() {
     fi
     break
   done
+  # IOS_LAUNCH_RETRIES=1 (CI): when the only failures are tests whose app never launched ("Timed out while launching
+  # application via Xcode", see launch_timeout_failures), run just those tests once more on a restarted simulator. A test
+  # that started and failed is never retried, and the first run's result bundle stays as the record of what was retried.
+  if [[ $rc -ne 0 && $rc -ne 124 && ${IOS_LAUNCH_RETRIES:-0} -ge 1 && -n "${IOS_RESULT_BUNDLE:-}" && -d "$IOS_RESULT_BUNDLE" ]]; then
+    local retry=() t
+    while IFS= read -r t; do [[ -z "$t" ]] || retry+=("-only-testing:$t"); done \
+      < <(xcrun xcresulttool get test-results tests --path "$IOS_RESULT_BUNDLE" 2>/dev/null | launch_timeout_failures)
+    if [[ ${#retry[@]} -gt 0 ]]; then
+      echo "== ios: ${#retry[@]} test(s) failed only because the app did not launch; running them once more: ${retry[*]}" >&2
+      [[ -z "$id" ]] || { xcrun simctl shutdown "$id" >/dev/null 2>&1; xcrun simctl boot "$id" >/dev/null 2>&1; xcrun simctl bootstatus "$id" >/dev/null 2>&1; } || true
+      mv "$IOS_RESULT_BUNDLE" "${IOS_RESULT_BUNDLE%.xcresult}-first.xcresult" 2>/dev/null || rm -rf "$IOS_RESULT_BUNDLE"
+      run_with_time_limit "$limit" env TEST_RUNNER_LOCAL_API_URL="$UI_TEST_API_URL" \
+        xcodebuild "${xcb[@]}" -destination "$dest" "${retry[@]}" -resultBundlePath "$IOS_RESULT_BUNDLE" \
+        ${IOS_TEST_ALLOWANCE:+-test-timeouts-enabled YES -default-test-execution-time-allowance "$IOS_TEST_ALLOWANCE" -maximum-test-execution-time-allowance "$IOS_TEST_ALLOWANCE"} -quiet && rc=0 || rc=$?
+    fi
+  fi
   [[ $rc -eq 0 ]] || return "$rc"
   # Only the full suite is sure to ask the API for a plan; a quick run may name no UI test, or one that doesn't.
   # A shard checks it only when it holds the class that makes a plan (PreviewUITests).
