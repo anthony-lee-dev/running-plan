@@ -18,6 +18,7 @@ struct GoalScreen: View {
     @State private var signedIn: Bool?
     @State private var showReviewSettings = false
     @State private var showWatchSettings = false
+    @State private var aiSwitch = AISummarySwitch(service: APIRunSummaryService(client: APIConfiguration.liveSignedInClient()))
     @State private var showGoalEdit = false
     @State private var rerunFlow: InterviewHolder?
     @State private var showProposals = false
@@ -164,6 +165,7 @@ struct GoalScreen: View {
                     .disabled(settings.saving)
                     .accessibilityIdentifier("settings.targetDisplay")
                 }
+                aiSummariesRow
                 if let error = settings.error {
                     Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("settings.error")
                     SignInAgainButton(message: error)
@@ -174,6 +176,25 @@ struct GoalScreen: View {
                 row("Apple Watch", value: watchSync.wantsSync ? "On" : "Off", id: "settings.watch") { showWatchSettings = true }
             }
         }
+    }
+
+    /// On by default; the server holds it, so the web app shares it. Off shows the plain text summary and never asks a model.
+    @ViewBuilder
+    private var aiSummariesRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(isOn: Binding(get: { aiSwitch.isOn ?? true }, set: { new in Task { await aiSwitch.set(new); await settings.load() } })) {
+                Text("AI run summaries").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink.color)
+            }
+            .tint(Palette.accentText.color)
+            .disabled(aiSwitch.isOn == nil || aiSwitch.saving)
+            .accessibilityIdentifier("settings.aiSummaries")
+            Text("Reworded by AI from your run's numbers. Off shows a plain summary and never calls AI.")
+                .font(.system(size: 13)).foregroundStyle(Palette.muted.color)
+            if let error = aiSwitch.error {
+                Text(error).font(.system(size: 14)).foregroundStyle(Palette.accentText.color).accessibilityIdentifier("settings.aiSummaries.error")
+            }
+        }
+        .task { await aiSwitch.load() }
     }
 
     private var planCard: some View {
