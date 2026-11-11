@@ -19,7 +19,7 @@ cd "$work/repo" || exit 1
 git config user.email t@example.com
 git config user.name t
 mkdir -p scripts api ios docs
-printf '#!/usr/bin/env bash\necho "$*" >> "$VERIFY_LOG"\nexit "${VERIFY_EXIT:-0}"\n' >scripts/verify.sh
+printf '#!/usr/bin/env bash\necho "$*" >> "$VERIFY_LOG"\necho "${IOS_TEST_SCOPE:-unset}/${IOS_UI_TESTS:-none}" >> "$VERIFY_LOG.scope"\nexit "${VERIFY_EXIT:-0}"\n' >scripts/verify.sh
 echo a >api/a.ts
 echo a >docs/d.md
 git add -A && git commit -qm base
@@ -87,6 +87,12 @@ echo x >ios/App.swift
 run_hook >/dev/null
 expect_runs "touching a second package runs again" $((n + 3))
 [[ "$(tail -1 "$VERIFY_LOG")" == "api ios" ]] && ok "runs both packages" || bad "runs both packages"
+# The full iOS suite takes longer than the hook's time limit, so the hook runs the quick scope (build and unit
+# tests, no UI test classes) whatever the session exported; CI runs the whole suite on the PR.
+echo y >>ios/App.swift
+IOS_TEST_SCOPE=full IOS_UI_TESTS="GoalUITests" run_hook >/dev/null
+[[ "$(tail -1 "$VERIFY_LOG.scope")" == "quick/none" ]] && ok "iOS runs in the quick scope" || bad "iOS scope: $(tail -1 "$VERIFY_LOG.scope")"
+n=$((n + 1))
 
 git add -A && git commit -qm "merge point"
 git update-ref refs/remotes/origin/main HEAD~1

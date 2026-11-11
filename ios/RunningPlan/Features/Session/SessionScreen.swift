@@ -62,7 +62,7 @@ struct SessionScreen: View {
             )
             .fullScreenCover(isPresented: Binding(get: { runDetails != nil }, set: { if !$0 { runDetails = nil } })) {
                 if let inbox, let id = runDetails {
-                    RunDetailsScreen(inbox: inbox, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), onClose: { runDetails = nil })
+                    RunDetailsScreen(inbox: inbox, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), summaries: APIRunSummaryService(client: APIConfiguration.liveSignedInClient()), onClose: { runDetails = nil })
                 }
             }
             .task {

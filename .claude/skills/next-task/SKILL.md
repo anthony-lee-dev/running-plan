@@ -27,14 +27,19 @@ the case when no such `#n` appears in the open-issue list above. Skip issues lab
 
 - Open `type: defect` issues come first (`priority: high` before `priority: normal`). A defect has no slice.
 - Then pick the lowest-numbered unblocked feature in the earliest milestone that has open issues.
-- Don't start a later slice until the current milestone has no open issues and its **Done when** (the
-  milestone's description) holds. Judge that from the issues and the merged PRs' bodies (`gh pr view <n>`), not
+- Don't start a later slice until the current milestone has no open issues other than `[Device check]` ones and
+  its **Done when** (the milestone's description) holds, apart from the device check. Open device checks don't
+  hold the next slice back; they stop you calling the slice done (step 5). Judge that from the issues and the merged PRs' bodies (`gh pr view <n>`), not
   by reading code. Issues labelled `any-time` may be picked while the current slice waits on the human, or as the
   second worker (step 3).
 - If the user named a task, use that one.
 - If nothing is unblocked, say what is waiting on the human (a merge, a device check, a gate) and stop.
 - For an `ask-first` issue, read what it points to, post the plan, and stop until the human answers. A worker can't
-  wait for an answer.
+  wait for an answer. If the issue adds or reshapes a screen, the plan comes with its design, before any question:
+  the review of how comparable apps do it and a mock, `designs/dark/DK-<name>.dc.html`, in the existing boards'
+  tokens (`docs/design-notes.md`), on a branch with a PR the human can open. The questions come last and refer to
+  the mock, so the human decides once. (On #131 the questions came first and two answers were reversed after the
+  design review.) The merged mock is the worker's and the reviewer's reference.
 
 ## 2. Start a worker
 
@@ -54,10 +59,11 @@ whenever this session ends a turn, the repo's Stop hook runs `verify.sh` on what
 were editing the main checkout, the hook would verify its half-done work and run the same iOS tests as the worker.
 
 **One worker per backlog task.** The worker builds the whole task, end to end, in one PR of any size. Splitting a
-task across workers would make each new worker learn the same code again. The one exception is the repo's
-contract-first rule: if the task changes an endpoint, the worker's PR is only the `spec/openapi.yaml` change, and
-that PR waits for the human. After it merges, start a worker for the rest of the task, with that PR's link and the
-worker's "Left" list as the brief's "Done so far".
+task across workers would make each new worker learn the same code again. A contract change that only adds rides in
+that PR as its first commit. The one exception is a change that removes or alters part of the existing contract
+(`scripts/spec-additive.mjs` says so): then the worker's PR is only the `spec/openapi.yaml` change, and that PR waits
+for the human. After it merges, start a worker for the rest of the task, with that PR's link and the worker's "Left"
+list as the brief's "Done so far".
 
 **Pass on what the human said.** Workers can't see this conversation. Put into the brief any correction or choice
 the human made that the task needs. A correction also belongs in the relevant `CLAUDE.md` (repo rule), so ask the
@@ -110,7 +116,8 @@ Stop only that worker's loops (`kill <pid>`), and only once what they wait on ha
   `git worktree remove <path>`), then start a new worker. Fill the brief's "Existing PR" field so the new worker
   carries on that branch instead of starting a fresh one. Either way the branch can't be checked out in the main
   checkout at the same time: if the human is verifying it there, ask them to switch away first.
-- **Left for the human** (`request-merge.py` exited 3, or the PR has manual-gate boxes): stop (step 5).
+- **Left for the human** (`request-merge.py` exited 3, or the PR has manual-gate boxes): stop (step 5). A
+  `[Device check]` issue is not a reason to wait: the PR merges without it.
 
 Never start a worker whose task needs an unmerged PR. Workers branch from `origin/main`, so they only see work
 that has merged. A branch stacked on an unmerged one needs a rebase after the squash merge, and that rebase needs
@@ -118,23 +125,22 @@ a force-push, which is denied.
 
 ## 5. Stop at a human gate
 
-Stop when the next step needs the human: a PR to merge, a manual-gate box, the slice's **Done when** device check,
-an `ask-first` plan, or nothing left unblocked. Say plainly what is waiting and on whom, with PR links, and
-which issues the merged PRs closed.
+Stop when the next step needs the human: a PR to merge, a manual-gate box, an `ask-first` plan, or nothing left
+unblocked. Say plainly what is waiting and on whom, with PR links, and which issues the merged PRs closed.
 
-**Device checks run alongside CI.** Don't hold the human's device check until CI finishes: iOS CI takes 18-28
-minutes and the check is a separate wait. When a worker reports a PR with a device check, pass the ask on to the
-human straight away (PR link and steps), even if its checks are still running. The PR merges only after CI is green
-and the human has passed the check. If CI then fails and the worker's fix changes app behavior, tell the human the
-check has to be redone. Workers run iOS locally in the quick mode (`IOS_TEST_SCOPE=quick`, see the brief); the full
-suite runs in CI, so a green local run doesn't replace the required `ios` check. Before the ask goes out, check that
-production has the routes the check uses (5a).
+Every time you stop, list the open device checks in one block, oldest first, so the human can do them in one
+sitting (`gh issue list --state open --search "[Device check] in:title"`). Never call a slice done while one of
+its device checks is open, and never close one yourself unless the human says they did it.
+
+**Device checks never hold a PR.** A worker's `/ship` opens a `[Device check]` issue with the steps and the PR merges
+on green CI (iOS CI is the full suite; workers only run the quick mode locally). The check needs the merged API to
+be deployed, so when a merged PR touched `api/` and has a device check, do 5a before you list the check as ready.
 
 ## 5a. Deploy the API (only with the human's yes)
 
 A merge doesn't deploy: the Worker and its D1 database only change when someone runs the migrations and
 `wrangler deploy`. A device check against the deployed API then fails with 404s on routes that merged. So before you
-hand the human a device check, or whenever merged PRs touched `api/` or `api/migrations/`, find out whether production
+list a device check as ready, or whenever merged PRs touched `api/` or `api/migrations/`, find out whether production
 is behind. Neither command below changes production data (the smoke test only moves rate-limit counters). Run them
 from `api/` on an up-to-date `main`; `wrangler.toml` lives there:
 

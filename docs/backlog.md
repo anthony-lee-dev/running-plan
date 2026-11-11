@@ -13,8 +13,10 @@ manual-gate rules come from `designs/Running Planner Agent Build Workflow.md` (h
 **End-to-end check for every slice** (from slice 1 on):
 1. API contract tests for the slice's endpoints pass on the Workers and the Node entry.
 2. An iOS UI test runs the slice's flow in the simulator against the local Node API (in memory, no network).
-3. The slice's last PR lists a device check against the deployed API as an unticked `## Manual gates` box for the
-   human; WorkoutKit and HealthKit checks are Gate D items. Agents never tick these boxes.
+3. The slice's last PR adds one journey UI test: the slice's flow across its screens, the way the human walks it on
+   the device (sign out and back in, re-plan then review, import then match), not one screen at a time. `/ship`
+   opens a `[Device check]` issue in the slice's milestone for the same flow against the deployed API; the PR
+   merges on green CI and the slice is done when that issue closes. WorkoutKit and HealthKit checks are Gate D items.
 4. After each deploy, `npm run smoke -w api` passes against the deployed API (task 2.22).
 
 Every screen task also needs 0.5 (the dark-board PNGs) for its snapshot test.

@@ -101,6 +101,8 @@ Read it top to bottom: a phase does not start until the gate above it passes, an
 
 **Manual gates agents cannot close.** Send-to-watch (WorkoutKit), HealthKit import, Sign in with Apple and App Attest need a real device or your Apple account. The PR template lists them as unticked boxes, and agents never tick them.
 
+**Changed in November 2026 (see `CLAUDE.md` and `docs/autonomy.md`).** A device check no longer holds a PR open: `/ship` opens a `[Device check]` issue and the PR merges on green CI; unticked `## Manual gates` boxes are only for what must happen before a merge. A contract change that only adds rides in its feature PR as the first commit (`scripts/spec-additive.mjs` checks it); one that removes or alters something existing is still a spec PR of its own that you merge.
+
 **How the loop keeps going without you.**
 
 - **Stop hook (`.claude/hooks/stop-gate.py`).** When Claude tries to finish, it runs `verify.sh` for the packages the branch changed. On red it returns a block decision with the last 60 lines of output, so Claude keeps fixing. After five blocks in one session it lets Claude stop with a message, so a problem it cannot fix (a missing simulator, say) never loops forever.
