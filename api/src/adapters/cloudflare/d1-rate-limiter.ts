@@ -19,4 +19,11 @@ export class D1RateLimiter implements RateLimiter {
       .first<{ count: number }>();
     return { allowed: (row?.count ?? 1) <= limit, retryAfterSec: Math.max(1, start + windowSec - nowSec) };
   }
+
+  async peek(key: string, windowSec: number, now: Date) {
+    const nowSec = Math.floor(now.getTime() / 1000);
+    const start = nowSec - (nowSec % windowSec);
+    const row = await this.db.prepare("SELECT count FROM rate_limits WHERE key = ? AND window_start = ?").bind(key, start).first<{ count: number }>();
+    return row?.count ?? 0;
+  }
 }

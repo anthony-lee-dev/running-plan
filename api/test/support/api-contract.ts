@@ -12,7 +12,7 @@ export interface ContractTarget {
 }
 
 /** Spec operations with no route yet. Remove one when its slice builds it, and add its cases. */
-export const NOT_BUILT = new Set<string>(["POST /v1/activities/{activityId}/summary:generate"]);
+export const NOT_BUILT = new Set<string>();
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -322,6 +322,12 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("GET /v1/activities/{activityId}/summary", summary(a1!), 401);
       await ok("GET /v1/activities/{activityId}/summary", summary(a1!), 200, { token });
       await ok("GET /v1/activities/{activityId}/summary", summary(id(999)), 404, { token });
+      await ok("GET /v1/activities/{activityId}/summary", `/v1/activities/${a1}/summary`, 400, { token });
+      const generate = (activityId: string) => `/v1/activities/${activityId}/summary:generate?today=2026-11-05`;
+      await ok("POST /v1/activities/{activityId}/summary:generate", generate(a1!), 401);
+      await ok("POST /v1/activities/{activityId}/summary:generate", generate(a1!), 200, { token });
+      await ok("POST /v1/activities/{activityId}/summary:generate", generate(id(999)), 404, { token });
+      await ok("POST /v1/activities/{activityId}/summary:generate", `/v1/activities/${a1}/summary:generate`, 400, { token });
 
       const G = `/v1/plans/${id(101)}/progress`;
       await ok("GET /v1/plans/{planId}/progress", `${G}?today=2026-11-03`, 401);

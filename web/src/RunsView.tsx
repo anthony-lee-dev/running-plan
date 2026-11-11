@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Api } from "./api/client";
 import type { Activity, Session } from "./api/types";
 import { clock, pace } from "./format";
+import { RunSummaryCard } from "./RunSummaryCard";
 import { planVsActual } from "./sessionMath";
 
 export { pace };
@@ -66,6 +67,7 @@ function RunDetail({ api, run, onBack, onSignedOut }: { api: Api; run: Activity;
           </div>
         ))}
       </dl>
+      {run.workoutType === "running" && run.disposition !== "ignored" && <RunSummaryCard api={api} run={run} onSignedOut={onSignedOut} />}
       {compared && compared.lines.length > 0 && (
         <section aria-label="Plan vs actual">
           <h3>Plan vs actual</h3>

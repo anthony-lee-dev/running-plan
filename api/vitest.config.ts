@@ -15,6 +15,8 @@ export default defineConfig({
         plugins: [
           cloudflareTest(async () => ({
             wrangler: { configPath: "./wrangler.toml" },
+            // The [ai] binding is remote-only: without this the pool starts a Cloudflare session (needs a login, may spend neurons).
+            remoteBindings: false,
             miniflare: {
               bindings: { TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")) },
             },
