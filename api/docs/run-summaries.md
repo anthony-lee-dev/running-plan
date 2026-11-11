@@ -26,8 +26,8 @@ Part of the API guide (`api/CLAUDE.md` has the index). Read this before changing
   allowance; over it `over_limit`). A quota error from the model gives `over_limit` and sets a 15-minute marker (`RateLimiter.peek`) so nothing calls the exhausted model again; timeouts and failures give `ai_unavailable`
   and store nothing; two failed checks store a template row so reopening does not spend more. Logs carry reason codes only: never the
   facts, the prompt or the model's text. Workers Free: the allowance is 10,000 neurons a day (about 10 a call), a daily cap of 600
-  leaves headroom; on Workers Paid overage is billed, so raise the cap deliberately. `AI_SUMMARIES` is a plain var that ships `"off"` in wrangler.toml: the human sets `"on"` after #82 (legal wording) and the device check; `"off"` is also the
-  kill switch (a deploy resets a dashboard edit). Two concurrent generates for one run both call the model and both count; the later `put` wins, and the hash check on read keeps the text correct. Tests use `FakeNarrator`; the adapter test uses a stub binding. `wrangler dev` calls Workers AI
+  leaves headroom; on Workers Paid overage is billed, so raise the cap deliberately. `AI_SUMMARIES` is a plain var that ships `"on"` in wrangler.toml by the human's decision on 2026-11-11 after the device check (#82, the legal wording, is still open); setting `"off"` and deploying is still the
+  kill switch (a deploy resets a dashboard edit, so the value in wrangler.toml is what counts). Two concurrent generates for one run both call the model and both count; the later `put` wins, and the hash check on read keeps the text correct. Tests use `FakeNarrator`; the adapter test uses a stub binding. `wrangler dev` calls Workers AI
   remotely and spends neurons. `npm run eval-summary -w api` (manual, needs the human's account id and token, never in CI) runs 30
   fixtures through candidate models and prints the share of AI text that passes the checks and the neurons spent.
 - Eval lessons (issue #160; the first real eval gave 0/30 on every model):

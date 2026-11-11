@@ -1,0 +1,5864 @@
+[
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 1,
+  "result": {
+   "id": "chatcmpl-ff9c22c3-37fa-4b0e-84df-29d27ac54508",
+   "object": "chat.completion",
+   "created": 1794436122,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was 3.0 km in 15 min at an average pace of 5:00/km and an average heart rate of 140 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as the others, who averaged 5:01/km, and the heart rate was 10 bpm lower than theirs, who averaged 150 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 446,
+    "completion_tokens": 92,
+    "total_tokens": 538,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.0447187423706055
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 3.0 km in 15 min at an average pace of 5:00/km and an average heart rate of 140 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as the others, who averaged 5:01/km, and the heart rate was 10 bpm lower than theirs, who averaged 150 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 2,
+  "result": {
+   "id": "chatcmpl-e0b9b960-0f85-4f64-8f04-810db7388f88",
+   "object": "chat.completion",
+   "created": 1794436122,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 5.0 km in 26 min, with an average pace of 5:17/km and an average heart rate of 141 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 9 bpm lower. The runner felt it was a 2 out of 5 experience and considered the effort to be 2 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 101,
+    "total_tokens": 555,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.391477584838867
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 5.0 km in 26 min, with an average pace of 5:17/km and an average heart rate of 141 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 9 bpm lower. The runner felt it was a 2 out of 5 experience and considered the effort to be 2 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 3,
+  "result": {
+   "id": "chatcmpl-aad37fd5-0bc8-41d6-90b3-fecacb6e513f",
+   "object": "chat.completion",
+   "created": 1794436123,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's tempo run covered 8.0 km in 45 minutes, with an average pace of 5:34 per kilometre and an average heart rate of 142 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 44,
+    "total_tokens": 447,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.193964958190918
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's tempo run covered 8.0 km in 45 minutes, with an average pace of 5:34 per kilometre and an average heart rate of 142 beats per minute."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 4,
+  "result": {
+   "id": "chatcmpl-30a9ba16-3ae6-4e1c-aed4-638a7fa5561e",
+   "object": "chat.completion",
+   "created": 1794436123,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This 10.0 km run took 59 min to complete with an average pace of 5:51/km. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:52/km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 395,
+    "completion_tokens": 64,
+    "total_tokens": 459,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.8583731651306152
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This 10.0 km run took 59 min to complete with an average pace of 5:51/km. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:52/km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 5,
+  "result": {
+   "id": "chatcmpl-dc00448c-1bd1-4ae1-9e1d-dc05fbc57006",
+   "object": "chat.completion",
+   "created": 1794436124,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run was 12.5 km in 1 hour 17 minutes, with an average pace of 6 minutes and 8 seconds per kilometre. The average heart rate was 144 beats per minute. The runner felt it was a very enjoyable easy run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 405,
+    "completion_tokens": 59,
+    "total_tokens": 464,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.7252197265625
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run was 12.5 km in 1 hour 17 minutes, with an average pace of 6 minutes and 8 seconds per kilometre. The average heart rate was 144 beats per minute. The runner felt it was a very enjoyable easy run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 6,
+  "result": {
+   "id": "chatcmpl-977cf036-51dc-433d-b8f0-745f6d31b348",
+   "object": "chat.completion",
+   "created": 1794436124,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 16.0 km in 1 hour 43 minutes, with an average pace of 6:25/km and an average heart rate of 145 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 5 bpm lower. The runner rated this run as feeling 1 out of 5 and requiring a 6 out of 10 effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 102,
+    "total_tokens": 559,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.438701152801514
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 16.0 km in 1 hour 43 minutes, with an average pace of 6:25/km and an average heart rate of 145 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 5 bpm lower. The runner rated this run as feeling 1 out of 5 and requiring a 6 out of 10 effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 7,
+  "result": {
+   "id": "chatcmpl-5a9194e9-5f55-4142-94cf-6c73d3b3bc16",
+   "object": "chat.completion",
+   "created": 1794436125,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's tempo run covered 21.1 km in 1 hour 50 minutes, with an average pace of 5:12 per kilometre. The average heart rate was 146 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 379,
+    "completion_tokens": 47,
+    "total_tokens": 426,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.1997227668762207
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's tempo run covered 21.1 km in 1 hour 50 minutes, with an average pace of 5:12 per kilometre. The average heart rate was 146 beats per minute."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 8,
+  "result": {
+   "id": "chatcmpl-9a0f7725-857f-4e97-90b5-fcd64f5b2880",
+   "object": "chat.completion",
+   "created": 1794436126,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This 3.0 km run took 16 minutes with an average pace of 5:29/km. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as their average of 5:30/km. The runner felt it was a moderate effort, rating it 8 out of 10, and a 3 out of 5 in terms of how it felt.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 93,
+    "total_tokens": 515,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.980741500854492
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This 3.0 km run took 16 minutes with an average pace of 5:29/km. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as their average of 5:30/km. The runner felt it was a moderate effort, rating it 8 out of 10, and a 3 out of 5 in terms of how it felt."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 9,
+  "result": {
+   "id": "chatcmpl-15ead6c6-5e1a-48e6-bed4-652cab2ebb4a",
+   "object": "chat.completion",
+   "created": 1794436126,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run was 5.0 km long and took 29 minutes to complete, with an average pace of 5:46/km and an average heart rate of 148 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as the others, who averaged 5:47/km, and had a heart rate that was 2 bpm lower than theirs, who averaged 150 bpm. The run felt like 4 out of 5 and was a 9 out of 10 effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 118,
+    "total_tokens": 591,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 6.062483787536621
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run was 5.0 km long and took 29 minutes to complete, with an average pace of 5:46/km and an average heart rate of 148 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as the others, who averaged 5:47/km, and had a heart rate that was 2 bpm lower than theirs, who averaged 150 bpm. The run felt like 4 out of 5 and was a 9 out of 10 effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 10,
+  "result": {
+   "id": "chatcmpl-c8e32120-bf72-4d08-a1df-af776b02a04a",
+   "object": "chat.completion",
+   "created": 1794436127,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run was 8.0 km long and took 48 minutes to complete. The average pace was 6 minutes and 3 seconds per kilometre. The average heart rate was 149 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 356,
+    "completion_tokens": 48,
+    "total_tokens": 404,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.139863967895508
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run was 8.0 km long and took 48 minutes to complete. The average pace was 6 minutes and 3 seconds per kilometre. The average heart rate was 149 beats per minute."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 11,
+  "result": {
+   "id": "chatcmpl-74ec9b91-d579-45c5-8a9a-c80d7afff99c",
+   "object": "chat.completion",
+   "created": 1794436128,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run was 10.0 km in distance and took 1 hour 03 minutes to complete. The average pace was 6:20 per kilometre. The average heart rate was 150 beats per minute. The run felt like a 1 out of 5 effort and was rated as a 1 out of 10 in terms of how it felt.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 79,
+    "total_tokens": 485,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.426694869995117
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run was 10.0 km in distance and took 1 hour 03 minutes to complete. The average pace was 6:20 per kilometre. The average heart rate was 150 beats per minute. The run felt like a 1 out of 5 effort and was rated as a 1 out of 10 in terms of how it felt."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 12,
+  "result": {
+   "id": "chatcmpl-bd3bfc12-ebab-46c7-b046-beb00b67d0f2",
+   "object": "chat.completion",
+   "created": 1794436129,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 12.5 km in 1 hour 04 minutes, with an average pace of 5:07/km. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as the others. The runner felt that it was a 2 out of 5 in terms of how it felt and a 2 out of 10 in terms of effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 425,
+    "completion_tokens": 91,
+    "total_tokens": 516,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.923361301422119
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 12.5 km in 1 hour 04 minutes, with an average pace of 5:07/km. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as the others. The runner felt that it was a 2 out of 5 in terms of how it felt and a 2 out of 10 in terms of effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 13,
+  "result": {
+   "id": "chatcmpl-309fca0a-6562-4a91-a4f8-76d83d7f9caa",
+   "object": "chat.completion",
+   "created": 1794436129,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run covered 16.0 km in 1 hour 26 minutes, with an average pace of 5:24/km and an average heart rate of 152 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:25/km, and the heart rate was 2 bpm higher than theirs, who averaged 150 bpm. This run matched the planned easy run of 16.0 km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 449,
+    "completion_tokens": 109,
+    "total_tokens": 558,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.649827480316162
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run covered 16.0 km in 1 hour 26 minutes, with an average pace of 5:24/km and an average heart rate of 152 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:25/km, and the heart rate was 2 bpm higher than theirs, who averaged 150 bpm. This run matched the planned easy run of 16.0 km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 14,
+  "result": {
+   "id": "chatcmpl-d41cedd4-e120-4afc-a7d5-19a4d79c4626",
+   "object": "chat.completion",
+   "created": 1794436130,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run covered 21.1 km in 2 hours and 0 minutes, with an average pace of 5:41/km and an average heart rate of 153 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 3 bpm higher. The runner felt it was a 4 out of 5 experience and considered the effort level to be 4 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 107,
+    "total_tokens": 564,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.613040447235107
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run covered 21.1 km in 2 hours and 0 minutes, with an average pace of 5:41/km and an average heart rate of 153 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 3 bpm higher. The runner felt it was a 4 out of 5 experience and considered the effort level to be 4 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 15,
+  "result": {
+   "id": "chatcmpl-ae85d28f-10bf-4837-a545-f68e6ce5bdfc",
+   "object": "chat.completion",
+   "created": 1794436131,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The tempo run covered 3.0 km in 18 min, with an average pace of 5:58/km. The average heart rate was 154 bpm. The runner felt it was a 5 out of 5 experience and considered the effort to be 5 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 65,
+    "total_tokens": 468,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.926189422607422
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The tempo run covered 3.0 km in 18 min, with an average pace of 5:58/km. The average heart rate was 154 bpm. The runner felt it was a 5 out of 5 experience and considered the effort to be 5 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 16,
+  "result": {
+   "id": "chatcmpl-b56fe8f1-1972-43fd-a190-28554f774a2a",
+   "object": "chat.completion",
+   "created": 1794436131,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This 5.0 km run took 31 minutes, with an average pace of 6:15/km. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as the average.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 395,
+    "completion_tokens": 55,
+    "total_tokens": 450,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.544562578201294
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This 5.0 km run took 31 minutes, with an average pace of 6:15/km. Compared to 4 other runs of similar length over the last 4 weeks, this run was about the same pace as the average."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 17,
+  "result": {
+   "id": "chatcmpl-f6103397-e29d-4e4a-8084-10e4ee39ee85",
+   "object": "chat.completion",
+   "created": 1794436132,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's easy run covered 8.0 km in 40 min, with an average pace of 5:02/km and an average heart rate of 156 bpm. Compared to the other 4 easy runs of similar length over the last 4 weeks, this run's pace was about the same as the average, but the heart rate was 6 bpm higher than the average. The runner rated this run as feeling 2 out of 5 and requiring a 7 out of 10 effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 107,
+    "total_tokens": 580,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.6789374351501465
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's easy run covered 8.0 km in 40 min, with an average pace of 5:02/km and an average heart rate of 156 bpm. Compared to the other 4 easy runs of similar length over the last 4 weeks, this run's pace was about the same as the average, but the heart rate was 6 bpm higher than the average. The runner rated this run as feeling 2 out of 5 and requiring a 7 out of 10 effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 17,
+  "result": {
+   "id": "chatcmpl-16c90da0-df08-42a1-b27c-c4cbf1b24347",
+   "object": "chat.completion",
+   "created": 1794436132,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was 8.0 km long and took 40 min to complete at an average pace of 5:02/km. The average heart rate was 156 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:03/km, and the heart rate was 6 bpm higher than theirs, who averaged 150 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 95,
+    "total_tokens": 568,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.260523319244385
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 8.0 km long and took 40 min to complete at an average pace of 5:02/km. The average heart rate was 156 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:03/km, and the heart rate was 6 bpm higher than theirs, who averaged 150 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 18,
+  "result": {
+   "id": "chatcmpl-a58a7d4e-9c86-44a7-8f49-81fe64b010f3",
+   "object": "chat.completion",
+   "created": 1794436133,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This 10.0 km run took 53 minutes at an average pace of 5:19/km. The average heart rate was 157 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 7 bpm higher than theirs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 75,
+    "total_tokens": 529,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.484914302825928
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This 10.0 km run took 53 minutes at an average pace of 5:19/km. The average heart rate was 157 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, and the heart rate was 7 bpm higher than theirs."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 19,
+  "result": {
+   "id": "chatcmpl-a900793a-7b78-4067-a926-402837d9806f",
+   "object": "chat.completion",
+   "created": 1794436134,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's tempo run covered 12.5 km in 1 hour 10 minutes, with an average pace of 5:36 per kilometre and an average heart rate of 158 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 379,
+    "completion_tokens": 47,
+    "total_tokens": 426,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.1997227668762207
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's tempo run covered 12.5 km in 1 hour 10 minutes, with an average pace of 5:36 per kilometre and an average heart rate of 158 beats per minute."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 20,
+  "result": {
+   "id": "chatcmpl-fc974b85-5018-45ed-9676-dd3181a80be7",
+   "object": "chat.completion",
+   "created": 1794436134,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run was 16.0 km long and took 1 hour 34 minutes to complete. The average pace was 5 minutes and 53 seconds per kilometre.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 408,
+    "completion_tokens": 40,
+    "total_tokens": 448,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.0750865936279297
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run was 16.0 km long and took 1 hour 34 minutes to complete. The average pace was 5 minutes and 53 seconds per kilometre."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 21,
+  "result": {
+   "id": "chatcmpl-f7e1e7b2-fbfb-49a6-bcef-a20e3618682b",
+   "object": "chat.completion",
+   "created": 1794436134,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 21.1 km in 2 hours 10 minutes, with an average pace of 6:10/km and an average heart rate of 160 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run had about the same pace as the average, but a 10 bpm higher heart rate than the average. The run matched the planned easy run distance of 21.1 km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 476,
+    "completion_tokens": 95,
+    "total_tokens": 571,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.272879123687744
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 21.1 km in 2 hours 10 minutes, with an average pace of 6:10/km and an average heart rate of 160 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run had about the same pace as the average, but a 10 bpm higher heart rate than the average. The run matched the planned easy run distance of 21.1 km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 22,
+  "result": {
+   "id": "chatcmpl-25442ebd-dfdd-4aea-a628-5d8372db3336",
+   "object": "chat.completion",
+   "created": 1794436135,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 3.0 km in 19 min, with an average pace of 6:27/km and an average heart rate of 161 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 6:28/km, and the heart rate was 11 bpm higher than theirs, who averaged 150 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 427,
+    "completion_tokens": 91,
+    "total_tokens": 518,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.93159818649292
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 3.0 km in 19 min, with an average pace of 6:27/km and an average heart rate of 161 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 6:28/km, and the heart rate was 11 bpm higher than theirs, who averaged 150 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 23,
+  "result": {
+   "id": "chatcmpl-5d8867ad-52a6-408b-ac75-944b99ad7586",
+   "object": "chat.completion",
+   "created": 1794436136,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's tempo run covered 5.0 km in 26 minutes, with an average pace of 5:14 per kilometre. The average heart rate was 162 beats per minute. The run felt like a 3 out of 5 in terms of overall satisfaction and required a moderate effort, rated as 3 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 75,
+    "total_tokens": 478,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.274867534637451
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's tempo run covered 5.0 km in 26 minutes, with an average pace of 5:14 per kilometre. The average heart rate was 162 beats per minute. The run felt like a 3 out of 5 in terms of overall satisfaction and required a moderate effort, rated as 3 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 24,
+  "result": {
+   "id": "chatcmpl-11e3003f-d994-4da7-a753-93a3670eccfc",
+   "object": "chat.completion",
+   "created": 1794436136,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 8.0 km in 44 minutes, with an average pace of 5:31/km. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:32/km. The runner felt it was a 4 out of 5 experience and considered it a 4 out of 10 in terms of effort level.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 93,
+    "total_tokens": 515,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.980741500854492
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 8.0 km in 44 minutes, with an average pace of 5:31/km. Compared to 4 other runs of similar length over the last 4 weeks, this run's pace was about the same as theirs, who averaged 5:32/km. The runner felt it was a 4 out of 5 experience and considered it a 4 out of 10 in terms of effort level."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 25,
+  "result": {
+   "id": "chatcmpl-686609a2-ad4d-4c3e-ba57-3c4632e1849c",
+   "object": "chat.completion",
+   "created": 1794436137,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run was 10.0 km in 58 min with an average pace of 5:48/km and an average heart rate of 164 bpm. This was a match for the planned easy run of 10.0 km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 375,
+    "completion_tokens": 53,
+    "total_tokens": 428,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.392455577850342
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run was 10.0 km in 58 min with an average pace of 5:48/km and an average heart rate of 164 bpm. This was a match for the planned easy run of 10.0 km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 26,
+  "result": {
+   "id": "chatcmpl-e8c02725-c566-4b64-bd49-927c3dd27905",
+   "object": "chat.completion",
+   "created": 1794436137,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 12.5 km in 1 hour 16 minutes, with an average pace of 6:05/km and an average heart rate of 140 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run had about the same pace as theirs, but a heart rate that was 10 bpm lower. The runner felt that this run was not enjoyable and required a moderate level of effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 95,
+    "total_tokens": 552,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.194626331329346
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 12.5 km in 1 hour 16 minutes, with an average pace of 6:05/km and an average heart rate of 140 bpm. Compared to 4 other runs of similar length over the last 4 weeks, this run had about the same pace as theirs, but a heart rate that was 10 bpm lower. The runner felt that this run was not enjoyable and required a moderate level of effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 27,
+  "result": {
+   "id": "chatcmpl-d2a1ceae-b174-4f30-97e3-fb0b50248d6e",
+   "object": "chat.completion",
+   "created": 1794436138,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run covered 16.0 km in 1 hour 42 minutes, with an average pace of 6:22 per kilometre. The average heart rate was 141 beats per minute. The runner rated the session as feeling 2 out of 5 and the effort level as 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 71,
+    "total_tokens": 477,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.147751808166504
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run covered 16.0 km in 1 hour 42 minutes, with an average pace of 6:22 per kilometre. The average heart rate was 141 beats per minute. The runner rated the session as feeling 2 out of 5 and the effort level as 7 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 28,
+  "result": {
+   "id": "chatcmpl-cc8c6b76-20cc-455f-837e-cc0b3cc26a68",
+   "object": "chat.completion",
+   "created": 1794436139,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 21.1 km in 1 hour 49 minutes, with an average pace of 5:09/km. Compared to four other runs of similar length over the last 4 weeks, this run was about the same pace as the average of 5:10/km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 398,
+    "completion_tokens": 64,
+    "total_tokens": 462,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.8707287311553955
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 21.1 km in 1 hour 49 minutes, with an average pace of 5:09/km. Compared to four other runs of similar length over the last 4 weeks, this run was about the same pace as the average of 5:10/km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 28,
+  "result": {
+   "id": "chatcmpl-05039bd8-9550-4f90-9c19-ab0819aef018",
+   "object": "chat.completion",
+   "created": 1794436139,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered 21.1 km in 1 hour 49 minutes, with an average pace of 5:09/km. Compared to four other runs of similar length over the last 4 weeks, this run was about the same pace as the average of 5:10/km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 398,
+    "completion_tokens": 64,
+    "total_tokens": 462,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.8707287311553955
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "This run covered 21.1 km in 1 hour 49 minutes, with an average pace of 5:09/km. Compared to four other runs of similar length over the last 4 weeks, this run was about the same pace as the average of 5:10/km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 29,
+  "result": {
+   "id": "chatcmpl-f27fb7db-44c6-4658-8b14-9fdf9cd1482c",
+   "object": "chat.completion",
+   "created": 1794436140,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run covered 3.0 km in 16 min at an average pace of 5:26/km and an average heart rate of 143 bpm. Compared to the other 4 runs of similar length over the last 4 weeks, this run was about the same pace as the average of 5:27/km, but had a 7 bpm lower average heart rate than the average of 150 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 90,
+    "total_tokens": 563,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.086184501647949
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run covered 3.0 km in 16 min at an average pace of 5:26/km and an average heart rate of 143 bpm. Compared to the other 4 runs of similar length over the last 4 weeks, this run was about the same pace as the average of 5:27/km, but had a 7 bpm lower average heart rate than the average of 150 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  "run": 30,
+  "result": {
+   "id": "chatcmpl-d50764b8-3edd-454d-8cee-9db8aa75213a",
+   "object": "chat.completion",
+   "created": 1794436141,
+   "model": "@cf/meta/llama-3.1-8b-fast-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run covered 5.0 km in 29 min at an average pace of 5:43/km and an average heart rate of 144 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 413,
+    "completion_tokens": 37,
+    "total_tokens": 450,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 2.9910759925842285
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run covered 5.0 km in 29 min at an average pace of 5:43/km and an average heart rate of 144 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 1,
+  "result": {
+   "id": "chatcmpl-47da9e9a-a85f-43a5-ac5c-3297b9d1c0d7",
+   "object": "chat.completion",
+   "created": 1794436141,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 3.0 km run took 15 min to complete at an average pace of 5:00/km. Compared to the previous 4 runs of similar length, this run was at the same pace as the others. The average heart rate for this run was 10 bpm lower than the group's average of 150 bpm. This run was planned as an easy session of 3.0 km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 446,
+    "completion_tokens": 89,
+    "total_tokens": 535,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.774817943572998
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 3.0 km run took 15 min to complete at an average pace of 5:00/km. Compared to the previous 4 runs of similar length, this run was at the same pace as the others. The average heart rate for this run was 10 bpm lower than the group's average of 150 bpm. This run was planned as an easy session of 3.0 km."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 2,
+  "result": {
+   "id": "chatcmpl-a83c3af9-487b-4919-bb9a-57dd48952251",
+   "object": "chat.completion",
+   "created": 1794436142,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 5.0 km run took 26 min to complete at an average pace of 5:17/km. Compared to previous runs of similar length, this one felt about the same pace and had a heart rate 9 bpm lower than the average of the last 4 weeks, with runners averaging 5:18/km and a heart rate of 150 bpm. The effort level was rated 2 out of 10, indicating a moderate pace.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 98,
+    "total_tokens": 552,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.086087226867676
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 5.0 km run took 26 min to complete at an average pace of 5:17/km. Compared to previous runs of similar length, this one felt about the same pace and had a heart rate 9 bpm lower than the average of the last 4 weeks, with runners averaging 5:18/km and a heart rate of 150 bpm. The effort level was rated 2 out of 10, indicating a moderate pace."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 3,
+  "result": {
+   "id": "chatcmpl-8a299d41-53fe-466d-a7c3-28c1488d0925",
+   "object": "chat.completion",
+   "created": 1794436142,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was 8.0 km in 45 min at an average pace of 5:34/km. The runner felt 3 out of 5 in terms of how it felt, and rated the effort 3 out of 10 in terms of how hard it was. The average heart rate was 142 bpm during the run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 75,
+    "total_tokens": 478,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.149313926696777
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 8.0 km in 45 min at an average pace of 5:34/km. The runner felt 3 out of 5 in terms of how it felt, and rated the effort 3 out of 10 in terms of how hard it was. The average heart rate was 142 bpm during the run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 4,
+  "result": {
+   "id": "chatcmpl-2e567a07-a87a-4b25-b50a-bde4c5cfc492",
+   "object": "chat.completion",
+   "created": 1794436143,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 10.0 km run took 59 min to complete, with an average pace of 5:51/km. Compared to previous runs of similar length, this one was about the same pace as the others from the last 4 weeks, with an average pace of 5:52/km among those runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 395,
+    "completion_tokens": 70,
+    "total_tokens": 465,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.9599437713623047
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 10.0 km run took 59 min to complete, with an average pace of 5:51/km. Compared to previous runs of similar length, this one was about the same pace as the others from the last 4 weeks, with an average pace of 5:52/km among those runs."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 5,
+  "result": {
+   "id": "chatcmpl-1f798a20-6e48-4cf5-8ee7-f232cb410263",
+   "object": "chat.completion",
+   "created": 1794436144,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a 12.5 km easy run that lasted 1 hour and 17 minutes. The pace was 6:08 minutes per kilometer. The average heart rate was 144 beats per minute. The runner felt completely satisfied with the session, giving it a rating of 5 out of 5, and the effort level was moderate, rated 5 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 405,
+    "completion_tokens": 86,
+    "total_tokens": 491,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.493785858154297
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a 12.5 km easy run that lasted 1 hour and 17 minutes. The pace was 6:08 minutes per kilometer. The average heart rate was 144 beats per minute. The runner felt completely satisfied with the session, giving it a rating of 5 out of 5, and the effort level was moderate, rated 5 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 6,
+  "result": {
+   "id": "chatcmpl-0bcf1834-0c1e-45c7-8523-7acbe75b0eb8",
+   "object": "chat.completion",
+   "created": 1794436144,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\": \"Today's run was 16.0 km in 1 h 43 min, with an average pace of 6:25/km. The runner's heart rate was 145 bpm. Compared to similar runs from the last 4 weeks, this run was about the same pace and had a heart rate 5 bpm lower than the average of those runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 78,
+    "total_tokens": 535,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.4904656410217285
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 16.0 km in 1 h 43 min, with an average pace of 6:25/km. The runner's heart rate was 145 bpm. Compared to similar runs from the last 4 weeks, this run was about the same pace and had a heart rate 5 bpm lower than the average of those runs."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 7,
+  "result": {
+   "id": "chatcmpl-bc2db80b-66ce-436c-8476-5aa4d98dd958",
+   "object": "chat.completion",
+   "created": 1794436145,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a tempo run with a planned distance of 21.1 km. The session lasted 1 hour and 50 minutes, with an average pace of 5 minutes and 12 seconds per kilometer. The average heart rate during the run was 146 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 379,
+    "completion_tokens": 64,
+    "total_tokens": 443,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.703101634979248
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a tempo run with a planned distance of 21.1 km. The session lasted 1 hour and 50 minutes, with an average pace of 5 minutes and 12 seconds per kilometer. The average heart rate during the run was 146 beats per minute."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 8,
+  "result": {
+   "id": "chatcmpl-88678073-ad9c-4c90-b747-a0cbb19083d0",
+   "object": "chat.completion",
+   "created": 1794436146,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 3.0 km run took 16 min to complete at an average pace of 5:29/km, which is about the same pace as the runners' average over the last 4 weeks. Compared to other runs of similar length, this one ranked 4th. Overall, the run felt like a 3 out of 5 in terms of how it felt, and the effort level was rated 8 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 96,
+    "total_tokens": 518,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.8771514892578125
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 3.0 km run took 16 min to complete at an average pace of 5:29/km, which is about the same pace as the runners' average over the last 4 weeks. Compared to other runs of similar length, this one ranked 4th. Overall, the run felt like a 3 out of 5 in terms of how it felt, and the effort level was rated 8 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 8,
+  "result": {
+   "id": "chatcmpl-638f6829-e3ae-4342-af1b-642e64a86fb5",
+   "object": "chat.completion",
+   "created": 1794436146,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 3.0 km run took 16 min to complete at an average pace of 5:29/km, which is about the same pace as the other 4 runs of similar length over the last 4 weeks. The runner felt that this run was 3 out of 5 in terms of how it felt, and it was rated 8 out of 10 in terms of effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 87,
+    "total_tokens": 509,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.602878570556641
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 3.0 km run took 16 min to complete at an average pace of 5:29/km, which is about the same pace as the other 4 runs of similar length over the last 4 weeks. The runner felt that this run was 3 out of 5 in terms of how it felt, and it was rated 8 out of 10 in terms of effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 9,
+  "result": {
+   "id": "chatcmpl-3cbf67a2-4e3b-4d9f-8c85-72bd0e306010",
+   "object": "chat.completion",
+   "created": 1794436147,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\": \"Today's 5.0 km run took 29 min to complete at an average pace of 5:46/km. My heart rate was 148 bpm during the run. Compared to my previous 4 similar runs, this one felt about the same pace and had a heart rate 2 bpm lower than the group average.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 72,
+    "total_tokens": 545,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.381610870361328
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 5.0 km run took 29 min to complete at an average pace of 5:46/km. My heart rate was 148 bpm during the run. Compared to my previous 4 similar runs, this one felt about the same pace and had a heart rate 2 bpm lower than the group average."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 10,
+  "result": {
+   "id": "chatcmpl-bf21a33f-406d-4332-850b-2dd7ab448feb",
+   "object": "chat.completion",
+   "created": 1794436147,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run covered 8.0 km in 48 min at an average pace of 6:03/km and an average heart rate of 149 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 356,
+    "completion_tokens": 38,
+    "total_tokens": 394,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 2.8043923377990723
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run covered 8.0 km in 48 min at an average pace of 6:03/km and an average heart rate of 149 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 11,
+  "result": {
+   "id": "chatcmpl-ddb94c8e-2311-4a33-8002-383efeb70206",
+   "object": "chat.completion",
+   "created": 1794436148,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was 10.0 km in 1 hour and 3 minutes, with an average pace of 6:20/km. The runner felt a rating of 1 out of 5 and an effort rating of 1 out of 10, with an average heart rate of 150 bpm during the tempo run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 72,
+    "total_tokens": 478,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.071763515472412
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 10.0 km in 1 hour and 3 minutes, with an average pace of 6:20/km. The runner felt a rating of 1 out of 5 and an effort rating of 1 out of 10, with an average heart rate of 150 bpm during the tempo run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 12,
+  "result": {
+   "id": "chatcmpl-97f5fa24-4380-461d-90af-f76faa247cf7",
+   "object": "chat.completion",
+   "created": 1794436148,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 12.5 km run took 1 hour and 4 minutes to complete. The average pace was 5:07 per kilometer. Compared to similar runs over the last 4 weeks, this run was at the same pace as the others. The runner felt moderately tired, rating the effort as 2 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 425,
+    "completion_tokens": 75,
+    "total_tokens": 500,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.251054763793945
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 12.5 km run took 1 hour and 4 minutes to complete. The average pace was 5:07 per kilometer. Compared to similar runs over the last 4 weeks, this run was at the same pace as the others. The runner felt moderately tired, rating the effort as 2 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 13,
+  "result": {
+   "id": "chatcmpl-f6634b1b-77db-40f4-82bb-455c6e997465",
+   "object": "chat.completion",
+   "created": 1794436149,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was 16.0 km in 1 h 26 min, with an average pace of 5:24/km. The runner's heart rate was 152 bpm during the run. Compared to their previous 4 runs of similar length, this run had a pace of about the same and a heart rate that was 2 bpm higher than theirs over the last 4 weeks.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 449,
+    "completion_tokens": 85,
+    "total_tokens": 534,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.666792869567871
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 16.0 km in 1 h 26 min, with an average pace of 5:24/km. The runner's heart rate was 152 bpm during the run. Compared to their previous 4 runs of similar length, this run had a pace of about the same and a heart rate that was 2 bpm higher than theirs over the last 4 weeks."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 14,
+  "result": {
+   "id": "chatcmpl-fddd43ac-3c69-4c02-b620-fe7a40a7e16a",
+   "object": "chat.completion",
+   "created": 1794436149,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\": \"Today's 21.1 km run took 2 hours and 0 minutes to complete, with an average pace of 5:41/km. The runner's heart rate was 153 bpm during the run. Compared to their previous 4 runs of similar length, this run was at the same pace and had a heart rate 3 bpm higher than their average.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 80,
+    "total_tokens": 537,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.55141544342041
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 21.1 km run took 2 hours and 0 minutes to complete, with an average pace of 5:41/km. The runner's heart rate was 153 bpm during the run. Compared to their previous 4 runs of similar length, this run was at the same pace and had a heart rate 3 bpm higher than their average."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 15,
+  "result": {
+   "id": "chatcmpl-08ecb588-ad2a-402e-a122-c5f69cba5a0f",
+   "object": "chat.completion",
+   "created": 1794436150,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a great tempo run, covering 3.0 km in 18 min at an average pace of 5:58/km. The runner felt very accomplished, rating their effort as 5 out of 10. Their heart rate was 154 bpm during the session, which was perfectly matched to the planned tempo run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 73,
+    "total_tokens": 476,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.088364601135254
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a great tempo run, covering 3.0 km in 18 min at an average pace of 5:58/km. The runner felt very accomplished, rating their effort as 5 out of 10. Their heart rate was 154 bpm during the session, which was perfectly matched to the planned tempo run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 15,
+  "result": {
+   "id": "chatcmpl-ad98fa10-9b52-4e70-9c0e-f423c0410b71",
+   "object": "chat.completion",
+   "created": 1794436150,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's tempo run was a success, covering 3.0 km in 18 min at an average pace of 5:58/km. The runner felt fully engaged, rating the effort as 5 out of 10. The heart rate remained steady at 154 bpm throughout the session, which was perfectly paced according to the planned tempo run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 75,
+    "total_tokens": 478,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.149313926696777
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's tempo run was a success, covering 3.0 km in 18 min at an average pace of 5:58/km. The runner felt fully engaged, rating the effort as 5 out of 10. The heart rate remained steady at 154 bpm throughout the session, which was perfectly paced according to the planned tempo run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 16,
+  "result": {
+   "id": "chatcmpl-21dd3573-ab84-4af5-877d-ff89ac67675a",
+   "object": "chat.completion",
+   "created": 1794436151,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 5.0 km run took place over a period of 31 min, with an average pace of 6:15/km. This run was compared to 4 other runs of similar length, and the average pace of those runs was 6:16/km, resulting in a pace that was about the same as theirs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 395,
+    "completion_tokens": 73,
+    "total_tokens": 468,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.05136775970459
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 5.0 km run took place over a period of 31 min, with an average pace of 6:15/km. This run was compared to 4 other runs of similar length, and the average pace of those runs was 6:16/km, resulting in a pace that was about the same as theirs."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 17,
+  "result": {
+   "id": "chatcmpl-4958eadd-72bc-4668-aede-5562ecea3113",
+   "object": "chat.completion",
+   "created": 1794436151,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\": \"Today's 8.0 km run took 40 min to complete at an average pace of 5:02/km. The runner felt a 2 out of 5 rating of how it felt and a 7 out of 10 rating of effort. The heart rate was 156 bpm, 6 bpm higher than the average of their last 4 runs of similar length, which were completed at a pace of 5:03/km and a heart rate of 150 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 104,
+    "total_tokens": 577,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.356802940368652
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 8.0 km run took 40 min to complete at an average pace of 5:02/km. The runner felt a 2 out of 5 rating of how it felt and a 7 out of 10 rating of effort. The heart rate was 156 bpm, 6 bpm higher than the average of their last 4 runs of similar length, which were completed at a pace of 5:03/km and a heart rate of 150 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 17,
+  "result": {
+   "id": "chatcmpl-4dd30b6d-cb87-4b24-abc6-d75635d729ab",
+   "object": "chat.completion",
+   "created": 1794436152,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 8.0 km run took 40 min to complete at an average pace of 5:02/km, with an average heart rate of 156 bpm. Compared to similar runs from the last 4 weeks, this run was about the same pace and had a heart rate 6 bpm higher than the others. The run was planned as an easy session, covering the same 8.0 km distance as intended. Overall, the run felt 2 out of 5 in terms of how it felt, and the effort level was rated 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 123,
+    "total_tokens": 596,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.935823917388916
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 8.0 km run took 40 min to complete at an average pace of 5:02/km, with an average heart rate of 156 bpm. Compared to similar runs from the last 4 weeks, this run was about the same pace and had a heart rate 6 bpm higher than the others. The run was planned as an easy session, covering the same 8.0 km distance as intended. Overall, the run felt 2 out of 5 in terms of how it felt, and the effort level was rated 7 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 18,
+  "result": {
+   "id": "chatcmpl-a8a92174-a0b2-4042-b054-e2bc6e39eb77",
+   "object": "chat.completion",
+   "created": 1794436152,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 10.0 km run took 53 min to complete at an average pace of 5:19/km. The runner felt a rating of 3 out of 5 and rated the effort as 8 out of 10. Compared to similar runs from the last 4 weeks, this run was about the same pace and had a heart rate 7 bpm higher than the average of those runs, with an average heart rate of 157 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 98,
+    "total_tokens": 552,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.086087226867676
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 10.0 km run took 53 min to complete at an average pace of 5:19/km. The runner felt a rating of 3 out of 5 and rated the effort as 8 out of 10. Compared to similar runs from the last 4 weeks, this run was about the same pace and had a heart rate 7 bpm higher than the average of those runs, with an average heart rate of 157 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 19,
+  "result": {
+   "id": "chatcmpl-0412457f-3449-499d-b9a5-6a5398d30ac8",
+   "object": "chat.completion",
+   "created": 1794436153,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a tempo run with a planned distance of 12.5 km. The run lasted 1 hour and 10 minutes. Your average pace was 5 minutes and 36 seconds per kilometer. During the run, your average heart rate was 158 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 379,
+    "completion_tokens": 64,
+    "total_tokens": 443,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.703101634979248
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a tempo run with a planned distance of 12.5 km. The run lasted 1 hour and 10 minutes. Your average pace was 5 minutes and 36 seconds per kilometer. During the run, your average heart rate was 158 beats per minute."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 20,
+  "result": {
+   "id": "chatcmpl-8b86032d-e002-46aa-ac11-4fa881b2b627",
+   "object": "chat.completion",
+   "created": 1794436154,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run covered a distance of 16.0 km and lasted 1 hour and 34 minutes. The average pace was 5:53 per kilometer.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 408,
+    "completion_tokens": 38,
+    "total_tokens": 446,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.044870376586914
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run covered a distance of 16.0 km and lasted 1 hour and 34 minutes. The average pace was 5:53 per kilometer."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 21,
+  "result": {
+   "id": "chatcmpl-10799a9c-6592-4e85-9afa-9a40c74a94a2",
+   "object": "chat.completion",
+   "created": 1794436154,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\": \"Today's 21.1 km run took 2 hours and 10 minutes to complete at an average pace of 6:10/km. The runner's heart rate was 160 bpm during the run. Compared to similar runs over the last 4 weeks, this run was about the same pace and had a heart rate 10 bpm higher than the average of those runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 476,
+    "completion_tokens": 82,
+    "total_tokens": 558,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.700232028961182
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 21.1 km run took 2 hours and 10 minutes to complete at an average pace of 6:10/km. The runner's heart rate was 160 bpm during the run. Compared to similar runs over the last 4 weeks, this run was about the same pace and had a heart rate 10 bpm higher than the average of those runs."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 22,
+  "result": {
+   "id": "chatcmpl-e0cbf05a-7939-42cc-a3ac-42402809e1c7",
+   "object": "chat.completion",
+   "created": 1794436155,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 3.0 km run took 19 min to complete at an average pace of 6:27/km, with an average heart rate of 161 bpm. This run was compared to 4 other runs of similar length, which were completed over the last 4 weeks. The average pace of these other runs was 6:28/km, resulting in a pace that was about the same for today's run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 427,
+    "completion_tokens": 91,
+    "total_tokens": 518,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.747900485992432
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 3.0 km run took 19 min to complete at an average pace of 6:27/km, with an average heart rate of 161 bpm. This run was compared to 4 other runs of similar length, which were completed over the last 4 weeks. The average pace of these other runs was 6:28/km, resulting in a pace that was about the same for today's run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 22,
+  "result": {
+   "id": "chatcmpl-367caf76-fcb0-4d27-9c7b-451271f380d0",
+   "object": "chat.completion",
+   "created": 1794436156,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 3.0 km run took 19 min to complete at an average pace of 6:27/km, with an average heart rate of 161 bpm. Compared to similar runs over the last 4 weeks, this run was about the same pace and had a heart rate 11 bpm higher than the average of the other runs of the same length.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 427,
+    "completion_tokens": 79,
+    "total_tokens": 506,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.382203102111816
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 3.0 km run took 19 min to complete at an average pace of 6:27/km, with an average heart rate of 161 bpm. Compared to similar runs over the last 4 weeks, this run was about the same pace and had a heart rate 11 bpm higher than the average of the other runs of the same length."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 23,
+  "result": {
+   "id": "chatcmpl-efebbe1a-35f6-4062-be93-21eba1775f3d",
+   "object": "chat.completion",
+   "created": 1794436156,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a tempo run of 5.0 km, completed in 26 min at an average pace of 5:14/km. The runner felt moderately satisfied with their effort, rating it 3 out of 5, and the overall exertion level was 3 out of 10. The average heart rate during the run was 162 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 79,
+    "total_tokens": 482,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.271213531494141
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a tempo run of 5.0 km, completed in 26 min at an average pace of 5:14/km. The runner felt moderately satisfied with their effort, rating it 3 out of 5, and the overall exertion level was 3 out of 10. The average heart rate during the run was 162 bpm."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 23,
+  "result": {
+   "id": "chatcmpl-c3c3bdb6-9235-4d5f-a35a-2e7bbfc47ee2",
+   "object": "chat.completion",
+   "created": 1794436157,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a tempo run of 5.0 km, completed in 26 min at an average pace of 5:14/km. My heart rate averaged 162 bpm during the session. I felt moderately satisfied with the run, rating it 3 out of 5 in terms of how it felt, and the effort level was average, also rating it 3 out of 10. The planned distance matched the distance I ran.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 95,
+    "total_tokens": 498,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.758809566497803
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a tempo run of 5.0 km, completed in 26 min at an average pace of 5:14/km. My heart rate averaged 162 bpm during the session. I felt moderately satisfied with the run, rating it 3 out of 5 in terms of how it felt, and the effort level was average, also rating it 3 out of 10. The planned distance matched the distance I ran."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 24,
+  "result": {
+   "id": "chatcmpl-e108d235-7b8d-4875-bba0-ef57df1cf64b",
+   "object": "chat.completion",
+   "created": 1794436157,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 8.0 km run took place over a period of 44 min, with an average pace of 5:31/km. Compared to other runs of similar length, this one was about the same pace as the others, and the runner felt they had a rating of 4 out of 5. The effort level was rated 4 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 81,
+    "total_tokens": 503,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.420029640197754
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 8.0 km run took place over a period of 44 min, with an average pace of 5:31/km. Compared to other runs of similar length, this one was about the same pace as the others, and the runner felt they had a rating of 4 out of 5. The effort level was rated 4 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 25,
+  "result": {
+   "id": "chatcmpl-ca92d586-fb2d-4be5-be1d-58aa371129db",
+   "object": "chat.completion",
+   "created": 1794436158,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was 10.0 km in 58 min at an average pace of 5:48/km, with an average heart rate of 164 bpm, and matched the planned session type of easy run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 375,
+    "completion_tokens": 49,
+    "total_tokens": 424,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.2274818420410156
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 10.0 km in 58 min at an average pace of 5:48/km, with an average heart rate of 164 bpm, and matched the planned session type of easy run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 26,
+  "result": {
+   "id": "chatcmpl-16408abb-a840-48b4-90a9-91e44c2a7b8c",
+   "object": "chat.completion",
+   "created": 1794436158,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\": \"Today's run was 12.5 km long and took 1 hour and 16 minutes to complete. My average pace was 6:05/km, which is about the same as the other 4 runs of similar length I've done recently. I maintained a heart rate of 140 bpm, which is 10 bpm lower than the average of the other runners in the same period.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 85,
+    "total_tokens": 542,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.703789234161377
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was 12.5 km long and took 1 hour and 16 minutes to complete. My average pace was 6:05/km, which is about the same as the other 4 runs of similar length I've done recently. I maintained a heart rate of 140 bpm, which is 10 bpm lower than the average of the other runners in the same period."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 27,
+  "result": {
+   "id": "chatcmpl-b24d9410-9310-4166-b472-c1316dde1842",
+   "object": "chat.completion",
+   "created": 1794436159,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's run was a tempo run of 16.0 km, completed in 1 h 42 min. The average pace was 6:22/km. The average heart rate was 141 bpm. The runner felt a rating of 2 out of 5 and the effort was rated 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 71,
+    "total_tokens": 477,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.04128885269165
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's run was a tempo run of 16.0 km, completed in 1 h 42 min. The average pace was 6:22/km. The average heart rate was 141 bpm. The runner felt a rating of 2 out of 5 and the effort was rated 7 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 27,
+  "result": {
+   "id": "chatcmpl-309ff1aa-1b78-4932-a502-e96472d765e4",
+   "object": "chat.completion",
+   "created": 1794436160,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's tempo run covered 16.0 km in 1 h 42 min at an average pace of 6:22/km. The runner's average heart rate was 141 bpm. The session matched the planned distance of 16.0 km. The runner felt a rating of 2 out of 5 and the effort was rated 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 81,
+    "total_tokens": 487,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 4.346036434173584
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's tempo run covered 16.0 km in 1 h 42 min at an average pace of 6:22/km. The runner's average heart rate was 141 bpm. The session matched the planned distance of 16.0 km. The runner felt a rating of 2 out of 5 and the effort was rated 7 out of 10."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 28,
+  "result": {
+   "id": "chatcmpl-521a6933-6ac3-4b27-bfd6-3d23c2c07d35",
+   "object": "chat.completion",
+   "created": 1794436161,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 21.1 km run took place over a period of 1 hour and 49 minutes. The average pace was 5:09 per kilometer, which is about the same pace as the previous 4 runs of similar length.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 398,
+    "completion_tokens": 55,
+    "total_tokens": 453,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.516695976257324
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 21.1 km run took place over a period of 1 hour and 49 minutes. The average pace was 5:09 per kilometer, which is about the same pace as the previous 4 runs of similar length."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 29,
+  "result": {
+   "id": "chatcmpl-e6221ad3-e2d2-4c04-a197-d8c0e0908248",
+   "object": "chat.completion",
+   "created": 1794436162,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"Today's 3.0 km run took 16 min to complete at an average pace of 5:26/km, which is about the same pace as the other 4 runs of similar length over the last 4 weeks. The average heart rate during this run was 143 bpm, 7 bpm lower than the group's average. The run was planned as an easy session of 3.0 km, and the runner felt it was 4 out of 5 in terms of how it felt and 9 out of 10 in terms of effort.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 473,
+    "completion_tokens": 119,
+    "total_tokens": 592,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 5.813924789428711
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "Today's 3.0 km run took 16 min to complete at an average pace of 5:26/km, which is about the same pace as the other 4 runs of similar length over the last 4 weeks. The average heart rate during this run was 143 bpm, 7 bpm lower than the group's average. The run was planned as an easy session of 3.0 km, and the runner felt it was 4 out of 5 in terms of how it felt and 9 out of 10 in terms of effort."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/meta/llama-3.2-3b-instruct",
+  "run": 30,
+  "result": {
+   "id": "chatcmpl-078d751b-53fe-452b-99b0-65616e29074d",
+   "object": "chat.completion",
+   "created": 1794436162,
+   "model": "@cf/meta/llama-3.2-3b-instruct-v2",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The run covered 5.0 km in 29 min. The average pace was 5:43/km. The average heart rate was 144 bpm during the run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 413,
+    "completion_tokens": 40,
+    "total_tokens": 453,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 3.1289429664611816
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null,
+   "response": {
+    "paragraph": "The run covered 5.0 km in 29 min. The average pace was 5:43/km. The average heart rate was 144 bpm during the run."
+   },
+   "tool_calls": []
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 1,
+  "result": {
+   "id": "chatcmpl-ad3a346e-0d9e-4dd4-814d-99a376015f4b",
+   "object": "chat.completion",
+   "created": 1794436163,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 3.0 km run, the runner completed the distance in 15 minutes, maintaining an average pace of 5:00 per kilometer. Compared to the average pace of 5:01 km for other similar runs in the last four weeks, this run was about the same pace. Additionally, the runner's average heart rate of 140 bpm was 10 bpm lower than the average heart rate of 150 bpm for other runs during the same period, indicating a slightly more relaxed effort level.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 427,
+    "completion_tokens": 109,
+    "total_tokens": 536,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.7655467987060547
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 1,
+  "result": {
+   "id": "chatcmpl-6ae8c7b4-48d5-4b88-a9d1-e95b73cee4c2",
+   "object": "chat.completion",
+   "created": 1794436166,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 3.0 km easy run, the runner completed the distance in 15 minutes, maintaining an average pace of 5:00 per kilometer, which was about the same as the average pace of 5:01 per kilometer for the four other runs of similar length completed by others in the last four weeks. The runner's average heart rate was 140 bpm, which was 10 bpm lower than the average heart rate of 150 bpm for the other runners during their similar runs. This run matched the planned easy session, a 3.0 km easy run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 427,
+    "completion_tokens": 125,
+    "total_tokens": 552,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9280800819396973
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 2,
+  "result": {
+   "id": "chatcmpl-f72d5305-4ae3-4440-88ad-a467eb5cf5ed",
+   "object": "chat.completion",
+   "created": 1794436170,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 5.0 km run that took 26 minutes, the runner maintained an average pace of 5:17 per kilometer, which was about the same as the average pace of 5:18 per kilometer for four other runs completed in the last four weeks. The runner's average heart rate was 141 bpm, which was 9 bpm lower than the average heart rate of 150 bpm for the other runs during the same period. The runner rated the experience as a 2 out of 5 and the effort as a 2 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 435,
+    "completion_tokens": 122,
+    "total_tokens": 557,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9099383354187012
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 2,
+  "result": {
+   "id": "chatcmpl-664f8157-82ea-4eff-9133-11bfa24ab469",
+   "object": "chat.completion",
+   "created": 1794436174,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 5.0 km run in 26 minutes, maintaining an average pace of 5:17 per kilometer. Compared to the average pace of 5:18 per kilometer for four other runs of similar length over the last four weeks, this run was about the same pace. Additionally, the runner's average heart rate was 141 bpm, which was 9 bpm lower than the average heart rate of 150 bpm for those other runs during the same period. The runner rated the experience as a 2 out of 5 and the effort as a 2 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 435,
+    "completion_tokens": 129,
+    "total_tokens": 564,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9810466766357422
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 3,
+  "result": {
+   "id": "chatcmpl-1bd5bae6-7c8f-4b4e-a908-0b8e95032af3",
+   "object": "chat.completion",
+   "created": 1794436178,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In an 8.0 km tempo run, the runner completed the distance in 45 minutes, maintaining an average pace of 5:34 per kilometer. The runner's average heart rate during the session was 142 bpm. The session matched the runner's planned tempo run, with a runner rating of 3 out of 5 for how it felt and 3 out of 10 for the effort level.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 383,
+    "completion_tokens": 89,
+    "total_tokens": 472,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4945471286773682
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 3,
+  "result": {
+   "id": "chatcmpl-ebcb7469-1510-4e20-add7-0f0ff496b371",
+   "object": "chat.completion",
+   "created": 1794436182,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In an 8.0 km tempo run, the runner completed the distance in 45 minutes, maintaining an average pace of 5:34 per kilometer. The average heart rate during the session was 142 bpm. The runner rated how it felt as a 3 out of 5 and rated the overall effort as a 3 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 383,
+    "completion_tokens": 78,
+    "total_tokens": 461,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.382805585861206
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 4,
+  "result": {
+   "id": "chatcmpl-a1a6803f-458c-4de4-913e-829be17bf297",
+   "object": "chat.completion",
+   "created": 1794436184,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 10.0 km run, the runner completed the distance in 59 minutes, maintaining an average pace of 5:51 per kilometer. This pace places their performance about the same as the average pace of four other runs of similar length completed in the last four weeks, which averaged 5:52 per kilometer. The comparison indicates that this run's pace was consistent with the recent trends of similar-length runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 376,
+    "completion_tokens": 93,
+    "total_tokens": 469,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.5243887901306152
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 4,
+  "result": {
+   "id": "chatcmpl-179ac0e3-191c-433c-b2cd-26ec78446b09",
+   "object": "chat.completion",
+   "created": 1794436188,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 10.0 km run, the runner completed the distance in 59 minutes, maintaining an average pace of 5:51 per kilometer. This pace was compared to the average pace of 5:52 per kilometer for four other runs of similar length completed in the last four weeks, indicating that this run was about the same pace as the others.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 376,
+    "completion_tokens": 81,
+    "total_tokens": 457,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4024889469146729
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 5,
+  "result": {
+   "id": "chatcmpl-f874f9d5-256b-4341-954d-813ac403a03f",
+   "object": "chat.completion",
+   "created": 1794436191,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 12.5 km easy run, the runner completed the distance in 1 hour and 17 minutes, maintaining an average pace of 6:08 per kilometer. The runner's average heart rate during the session was 144 bpm. The runner rated how it felt as a 5 out of 5, indicating a positive experience, and rated the effort as a 5 out of 10, suggesting it was a moderately challenging session.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 385,
+    "completion_tokens": 97,
+    "total_tokens": 482,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.5788971185684204
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 5,
+  "result": {
+   "id": "chatcmpl-588a54f0-4fd4-43a5-a0ca-9434e7945c23",
+   "object": "chat.completion",
+   "created": 1794436194,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 12.5 km easy run, the runner completed the distance in 1 hour and 17 minutes, maintaining an average pace of 6:08 per kilometer. The runner's average heart rate throughout the session was 144 bpm. The runner rated how it felt as a 5 out of 5, indicating a positive experience, while rating the effort as a 5 out of 10, suggesting it was a moderately challenging session.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 385,
+    "completion_tokens": 97,
+    "total_tokens": 482,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.5788971185684204
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 6,
+  "result": {
+   "id": "chatcmpl-6cb66b3e-c355-4b8b-9b93-ef3ed5b50f8d",
+   "object": "chat.completion",
+   "created": 1794436198,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 16.0 km run that took 1 hour and 43 minutes, the runner maintained an average pace of 6:25 per kilometer, which was about the same as the average pace of 6:26 per kilometer for four other runs completed in the last four weeks. The runner's average heart rate was 145 bpm, which was 5 bpm lower than the average heart rate of 150 bpm for the other runs during the same period. The runner rated the experience as a 1 out of 5 and rated the effort as a 6 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 438,
+    "completion_tokens": 127,
+    "total_tokens": 565,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9653550386428833
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 6,
+  "result": {
+   "id": "chatcmpl-ef005141-fc6b-4324-8cde-88b28242c061",
+   "object": "chat.completion",
+   "created": 1794436201,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 16.0 km run in 1 hour and 43 minutes, maintaining an average pace of 6:25 per kilometer. Compared to four other runs of similar length over the last four weeks, this run was performed at about the same pace, with an average heart rate of 145 bpm, which was 5 bpm lower than the 150 bpm average of the other runners. The runner rated the experience as a 1 out of 5 and the effort as a 6 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 438,
+    "completion_tokens": 113,
+    "total_tokens": 551,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.8231383562088013
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 7,
+  "result": {
+   "id": "chatcmpl-393efeec-e89a-43f9-afc2-a1848a0c8b2a",
+   "object": "chat.completion",
+   "created": 1794436205,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a tempo run covering 21.1 km, the runner maintained an average pace of 5:12 per kilometer, completing the session in 1 hour and 50 minutes. Their average heart rate during the run was 146 bpm, which matched the planned intensity for this tempo session.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 359,
+    "completion_tokens": 65,
+    "total_tokens": 424,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.2137473821640015
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 8,
+  "result": {
+   "id": "chatcmpl-71e711bb-6e3e-4076-a968-3b1888eb3f84",
+   "object": "chat.completion",
+   "created": 1794436208,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 3.0 km run, the runner completed the distance in 16 minutes, maintaining an average pace of 5:29 per kilometer. This pace was compared to the average pace of 5:30 per kilometer for four other runs of similar length completed in the last four weeks, indicating that this run was about the same pace. The runner rated how it felt as a 3 out of 5, and rated the overall effort as an 8 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 107,
+    "total_tokens": 510,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.7082303762435913
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 8,
+  "result": {
+   "id": "chatcmpl-9d425068-bd61-45c6-9dc8-7c09fc156f07",
+   "object": "chat.completion",
+   "created": 1794436211,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 3.0 km run over the last 4 weeks, the runner completed the distance in 16 minutes, maintaining an average pace of 5:29 per kilometer. This pace was about the same as the average pace of 5:30 per kilometer for the 4 other runs of similar length completed during the same period. The runner rated the experience as a 3 out of 5, indicating a moderate level of enjoyment, while rating the overall effort as an 8 out of 10, suggesting a higher level of physical exertion.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 120,
+    "total_tokens": 523,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.8402886390686035
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 9,
+  "result": {
+   "id": "chatcmpl-c02e22c2-0169-4b2e-971d-caa34951d4a7",
+   "object": "chat.completion",
+   "created": 1794436215,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 5.0 km easy run, the runner maintained a consistent pace of 5:46 per kilometer, completing the distance in 29 minutes. This pace was comparable to that of four other runners who completed similar runs in the last four weeks, with their average pace being 5:47 per kilometer. The runner's heart rate averaged 148 bpm during the session, which was 2 beats per minute lower than the average heart rate of 150 bpm observed in the other runners during their similar-length runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 113,
+    "total_tokens": 567,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.8478050231933594
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 9,
+  "result": {
+   "id": "chatcmpl-070af79a-4eb7-45c7-a629-0a8bca2bd095",
+   "object": "chat.completion",
+   "created": 1794436219,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 5.0 km easy run, the runner maintained a steady pace of 5:46 per kilometer, completing the distance in 29 minutes. This pace was comparable to the average of four other similar runs completed in the last four weeks, which averaged 5:47 per kilometer. The runner's heart rate averaged 148 bpm during the session, slightly lower than the 150 bpm average of the other runs, indicating a more relaxed effort. The runner rated the experience as a 4 out of 5 and the effort as a 9 out of 10, suggesting a positive overall perception of the run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 134,
+    "total_tokens": 588,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 2.0611300468444824
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 10,
+  "result": {
+   "id": "chatcmpl-89a5188f-4657-429f-be6e-3ce98a9104d8",
+   "object": "chat.completion",
+   "created": 1794436224,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The runner completed an 8.0 km run in 48 minutes, maintaining an average pace of 6:03 per kilometer. Their average heart rate throughout the run was 149 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 336,
+    "completion_tokens": 45,
+    "total_tokens": 381,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 0.9751226902008057
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 10,
+  "result": {
+   "id": "chatcmpl-85fb9bd4-0017-456f-8676-6b03b01111b6",
+   "object": "chat.completion",
+   "created": 1794436226,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"The runner completed an 8.0 km run in 48 minutes, maintaining an average pace of 6:03 per kilometer. Their average heart rate throughout the run was 149 bpm.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 336,
+    "completion_tokens": 45,
+    "total_tokens": 381,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 0.9751226902008057
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 11,
+  "result": {
+   "id": "chatcmpl-6ac05718-7964-4864-ac41-7cc512e5d5c7",
+   "object": "chat.completion",
+   "created": 1794436227,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 10.0 km tempo run, the runner maintained an average pace of 6:20 per kilometer, completing the distance in 1 hour and 3 minutes. The average heart rate during the session was 150 bpm. The runner rated how it felt as a 1 out of 5 and rated the effort as a 1 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 386,
+    "completion_tokens": 81,
+    "total_tokens": 467,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.417905569076538
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 12,
+  "result": {
+   "id": "chatcmpl-6acd96db-2861-4ca4-93f8-bbbea89d6cce",
+   "object": "chat.completion",
+   "created": 1794436230,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 12.5 km run, the runner completed the distance in 1 hour and 4 minutes, maintaining an average pace of 5:07 per kilometer. This pace was comparable to that of four other runs of similar length completed in the last four weeks, where the average pace was 5:08 per kilometer. The runner rated their experience of the run as a 2 out of 5, indicating it was not particularly enjoyable, and rated the overall effort as a 2 out of 10, suggesting the run was quite challenging.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 120,
+    "total_tokens": 526,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.8449136018753052
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 12,
+  "result": {
+   "id": "chatcmpl-7f092655-9532-4a8e-97ff-26fc2584d0b7",
+   "object": "chat.completion",
+   "created": 1794436234,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 12.5 km run that took 1 hour and 4 minutes, the runner maintained an average pace of 5:07 per kilometer. This pace was comparable to that of four other runs of similar length completed in the last four weeks, where the average pace was 5:08 per kilometer. The runner rated the experience as a 2 out of 5 and the effort as a 2 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 406,
+    "completion_tokens": 96,
+    "total_tokens": 502,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.6011136770248413
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 13,
+  "result": {
+   "id": "chatcmpl-89f5ea79-6048-4c21-ba1e-f8cede71db4e",
+   "object": "chat.completion",
+   "created": 1794436237,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 16.0 km run that took 1 hour and 26 minutes, the runner maintained an average pace of 5:24 per kilometer, which was about the same as the average pace of 5:25 per kilometer observed in four similar runs completed in the last four weeks. The runner's average heart rate for this session was 152 bpm, slightly higher than the 150 bpm average heart rate of the other runs in the same period. This run was part of a planned easy run session with the same distance of 16.0 km.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 430,
+    "completion_tokens": 122,
+    "total_tokens": 552,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9022300243377686
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 13,
+  "result": {
+   "id": "chatcmpl-06991221-d278-4026-8e23-fa9449e8928e",
+   "object": "chat.completion",
+   "created": 1794436242,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 16.0 km easy run in 1 hour and 26 minutes, maintaining an average pace of 5:24 per kilometer, which was about the same as the average pace of 4 other runs of similar length during the last 4 weeks. Their average heart rate for this run was 152 bpm, slightly higher than the average heart rate of 150 bpm for those other runs. The run matched a planned easy session of the same distance.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 430,
+    "completion_tokens": 102,
+    "total_tokens": 532,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.6990635395050049
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 14,
+  "result": {
+   "id": "chatcmpl-9e222057-b12b-4881-a709-1add44edafed",
+   "object": "chat.completion",
+   "created": 1794436245,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 21.1 km run that took 2 hours, the runner maintained an average pace of 5:41 per kilometer, which was about the same as the average pace of 4 other similar runs from the last 4 weeks. The runner's average heart rate was 153 bpm, slightly higher than the 150 bpm average of the other runners. The runner rated the experience as a 4 out of 5 and the effort as a 4 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 438,
+    "completion_tokens": 105,
+    "total_tokens": 543,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.74187171459198
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 15,
+  "result": {
+   "id": "chatcmpl-4abac70e-5ba1-48d3-87a5-891401d093c7",
+   "object": "chat.completion",
+   "created": 1794436248,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 3.0 km tempo run, the runner completed the distance in 18 minutes, maintaining an average pace of 5:58 per kilometer. The runner's average heart rate during the session was 154 bpm. The session matched the planned tempo run, with the runner rating how it felt as a 5 out of 5 and rating the overall effort as a 5 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 383,
+    "completion_tokens": 89,
+    "total_tokens": 472,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4945471286773682
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 15,
+  "result": {
+   "id": "chatcmpl-9cc72045-7c3b-4a3d-a818-747ed42c7e62",
+   "object": "chat.completion",
+   "created": 1794436251,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 3.0 km tempo run, the runner completed the distance in 18 minutes, maintaining an average pace of 5:58 per kilometer. Their average heart rate during the session was 154 bpm. The runner rated how it felt as a 5 out of 5, indicating a very positive experience, and rated the overall effort as a 5 out of 10, suggesting it was moderately challenging.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 383,
+    "completion_tokens": 91,
+    "total_tokens": 474,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.5148638486862183
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 16,
+  "result": {
+   "id": "chatcmpl-d4748a23-ff59-44dd-9301-1ceda38daca6",
+   "object": "chat.completion",
+   "created": 1794436254,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 5.0 km run, the runner completed the distance in 31 minutes, maintaining an average pace of 6:15 per kilometer. This pace was compared to the average pace of 4 other runs of similar length completed by others in the last 4 weeks, which was slightly faster at 6:16 per kilometer. The runner's pace for this particular run was described as about the same as those other runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 376,
+    "completion_tokens": 96,
+    "total_tokens": 472,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.5548639297485352
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 16,
+  "result": {
+   "id": "chatcmpl-b3f41510-e221-4498-85e0-5c3b3631ff4c",
+   "object": "chat.completion",
+   "created": 1794436257,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 5.0 km run, the runner completed the distance in 31 minutes, maintaining an average pace of 6:15 per kilometer. This pace was compared to the average pace of 4 other runs of similar length completed by the runner in the last 4 weeks, which was slightly faster at 6:16 per kilometer. The current run's pace was described as about the same as those previous runs.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 376,
+    "completion_tokens": 94,
+    "total_tokens": 470,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.534547209739685
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 17,
+  "result": {
+   "id": "chatcmpl-ff1dbda1-b1f9-41ad-8daa-f942f01931d0",
+   "object": "chat.completion",
+   "created": 1794436261,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In an 8.0 km easy run, the runner maintained a steady pace of 5:02 per kilometer, completing the distance in 40 minutes. This pace was comparable to the average of four other similar runs from the last four weeks, which averaged 5:03 per kilometer. The runner's heart rate averaged 156 bpm during the session, slightly higher than the 150 bpm average of the other runs, indicating a 6 bpm increase. The runner rated the experience as a 2 out of 5 and the effort as a 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 124,
+    "total_tokens": 578,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9595465660095215
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 17,
+  "result": {
+   "id": "chatcmpl-fafe2666-1fa4-4c60-a778-353bdc1bc9ed",
+   "object": "chat.completion",
+   "created": 1794436265,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In an 8.0 km easy run, the runner maintained a steady pace of 5:02 per kilometer, completing the distance in 40 minutes. This pace was comparable to the average of four other similar runs from the past four weeks, which averaged 5:03 per kilometer. Heart rate during this run was 6 bpm higher than the average 150 bpm of those other runs, clocking in at 156 bpm. The runner rated the experience as a 2 out of 5 and rated the effort as a 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 121,
+    "total_tokens": 575,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9290716648101807
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 18,
+  "result": {
+   "id": "chatcmpl-ae16222a-c0c8-4ce6-9c31-b054ab407ae5",
+   "object": "chat.completion",
+   "created": 1794436269,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 10.0 km run that took 53 minutes, the runner maintained an average pace of 5:19 per kilometer, which was about the same as the average pace of 5:20 per kilometer for four other runs of similar length completed in the last four weeks. The runner's average heart rate was 157 bpm, which was 7 bpm higher than the average heart rate of 150 bpm for those other runs during the same period. The runner rated the experience as a 3 out of 5 and rated the effort as an 8 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 435,
+    "completion_tokens": 126,
+    "total_tokens": 561,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9505717754364014
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 18,
+  "result": {
+   "id": "chatcmpl-e4630454-bb8c-4e2f-bdec-7be7f0ea4a12",
+   "object": "chat.completion",
+   "created": 1794436273,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 10.0 km run that took 53 minutes, the runner maintained an average pace of 5:19 per kilometer, which was about the same as the average pace of 5:20 per kilometer for four other runs of similar length completed in the last four weeks. The runner's average heart rate was 157 bpm, which was 7 bpm higher than the average heart rate of 150 bpm for those other runs. The runner rated the experience as a 3 out of 5 and the effort as an 8 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 435,
+    "completion_tokens": 121,
+    "total_tokens": 556,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.899780035018921
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 19,
+  "result": {
+   "id": "chatcmpl-95e738cb-abe3-4069-b9ca-1078de0d385c",
+   "object": "chat.completion",
+   "created": 1794436277,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a tempo run covering 12.5 km, the runner maintained an average pace of 5:36 per kilometer, completing the session in 1 hour and 10 minutes. Their average heart rate during the run was 158 bpm, matching the planned session's intensity. The run adhered precisely to the intended 12.5 km distance.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 359,
+    "completion_tokens": 77,
+    "total_tokens": 436,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.3356473445892334
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 19,
+  "result": {
+   "id": "chatcmpl-cc4daa0b-0cc5-4745-b193-451867e25040",
+   "object": "chat.completion",
+   "created": 1794436279,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a tempo run covering 12.5 km, the runner maintained an average pace of 5:36 per kilometer, completing the session in 1 hour and 10 minutes. Their average heart rate during the run was 158 bpm, aligning with the parameters of the matched planned session, which also called for a 12.5 km distance.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 359,
+    "completion_tokens": 78,
+    "total_tokens": 437,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.3458056449890137
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 20,
+  "result": {
+   "id": "chatcmpl-892c11d9-2206-4949-9f08-7547985047eb",
+   "object": "chat.completion",
+   "created": 1794436282,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This run covered a distance of 16.0 kilometers and took 1 hour and 34 minutes to complete. The runner maintained an average pace of 5 minutes and 53 seconds per kilometer throughout the duration of the run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 388,
+    "completion_tokens": 52,
+    "total_tokens": 440,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.1263972520828247
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 21,
+  "result": {
+   "id": "chatcmpl-9e6e2a82-a795-4242-90b5-f9af5beff666",
+   "object": "chat.completion",
+   "created": 1794436284,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 21.1 km run, the runner maintained an average pace of 6:10 per kilometer, completing the distance in 2 hours and 10 minutes. Their average heart rate was 160 bpm, which was 10 bpm higher than the average heart rate of 150 bpm observed in four similar runs from the last four weeks. The runner rated their experience as a 1 out of 5 and their effort level as a 1 out of 10, indicating a less enjoyable and more challenging run compared to the planned easy session of the same distance.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 122,
+    "total_tokens": 579,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.943854808807373
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 21,
+  "result": {
+   "id": "chatcmpl-ad91312f-b33a-4b23-b40b-87fd9194fe4d",
+   "object": "chat.completion",
+   "created": 1794436288,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 21.1 km easy run in 2 hours and 10 minutes, maintaining an average pace of 6:10 per kilometer, which was about the same as the average pace of 4 other similar runs from the last 4 weeks. The runner's average heart rate was 160 bpm, which was 10 bpm higher than the average heart rate of 150 bpm during those other runs. The runner rated how it felt as a 1 out of 5 and rated the effort as a 1 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 457,
+    "completion_tokens": 118,
+    "total_tokens": 575,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.903221607208252
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 22,
+  "result": {
+   "id": "chatcmpl-b511865c-f602-4004-9112-4b0cb8b90e1a",
+   "object": "chat.completion",
+   "created": 1794436291,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 3.0 km run lasting 19 minutes, the runner maintained an average pace of 6:27 per kilometer, which was about the same as the average pace of 4 other recent runs of similar length. Their average heart rate of 161 bpm was 11 bpm higher than the 150 bpm average heart rate of those comparable runs during the last 4 weeks.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 408,
+    "completion_tokens": 84,
+    "total_tokens": 492,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4822970628738403
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 23,
+  "result": {
+   "id": "chatcmpl-a890f26b-8859-466d-b0be-b53fd8d8c97b",
+   "object": "chat.completion",
+   "created": 1794436294,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 5.0 km tempo run, the runner completed the distance in 26 minutes, maintaining an average pace of 5:14 per kilometer. The runner's average heart rate during the session was 162 bpm. The runner rated how it felt during the run as a 3 out of 5, and rated the overall effort as a 3 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 383,
+    "completion_tokens": 84,
+    "total_tokens": 467,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4437555074691772
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 23,
+  "result": {
+   "id": "chatcmpl-efd67f03-bc23-49af-98a3-55295172ad6f",
+   "object": "chat.completion",
+   "created": 1794436297,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 5.0 km tempo run, the runner completed the distance in 26 minutes, maintaining an average pace of 5:14 per kilometer. The runner's average heart rate during the session was 162 bpm. The runner rated how it felt as a 3 out of 5 and rated the overall effort as a 3 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 383,
+    "completion_tokens": 80,
+    "total_tokens": 463,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4031221866607666
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 24,
+  "result": {
+   "id": "chatcmpl-69c0a0a0-018c-4d67-ba56-2eea752a29ba",
+   "object": "chat.completion",
+   "created": 1794436299,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In an 8.0 km run that took 44 minutes, the runner maintained an average pace of 5:31 per kilometer, which was about the same as the 5:32 average pace of four other runs of similar length completed in the last four weeks. The runner rated the experience as a 4 out of 5, indicating a positive feeling, and rated the effort as a 4 out of 10, suggesting a moderate level of exertion.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 101,
+    "total_tokens": 504,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.6472803354263306
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 24,
+  "result": {
+   "id": "chatcmpl-00e14740-2e14-4092-891c-4aca6cc11dfe",
+   "object": "chat.completion",
+   "created": 1794436303,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In an 8.0 km run that took 44 minutes, the runner maintained an average pace of 5:31 per kilometer. This pace was compared to the average of 4 other runs of similar length over the last 4 weeks, where those paces averaged 5:32 per kilometer, indicating this run was about the same pace. The runner rated the experience as a 4 out of 5 and the effort as a 4 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 403,
+    "completion_tokens": 103,
+    "total_tokens": 506,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.6675970554351807
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 25,
+  "result": {
+   "id": "chatcmpl-0cd44e6c-ba56-4fce-bf69-f8112e5b677b",
+   "object": "chat.completion",
+   "created": 1794436306,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 10.0 km easy run, the runner completed the distance in 58 minutes, maintaining an average pace of 5:48 per kilometer. The runner's average heart rate during the session was 164 bpm, aligning with the planned session's parameters for an easy run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 355,
+    "completion_tokens": 65,
+    "total_tokens": 420,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.207580804824829
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 25,
+  "result": {
+   "id": "chatcmpl-50e53265-c0cb-4726-8648-7a161187b9a5",
+   "object": "chat.completion",
+   "created": 1794436309,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 10.0 km easy run, the runner completed the distance in 58 minutes, maintaining an average pace of 5:48 per kilometer. The average heart rate during the session was 164 bpm, aligning with the planned session's parameters for an easy run.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 355,
+    "completion_tokens": 63,
+    "total_tokens": 418,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.1872642040252686
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 26,
+  "result": {
+   "id": "chatcmpl-92d161de-f520-43ab-a7b3-47c8cde76307",
+   "object": "chat.completion",
+   "created": 1794436311,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 12.5 km run in 1 hour and 16 minutes, maintaining an average pace of 6:05 per kilometer. Compared to the average pace of 6:06 km for similar runs among 4 others over the last 4 weeks, this run was about the same pace. Additionally, the runner's average heart rate of 140 bpm was 10 bpm lower than the 150 bpm average heart rate of the other runners during the same period. The runner rated the experience as a 1 out of 5 and the effort as a 6 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 438,
+    "completion_tokens": 129,
+    "total_tokens": 567,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9856716394424438
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 26,
+  "result": {
+   "id": "chatcmpl-ec91a51b-6d72-4b64-b43c-c5db6fcdbd01",
+   "object": "chat.completion",
+   "created": 1794436315,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 12.5 km run that took 1 hour and 16 minutes, the runner maintained an average pace of 6:05 per kilometer, which was about the same as the average pace of 4 other recent runs of similar length. Their heart rate averaged 140 bpm, which was 10 bpm lower than the 150 bpm average of the other runners during the same period. The runner rated the experience as a 1 out of 5 and rated the effort as a 6 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 438,
+    "completion_tokens": 112,
+    "total_tokens": 550,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.812980055809021
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 27,
+  "result": {
+   "id": "chatcmpl-67ab08d8-0ec3-41cf-96da-9f6b68e04712",
+   "object": "chat.completion",
+   "created": 1794436318,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 16.0 km tempo run, the runner completed the distance in 1 hour and 42 minutes, maintaining an average pace of 6:22 per kilometer. The runner's average heart rate during the session was 141 bpm. The runner rated how it felt during the run as a 2 out of 5, indicating a less enjoyable experience, while rating the overall effort as a 7 out of 10, suggesting a moderate level of challenge.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 386,
+    "completion_tokens": 101,
+    "total_tokens": 487,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.6210720539093018
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 27,
+  "result": {
+   "id": "chatcmpl-33c378d7-fc66-4d5c-9e25-14ffd156d77a",
+   "object": "chat.completion",
+   "created": 1794436322,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 16.0 km tempo run, the runner maintained an average pace of 6:22 per kilometer, completing the session in 1 hour and 42 minutes. The runner's average heart rate during the run was 141 bpm. The session matched the planned tempo run, with the runner rating how it felt as a 2 out of 5 and their effort rating as a 7 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 386,
+    "completion_tokens": 92,
+    "total_tokens": 478,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.5296471118927002
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 28,
+  "result": {
+   "id": "chatcmpl-a669cf30-ff7f-45b2-a283-e51407f3b9b0",
+   "object": "chat.completion",
+   "created": 1794436324,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 21.1 km run, the runner completed the distance in 1 hour and 49 minutes, maintaining an average pace of 5:09 per kilometer. This pace was compared to the average pace of 5:10 per kilometer for four other runs of similar length completed by the runner in the last four weeks, indicating that this run was about the same pace as those previous efforts.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 379,
+    "completion_tokens": 89,
+    "total_tokens": 468,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.4883804321289062
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 28,
+  "result": {
+   "id": "chatcmpl-f2f67088-ff70-4845-bd2b-646c84d990fc",
+   "object": "chat.completion",
+   "created": 1794436328,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a recent 21.1 km run, the runner completed the distance in 1 hour and 49 minutes, maintaining an average pace of 5:09 per kilometer. Compared to the average pace of 5:10 per kilometer for four other runs of similar length during the last four weeks, this run was about the same pace.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 379,
+    "completion_tokens": 76,
+    "total_tokens": 455,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.3563222885131836
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 29,
+  "result": {
+   "id": "chatcmpl-142bac23-63ac-4fdb-8108-88d90a679130",
+   "object": "chat.completion",
+   "created": 1794436331,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 3.0 km easy run, the runner completed the distance in 16 minutes, maintaining an average pace of 5:26 per kilometer, which was about the same as the average pace of 4 other runners who completed similar runs in the last 4 weeks. The runner's average heart rate was 143 bpm, which was 7 bpm lower than the average heart rate of 150 bpm for the other runners during their similar runs. The runner rated the session as feeling like a 4 out of 5 and putting in an effort rating of 9 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 127,
+    "total_tokens": 581,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9900217056274414
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 29,
+  "result": {
+   "id": "chatcmpl-76f942de-eaa5-42a7-ab37-c1e83261f67c",
+   "object": "chat.completion",
+   "created": 1794436335,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"In a 3.0 km easy run, the runner completed the distance in 16 minutes, maintaining an average pace of 5:26 per kilometer, which was about the same as the average pace of 4 other runners who completed similar runs in the last 4 weeks. The runner's average heart rate was 143 bpm, which was 7 bpm lower than the average heart rate of 150 bpm for the other runners during their similar runs. The runner rated the session as feeling like a 4 out of 5 and rated the effort as a 9 out of 10.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 454,
+    "completion_tokens": 126,
+    "total_tokens": 580,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.9798634052276611
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 30,
+  "result": {
+   "id": "chatcmpl-98ce0a00-17a0-4471-ab82-7a15d0136b56",
+   "object": "chat.completion",
+   "created": 1794436339,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 5.0 km run in 29 minutes, maintaining an average pace of 5:43 per kilometer. Their average heart rate throughout the run was 144 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 393,
+    "completion_tokens": 47,
+    "total_tokens": 440,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.0833139419555664
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ },
+ {
+  "model": "@cf/ibm-granite/granite-4.0-h-micro",
+  "run": 30,
+  "result": {
+   "id": "chatcmpl-d9c3d7fa-eb58-4efc-a4e6-bce9ec7064f6",
+   "object": "chat.completion",
+   "created": 1794436341,
+   "model": "@cf/ibm-granite/granite-4.0-h-micro",
+   "choices": [
+    {
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"paragraph\":\"This runner completed a 5.0 km run in 29 minutes, maintaining an average pace of 5:43 per kilometer. Their average heart rate throughout the run was 144 beats per minute.\"}",
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "reasoning": null,
+      "reasoning_content": null
+     },
+     "logprobs": null,
+     "finish_reason": "stop",
+     "stop_reason": null,
+     "token_ids": null,
+     "routed_experts": null
+    }
+   ],
+   "service_tier": null,
+   "usage": {
+    "prompt_tokens": 393,
+    "completion_tokens": 47,
+    "total_tokens": 440,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    },
+    "neurons": 1.0833139419555664
+   },
+   "prompt_logprobs": null,
+   "prompt_token_ids": null,
+   "prompt_text": null,
+   "kv_transfer_params": null,
+   "ec_transfer_params": null,
+   "metrics": null
+  }
+ }
+]
