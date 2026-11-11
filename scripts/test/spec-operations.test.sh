@@ -33,6 +33,8 @@ POST /v1/sync sync app
 POST /v1/activities:batch importActivities native
 GET /v1/activities listActivities app
 PATCH /v1/activities/{activityId} updateActivity app
+GET /v1/activities/{activityId}/summary getRunSummary app
+POST /v1/activities/{activityId}/summary:generate generateRunSummary app
 PUT /v1/sessions/{sessionId}/match putMatch app
 DELETE /v1/sessions/{sessionId}/match deleteMatch app
 POST /v1/sessions/{sessionId}/checkins createCheckIn app

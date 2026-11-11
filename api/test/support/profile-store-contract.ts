@@ -13,6 +13,7 @@ const fields = {
   heartRate: { maxBpm: 188 },
   scheduling: { longRunDay: "sun" as const, unavailableDays: ["mon" as const, "tue" as const] },
   review: { frequency: "weekly" as const, day: "fri" as const },
+  aiSummaries: false,
 };
 
 /** Behaviour every ProfileStore must have; run against the in-memory store and the D1 store. */

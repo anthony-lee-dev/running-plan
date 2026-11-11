@@ -19,6 +19,7 @@ describe("DEFAULT_PROFILE", () => {
       heartRate: {},
       scheduling: {},
       review: { frequency: "weekly_plus_urgent" },
+      aiSummaries: true,
     });
   });
 });
@@ -59,6 +60,19 @@ describe("parseProfileUpdate", () => {
 
   it("reports every problem at once", () => {
     expect(errorsOf({ targetDisplay: "x", heartRate: { maxBpm: 1 } }).sort()).toEqual(["/heartRate/maxBpm", "/targetDisplay"]);
+  });
+});
+
+describe("aiSummaries", () => {
+  it("is a boolean switch", () => {
+    expect(ok({ aiSummaries: false })).toEqual({ aiSummaries: false });
+    expect(errorsOf({ aiSummaries: "no" })).toEqual(["/aiSummaries"]);
+    expect(errorsOf({ aiSummaries: null })).toEqual(["/aiSummaries"]);
+  });
+  it("changes on its own and leaves the rest alone", () => {
+    const off = applyProfileUpdate({ ...DEFAULT_PROFILE }, ok({ aiSummaries: false }));
+    expect(off).toEqual({ ...DEFAULT_PROFILE, aiSummaries: false });
+    expect(applyProfileUpdate(off, ok({ targetDisplay: "effort" })).aiSummaries).toBe(false);
   });
 });
 

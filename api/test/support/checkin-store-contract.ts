@@ -29,6 +29,15 @@ export function checkInStoreContract(name: string, make: () => Promise<Made>) {
       await m.plans.createPlan(U1, plan, [session], "h");
     });
 
+    it("lists the live check-ins of one session, for its owner only", async () => {
+      const C2 = "00000000-0000-4000-8000-000000000302";
+      await m.store.create(U1, checkIn());
+      await m.store.create(U1, checkIn({ id: C2, when: "before", updatedAt: "2026-10-29T08:00:00.000Z" }));
+      expect((await m.store.forSession(U1, S1)).map((c) => c.id)).toEqual([C2, C1]);
+      expect(await m.store.forSession(U2, S1)).toEqual([]);
+      expect(await m.store.forSession(U1, "00000000-0000-4000-8000-000000000299")).toEqual([]);
+    });
+
     it("creates a check-in on a live session of the user", async () => {
       expect(await m.store.create(U1, checkIn())).toEqual({ status: "created", checkIn: checkIn() });
     });

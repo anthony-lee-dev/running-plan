@@ -29,6 +29,8 @@ export interface ProfileFields {
   heartRate: { maxBpm?: number; zones?: HeartRateRange[] };
   scheduling: { longRunDay?: Weekday; restDay?: Weekday; unavailableDays?: Weekday[] };
   review: { frequency: ReviewFrequency; day?: Weekday };
+  /** Write run summaries with AI (issue #132). On by default; off means the template text only and no model call. */
+  aiSummaries: boolean;
 }
 
 export interface Profile extends ProfileFields {
@@ -43,6 +45,7 @@ export const DEFAULT_PROFILE: ProfileFields = {
   heartRate: {},
   scheduling: {},
   review: { frequency: "weekly_plus_urgent" },
+  aiSummaries: true,
 };
 
 /** A validated PATCH body: only the sections the user sent. */
@@ -52,6 +55,7 @@ export interface ProfileUpdate {
   heartRate?: ProfileFields["heartRate"];
   scheduling?: ProfileFields["scheduling"];
   review?: ProfileFields["review"];
+  aiSummaries?: boolean;
 }
 
 export interface FieldError {
@@ -83,13 +87,18 @@ export function parseProfileUpdate(
   if (!isObject(body) || Object.keys(body).length === 0) {
     return { ok: false, errors: [{ path: "/", message: "Send at least one field to change" }] };
   }
-  unknownKeys(body, ["targetDisplay", "paces", "heartRate", "scheduling", "review"], "", errors);
+  unknownKeys(body, ["targetDisplay", "paces", "heartRate", "scheduling", "review", "aiSummaries"], "", errors);
   const value: ProfileUpdate = {};
 
   if ("targetDisplay" in body) {
     if (typeof body.targetDisplay === "string" && DISPLAYS.includes(body.targetDisplay)) {
       value.targetDisplay = body.targetDisplay as TargetDisplay;
     } else errors.push({ path: "/targetDisplay", message: "Use pace, heart_rate or effort" });
+  }
+
+  if ("aiSummaries" in body) {
+    if (typeof body.aiSummaries === "boolean") value.aiSummaries = body.aiSummaries;
+    else errors.push({ path: "/aiSummaries", message: "true or false" });
   }
 
   if ("paces" in body) {
@@ -189,6 +198,7 @@ export function applyProfileUpdate(current: ProfileFields, update: ProfileUpdate
   if (update.heartRate) next.heartRate = structuredClone(update.heartRate);
   if (update.scheduling) next.scheduling = structuredClone(update.scheduling);
   if (update.review) next.review = structuredClone(update.review);
+  if (update.aiSummaries !== undefined) next.aiSummaries = update.aiSummaries;
   if (update.paces && Object.keys(update.paces).length > 0) {
     // Typed in by the user, so it is no longer derived from a race: drop the provenance.
     const { basedOn: _basedOn, ...rest } = next.paces;
