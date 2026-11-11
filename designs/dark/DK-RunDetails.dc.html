@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Original Dark: Run details</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1C1A15;--card:#27241D;--ink:#F5F1E6;--muted:#ABA597;--line:#3A362B;--accent:#C9411B;--accent-text:#FF8A63;--accent-soft:#4A2418;--amber-soft:#3B3115;--green:#4FC79A}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#F5F1E6}
+a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+<!-- Run details for a matched intervals run (issue #164 proposal). New: verdict line, PB chip, zone card with the target marked, interval reps. Everything else is what #131/#132 already show. -->
+<div style="width:390px;min-height:1560px;box-sizing:border-box;background:var(--bg);display:flex;flex-direction:column;padding:56px 20px 34px;gap:16px;font-family:'Inter',system-ui,sans-serif;color:var(--ink)">
+  <a href="DK-Session.dc.html" style="min-height:44px;margin-left:-10px;padding-right:12px;display:flex;align-items:center;gap:4px;font-size:16px;font-weight:600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Back</a>
+
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;line-height:1.08;font-weight:700;letter-spacing:-0.02em">Intervals: 5 × 600 m</h1>
+    <span style="font-size:14px;color:var(--muted)">Apple Watch · Matched to Wednesday's session</span>
+  </header>
+
+  <div style="display:flex;gap:16px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums">7.0 km</span><span style="font-size:13px;color:var(--muted)">Distance</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums">43 min</span><span style="font-size:13px;color:var(--muted)">Time</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums">6:09/km</span><span style="font-size:13px;color:var(--muted)">Avg pace</span></div>
+  </div>
+
+  <!-- NEW: verdict line. Fixed phrase picked by the server, with its reason. Green on target, amber when off. -->
+  <div style="background:var(--amber-soft);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+    <span style="font-size:13px;color:var(--muted)">Intensity</span>
+    <span style="font-size:16px;font-weight:600;line-height:1.3">A touch hard for this session</span>
+    <span style="font-size:13px;color:var(--muted);line-height:1.4">Reps ran 12 s/km quicker than the target range, and 31% of the time was in zone 5 or above.</span>
+  </div>
+
+  <!-- NEW: PB chip row, shown only when the facts back it -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span style="background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:6px">★ Fastest 1 km in your imported runs · 3:41</span>
+  </div>
+
+  <!-- Existing: written summary card (#132) -->
+  <section style="background:var(--card);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:8px">
+    <h2 style="margin:0;font-size:17px;font-weight:600">Summary</h2>
+    <p style="margin:0;font-size:15px;line-height:1.5">Seven kilometres in 43 min at 6:09/km. Your five reps averaged 3:52/km, quicker than the 4:05 to 4:15/km target, with the last rep your fastest. Good consistency across the reps.</p>
+    <span style="font-size:12px;color:var(--muted)">Generated summary</span>
+  </section>
+
+  <!-- NEW: interval reps, only when the source wrote laps -->
+  <section style="background:var(--card);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:17px;font-weight:600">Reps</h2><span style="font-size:13px;color:var(--muted)">Target 4:05 to 4:15/km</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:15px;font-variant-numeric:tabular-nums">
+      <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;color:var(--muted)">1</span><span style="flex:1;height:8px;border-radius:4px;background:var(--line);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:86%;border-radius:4px;background:var(--accent-text)"></span></span><span style="width:70px;text-align:right">3:58/km</span><span style="width:76px;white-space:nowrap;text-align:right;color:var(--muted)">171 bpm</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;color:var(--muted)">2</span><span style="flex:1;height:8px;border-radius:4px;background:var(--line);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:88%;border-radius:4px;background:var(--accent-text)"></span></span><span style="width:70px;text-align:right">3:55/km</span><span style="width:76px;white-space:nowrap;text-align:right;color:var(--muted)">176 bpm</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;color:var(--muted)">3</span><span style="flex:1;height:8px;border-radius:4px;background:var(--line);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:87%;border-radius:4px;background:var(--accent-text)"></span></span><span style="width:70px;text-align:right">3:56/km</span><span style="width:76px;white-space:nowrap;text-align:right;color:var(--muted)">179 bpm</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;color:var(--muted)">4</span><span style="flex:1;height:8px;border-radius:4px;background:var(--line);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:90%;border-radius:4px;background:var(--accent-text)"></span></span><span style="width:70px;text-align:right">3:52/km</span><span style="width:76px;white-space:nowrap;text-align:right;color:var(--muted)">181 bpm</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;color:var(--muted)">5</span><span style="flex:1;height:8px;border-radius:4px;background:var(--line);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:93%;border-radius:4px;background:var(--green)"></span></span><span style="width:70px;text-align:right">3:49/km</span><span style="width:76px;white-space:nowrap;text-align:right;color:var(--muted)">184 bpm</span></div>
+    </div>
+    <span style="font-size:13px;color:var(--muted)">Recovery jogs averaged 6:40/km. Bar length is speed.</span>
+  </section>
+
+  <!-- Existing: splits (#131), unchanged -->
+  <section style="background:var(--card);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <h2 style="margin:0;font-size:17px;font-weight:600">Splits</h2>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:15px;font-variant-numeric:tabular-nums">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">1</span><span>6:20/km</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">2</span><span>5:41/km</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">3</span><span>5:35/km</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">4 <span style="font-size:12px;font-weight:600;color:var(--green)">Fastest</span></span><span>5:22/km</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">5</span><span>6:02/km</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">6 <span style="font-size:12px;font-weight:600;color:var(--accent-text)">Slowest</span></span><span>6:34/km</span></div>
+    </div>
+  </section>
+
+  <!-- Existing zone card, NEW: target band marked and the planned share -->
+  <section style="background:var(--card);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:17px;font-weight:600">Heart-rate zones</h2><span style="font-size:13px;color:var(--muted)">Your zones</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:15px;font-variant-numeric:tabular-nums">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Zone 1</span><span>4 min · 9%</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Zone 2</span><span>12 min · 28%</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Zone 3</span><span>5 min · 12%</span></div>
+      <div style="display:flex;justify-content:space-between;background:var(--accent-soft);margin:0 -8px;padding:2px 8px;border-radius:8px"><span style="color:#FFB59B">Zone 4 · target</span><span>9 min · 21%</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Zone 5</span><span>13 min · 30%</span></div>
+    </div>
+  </section>
+
+  <!-- NEW: encouragement, a fixed phrase backed by a fact; absent when nothing real to say or when pain is flagged -->
+  <p style="margin:0;font-size:15px;line-height:1.4;color:var(--muted)">That is your fastest 1 km in your imported runs. Well earned.</p>
+
+  <span style="font-size:13px;color:var(--muted)">Limited data from Apple Watch: no cadence.</span>
+</div>
+</x-dc>
+</body>
+</html>

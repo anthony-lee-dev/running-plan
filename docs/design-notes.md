@@ -1,6 +1,6 @@
 # Design notes (dark theme)
 
-Pulled from the 11 `designs/dark/DK-*.dc.html` boards of the Claude Design canvas "Running Planner iOS".
+Pulled from the 12 `designs/dark/DK-*.dc.html` boards of the Claude Design canvas "Running Planner iOS".
 The HTML files are the source of truth; this page is the handoff summary: tokens, components and their states,
 accessibility rules, and which endpoints each screen calls. Sizes are in pt (1 CSS px on the 390-wide boards).
 

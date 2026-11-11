@@ -15,7 +15,7 @@ set up each session on their watch by hand, then import results and review. Live
   - `designs/Running Planner — System Design v1.0.md` behaviour, data model, endpoints (what to build).
   - `designs/Running Planner Agent Build Workflow.md` phases, gates, test approach per layer, review loop,
     autonomy dial and Day-1 setup (how to build).
-  - `designs/dark/DK-*.dc.html` the 11 dark-theme screens (HTML source with exact colours and spacing).
+  - `designs/dark/DK-*.dc.html` the 12 dark-theme screens (HTML source with exact colours and spacing).
   - `docs/design-notes.md` tokens and the screen-to-endpoint map pulled from those screens.
 - **GitHub issues** are the task list agents pick from: one issue = one task = one PR, a milestone per slice, `type: feature`
   or `type: defect` labels. `docs/backlog.md` only archives the tasks finished before the move to issues (and holds the
