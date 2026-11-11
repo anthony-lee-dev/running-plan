@@ -74,4 +74,4 @@ export function nextStepLine(sessions: NextCandidate[], today: string): string |
 }
 
 /** Bump with any change to the prompt or the facts' meaning: stored paragraphs of another version are written again. */
-export const PROMPT_VERSION = "v1";
+export const PROMPT_VERSION = "v2";

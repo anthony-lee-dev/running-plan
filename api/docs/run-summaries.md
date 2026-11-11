@@ -30,3 +30,17 @@ Part of the API guide (`api/CLAUDE.md` has the index). Read this before changing
   kill switch (a deploy resets a dashboard edit). Two concurrent generates for one run both call the model and both count; the later `put` wins, and the hash check on read keeps the text correct. Tests use `FakeNarrator`; the adapter test uses a stub binding. `wrangler dev` calls Workers AI
   remotely and spends neurons. `npm run eval-summary -w api` (manual, needs the human's account id and token, never in CI) runs 30
   fixtures through candidate models and prints the share of AI text that passes the checks and the neurons spent.
+- Eval lessons (issue #160; the first real eval gave 0/30 on every model):
+  - Models write units in words ("59 minutes", "5:51 per kilometre", "1 hour 17 minutes", "152 beats per minute"). `canonicalUnits`
+    in `summary-check.ts` rewrites only the unit to the facts' own form before the number check; values are never touched, so a
+    wrong number still fails. "28 days" is accepted like "4 weeks". Spelled-out numbers ("four") still fail, the prompt says digits.
+    A letter stuck to a digit ("took44") is a `shape` failure. Run-together words with no digit ("wascompleted") are not caught by
+    any check: only the prompt (v2) discourages them.
+  - Workers AI answers differ by model: `response` as a JSON string or an object, or chat-completion `choices[0].message.content`
+    (Granite gave `malformed: undefined` until read this way). `modelAnswer` (`run-summary-prompt.ts`) reads all of them; the adapter
+    and the eval both use it. Judge the whole `result`, never `result.response`.
+  - The eval's fixtures and `judge` live in `scripts/eval-summary-fixtures.ts`. `OFFLINE=file.json` re-judges saved results with no
+    network; `SAVE=file.json` saves them from a live run. `test/summary-eval-offline.test.ts` runs `test/fixtures/summary-eval-captured.ts`
+    (one paragraph real from the issue, the rest synthetic and labelled so) through the same path in verify. After a live eval, add
+    real paragraphs there. Known laxness: the check matches quantities, not which fact they belong to (the average pace written
+    as this run's pace passes).
