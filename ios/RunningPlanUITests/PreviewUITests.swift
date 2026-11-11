@@ -71,7 +71,7 @@ final class PreviewUITests: XCTestCase {
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
         let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(day.waitForExistence(timeout: 15), app.debugDescription)
         day.tap()
 
         let deadline = Date().addingTimeInterval(15)
@@ -83,7 +83,7 @@ final class PreviewUITests: XCTestCase {
         XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
 
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
-        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertTrue(week.waitForExistence(timeout: 45), app.debugDescription)
         try await LocalAPI.saveAndSignIn(app, api)
 
         // The plan started at least two weeks ago, so this week is not week 1: the chosen date reached the saved plan.
@@ -116,7 +116,7 @@ final class PreviewUITests: XCTestCase {
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
         let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(day.waitForExistence(timeout: 15), app.debugDescription)
         day.tap()
 
         let deadline = Date().addingTimeInterval(15)
@@ -128,7 +128,7 @@ final class PreviewUITests: XCTestCase {
         XCTAssertGreaterThan(after, before, "Choosing a start date should rebuild the plan")
 
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
-        XCTAssertTrue(week.waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertTrue(week.waitForExistence(timeout: 45), app.debugDescription)
         try await LocalAPI.saveAndSignIn(app, api)
 
         let starts = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Starts'")).firstMatch

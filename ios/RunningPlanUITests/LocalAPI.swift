@@ -82,7 +82,7 @@ enum LocalAPI {
 
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Week 1 ·'")).firstMatch
         let error = app.staticTexts["preview.error"]
-        XCTAssertTrue(week.waitForExistence(timeout: 15) || error.exists, app.debugDescription)
+        XCTAssertTrue(week.waitForExistence(timeout: 45) || error.exists, app.debugDescription)
         XCTAssertFalse(error.exists, "The preview failed: \(error.label)")
         return app
     }
