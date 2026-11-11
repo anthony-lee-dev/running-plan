@@ -97,6 +97,29 @@ struct LiveTokenStoreTests {
     }
 }
 
+struct SeededSignInTests {
+    @Test func theSeedArgumentSignsInWithItsTokens() throws {
+        let defaults = try #require(UserDefaults(suiteName: "tests.\(UUID().uuidString)"))
+        let url = URL(string: "http://127.0.0.1:\(Int.random(in: 20_000...60_000))")!
+        let bundleID = "tests.\(UUID().uuidString)"
+        defer { APIConfiguration.liveTokenStore(baseURL: url, bundleID: bundleID, defaults: UserDefaults()).clear() }
+        defaults.set(true, forKey: "auth.reset")
+        defaults.set("access-1|refresh-1|user-1", forKey: "auth.seed")
+
+        let store = APIConfiguration.liveTokenStore(baseURL: url, bundleID: bundleID, defaults: defaults)
+        #expect(store.load() == StoredTokens(accessToken: "access-1", refreshToken: "refresh-1", userId: "user-1"))
+    }
+
+    @Test func aSeedThatIsNotThreeParts() throws {
+        let defaults = try #require(UserDefaults(suiteName: "tests.\(UUID().uuidString)"))
+        let url = URL(string: "http://127.0.0.1:\(Int.random(in: 20_000...60_000))")!
+        let bundleID = "tests.\(UUID().uuidString)"
+        defaults.set(true, forKey: "auth.reset")
+        defaults.set("only-one", forKey: "auth.seed")
+        #expect(APIConfiguration.liveTokenStore(baseURL: url, bundleID: bundleID, defaults: defaults).load() == nil)
+    }
+}
+
 struct AuthSessionSignInTests {
     @Test func verifyStoresTheTokens() async throws {
         let transport = ScriptedTransport { _ in (.ok, pair("a1", "r1")) }

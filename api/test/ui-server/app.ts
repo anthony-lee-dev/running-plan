@@ -26,6 +26,34 @@ export function buildUiTestServer(): UiTestServer {
     const code = email.sent.filter((s) => s.to === to).at(-1)?.code;
     return code ? c.json({ code }) : c.json({ error: "no_code" }, 404);
   });
+  // Signs an account in and saves a 10K plan for it, the way the app's interview, preview and sign-in would, and hands
+  // back the tokens. A UI test that is not about those flows launches the app signed in with them.
+  app.post("/__test/seed", async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { email?: unknown; today?: unknown } | null;
+    if (typeof body?.email !== "string" || typeof body.today !== "string") return c.json({ error: "email and today are required" }, 400);
+    const post = (path: string, payload: unknown, token?: string) =>
+      api.fetch(
+        new Request(new URL(path, c.req.url), {
+          method: "POST",
+          headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify(payload),
+        }),
+      );
+    await post("/v1/auth/email/start", { email: body.email });
+    const code = email.sent.filter((s) => s.to === body.email).at(-1)?.code;
+    const verified = await post("/v1/auth/email/verify", { email: body.email, code, clientType: "ios" });
+    if (verified.status !== 200) return c.json({ error: "sign-in failed" }, 500);
+    const tokens = (await verified.json()) as { accessToken: string; refreshToken: string; userId: string };
+    const generated = await post("/v1/plans/generate", { answers: { goal: { distance: "10k" } }, today: body.today });
+    if (generated.status !== 200) return c.json({ error: "generate failed" }, 500);
+    const draft = (await generated.json()) as { sessions: object[]; assumptions?: unknown; warnings?: unknown };
+    const { assumptions: _a, warnings: _w, ...fields } = draft;
+    const planId = crypto.randomUUID();
+    const sessions = draft.sessions.map((s) => ({ ...s, id: crypto.randomUUID() }));
+    const created = await post("/v1/plans", { ...fields, id: planId, sessions }, tokens.accessToken);
+    if (created.status !== 201) return c.json({ error: "save failed" }, 500);
+    return c.json({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, userId: tokens.userId, planId });
+  });
   app.all("*", async (c) => {
     const res = await api.fetch(c.req.raw);
     if (res.status < 400) {

@@ -14,10 +14,20 @@ extension APIConfiguration {
     }
 
     /// The Keychain store for this base URL. The `-auth.reset YES` launch argument signs out first: Keychain items
-    /// outlive a reinstall, so UI tests pass it to start signed out.
+    /// outlive a reinstall, so UI tests pass it to start signed out. A Debug build also takes `-auth.seed
+    /// "<access>|<refresh>|<userId>"` (after the reset) to start signed in, so a UI test that is not about sign-in
+    /// can skip it; the tokens come from the UI-test API's `/__test/seed`.
     static func liveTokenStore(baseURL: URL, bundleID: String, defaults: UserDefaults) -> KeychainTokenStore {
         let store = KeychainTokenStore(service: KeychainTokenStore.service(for: baseURL, bundleID: bundleID))
         if defaults.bool(forKey: "auth.reset") { store.clear() }
+        #if DEBUG
+        if let seed = defaults.string(forKey: "auth.seed") {
+            let parts = seed.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+            if parts.count == 3, !parts.contains("") {
+                try? store.save(StoredTokens(accessToken: parts[0], refreshToken: parts[1], userId: parts[2]))
+            }
+        }
+        #endif
         return store
     }
 }
