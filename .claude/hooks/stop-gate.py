@@ -7,6 +7,7 @@ so Claude continues and fixes it. After MAX_BLOCKS blocks in one session it lets
 so a problem it cannot fix (for example a missing simulator) never loops forever.
 A green run is remembered by a fingerprint (it does not notice toolchain or node_modules changes) of the changed package files, so later turns that change nothing
 there (chat, docs, a commit of the same content) skip the run.
+For ios/ it runs verify.sh's quick scope (build and unit tests); the UI tests run in CI.
 """
 import hashlib
 import json
@@ -80,8 +81,10 @@ def main():
         cwd=cwd,
         capture_output=True,
         text=True,
-        # The hook always runs the full iOS suite, even if the session exported IOS_TEST_SCOPE=quick.
-        env={k: v for k, v in os.environ.items() if k not in ("IOS_TEST_SCOPE", "IOS_UI_TESTS")},
+        # iOS runs in the quick scope with no UI test classes (spec check, build, unit tests), whatever the session
+        # exported: the full suite takes longer than this hook's time limit (900 s in settings.json), and a hook
+        # that is cut off gates nothing. The whole suite runs in CI on the PR.
+        env={**{k: v for k, v in os.environ.items() if k != "IOS_UI_TESTS"}, "IOS_TEST_SCOPE": "quick"},
     )
     counter = os.path.join(tempfile.gettempdir(), f"running-plan-stop-gate-{session}")
     if result.returncode == 0:
