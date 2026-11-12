@@ -121,6 +121,30 @@ warm_up_app() {
   return 0
 }
 
+# The runner's 1-minute load average. macOS prints `{ 1.23 4.56 7.89 }`.
+runner_load_now() { sysctl -n vm.loadavg 2>/dev/null | awk '{ print $2 }'; }
+settle_pause() { sleep 10; }
+
+# Waits until the runner's 1-minute load average is at or under $2, looking every 10 s, for at most $1 seconds
+# (0 = no wait). A simulator that has just booted for the first time starts hundreds of its own services at once: on a
+# 3-core CI runner the load went from 10 to 430 in three minutes and was still over 140 ten minutes later, and UI tests
+# started in that storm waited in vain for taps and screens (issue #171). Never fails the run: when the time runs out it
+# says so and the tests start anyway.
+wait_for_runner_to_settle() {
+  local max="$1" limit="$2" waited=0 load
+  [[ "$max" -gt 0 ]] || return 0
+  while :; do
+    load="$(runner_load_now)"
+    if awk -v l="${load:-0}" -v m="$limit" 'BEGIN { exit !(l <= m) }'; then
+      echo "== ios: runner settled after ${waited}s (load $load, limit $limit)"; return 0
+    fi
+    if (( waited >= max )); then
+      echo "== ios: runner still busy after ${waited}s (load $load, limit $limit); testing anyway"; return 0
+    fi
+    settle_pause; waited=$((waited + 10))
+  done
+}
+
 # Runs a command, stopping it after $1 seconds; returns 124 when it ran out of time (as GNU timeout does), 127 when
 # the command can't start, 128 + n when signal n killed it. macOS has no `timeout`, so perl runs the command as a
 # child: at the limit it sends TERM (xcodebuild then cancels its test session and the simulator's test runner), and
@@ -371,6 +395,8 @@ verify_ios() {
   # Wait for the boot started above, so xcodebuild never races a booting device.
   [[ -z "$id" ]] || xcrun simctl bootstatus "$id" >/dev/null 2>&1 || true
   [[ "${IOS_WARM_UP:-}" != 1 || -z "$id" || -z "${IOS_PRODUCTS:-}" ]] || warm_up_app "$id" "$IOS_PRODUCTS"
+  # IOS_SETTLE_MAX=<seconds> (CI): let the simulator's first-boot work die down before the tests start.
+  wait_for_runner_to_settle "${IOS_SETTLE_MAX:-0}" "${IOS_SETTLE_LOAD:-24}"
   echo "== ios: test on ${dest}"
   # A hung simulator can stall xcodebuild for ever, and with it anything waiting on this run, so it gets a limit
   # (IOS_TEST_TIMEOUT seconds, default 45 minutes; a full run takes 16-18 minutes locally and 18-28 in CI, where
