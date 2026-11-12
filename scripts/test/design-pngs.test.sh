@@ -25,7 +25,7 @@ for html in "$dark"/DK-*.dc.html; do
   if [[ ! "$w" =~ ^[0-9]+$ ]]; then fail "$name: could not read the width"
   elif [[ "$w" -ne $want_width ]]; then fail "$name: width $w, want $want_width"; else echo "ok   $name"; fi
 done
-[[ $boards -eq 11 ]] || fail "expected 11 DK boards, found $boards"
+[[ $boards -eq 12 ]] || fail "expected 12 DK boards, found $boards"
 
 for png in "$dark"/png/*.png; do
   [[ -e "$png" ]] || continue

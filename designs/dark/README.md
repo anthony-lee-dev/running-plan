@@ -1,6 +1,6 @@
 # Dark theme screens
 
-HTML source of the 11 dark boards ("The original design in a dark theme") from the Claude Design canvas
+HTML source of the 12 dark boards ("The original design in a dark theme") from the Claude Design canvas
 "Running Planner iOS": https://claude.ai/artifact/MziiCTxk76h3b735qNXdGj
 (same canvas as https://claude.ai/code/artifact/aa05df7b-81f3-483b-8fdb-2aa927762da0).
 

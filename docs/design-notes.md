@@ -1,6 +1,6 @@
 # Design notes (dark theme)
 
-Pulled from the 11 `designs/dark/DK-*.dc.html` boards of the Claude Design canvas "Running Planner iOS".
+Pulled from the 12 `designs/dark/DK-*.dc.html` boards of the Claude Design canvas "Running Planner iOS".
 The HTML files are the source of truth; this page is the handoff summary: tokens, components and their states,
 accessibility rules, and which endpoints each screen calls. Sizes are in pt (1 CSS px on the 390-wide boards).
 
@@ -147,6 +147,7 @@ operation ids; `scripts/test/design-notes.test.sh` checks this section against `
 | DK-Week | Local store, refreshed by `sync`; `getPlan` on first load of a plan | Add a session opens the editor; marking done or skipped: `updateSession` (`session.update`) |
 | DK-Whole | `getPlan`; per-week done distance and on-track badge from `getProgress` | Tap a week opens DK-Week for that week |
 | DK-Progress | `getProgress` | None |
+| DK-RunDetails | `getRunSummary` (`generateRunSummary`) | Proposal for #164, not built: verdict, PB chip, reps and zone target come from a later activity-detail endpoint; splits and zones are on the device today (#131) |
 | DK-Session | Local store | Shorter, Easier, Swap, Skip: `updateSession` (`session.update`); before-session check-in: `createCheckIn` (`checkin.create`); the watch status line, Watch settings and Copy steps run on the device (WorkoutKit). The board's "Add to Apple Watch" button is replaced (issue #100): a run shows one status line ("On your watch: in the Workout app for Tue 4 Nov.", "Goes to your watch closer to the day.", "Not on your watch. Turn on in Watch settings.", or "Running Plan can't add workouts. Allow it in Settings." with Open Settings) and a "Watch settings" link; strength, custom and rest sessions and devices without a paired watch show no line |
 | DK-Editor | Local store | Save: `updateSession` (`session.update`) or `createSession` (`session.create`); delete: `deleteSession` (`session.delete`); building a plan from blank or changing plan fields: `updatePlan` (`plan.update`) |
 | DK-Inbox | HealthKit on the device, uploaded with `importActivities`; the list from `listActivities` with `inbox=true` | Confirm match or Change: `putMatch`; undo a match: `deleteMatch`; Add as extra run, Ignore: `updateActivity`; Add a run manually: `importActivities` with source `manual` |
