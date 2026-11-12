@@ -93,7 +93,7 @@ jobs:
   # The suite is split over three runners (see ios_shard_filters in scripts/verify.sh, which finds the UI test classes
   # itself, so a new class is never left out) and runs from the build above without building again.
   ios-test:
-    name: ios-test (${{ matrix.shard }}, rep ${{ matrix.rep }})
+    name: ios-test (${{ matrix.shard }})
     needs: [changes, build]
     if: needs.changes.outputs.run == 'true'
     runs-on: macos-latest
@@ -102,8 +102,6 @@ jobs:
       fail-fast: false
       matrix:
         shard: ["1/3", "2/3", "3/3"]
-        warm: ["1"]
-        rep: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
       - name: Select the newest Xcode on the runner
@@ -138,7 +136,7 @@ jobs:
           IOS_TEST_ALLOWANCE: "300"
           # Start the app once before the tests (its first launch on a fresh simulator is the one that times out), and
           # run again only the tests that failed with "Timed out while launching application via Xcode".
-          IOS_WARM_UP: ${{ matrix.warm }}
+          IOS_WARM_UP: "1"
           IOS_LAUNCH_RETRIES: "1"
           # A simulator booted for the first time starts hundreds of its own services: on these 3-core runners the 1-minute
           # load reaches 430 to 560 and UI tests started then run 2 to 3 times slower, some past their waits (issue #171).
@@ -149,8 +147,8 @@ jobs:
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
           # The UI-test API's request log (arrival and answer, with status and ms), uploaded with the result bundle on failure.
           IOS_API_LOG: ${{ runner.temp }}/ui-test-api.log
-          # A shard takes about 10 to 15 minutes and one test is stopped after 5 (IOS_TEST_ALLOWANCE), so a shard
-          # past 25 is hung: verify stops it, restarts the simulator and runs it once more, inside the 45-minute limit.
+          # The tests of a shard take about 5 to 10 minutes (after up to 8 of settling, which this limit does not count)
+          # and one test is stopped after 5 (IOS_TEST_ALLOWANCE), so a test run past 25 is hung: verify stops it, restarts the simulator and runs it once more, inside the 45-minute limit.
           IOS_TEST_TIMEOUT: "1500"
         run: bash scripts/verify.sh ios
       # Per-test times and failure messages (xcodebuild -quiet prints neither).

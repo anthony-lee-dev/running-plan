@@ -28,6 +28,11 @@ Part of the iOS guide (`ios/CLAUDE.md` has the index). Read this before changing
   and the first session, Plan opens on week 1, the watch window and inbox have no "today" session or missed ones. The chosen date goes to `plans/generate` as `today` (the engine builds from it), `PreviewViewModel.startDate`
   is nil for "today", and `SavedPreview.startDate` (optional) keeps it so a saved draft is reused only for the same date.
   A goal date can still move the start (engine alignment); the preview then says so. The interview itself is unchanged.
+- UI tests and the start date picker (issue #171): the picker starts on the bottom edge of the screen (about 10 pt
+  showing on an iPhone 17 Pro). `isHittable` is already true there, but a tap lands in the home indicator's strip and is
+  sometimes dropped, so the calendar never opens. `PreviewUITests.openStartDateCalendar` scrolls until the picker's
+  frame is at least 100 pt clear of the bottom and asserts it; use it (or the same frame check) for anything tapped near
+  the bottom edge, not `isHittable`.
 - Inbox picker (issue #98): "Match to a session" lists every open session of a fitting type in the plan, nearest the
   run's day first (no 7-day window), and says why when there is none. Deleting a plan returns its runs to the inbox
   (server `unlink`), and the inbox refreshes when the plan id changes.
