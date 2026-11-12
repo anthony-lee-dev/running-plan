@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Renders the dark boards (designs/dark/DK-*.dc.html) to designs/dark/png/DK-<Name>.png with headless Chrome:
+# Renders the dark boards (designs/dark/DK-*.dc.html) to designs/dark/png/DK-<Name>.png with Playwright's chrome-headless-shell:
 # 390 pt wide at @3x (1170 px), as tall as the board. Fonts come from Google Fonts, so it needs the network.
 # The boards were written for the canvas runtime (support.js), which is not in the repo; they are plain HTML with
 # inline styles, so a browser renders them without it. Re-run after re-exporting the boards from the canvas.
@@ -7,13 +7,23 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# A browser this script owns: Playwright's chrome-headless-shell, never the user's Google Chrome (launching that
+# wakes its updater, and macOS asks for "App Management" permission). CHROME=/path overrides it.
 chrome="${CHROME:-}"
 if [[ -z "$chrome" ]]; then
-  for c in "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" google-chrome chromium chromium-browser; do
-    if command -v "$c" >/dev/null 2>&1 || [[ -x "$c" ]]; then chrome="$c"; break; fi
-  done
+  case "$(uname -s)" in
+    Darwin) cache="$HOME/Library/Caches/ms-playwright" ;;
+    *) cache="$HOME/.cache/ms-playwright" ;;
+  esac
+  cache="${PLAYWRIGHT_BROWSERS_PATH:-$cache}"
+  chrome="$(find "$cache" -path '*/chromium_headless_shell-*/*' -type f -name chrome-headless-shell 2>/dev/null | sort | tail -n 1 || true)"
 fi
-[[ -n "$chrome" ]] || { echo "Chrome not found; set CHROME=/path/to/chrome" >&2; exit 1; }
+if [[ -z "$chrome" || ! -x "$chrome" ]]; then
+  echo "chrome-headless-shell not found. Install it once with:" >&2
+  echo "  npx playwright install chromium-headless-shell" >&2
+  echo "(or set CHROME=/path/to/a/headless/chromium)" >&2
+  exit 1
+fi
 
 dark=designs/dark
 out="$dark/png"

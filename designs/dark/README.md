@@ -9,5 +9,5 @@ the canvas runtime (`support.js`, not in the repo), but they are plain HTML with
 them without it. If the canvas changes, re-export these files; the canvas is the master.
 
 Reference images for iOS snapshot tests are in `png/`: one `DK-<Name>.png` per board, 390 pt wide at @3x
-(1170 px), as tall as the board. After changing a board, re-render with `bash scripts/export-boards.sh` (headless
-Chrome, needs the network for Google Fonts). `scripts/test/design-pngs.test.sh` checks every board has its PNG.
+(1170 px), as tall as the board. After changing a board, re-render with `bash scripts/export-boards.sh` (Playwright's
+chrome-headless-shell, never your Google Chrome; `npx playwright install chromium-headless-shell` once; needs the network for Google Fonts). `scripts/test/design-pngs.test.sh` checks every board has its PNG.

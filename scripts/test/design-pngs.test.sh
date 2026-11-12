@@ -33,4 +33,9 @@ for png in "$dark"/png/*.png; do
   [[ -f "$dark/$name.dc.html" ]] || fail "$name.png has no matching board"
 done
 
+# The exporter must never launch the user's Google Chrome (wakes its updater, macOS App Management prompt).
+if grep -v '^#' "$root/scripts/export-boards.sh" | grep -q 'Google Chrome'; then fail "export-boards.sh launches Google Chrome"; fi
+out="$(env CHROME= PLAYWRIGHT_BROWSERS_PATH=/nonexistent bash "$root/scripts/export-boards.sh" 2>&1)" && fail "export-boards.sh passed with no browser installed"
+[[ "$out" == *"npx playwright install chromium-headless-shell"* ]] || fail "missing-browser error lacks the install command"
+
 [[ $fails -eq 0 ]] || { echo "$fails design PNG check(s) failed; run bash scripts/export-boards.sh"; exit 1; }
