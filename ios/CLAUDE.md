@@ -105,7 +105,7 @@ feature's note. This file is only for what every iOS task needs.
   created on first need. Runs started by an older `verify.sh` don't take the lock.
 - The required `ios` check always reports, but builds only when something the iOS build or UI tests use changed: `ios/`
   (not Markdown), `spec/`, `designs/dark/png` (the snapshot tests read it), `api/src`, `api/test/ui-server`, `api/migrations`, the API and root package files,
-  `scripts/verify.sh`, `scripts/generate-api-client.sh` or the workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step
+  `scripts/verify.sh`, `scripts/generate-api-client.sh`, `scripts/ci` or the workflow (the list is in `ios-ci.yml`, pinned by `scripts/test/ios-ci-paths.test.sh`). Keep it in step
   with what `api/test/ui-server` imports. It builds once (`IOS_PHASE=build`, `build-for-testing`, products passed as an artifact) and runs the suite as three parallel shards from that build (`IOS_PHASE=test`, `IOS_SHARD=<i>/<n>`, see
   `ios_shard_filters` in `verify.sh`): the unit tests and each UI test class are dealt out by the times in
   `IOS_SHARD_WEIGHTS`, so re-measure those (each shard's log lists its slowest tests) when a class is added or the
@@ -113,7 +113,20 @@ feature's note. This file is only for what every iOS task needs.
   Before its tests each shard starts the built app once (`IOS_WARM_UP`; the first launch on a fresh simulator is what timed out), and a
   test that fails only with "Timed out while launching application via Xcode" is run once more (`IOS_LAUNCH_RETRIES`, `launch_timeout_failures`
   in `verify.sh`, pinned by `scripts/test/ios-launch-retry.test.sh`); any other failure, including a hang inside a test, is never retried.
+  The UI-test API logs two lines per request (its arrival, then its answer with status and ms); CI sets `IOS_API_LOG` and uploads it with
+  the result bundle (artifact `ios-failure-<n>`) when a shard fails: read it to tell a server stall from an app one (#171).
   It caches the API client generator build and DerivedData; a cache miss only makes it slower.
+- CI waits for the runner to settle before the UI tests (issue #171). A simulator booted for the first time starts
+  hundreds of its own services (widgets, wallpaper posters, `lsd`, `diagnosticd`, `apsd`): on the runners (3 cores,
+  some 5) the 1-minute load goes from 10 to 430-560 within four minutes and needs about eight more to fall under 100.
+  Tests started in that storm ran 2 to 3 times slower and some outran their waits (a Save tap that did nothing,
+  "Loading your plan" for 30 s, `kAXErrorIPCTimeout`); those were the shard failures, not the app or the API.
+  `IOS_SETTLE_MAX=480` and `IOS_SETTLE_LOAD=150` (`wait_for_runner_to_settle` in `verify.sh`, off unless set) hold the
+  tests until the 1-minute load is under 150 and no longer above the 5-minute one, or 8 minutes have passed; the log
+  says which and how long it took (up to the 8 minutes; shards run in parallel). Failing shards ran their tests at
+  loads of 190 and over; a shard that started them at 70 had its slowest test at 44 s, not 136 s. Don't answer a
+  slow-runner failure with longer waits in the tests: read the shard's "Runner load during the job" step first
+  (`scripts/ci/runner-load.sh`, one line every 20 s, also in the failure artifact).
 
 ## Manual gates (agents list these in the PR body, the human ticks them)
 

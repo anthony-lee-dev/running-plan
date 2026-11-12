@@ -6,6 +6,20 @@ final class PreviewUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Taps the "Starts on" picker so its calendar opens. The picker starts on the bottom edge of the screen (about
+    /// 10 pt of it showing on an iPhone 17 Pro), where `isHittable` is already true but a tap lands in the home
+    /// indicator's strip and is sometimes dropped: the calendar never opened and the test failed waiting for it
+    /// (issue #171). So this scrolls until the whole picker is clear of the bottom edge, and checks that it is.
+    @MainActor
+    private func openStartDateCalendar(_ app: XCUIApplication) {
+        let picker = app.datePickers["preview.startDate"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 15), app.debugDescription)
+        let lowest = app.windows.firstMatch.frame.maxY - 100
+        for _ in 0..<5 where picker.frame.maxY > lowest { app.swipeUp() }
+        XCTAssertLessThanOrEqual(picker.frame.maxY, lowest, "The start date picker is still on the bottom edge: \(app.debugDescription)")
+        picker.buttons.firstMatch.tap()
+    }
+
     @MainActor
     func testInterviewToPreviewUsesTheLocalAPI() async throws {
         let api = try LocalAPI.url()
@@ -63,11 +77,10 @@ final class PreviewUITests: XCTestCase {
         parts.month! -= 1
         parts.day = 15
         let target = calendar.date(from: parts)!
-        let picker = app.datePickers["preview.startDate"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 15), app.debugDescription)
-        for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
-        picker.buttons.firstMatch.tap()
-        app.buttons["Previous Month"].tap()
+        openStartDateCalendar(app)
+        let previousMonth = app.buttons["Previous Month"]
+        XCTAssertTrue(previousMonth.waitForExistence(timeout: 15), app.debugDescription)
+        previousMonth.tap()
         let label = DateFormatter()
         label.dateFormat = "EEEE, MMMM d"
         let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", label.string(from: target))).firstMatch
@@ -106,10 +119,7 @@ final class PreviewUITests: XCTestCase {
         parts.month! += 1
         parts.day = 15
         let target = calendar.date(from: parts)!
-        let picker = app.datePickers["preview.startDate"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 15), app.debugDescription)
-        for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
-        picker.buttons.firstMatch.tap()
+        openStartDateCalendar(app)
         let nextMonth = app.buttons["Next Month"]
         XCTAssertTrue(nextMonth.waitForExistence(timeout: 15), app.debugDescription)
         nextMonth.tap()
