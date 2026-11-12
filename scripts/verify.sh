@@ -121,25 +121,28 @@ warm_up_app() {
   return 0
 }
 
-# The runner's 1-minute load average. macOS prints `{ 1.23 4.56 7.89 }`.
-runner_load_now() { sysctl -n vm.loadavg 2>/dev/null | awk '{ print $2 }'; }
+# The runner's 1-minute and 5-minute load averages, as "<1> <5>". macOS prints `{ 1.23 4.56 7.89 }`.
+runner_load_now() { sysctl -n vm.loadavg 2>/dev/null | awk '{ print $2, $3 }'; }
 settle_pause() { sleep 10; }
 
-# Waits until the runner's 1-minute load average is at or under $2, looking every 10 s, for at most $1 seconds
-# (0 = no wait). A simulator that has just booted for the first time starts hundreds of its own services at once: on a
-# 3-core CI runner the load went from 10 to 430 in three minutes and was still over 140 ten minutes later, and UI tests
-# started in that storm waited in vain for taps and screens (issue #171). Never fails the run: when the time runs out it
-# says so and the tests start anyway.
+# Waits until the runner has settled, looking every 10 s, for at most $1 seconds (0, or anything that is not a whole
+# number of seconds, = no wait). Settled means the 1-minute load average is at or under $2 and not above the 5-minute
+# one, so a load that is under the limit only because it has just started to climb does not count.
+# A simulator that has just booted for the first time starts hundreds of its own services at once: on a CI runner the
+# 1-minute load went from 10 to between 430 and 560 within four minutes and took about eight more to fall under 100,
+# and UI tests started in that storm waited in vain for taps and screens (issue #171). Never fails the run: when the
+# time runs out, or the load can't be read, it says so and the tests start anyway.
 wait_for_runner_to_settle() {
-  local max="$1" limit="$2" waited=0 load
-  [[ "$max" -gt 0 ]] || return 0
+  local max="$1" limit="$2" waited=0 load one five
+  [[ "$max" =~ ^[1-9][0-9]*$ ]] || return 0
   while :; do
-    load="$(runner_load_now)"
-    if awk -v l="${load:-0}" -v m="$limit" 'BEGIN { exit !(l <= m) }'; then
-      echo "== ios: runner settled after ${waited}s (load $load, limit $limit)"; return 0
+    load="$(runner_load_now)" || true
+    read -r one five <<<"$load" || true
+    if [[ -n "${one:-}" && -n "${five:-}" ]] && awk -v o="$one" -v f="$five" -v m="$limit" 'BEGIN { exit !(o + 0 <= m + 0 && o + 0 <= f + 0) }'; then
+      echo "== ios: runner settled after ${waited}s (load $one, 5-minute $five, limit $limit)"; return 0
     fi
     if (( waited >= max )); then
-      echo "== ios: runner still busy after ${waited}s (load $load, limit $limit); testing anyway"; return 0
+      echo "== ios: runner still busy after ${waited}s (load ${one:-unknown}, limit $limit); testing anyway"; return 0
     fi
     settle_pause; waited=$((waited + 10))
   done
@@ -187,7 +190,7 @@ ui_test_api_url_from_log() {
 # second run (the Stop hook's, say) never collides with this one or talks to a stale server.
 start_ui_test_api() {
   local log
-  # IOS_API_LOG=<file> (CI) keeps the server's log, one line per request, for the failure artifact.
+  # IOS_API_LOG=<file> (CI) keeps the server's log, two lines per request (arrival and answer), for the failure artifact.
   log="${IOS_API_LOG:-$(mktemp "${TMPDIR:-/tmp}/ui-test-api.XXXXXX")}"
   (cd api && UI_TEST_PORT=0 exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"$log" 2>&1 &
   UI_TEST_API_PID=$!

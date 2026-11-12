@@ -13,7 +13,7 @@ tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 cd "$tmp" && git init -q && git config user.email t@t && git config user.name t
 for f in ios/RunningPlan/A.swift ios/CLAUDE.md spec/openapi.yaml designs/dark/png/DK-Next.png api/src/app.ts api/wrangler.toml \
   api/CLAUDE.md api/test/wrangler-config.test.ts api/test/ui-server/app.ts api/migrations/0001.sql api/package.json package-lock.json \
-  scripts/verify.sh scripts/generate-api-client.sh .github/workflows/ios-ci.yml web/src/a.ts web/README.md; do
+  scripts/verify.sh scripts/generate-api-client.sh scripts/ci/runner-load.sh .github/workflows/ios-ci.yml web/src/a.ts web/README.md; do
   mkdir -p "$(dirname "$f")"; echo a >"$f"
 done
 git add -A && git commit -qm base
@@ -26,6 +26,6 @@ check() { # want (build|skip), file
   if [[ "$got" == "$1" ]]; then echo "ok   $2 -> $got"; else echo "FAIL $2: $got, want $1"; fails=$((fails + 1)); fi
 }
 for f in ios/RunningPlan/A.swift spec/openapi.yaml designs/dark/png/DK-Next.png api/src/app.ts api/test/ui-server/app.ts api/migrations/0001.sql \
-  api/package.json package-lock.json scripts/verify.sh scripts/generate-api-client.sh .github/workflows/ios-ci.yml; do check build "$f"; done
+  api/package.json package-lock.json scripts/verify.sh scripts/generate-api-client.sh scripts/ci/runner-load.sh .github/workflows/ios-ci.yml; do check build "$f"; done
 for f in ios/CLAUDE.md api/wrangler.toml api/CLAUDE.md api/test/wrangler-config.test.ts web/src/a.ts web/README.md; do check skip "$f"; done
 exit $((fails > 0))

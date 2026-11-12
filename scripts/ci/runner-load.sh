@@ -6,7 +6,7 @@
 sample() {
   local load top
   load="$(uptime | sed -E 's/.*load averages?: *//; s/,//g')"
-  top="$(ps -Ao pcpu=,comm= | sort -rn | head -5 | awk '{ n = split($NF, part, "/"); printf "%s=%s ", part[n], $1 }')"
+  top="$(ps -Ao pcpu=,comm= | sort -rn 2>/dev/null | head -5 | awk '{ n = split($NF, part, "/"); printf "%s=%s ", part[n], $1 }')"
   echo "$(date -u +%H:%M:%S) load $load | $top"
 }
 if [[ "${1:-}" == "--once" ]]; then sample; exit 0; fi
