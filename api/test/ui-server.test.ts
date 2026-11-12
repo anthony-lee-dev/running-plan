@@ -16,6 +16,17 @@ describe("UI-test API server", () => {
     expect(after.requests["POST /v1/plans/generate"]).toBe(1);
   });
 
+  it("logs every request with its status and time, so a stalled or failed call shows in a CI failure", async () => {
+    const lines: string[] = [];
+    const { app } = buildUiTestServer({ log: (line) => lines.push(line) });
+    await app.request("/v1/plans/generate", { method: "POST", headers: json, body: JSON.stringify({ answers: {}, today: "x" }) });
+    await app.request("/__test/stats");
+    expect(lines).toHaveLength(2);
+    // ISO time, method, path, status, milliseconds.
+    expect(lines[0]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z POST \/v1\/plans\/generate 4\d\d \d+ms$/);
+    expect(lines[1]).toMatch(/ GET \/__test\/stats 200 \d+ms$/);
+  });
+
   it("gives a test the last sign-in code for an address, which signs in", async () => {
     const { app } = buildUiTestServer();
     expect((await app.request("/__test/codes/latest?email=runner@example.com")).status).toBe(404);

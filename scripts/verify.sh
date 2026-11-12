@@ -163,7 +163,8 @@ ui_test_api_url_from_log() {
 # second run (the Stop hook's, say) never collides with this one or talks to a stale server.
 start_ui_test_api() {
   local log
-  log="$(mktemp "${TMPDIR:-/tmp}/ui-test-api.XXXXXX")"
+  # IOS_API_LOG=<file> (CI) keeps the server's log, one line per request, for the failure artifact.
+  log="${IOS_API_LOG:-$(mktemp "${TMPDIR:-/tmp}/ui-test-api.XXXXXX")}"
   (cd api && UI_TEST_PORT=0 exec ../node_modules/.bin/tsx test/ui-server/main.ts) >"$log" 2>&1 &
   UI_TEST_API_PID=$!
   trap 'stop_ui_test_api; release_sim_lock' EXIT # the only EXIT trap in this script; chain it if another is added

@@ -12,7 +12,12 @@ export interface UiTestServer {
   counts: Map<string, number>;
 }
 
-export function buildUiTestServer(): UiTestServer {
+export interface UiTestServerOptions {
+  /** Called once per request, when it has been answered: `<ISO time> <METHOD> <path> <status> <ms>ms`. */
+  log?: (line: string) => void;
+}
+
+export function buildUiTestServer(options: UiTestServerOptions = {}): UiTestServer {
   const email = new MemoryEmailSender();
   // Every UI test comes from one address, so the per-IP sign-in limit (15 an hour) would stop the run after a dozen
   // tests; the limits themselves are covered by the API's own tests.
@@ -28,6 +33,17 @@ export function buildUiTestServer(): UiTestServer {
   const api = createApp(memoryDeps({ email, rateLimiter, narrator }));
   const counts = new Map<string, number>();
   const app = new Hono();
+
+  // One line per request, answered or failed, so a UI test that waited on the server can be told from one that did not.
+  // CI keeps this log (verify.sh) when a shard fails.
+  if (options.log) {
+    const log = options.log;
+    app.use("*", async (c, next) => {
+      const started = Date.now();
+      await next();
+      log(`${new Date(started).toISOString()} ${c.req.method} ${new URL(c.req.url).pathname} ${c.res.status} ${Date.now() - started}ms`);
+    });
+  }
 
   app.get("/__test/stats", (c) => c.json({ requests: Object.fromEntries(counts) }));
   app.get("/__test/codes/latest", (c) => {

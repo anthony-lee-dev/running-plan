@@ -134,6 +134,8 @@ jobs:
           IOS_WARM_UP: "1"
           IOS_LAUNCH_RETRIES: "1"
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
+          # The UI-test API's request log (time, method, path, status, ms), uploaded with the result bundle on failure.
+          IOS_API_LOG: ${{ runner.temp }}/ui-test-api.log
           # A shard takes about 10 to 15 minutes and one test is stopped after 5 (IOS_TEST_ALLOWANCE), so a shard
           # past 25 is hung: verify stops it, restarts the simulator and runs it once more, inside the 45-minute limit.
           IOS_TEST_TIMEOUT: "1500"
@@ -157,6 +159,20 @@ jobs:
             [.testNodes[] | cases("")] | sort_by(.d) | reverse | .[] | "\(.r)\t\(.d|floor)s\t\(.s)\t\(.n)" ' || true
           xcrun xcresulttool get test-results tests --path "$b" | jq -r '
             [.. | objects | select(.nodeType == "Failure Message")] | .[] | "FAILURE: \(.name)"' || true
+
+      # What shows which side stalled when a UI test waited in vain: per-step times in the result bundle, and the API's
+      # request log (timestamp, method, path, status, ms) from before and during the failure.
+      - name: Keep the result bundle and API log of a failed shard
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-failure-${{ strategy.job-index }}
+          path: |
+            ${{ runner.temp }}/ios.xcresult
+            ${{ runner.temp }}/ios-first.xcresult
+            ${{ runner.temp }}/ui-test-api.log
+          if-no-files-found: ignore
+          retention-days: 7
 
   # The required check. Passes when the iOS build did not matter, or when every shard passed.
   ios:
