@@ -113,7 +113,7 @@ feature's note. This file is only for what every iOS task needs.
   Before its tests each shard starts the built app once (`IOS_WARM_UP`; the first launch on a fresh simulator is what timed out), and a
   test that fails only with "Timed out while launching application via Xcode" is run once more (`IOS_LAUNCH_RETRIES`, `launch_timeout_failures`
   in `verify.sh`, pinned by `scripts/test/ios-launch-retry.test.sh`); any other failure, including a hang inside a test, is never retried.
-  The UI-test API logs one line per request (time, method, path, status, ms); CI sets `IOS_API_LOG` and uploads it with
+  The UI-test API logs one line per request (arrival and answer, with status and ms); CI sets `IOS_API_LOG` and uploads it with
   the result bundle (artifact `ios-failure-<n>`) when a shard fails: read it to tell a server stall from an app one (#171).
   It caches the API client generator build and DerivedData; a cache miss only makes it slower.
 
