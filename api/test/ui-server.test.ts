@@ -21,10 +21,12 @@ describe("UI-test API server", () => {
     const { app } = buildUiTestServer({ log: (line) => lines.push(line) });
     await app.request("/v1/plans/generate", { method: "POST", headers: json, body: JSON.stringify({ answers: {}, today: "x" }) });
     await app.request("/__test/stats");
-    expect(lines).toHaveLength(2);
-    // ISO time, method, path, status, milliseconds.
-    expect(lines[0]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z POST \/v1\/plans\/generate 4\d\d \d+ms$/);
-    expect(lines[1]).toMatch(/ GET \/__test\/stats 200 \d+ms$/);
+    // Each request logs when it arrives (so one that never answers still shows) and when it is answered.
+    expect(lines).toHaveLength(4);
+    expect(lines[0]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z #1 > POST \/v1\/plans\/generate$/);
+    expect(lines[1]).toMatch(/^\d{4}-\d\d-\d\dT[\d:.]+Z #1 < POST \/v1\/plans\/generate 4\d\d \d+ms$/);
+    expect(lines[2]).toMatch(/ #2 > GET \/__test\/stats$/);
+    expect(lines[3]).toMatch(/ #2 < GET \/__test\/stats 200 \d+ms$/);
   });
 
   it("gives a test the last sign-in code for an address, which signs in", async () => {

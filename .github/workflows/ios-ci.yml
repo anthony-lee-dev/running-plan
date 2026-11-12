@@ -146,7 +146,7 @@ jobs:
           IOS_WARM_UP: ${{ matrix.warm }}
           IOS_LAUNCH_RETRIES: "1"
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
-          # The UI-test API's request log (time, method, path, status, ms), uploaded with the result bundle on failure.
+          # The UI-test API's request log (arrival and answer, with status and ms), uploaded with the result bundle on failure.
           IOS_API_LOG: ${{ runner.temp }}/ui-test-api.log
           # A shard takes about 10 to 15 minutes and one test is stopped after 5 (IOS_TEST_ALLOWANCE), so a shard
           # past 25 is hung: verify stops it, restarts the simulator and runs it once more, inside the 45-minute limit.

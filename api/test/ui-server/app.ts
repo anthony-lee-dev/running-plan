@@ -13,7 +13,7 @@ export interface UiTestServer {
 }
 
 export interface UiTestServerOptions {
-  /** Called once per request, when it has been answered: `<ISO time> <METHOD> <path> <status> <ms>ms`. */
+  /** Called twice per request: `<ISO time> #<n> > <METHOD> <path>` on arrival, `<ISO time> #<n> < <METHOD> <path> <status> <ms>ms` when answered. */
   log?: (line: string) => void;
 }
 
@@ -34,14 +34,18 @@ export function buildUiTestServer(options: UiTestServerOptions = {}): UiTestServ
   const counts = new Map<string, number>();
   const app = new Hono();
 
-  // One line per request, answered or failed, so a UI test that waited on the server can be told from one that did not.
-  // CI keeps this log (verify.sh) when a shard fails.
+  // Two lines per request, `#<n> >` when it arrives and `#<n> <` when it is answered, so a request that never comes back
+  // still shows. CI keeps this log (verify.sh) when a shard fails.
   if (options.log) {
     const log = options.log;
+    let nextId = 0;
     app.use("*", async (c, next) => {
+      const id = ++nextId;
+      const what = `${c.req.method} ${new URL(c.req.url).pathname}`;
       const started = Date.now();
+      log(`${new Date(started).toISOString()} #${id} > ${what}`);
       await next();
-      log(`${new Date(started).toISOString()} ${c.req.method} ${new URL(c.req.url).pathname} ${c.res.status} ${Date.now() - started}ms`);
+      log(`${new Date().toISOString()} #${id} < ${what} ${c.res.status} ${Date.now() - started}ms`);
     });
   }
 
