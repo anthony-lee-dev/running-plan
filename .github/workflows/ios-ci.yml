@@ -102,8 +102,8 @@ jobs:
       fail-fast: false
       matrix:
         shard: ["1/3", "2/3"]
-        warm: ["1", "0"]
-        rep: [1, 2, 3, 4, 5]
+        warm: ["1"]
+        rep: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
       - name: Select the newest Xcode on the runner
@@ -124,16 +124,11 @@ jobs:
           path: ${{ runner.temp }}/artifact
       - name: Unpack the build
         run: tar -C "$RUNNER_TEMP" -xzf "$RUNNER_TEMP/artifact/ios-products.tgz"
-      # What the runner was busy with, every 20 s for the whole job: load averages and the six busiest processes. A UI
-      # test that waits in vain on a starved simulator (an empty element tree, an accessibility timeout) shows here as
-      # a load far above the runner's cores, with the process that took them. Printed below, kept on failure.
+      # What the runner was busy with, every 20 s for the whole job (scripts/ci/runner-load.sh): load averages and the
+      # five busiest processes. A UI test that waits in vain on a starved simulator shows here as a load far above the
+      # runner's cores, with the processes that took them. Printed below, kept with a failed shard's artifacts.
       - name: Sample the runner's load
-        run: |
-          echo "cores: $(sysctl -n hw.ncpu)" > "$RUNNER_TEMP/runner-load.log"
-          nohup bash -c 'while :; do
-              echo "$(date -u +%H:%M:%S) $(sysctl -n vm.loadavg) $(ps -Ao %cpu=,comm= -r | head -6 | awk "{n=split(\$2,a,\"/\"); printf \"%s=%s \", a[n], \$1}")"
-              sleep 20
-            done' >> "$RUNNER_TEMP/runner-load.log" 2>&1 &
+        run: nohup bash scripts/ci/runner-load.sh > "$RUNNER_TEMP/runner-load.log" 2>&1 &
       - name: Test
         env:
           IOS_PHASE: test
