@@ -13,7 +13,7 @@ export interface UiTestServer {
 }
 
 export interface UiTestServerOptions {
-  /** Called once per request, when it has been answered: `<ISO time> #<n> > <METHOD> <path>` on arrival, `<ISO time> #<n> < <METHOD> <path> <status> <ms>ms` when answered. */
+  /** Called twice per request: `<ISO time> #<n> > <METHOD> <path>` on arrival, `<ISO time> #<n> < <METHOD> <path> <status> <ms>ms` when answered. */
   log?: (line: string) => void;
 }
 
