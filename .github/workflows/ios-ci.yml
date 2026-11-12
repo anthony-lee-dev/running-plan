@@ -93,7 +93,7 @@ jobs:
   # The suite is split over three runners (see ios_shard_filters in scripts/verify.sh, which finds the UI test classes
   # itself, so a new class is never left out) and runs from the build above without building again.
   ios-test:
-    name: ios-test (${{ matrix.shard }}, settle ${{ matrix.settle }}, rep ${{ matrix.rep }})
+    name: ios-test (${{ matrix.shard }}, rep ${{ matrix.rep }})
     needs: [changes, build]
     if: needs.changes.outputs.run == 'true'
     runs-on: macos-latest
@@ -101,9 +101,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ["1/3"]
+        shard: ["1/3", "2/3", "3/3"]
         warm: ["1"]
-        settle: ["0", "480"]
         rep: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
@@ -141,8 +140,12 @@ jobs:
           # run again only the tests that failed with "Timed out while launching application via Xcode".
           IOS_WARM_UP: ${{ matrix.warm }}
           IOS_LAUNCH_RETRIES: "1"
-          # TEMP (#171): wait up to this many seconds for the runner's load to fall under IOS_SETTLE_LOAD before testing.
-          IOS_SETTLE_MAX: ${{ matrix.settle }}
+          # A simulator booted for the first time starts hundreds of its own services: on these 3-core runners the 1-minute
+          # load reaches 430 to 560 and UI tests started then run 2 to 3 times slower, some past their waits (issue #171).
+          # So wait for the load to fall under IOS_SETTLE_LOAD, at most IOS_SETTLE_MAX seconds (it takes about 6 to 8 minutes;
+          # tests ran cleanly at loads of 65 to 170 and failed at 190 and over).
+          IOS_SETTLE_MAX: "480"
+          IOS_SETTLE_LOAD: "150"
           IOS_RESULT_BUNDLE: ${{ runner.temp }}/ios.xcresult
           # The UI-test API's request log (arrival and answer, with status and ms), uploaded with the result bundle on failure.
           IOS_API_LOG: ${{ runner.temp }}/ui-test-api.log
