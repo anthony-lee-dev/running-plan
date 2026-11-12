@@ -124,6 +124,16 @@ jobs:
           path: ${{ runner.temp }}/artifact
       - name: Unpack the build
         run: tar -C "$RUNNER_TEMP" -xzf "$RUNNER_TEMP/artifact/ios-products.tgz"
+      # What the runner was busy with, every 20 s for the whole job: load averages and the six busiest processes. A UI
+      # test that waits in vain on a starved simulator (an empty element tree, an accessibility timeout) shows here as
+      # a load far above the runner's cores, with the process that took them. Printed below, kept on failure.
+      - name: Sample the runner's load
+        run: |
+          echo "cores: $(sysctl -n hw.ncpu)" > "$RUNNER_TEMP/runner-load.log"
+          nohup bash -c 'while :; do
+              echo "$(date -u +%H:%M:%S) $(sysctl -n vm.loadavg) $(ps -Ao %cpu=,comm= -r | head -6 | awk "{n=split(\$2,a,\"/\"); printf \"%s=%s \", a[n], \$1}")"
+              sleep 20
+            done' >> "$RUNNER_TEMP/runner-load.log" 2>&1 &
       - name: Test
         env:
           IOS_PHASE: test
@@ -161,10 +171,13 @@ jobs:
             [.testNodes[] | cases("")] | sort_by(.d) | reverse | .[] | "\(.r)\t\(.d|floor)s\t\(.s)\t\(.n)" ' || true
           xcrun xcresulttool get test-results tests --path "$b" | jq -r '
             [.. | objects | select(.nodeType == "Failure Message")] | .[] | "FAILURE: \(.name)"' || true
+      - name: Runner load during the job
+        if: always()
+        run: cat "$RUNNER_TEMP/runner-load.log" || true
 
-      # What shows which side stalled when a UI test waited in vain: per-step times in the result bundle, and the API's
-      # request log (timestamp, method, path, status, ms) from before and during the failure.
-      - name: Keep the result bundle and API log of a failed shard
+      # What shows which side stalled when a UI test waited in vain: per-step times in the result bundle, the API's
+      # request log (timestamp, method, path, status, ms) from before and during the failure, and the runner's load.
+      - name: Keep the result bundle, API log and load log of a failed shard
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -173,6 +186,7 @@ jobs:
             ${{ runner.temp }}/ios.xcresult
             ${{ runner.temp }}/ios-first.xcresult
             ${{ runner.temp }}/ui-test-api.log
+            ${{ runner.temp }}/runner-load.log
           if-no-files-found: ignore
           retention-days: 7
 
