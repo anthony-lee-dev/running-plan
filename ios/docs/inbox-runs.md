@@ -22,6 +22,28 @@ Part of the iOS guide (`ios/CLAUDE.md` has the index). Read this before changing
   `sourceLabel` cuts by UTF-16 units, the API's length: one over-long `sourceApp` makes it refuse the whole batch.
 - `generateProposals` is not called from the inbox: the review does it (see "Weekly review and proposals").
 
+## Automatic matching (issue #186)
+
+- The server decides (`autoMatches` in `api/src/domain/suggestions.ts`; rules in `api/docs/activities-matches.md`): a new
+  run is matched to its day's only planned session. The app only asks for it: `InboxServing.upload(_:autoMatch:)` sends
+  `autoMatch` for a Health import and never for a run typed in by hand (that one is entered in the inbox, where the
+  runner is already deciding; the inbox UI tests rely on it staying there). A service without the new method falls back
+  to the plain upload through the protocol extension, so older fakes still compile.
+- Always on, no setting (the human's call). Never across days and never to a skipped session: those runs wait in the
+  inbox and are matched by hand. Don't add a client-side rule; `InboxMatching.sameDay` is only the inbox card's fallback.
+- A match on upload changes a session the upload reply does not carry, so `InboxStore.importFromHealth` reloads the plan
+  when any `matchedSessionId` came back. `RootView` now imports (`openSessionPage()`: Health only when access was
+  already given, at most every five minutes, then the inbox and every run) on launch and whenever the app comes to
+  the front, so the run is matched without opening the inbox.
+- Next's "Done today" card (`MatchedToday`, pure; board `DK-NextMatched`) is worked out from state, not from the upload
+  reply: a session dated today, done, with a matched run in `allRuns`, whose check-in is not in `CheckInMemory`. So it
+  survives a relaunch, also shows after a match confirmed by hand whose check-in was skipped, and goes on its own when
+  the match is removed or the day ends. "Not this session" is the ordinary unmatch.
+- `CheckInMemory` (`UserDefaults`, last 200 session ids) is per device: the API has no "has an after check-in" on a
+  session. Tests give `InboxStore` their own suite; never the standard defaults.
+- UI test: `/__test/seed` with `runToday` seeds a Health run matched on upload (it adds an easy run today when the plan
+  has none), since Health cannot be driven in the simulator.
+
 ## Runs from any session (issue #105)
 
 - No API change: `PUT /v1/sessions/{id}/match` replaces the session's run (the old one returns to the inbox) and moves a

@@ -58,7 +58,7 @@ export function buildUiTestServer(options: UiTestServerOptions = {}): UiTestServ
   // Signs an account in and saves a 10K plan for it, the way the app's interview, preview and sign-in would, and hands
   // back the tokens. A UI test that is not about those flows launches the app signed in with them.
   app.post("/__test/seed", async (c) => {
-    const body = (await c.req.json().catch(() => null)) as { email?: unknown; today?: unknown } | null;
+    const body = (await c.req.json().catch(() => null)) as { email?: unknown; today?: unknown; runToday?: unknown } | null;
     if (typeof body?.email !== "string" || typeof body.today !== "string") return c.json({ error: "email and today are required" }, 400);
     const post = (path: string, payload: unknown, token?: string) =>
       api.fetch(
@@ -81,6 +81,21 @@ export function buildUiTestServer(options: UiTestServerOptions = {}): UiTestServ
     const sessions = draft.sessions.map((s) => ({ ...s, id: crypto.randomUUID() }));
     const created = await post("/v1/plans", { ...fields, id: planId, sessions }, tokens.accessToken);
     if (created.status !== 201) return c.json({ error: "save failed" }, 500);
+    if (body.runToday === true) {
+      // Issue #186: a run from Health for today, matched on upload. Today gets an easy run when the plan has none.
+      const runTypes = ["easy", "long", "intervals", "tempo"];
+      const todays = (sessions as { date?: string; type?: string }[]).filter((x) => x.date === body.today && runTypes.includes(x.type ?? ""));
+      if (todays.length > 1) return c.json({ error: "today has more than one run" }, 500);
+      if (todays.length === 0) {
+        const easy = { id: crypto.randomUUID(), date: body.today, type: "easy", steps: [{ kind: "work", goal: { type: "time", value: 1800 }, target: { type: "effort", effort: "easy" } }] };
+        const added = await post(`/v1/plans/${planId}/sessions`, easy, tokens.accessToken);
+        if (added.status !== 201) return c.json({ error: "adding today's session failed" }, 500);
+      }
+      const run = { source: "apple_health", externalId: crypto.randomUUID(), sourceApp: "Apple Watch", workoutType: "running", startedAt: `${body.today}T07:00:00Z`, localDate: body.today, durationSec: 1800, distanceM: 5000 };
+      const uploaded = await post("/v1/activities:batch", { activities: [run], autoMatch: true }, tokens.accessToken);
+      const result = uploaded.status === 200 ? ((await uploaded.json()) as { results: { matchedSessionId?: string }[] }).results[0] : undefined;
+      if (!result?.matchedSessionId) return c.json({ error: "the run was not matched" }, 500);
+    }
     return c.json({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, userId: tokens.userId, planId });
   });
   app.all("*", async (c) => {

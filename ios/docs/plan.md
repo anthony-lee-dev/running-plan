@@ -16,4 +16,8 @@ Part of the iOS guide (`ios/CLAUDE.md` has the index). Read this before changing
 - Screens: `NextModel`, `WeekModel` and `WholeModel` are pure (built from `PlanSchedule`) and pinned by unit tests;
   `NextView`, `WeekView` and `WholeView` only draw them. Snapshot tests render the views with `PlanFixture` (the boards'
   plan, today Wed 2026-10-28) through `BoardSnapshot`.
+- Next's title is today's date (`NextModel.title`, "Wednesday, Oct 28") with the plan position above it (`eyebrow`,
+  "Week 4 of 10 · Build", id `next.plan`). "Ready when you are" was removed at the human's request (issue #186); do
+  not bring a tagline back. With the "Done today" card showing, "Open workout" is an outline button (one filled
+  button on the screen).
 - VoiceOver reads paces in words through `PaceFormat.spoken` ("6 minutes 25 to 7 minutes 10 per kilometre").

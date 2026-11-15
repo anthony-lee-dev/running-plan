@@ -276,7 +276,7 @@ Illustrative REST-style routes. Final shapes are to be decided.
 ### 8.3 Importing activities
 
 - With the user’s permission, the app reads running, strength and other workout types (for custom sessions such as cycling) from Apple Health since the plan started and dedupes them (see the Garmin caveat below).
-- Each new activity gets a suggested match by date, type and duration, shown in an **import inbox** where the user confirms or reassigns it.
+- Each new activity gets a suggested match by date, type and duration. When nothing is left to decide (the only activity of its kind waiting that day, and exactly one planned session that fits), an import from Health is matched at once and shown as done, with one tap to undo. Everything else is shown in an **import inbox** where the user confirms or reassigns it. Nothing is matched across days or to a skipped session.
 - Handle extra runs, unmatched activities, two runs in one day and missed sessions. Strength and custom sessions match by date and duration only.
 - After a match is confirmed, show plan versus actual and prompt for an after-session check-in.
 - What reaches Health depends on what each tracking app writes there, so verify the data on real devices (Apple Watch, Garmin and Nike). Rep-level comparison may not be possible from imported summaries, so start with session-level comparison.

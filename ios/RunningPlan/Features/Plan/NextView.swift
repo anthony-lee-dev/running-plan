@@ -21,6 +21,13 @@ struct NextView: View {
     var onWatchTurnOn: () -> Void = {}
     var onWatchNotNow: () -> Void = {}
     var onWatchSettings: () -> Void = {}
+    /// Today's session with the run matched to it (DK-NextMatched, issue #186): the check-in and "Not this session".
+    var matched: MatchedToday?
+    var onFeel: (String) -> Void = { _ in }
+    var onNotThisSession: (String) -> Void = { _ in }
+    /// "Not this session" is on its way to the server.
+    var matchBusy = false
+    var matchError: String?
     /// A quick adjustment is on its way to the server.
     var busy = false
     var error: String?
@@ -33,7 +40,7 @@ struct NextView: View {
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Palette.muted.color)
                         .accessibilityIdentifier("next.plan")
-                    Text("Ready when you are")
+                    Text(model.title)
                         .font(.system(size: 30, weight: .bold))
                         .tracking(-0.6)
                         .foregroundStyle(Palette.ink.color)
@@ -41,8 +48,10 @@ struct NextView: View {
                         .accessibilityIdentifier(AppTab.next.screenIdentifier)
                 }
                 if let reviewCard { reviewNotice(reviewCard) }
+                if let matched { matchedCard(matched) }
                 if let focus = model.focus {
-                    FocusCard(focus: focus, busy: busy, error: error, onOpen: onOpen, onEasier: onEasier, onMove: onMove)
+                    // With the check-in on the screen, "Open workout" steps back to an outline (one filled button).
+                    FocusCard(focus: focus, quietOpen: matched != nil, busy: busy, error: error, onOpen: onOpen, onEasier: onEasier, onMove: onMove)
                 } else if let nothing = model.nothingToDo {
                     nothingCard(nothing)
                 }
@@ -78,6 +87,58 @@ struct NextView: View {
             .contentShape(Rectangle())
         }
         .accessibilityIdentifier("next.review")
+    }
+
+    /// DK-NextMatched: the run's numbers, "How did it feel?" (the after-run check-in) and "Not this session" (unmatch).
+    private func matchedCard(_ matched: MatchedToday) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 8) {
+                    Circle().fill(Palette.green.color).frame(width: 22, height: 22)
+                        .overlay(Image(systemName: "checkmark").font(.system(size: 11, weight: .heavy)).foregroundStyle(Palette.greenInk.color))
+                    Text("DONE TODAY").font(.system(size: 12, weight: .semibold)).tracking(0.96).foregroundStyle(Palette.greenSoftText.color)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(matched.title).font(.system(size: 24, weight: .bold)).tracking(-0.48).foregroundStyle(Palette.ink.color)
+                    Text(matched.detail).font(.system(size: 15)).monospacedDigit().foregroundStyle(Palette.greenSoftBody.color)
+                    Text(matched.source).font(.system(size: 13)).foregroundStyle(Palette.greenSoftText.color)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Done today: \(matched.title). \(PaceFormat.spoken(matched.detail)). \(matched.source)")
+            .accessibilityIdentifier("next.matched.summary")
+            Button { onFeel(matched.sessionId) } label: {
+                Text("How did it feel?")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 16))
+                    .foregroundStyle(.white)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("next.matched.feel")
+            if let matchError {
+                Text(matchError).font(.system(size: 13)).foregroundStyle(Palette.ink.color)
+                    .accessibilityIdentifier("next.matched.error")
+            }
+            Button { onNotThisSession(matched.sessionId) } label: {
+                Text("Not this session")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Palette.greenSoftText.color)
+                    .frame(maxWidth: .infinity, minHeight: Metrics.minTouchTarget)
+                    .contentShape(Rectangle())
+            }
+            .padding(.top, -6)
+            .padding(.bottom, -10)
+            .accessibilityIdentifier("next.matched.notThis")
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.greenSoft.color, in: RoundedRectangle(cornerRadius: 24))
+        .disabled(matchBusy)
+        .opacity(matchBusy ? 0.6 : 1)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("next.matched")
     }
 
     /// The one-time "Put your runs on your Apple Watch?" card, shown after the first plan is saved until answered.
@@ -213,6 +274,8 @@ struct NextView: View {
 
 private struct FocusCard: View {
     let focus: NextModel.Focus
+    /// Outline "Open workout" in place of the filled one.
+    var quietOpen = false
     let busy: Bool
     let error: String?
     let onOpen: (String) -> Void
@@ -226,8 +289,9 @@ private struct FocusCard: View {
                 Text("Open workout")
                     .font(.system(size: 17, weight: .semibold))
                     .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(Palette.accent.color, in: RoundedRectangle(cornerRadius: 16))
-                    .foregroundStyle(.white)
+                    .background(quietOpen ? Color.clear : Palette.accent.color, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Palette.goalTrack.color, lineWidth: quietOpen ? 1 : 0))
+                    .foregroundStyle(quietOpen ? Palette.ink.color : Color.white)
                     .contentShape(Rectangle())
             }
             .accessibilityIdentifier("next.open")

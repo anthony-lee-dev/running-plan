@@ -29,6 +29,8 @@ struct SessionScreen: View {
     @State private var editing = false
     @State private var pickingRun = false
     @State private var runDetails: String?
+    /// The after-run check-in opened from the matched run (issue #186).
+    @State private var afterCheckIn: InboxStore.CheckInTarget?
     @State private var moving = false
     @State private var showWatchSettings = false
     @State private var busy = false
@@ -42,6 +44,8 @@ struct SessionScreen: View {
             let today = PreviewViewModel.localToday()
             let schedule = PlanSchedule(plan: plan, today: today)
             let matched = inbox.flatMap { RunMatchModel.matchedRun(for: sessionId, in: $0.allRuns) }
+            let offersCheckIn = Self.offersCheckIn(session, matched: matched != nil, today: today, answered: inbox?.answered ?? [])
+            let askAfter: (() -> Void)? = offersCheckIn ? { afterCheckIn = inbox?.checkInTarget(sessionId: sessionId) } : nil
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
                 busy: busy || inbox?.busy == true, error: error ?? inbox?.error, checkedIn: checkedIn,
@@ -58,8 +62,15 @@ struct SessionScreen: View {
                 canMatchRun: inbox?.allRunsLoaded == true && matched == nil && RunMatchModel.canMatch(session, today: today),
                 onPickRun: { pickingRun = true },
                 onUnmatchRun: { if let inbox { Task { await inbox.unmatch(sessionId: sessionId) } } },
-                onRunDetails: { runDetails = matched?.value2.id }
+                onRunDetails: { runDetails = matched?.value2.id },
+                onAfterCheckIn: askAfter
             )
+            .fullScreenCover(item: $afterCheckIn) { target in
+                CheckInScreen(plans: plans, target: target, backTitle: "Session", onClose: { saved in
+                    if saved { inbox?.markCheckedIn(target.id) }
+                    afterCheckIn = nil
+                })
+            }
             .fullScreenCover(isPresented: Binding(get: { runDetails != nil }, set: { if !$0 { runDetails = nil } })) {
                 if let inbox, let id = runDetails {
                     RunDetailsScreen(inbox: inbox, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), summaries: APIRunSummaryService(client: APIConfiguration.liveSignedInClient()), onClose: { runDetails = nil })
@@ -102,6 +113,17 @@ struct SessionScreen: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Palette.bg.color.ignoresSafeArea())
         }
+    }
+
+    /// How far back the check-in is still offered on a session's page.
+    static let checkInDays = 7
+
+    /// "How did it feel?" on the session page: a done session with its run, from the last week, not yet answered on
+    /// this device. Older sessions are left alone: an answer that late says little, and one may exist from before.
+    static func offersCheckIn(_ session: Components.Schemas.Session, matched: Bool, today: String, answered: Set<String>) -> Bool {
+        guard matched, session.value2.status == .done, !answered.contains(session.value1.id) else { return false }
+        let age = PlanPreview.dayNumber(today) - PlanPreview.dayNumber(session.value2.date)
+        return age >= 0 && age <= checkInDays
     }
 
     private func adjust(_ adjustment: QuickAdjustment, _ session: Components.Schemas.Session) {

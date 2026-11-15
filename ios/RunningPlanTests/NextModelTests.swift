@@ -45,7 +45,8 @@ struct NextModelTests {
 
     @Test func theBoardsDay() throws {
         let m = try model()
-        #expect(m.eyebrow == "Wednesday, Oct 28 · Week 4 of 10 · Build")
+        #expect(m.title == "Wednesday, Oct 28")
+        #expect(m.eyebrow == "Week 4 of 10 · Build")
         #expect(m.focus?.label == "TODAY")
         #expect(m.focus?.title == "Intervals: 5 × 600 m")
         #expect(m.focus?.effort == "Hard but controlled")
@@ -91,14 +92,16 @@ struct NextModelTests {
 
     @Test func beforeTheStartTheFirstSessionIsShown() throws {
         let m = try model(today: "2026-10-01")
-        #expect(m.eyebrow == "Thursday, Oct 1 · Starts Monday, Oct 5")
+        #expect(m.title == "Thursday, Oct 1")
+        #expect(m.eyebrow == "Starts Monday, Oct 5")
         #expect(m.focus?.label == "FIRST SESSION · MONDAY, OCT 5")
         #expect(m.week.isEmpty)
     }
 
     @Test func afterTheEndThereIsNothingToDo() throws {
         let m = try model(today: "2026-12-20")
-        #expect(m.eyebrow == "Sunday, Dec 20 · Plan finished")
+        #expect(m.title == "Sunday, Dec 20")
+        #expect(m.eyebrow == "Plan finished")
         #expect(m.focus == nil)
         #expect(m.week.isEmpty)
         #expect(m.nothingToDo == .finished)
@@ -107,7 +110,7 @@ struct NextModelTests {
     @Test func afterTheLastSessionButBeforeTheEndThePlanIsNotCalledFinished() throws {
         // The last session is Sat Dec 12; the plan ends on race day, Sun Dec 13.
         let m = try model(today: "2026-12-13")
-        #expect(m.eyebrow.hasSuffix("Week 10 of 10 · Taper"))
+        #expect(m.eyebrow == "Week 10 of 10 · Taper")
         #expect(m.focus == nil)
         #expect(m.nothingToDo == .noMoreSessions)
     }

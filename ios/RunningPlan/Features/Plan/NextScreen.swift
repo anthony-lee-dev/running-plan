@@ -16,6 +16,13 @@ struct NextScreen: View {
     var onReview: () -> Void = {}
     /// Where the one-time watch card and Watch settings come from; nil in previews and tests.
     var watchSync: WatchSyncModel?
+    /// The runs behind the "Done today" card and its check-in (issue #186); nil in previews and tests.
+    var inbox: InboxStore?
+    /// The after-run check-in opened from the card.
+    @State private var checkIn: InboxStore.CheckInTarget?
+    /// "Not this session" is on its way to the server, and what went wrong if it failed.
+    @State private var unmatching = false
+    @State private var matchError: String?
     @State private var showWatchSettings = false
     @State private var busy = false
     @State private var error: String?
@@ -34,10 +41,20 @@ struct NextScreen: View {
                     },
                     onWatchNotNow: { Task { await watchSync?.markAsked() } },
                     onWatchSettings: { showWatchSettings = true },
+                    matched: inbox?.matchedToday(today: PreviewViewModel.localToday()),
+                    onFeel: { id in checkIn = inbox?.checkInTarget(sessionId: id) },
+                    onNotThisSession: notThisSession,
+                    matchBusy: unmatching, matchError: matchError,
                     busy: busy, error: error
                 )
                 .sheet(isPresented: $showWatchSettings) {
                     if let watchSync { WatchSettingsSheet(sync: watchSync, plans: plans, onClose: { showWatchSettings = false }) }
+                }
+                .fullScreenCover(item: $checkIn) { target in
+                    CheckInScreen(plans: plans, target: target, backTitle: "Next", onClose: { saved in
+                        if saved { inbox?.markCheckedIn(target.id) }
+                        checkIn = nil
+                    })
                 }
             case .loading:
                 centred { ProgressView().tint(Palette.accentText.color).accessibilityLabel("Loading your plan") }
@@ -71,6 +88,19 @@ struct NextScreen: View {
         }
         .toolbarBackground(Palette.tabBar.color, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+    }
+
+    /// Not this session: takes the run off the session. The run returns to the inbox and the session to planned, so
+    /// the card goes on its own.
+    private func notThisSession(_ id: String) {
+        guard let inbox, !unmatching else { return }
+        unmatching = true
+        matchError = nil
+        Task {
+            await inbox.unmatch(sessionId: id)
+            matchError = inbox.error
+            unmatching = false
+        }
     }
 
     /// Make it easier: the Easier quick adjustment, straight to the API.

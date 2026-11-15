@@ -18,5 +18,19 @@ struct NextSnapshotTests {
         let wrong = BoardSnapshot.difference(try render(today: "2026-10-01", board: board), board)
         #expect(right < wrong, "the board's day (\(right)) should be nearer than a plan not started yet (\(wrong))")
     }
-
+    /// DK-NextMatched (issue #186): the "Done today" card over the next session.
+    @Test func theMatchedDayIsNearerItsBoardThanTheSameDayWithoutTheCard() throws {
+        let board = try BoardSnapshot.board("DK-NextMatched")
+        var plan = try PlanFixture.detail()
+        let index = try #require(plan.value2.sessions.firstIndex { $0.value2.date == PlanFixture.today && $0.value2._type == .intervals })
+        plan.value2.sessions[index].value2.status = .done
+        let run = try activityFixture(
+            id: "a1", date: PlanFixture.today, durationSec: 2592, distanceM: 6800, matchedSession: plan.value2.sessions[index].value1.id, disposition: "matched"
+        )
+        let model = NextModel(schedule: PlanSchedule(plan: plan, today: PlanFixture.today))
+        let card = try #require(MatchedToday(sessions: plan.value2.sessions, runs: [run], today: PlanFixture.today, answered: []))
+        let with = BoardSnapshot.difference(try BoardSnapshot.render(NextView(model: model, onSetGoal: {}, matched: card), like: board), board)
+        let without = BoardSnapshot.difference(try BoardSnapshot.render(NextView(model: model, onSetGoal: {}), like: board), board)
+        #expect(with < without, "with the card (\(with)) should be nearer the board than without it (\(without))")
+    }
 }

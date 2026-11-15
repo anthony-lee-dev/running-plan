@@ -154,4 +154,32 @@ final class InboxUITests: XCTestCase {
         pick.tap()
         XCTAssertTrue(app.buttons["rundetails.change"].waitForExistence(timeout: 10), app.debugDescription)
     }
+    /// Issue #186: a run from Health that the server matched on upload shows on Next as done, with the check-in one
+    /// tap away, and "Not this session" sends it back to the inbox.
+    @MainActor
+    func testARunMatchedOnUploadShowsDoneOnNextAndCanBeTakenOff() async throws {
+        let api = try LocalAPI.url()
+        let app = try await LocalAPI.signedInApp(api, runToday: true)
+
+        let feel = app.buttons["next.matched.feel"]
+        XCTAssertTrue(feel.waitForExistence(timeout: 20), "Next shows the matched run: \(app.debugDescription)")
+        let notThis = app.buttons["next.matched.notThis"]
+        XCTAssertTrue(notThis.exists, app.debugDescription)
+
+        feel.tap()
+        XCTAssertTrue(app.staticTexts["screen.checkin"].waitForExistence(timeout: 10), app.debugDescription)
+        XCTAssertTrue(app.buttons["Back to Next"].exists, "The check-in goes back to Next: \(app.debugDescription)")
+        app.buttons["checkin.skip"].tap()
+        XCTAssertTrue(notThis.waitForExistence(timeout: 10), "Skipping keeps the card: \(app.debugDescription)")
+
+        let unmatchedBefore = try await LocalAPI.requestCount(api, "DELETE /v1/sessions/*")
+        notThis.tap()
+        XCTAssertTrue(feel.waitForNonExistence(timeout: 15), "The card goes with the match: \(app.debugDescription)")
+        let unmatched = try await LocalAPI.requestCount(api, "DELETE /v1/sessions/*")
+        XCTAssertEqual(unmatched, unmatchedBefore + 1, "The unmatch went to the API once")
+
+        app.buttons["next.inbox"].tap()
+        XCTAssertTrue(app.staticTexts["screen.inbox"].waitForExistence(timeout: 15), app.debugDescription)
+        XCTAssertTrue(app.buttons["inbox.confirm"].waitForExistence(timeout: 10), "The run waits in the inbox: \(app.debugDescription)")
+    }
 }

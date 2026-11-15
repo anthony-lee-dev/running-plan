@@ -138,6 +138,16 @@ private actor FakeService: InboxServing {
         return [:]
     }
 
+    /// Issue #186: what the server matched on upload, by activity id; and whether each upload asked for it.
+    var matchedOnUpload: [String: String] = [:]
+    var askedToMatch: [Bool] = []
+    func setMatchedOnUpload(_ matched: [String: String]) { matchedOnUpload = matched }
+
+    func upload(_ inputs: [Components.Schemas.ActivityInput], autoMatch: Bool) async throws -> UploadOutcome {
+        askedToMatch.append(autoMatch)
+        return UploadOutcome(suggested: try await upload(inputs), matched: autoMatch ? matchedOnUpload : [:])
+    }
+
     func confirm(sessionId: String, activityId: String) async throws -> Components.Schemas.MatchWriteResult {
         if let failure { throw failure }
         confirmed.append((sessionId, activityId))
@@ -207,6 +217,69 @@ struct InboxStoreTests {
         let service = FakeService(waiting: waiting, session: monday)
         let store = InboxStore(service: service, health: health, plans: plans, now: { Date(timeIntervalSince1970: 1_793_080_000) }, zone: { TimeZone(identifier: "UTC")! })
         return (store, service, plans, monday.value1.id)
+    }
+
+    // Issue #186: a Health import asks the server to match; a run typed in by hand does not.
+    @Test func aHealthImportAsksTheServerToMatchAndAManualRunDoesNot() async throws {
+        let (store, service, _, _) = try await make(health: FakeHealth(asks: false, found: [workout("hk-1")]))
+        await store.load()
+        #expect(await service.askedToMatch == [true])
+        #expect(await store.addManual(id: "m1", localDate: "2026-10-26", distanceKm: 5, minutes: 30))
+        #expect(await service.askedToMatch == [true])
+        #expect(await service.uploads.count == 2)
+    }
+
+    // The upload reply names only the session, so the plan is read again. Seen here by marking Monday skipped locally:
+    // the fake loader still holds it planned, and that is what shows after the import.
+    @Test func aRunMatchedOnImportReloadsThePlan() async throws {
+        let (store, service, plans, mondayId) = try await make(health: FakeHealth(asks: false, found: [workout("hk-1")]))
+        var monday = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
+        monday.value2.status = .skipped
+        plans.replace(session: monday, planContentRevision: 5, warnings: [])
+        #expect(plans.plan?.value2.sessions.first { $0.value1.id == mondayId }?.value2.status == .skipped)
+
+        await service.setMatchedOnUpload(["a1": mondayId])
+        await store.load()
+
+        #expect(plans.plan?.value2.sessions.first { $0.value1.id == mondayId }?.value2.status == .planned, "The plan was read again")
+    }
+
+    @Test func anImportThatMatchedNothingLeavesThePlanAlone() async throws {
+        let (store, _, plans, mondayId) = try await make(health: FakeHealth(asks: false, found: [workout("hk-1")]))
+        var monday = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
+        monday.value2.status = .skipped
+        plans.replace(session: monday, planContentRevision: 5, warnings: [])
+        await store.load()
+        #expect(plans.plan?.value2.sessions.first { $0.value1.id == mondayId }?.value2.status == .skipped)
+    }
+
+    @Test func theDoneTodayCardShowsForAMatchedRunUntilItsCheckInIsSaved() async throws {
+        let name = "InboxStoreTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+        var plan = try PlanFixture.detail()
+        let index = try #require(plan.value2.sessions.firstIndex { $0.value2.date == PlanFixture.today && $0.value2._type == .intervals })
+        plan.value2.sessions[index].value2.status = .done
+        let session = plan.value2.sessions[index]
+        let plans = PlanStore(loader: FakeLoader(plan: plan), account: SignedIn(), writer: NoWrites())
+        await plans.load()
+        let service = FakeService(waiting: [], session: session)
+        await service.setEverything([try activityFixture(id: "a1", date: PlanFixture.today, matchedSession: session.value1.id, disposition: "matched")])
+        let store = InboxStore(service: service, health: FakeHealth(), plans: plans, memory: CheckInMemory(defaults: defaults))
+
+        #expect(store.matchedToday(today: PlanFixture.today) == nil, "Not before the runs are read")
+        await store.loadAllRuns()
+        let card = try #require(store.matchedToday(today: PlanFixture.today))
+        #expect(card.sessionId == session.value1.id)
+        let target = try #require(store.checkInTarget(sessionId: session.value1.id))
+        #expect(target.activity.externalId == "hk-a1")
+
+        store.markCheckedIn(session.value1.id)
+        #expect(store.matchedToday(today: PlanFixture.today) == nil)
+        // Remembered on the device: a new store (a relaunch) does not ask again.
+        let again = InboxStore(service: service, health: FakeHealth(), plans: plans, memory: CheckInMemory(defaults: defaults))
+        await again.loadAllRuns()
+        #expect(again.matchedToday(today: PlanFixture.today) == nil)
     }
 
     @Test func confirmingAMatchMarksTheSessionDoneAndEmptiesTheInbox() async throws {

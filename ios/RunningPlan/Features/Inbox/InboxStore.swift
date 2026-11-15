@@ -30,20 +30,50 @@ final class InboxStore {
         var id: String { session.value1.id }
     }
 
+    /// Sessions whose after-run check-in was saved on this device (issue #186): "How did it feel?" is not offered again.
+    private(set) var answered: Set<String> = []
+
     private let service: InboxServing
     private let health: HealthImporting
     private let plans: PlanStore
     private let now: () -> Date
     private let zone: () -> TimeZone
+    private let memory: CheckInMemory
+    /// Set while a Health import runs, when the server matched one of its runs: the plan is read again afterwards.
+    private var importMatched = false
     /// How far back a Health import looks.
     static let lookbackDays = 30
 
-    init(service: InboxServing, health: HealthImporting, plans: PlanStore, now: @escaping () -> Date = Date.init, zone: @escaping () -> TimeZone = { .current }) {
+    init(
+        service: InboxServing, health: HealthImporting, plans: PlanStore, now: @escaping () -> Date = Date.init, zone: @escaping () -> TimeZone = { .current },
+        memory: CheckInMemory = CheckInMemory()
+    ) {
         self.service = service
         self.health = health
         self.plans = plans
         self.now = now
         self.zone = zone
+        self.memory = memory
+        answered = memory.answered
+    }
+
+    /// The "Done today" card on Next: today's done session with its matched run, until its check-in is saved.
+    func matchedToday(today: String) -> MatchedToday? {
+        guard allRunsLoaded else { return nil }
+        return MatchedToday(sessions: plans.plan?.value2.sessions ?? [], runs: allRuns, today: today, answered: answered)
+    }
+
+    /// The session and its matched run, for the check-in opened from Next or the session page.
+    func checkInTarget(sessionId: String) -> CheckInTarget? {
+        guard let session = plans.plan?.value2.sessions.first(where: { $0.value1.id == sessionId && $0.value1.deletedAt == nil }),
+              let run = RunMatchModel.matchedRun(for: sessionId, in: allRuns) else { return nil }
+        return CheckInTarget(session: session, activity: run.value1)
+    }
+
+    /// The after-run check-in of this session was saved.
+    func markCheckedIn(_ sessionId: String) {
+        memory.add(sessionId)
+        answered.insert(sessionId)
     }
 
     var healthAvailable: Bool { health.isAvailable }
@@ -127,13 +157,25 @@ final class InboxStore {
         if error == nil { error = importError }
     }
 
+    /// Uploads what Health has, asking the server to match a new run to its day's only planned session (issue #186).
+    /// When it matched one, the plan is read again so the session shows done everywhere.
     private func importFromHealth() async {
+        importMatched = false
         await run {
             let since = Calendar.current.date(byAdding: .day, value: -Self.lookbackDays, to: self.now()) ?? self.now()
             for batch in HealthWorkoutMapper.batches(try await self.health.workouts(since: since)) {
-                self.suggestions.merge(try await self.service.upload(batch)) { _, new in new }
+                let outcome = try await self.service.upload(batch, autoMatch: true)
+                self.suggestions.merge(outcome.suggested) { _, new in new }
+                if !outcome.matched.isEmpty { self.importMatched = true }
             }
             self.lastSynced = self.now()
+        }
+        if importMatched {
+            importMatched = false
+            // Keep the import's own error, if any, over the reload's.
+            let importError = error
+            await reloadPlan()
+            if error == nil { error = importError }
         }
     }
 
@@ -178,6 +220,7 @@ final class InboxStore {
     /// The check-in was skipped, or saved: then Undo goes, since unmatching would leave the stored check-in feeding
     /// proposals for a session that is no longer done.
     func finishCheckIn(saved: Bool = false) {
+        if saved, let done = pendingCheckIn { markCheckedIn(done.id) }
         pendingCheckIn = nil
         if saved { lastConfirmed = nil }
     }
