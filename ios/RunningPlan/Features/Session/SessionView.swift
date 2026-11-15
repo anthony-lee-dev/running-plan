@@ -24,6 +24,8 @@ struct SessionView: View {
     var onPickRun: () -> Void = {}
     var onUnmatchRun: () -> Void = {}
     var onRunDetails: () -> Void = {}
+    /// Offer "How did it feel?" on the matched run (issue #186): nil when there is nothing to ask.
+    var onAfterCheckIn: (() -> Void)?
 
     @State private var ticked: Set<Int> = []
     @State private var copied = false
@@ -78,6 +80,9 @@ struct SessionView: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
+                if let onAfterCheckIn {
+                    SecondaryButton(title: "How did it feel?", action: onAfterCheckIn).accessibilityIdentifier("session.run.checkin")
+                }
                 SecondaryButton(title: "Run details", action: onRunDetails).accessibilityIdentifier("session.run.details")
                 HStack(spacing: 10) {
                     SecondaryButton(title: "Change", action: onPickRun).accessibilityIdentifier("session.run.change")

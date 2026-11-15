@@ -79,9 +79,12 @@ struct RootView: View {
         .sheet(isPresented: Binding(get: { signIn.isPresented }, set: { if !$0 && signIn.isPresented { signIn.cancelSignIn() } })) {
             SignInView(model: signIn, purpose: .signIn)
         }
-        .task(id: "\(plans.plan?.value1.value1.id ?? "") \(accountChanges.count)") {
-            // The count on Next's inbox card; the inbox screen shows any error itself.
-            if plans.plan != nil { await inbox.refresh() }
+        .task(id: inboxKey) {
+            // On launch, on a new plan or account and whenever the app comes to the front: read Health (only when access
+            // was already given, and not again within five minutes), so a run just finished is matched to its session
+            // without a tap (issue #186). Then the count on Next's inbox card and the runs behind its "Done today" card.
+            guard scenePhase == .active, plans.plan != nil else { return }
+            await inbox.openSessionPage()
         }
         .task(id: reviewKey) {
             // Which review Next offers; the server decides when one is due. Not while the app is away.
@@ -156,6 +159,11 @@ extension RootView {
         sheet = nil
     }
 
+    /// Changes with the plan, the account, the local day and the app coming to the front.
+    var inboxKey: String {
+        "\(plans.plan?.value1.value1.id ?? "") \(accountChanges.count) \(scenePhase == .active ? "active" : "away") \(PreviewViewModel.localToday())"
+    }
+
     /// Changes when the app comes to the front, the plan loads or empties, or the sessions kept on the watch change,
     /// so the schedule is refreshed then and not on every edit.
     var watchKey: String {
@@ -188,7 +196,8 @@ extension RootView {
             NextScreen(
                 plans: plans, progress: progress, onSetGoal: { showOnboarding = true },
                 onOpen: { openSession = .open(sessionId: $0) }, onMove: { sheet = .move(sessionId: $0) },
-                inboxCount: inbox.count, onInbox: { showInbox = true }, onRuns: { showRuns = true }, review: reviews, onReview: { showReview = true }, watchSync: watchSync
+                inboxCount: inbox.count, onInbox: { showInbox = true }, onRuns: { showRuns = true }, review: reviews, onReview: { showReview = true }, watchSync: watchSync,
+                inbox: inbox
             )
         case .plan:
             PlanScreen(

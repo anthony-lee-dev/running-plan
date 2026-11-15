@@ -1212,6 +1212,11 @@ export interface components {
         };
         ActivityBatchRequest: {
             activities: components["schemas"]["ActivityInput"][];
+            /**
+             * @description Confirm the suggested match at once when there is nothing to decide: a run or strength workout created by this upload, the only one of its kind waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
+             * @default false
+             */
+            autoMatch: boolean;
         };
         ActivityBatchResponse: {
             results: {
@@ -1225,9 +1230,14 @@ export interface components {
                 activityId: string;
                 /**
                  * Format: uuid
-                 * @description Suggested match by local date, type and duration.
+                 * @description Suggested match by local date, type and duration. Left out for an activity that was matched.
                  */
                 suggestedSessionId?: string;
+                /**
+                 * Format: uuid
+                 * @description Set when the request asked for `autoMatch` and this activity was matched: the match is confirmed, the session is done and the activity has left the inbox.
+                 */
+                matchedSessionId?: string;
             }[];
         };
         ActivityList: {

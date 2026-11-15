@@ -56,6 +56,21 @@ describe("UI-test API server", () => {
     expect(refreshed.status).toBe(200);
   });
 
+  it("seeds a run matched to today's session when asked (issue #186), whatever day the plan starts on", async () => {
+    const { app } = buildUiTestServer();
+    for (const [i, today] of ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08"].entries()) {
+      const res = await app.request("/__test/seed", { method: "POST", headers: json, body: JSON.stringify({ email: `run${i}@example.com`, today, runToday: true }) });
+      expect(res.status, await res.clone().text()).toBe(200);
+      const seed = (await res.json()) as { accessToken: string; planId: string };
+      const auth = { authorization: `Bearer ${seed.accessToken}` };
+      const runs = ((await (await app.request("/v1/activities", { headers: auth })).json()) as { activities: { localDate: string; disposition: string; match?: { sessionId: string } }[] }).activities;
+      expect(runs).toHaveLength(1);
+      expect(runs[0]).toMatchObject({ localDate: today, disposition: "matched" });
+      const plan = (await (await app.request(`/v1/plans/${seed.planId}`, { headers: auth })).json()) as { sessions: { id: string; date: string; status: string }[] };
+      expect(plan.sessions.find((x) => x.id === runs[0]!.match!.sessionId)).toMatchObject({ date: today, status: "done" });
+    }
+  });
+
   it("refuses a seed request without a valid body", async () => {
     const { app } = buildUiTestServer();
     expect((await app.request("/__test/seed", { method: "POST", headers: json, body: "{}" })).status).toBe(400);

@@ -4,9 +4,10 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { isLocalDate, parseActivityBatch, planImport, type StoredActivity } from "../domain/activities";
 import type { MatchRow } from "../domain/matches";
-import { suggestSessions } from "../domain/suggestions";
-import type { Deps } from "../ports";
+import { autoMatches, suggestSessions } from "../domain/suggestions";
+import { MatchConflictError, type Deps } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
+import { changeMatch } from "./match-change";
 import { problem } from "./problem";
 
 const MAX_BODY_BYTES = 262_144;
@@ -49,6 +50,14 @@ export function activityRoutes(deps: Deps) {
       } catch {
         return problem(c, 400, "bad_request", "Send JSON");
       }
+      // `autoMatch` is the request's own switch; the rest of the body is the batch.
+      let autoMatch = false;
+      if (body !== null && typeof body === "object" && !Array.isArray(body) && "autoMatch" in body) {
+        const { autoMatch: asked, ...rest } = body as Record<string, unknown>;
+        if (typeof asked !== "boolean") return problem(c, 400, "validation_failed", "Some fields are invalid", {}, { errors: [{ path: "/autoMatch", message: "Use true or false" }] });
+        autoMatch = asked;
+        body = rest;
+      }
       const parsed = parseActivityBatch(body);
       if (!parsed.ok) return problem(c, 400, "validation_failed", "Some fields are invalid", {}, { errors: parsed.errors });
 
@@ -66,12 +75,38 @@ export function activityRoutes(deps: Deps) {
         return a && a.disposition === "inbox" ? [a] : [];
       });
       const suggested = new Map<string, string>();
+      const matched = new Map<string, string>();
       if (waiting.length > 0) {
         const waitingDates = waiting.map((a) => a.localDate).sort();
         const sessions = await deps.matches.suggestionCandidates(userId, waitingDates[0]!, waitingDates.at(-1)!);
-        for (const [activityId, sessionId] of suggestSessions(waiting, sessions)) suggested.set(activityId, sessionId);
+        if (autoMatch) {
+          // Only what this upload created: a run the runner took off its session is sent again on the next import
+          // and must stay where they put it. Everything waiting on those days counts towards "the only one".
+          const createdIds = new Set(plan.creates.map((a) => a.id));
+          const allWaiting = [...finals.values()].filter((a) => a.disposition === "inbox");
+          for (const [activityId, sessionId] of autoMatches(waiting.filter((a) => createdIds.has(a.id)), allWaiting, sessions)) {
+            try {
+              const effects = await changeMatch(deps, userId, { sessionId, activityId }, { kind: "put", sessionId, activityId, status: "confirmed" }, (s) =>
+                // Still planned and free: the session may have been matched, skipped or deleted since the candidates were read.
+                s.sessions.some((x) => x.id === sessionId && x.status === "planned") && s.activities.some((x) => x.id === activityId) && s.matches.length === 0,
+                1, // one try: a conflict leaves the run in the inbox, and ten matches stay at two queries each
+              );
+              if (effects?.putMatch) matched.set(activityId, sessionId);
+            } catch (error) {
+              // The state moved under us: leave this one in the inbox with its suggestion.
+              if (!(error instanceof MatchConflictError)) throw error;
+            }
+          }
+        }
+        const left = waiting.filter((a) => !matched.has(a.id));
+        const open = sessions.filter((s) => ![...matched.values()].includes(s.id));
+        for (const [activityId, sessionId] of suggestSessions(left, open)) suggested.set(activityId, sessionId);
       }
-      return c.json({ results: plan.results.map((r) => (suggested.has(r.activityId) ? { ...r, suggestedSessionId: suggested.get(r.activityId)! } : r)) });
+      return c.json({
+        results: plan.results.map((r) =>
+          matched.has(r.activityId) ? { ...r, matchedSessionId: matched.get(r.activityId)! } : suggested.has(r.activityId) ? { ...r, suggestedSessionId: suggested.get(r.activityId)! } : r,
+        ),
+      });
     },
   );
 

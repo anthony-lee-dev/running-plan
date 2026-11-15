@@ -4445,15 +4445,25 @@ public enum Components {
         public struct ActivityBatchRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ActivityBatchRequest/activities`.
             public var activities: [Components.Schemas.ActivityInput]
+            /// Confirm the suggested match at once when there is nothing to decide: a run or strength workout created by this upload, the only one of its kind waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityBatchRequest/autoMatch`.
+            public var autoMatch: Swift.Bool?
             /// Creates a new `ActivityBatchRequest`.
             ///
             /// - Parameters:
             ///   - activities:
-            public init(activities: [Components.Schemas.ActivityInput]) {
+            ///   - autoMatch: Confirm the suggested match at once when there is nothing to decide: a run or strength workout created by this upload, the only one of its kind waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
+            public init(
+                activities: [Components.Schemas.ActivityInput],
+                autoMatch: Swift.Bool? = nil
+            ) {
                 self.activities = activities
+                self.autoMatch = autoMatch
             }
             public enum CodingKeys: String, CodingKey {
                 case activities
+                case autoMatch
             }
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -4461,8 +4471,13 @@ public enum Components {
                     [Components.Schemas.ActivityInput].self,
                     forKey: .activities
                 )
+                self.autoMatch = try container.decodeIfPresent(
+                    Swift.Bool.self,
+                    forKey: .autoMatch
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "activities"
+                    "activities",
+                    "autoMatch"
                 ])
             }
         }
@@ -4486,33 +4501,41 @@ public enum Components {
                 public var status: Components.Schemas.ActivityBatchResponse.resultsPayloadPayload.statusPayload
                 /// - Remark: Generated from `#/components/schemas/ActivityBatchResponse/resultsPayload/activityId`.
                 public var activityId: Swift.String
-                /// Suggested match by local date, type and duration.
+                /// Suggested match by local date, type and duration. Left out for an activity that was matched.
                 ///
                 /// - Remark: Generated from `#/components/schemas/ActivityBatchResponse/resultsPayload/suggestedSessionId`.
                 public var suggestedSessionId: Swift.String?
+                /// Set when the request asked for `autoMatch` and this activity was matched: the match is confirmed, the session is done and the activity has left the inbox.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ActivityBatchResponse/resultsPayload/matchedSessionId`.
+                public var matchedSessionId: Swift.String?
                 /// Creates a new `resultsPayloadPayload`.
                 ///
                 /// - Parameters:
                 ///   - externalId:
                 ///   - status: `updated` when a re-written record matched an existing activity.
                 ///   - activityId:
-                ///   - suggestedSessionId: Suggested match by local date, type and duration.
+                ///   - suggestedSessionId: Suggested match by local date, type and duration. Left out for an activity that was matched.
+                ///   - matchedSessionId: Set when the request asked for `autoMatch` and this activity was matched: the match is confirmed, the session is done and the activity has left the inbox.
                 public init(
                     externalId: Swift.String,
                     status: Components.Schemas.ActivityBatchResponse.resultsPayloadPayload.statusPayload,
                     activityId: Swift.String,
-                    suggestedSessionId: Swift.String? = nil
+                    suggestedSessionId: Swift.String? = nil,
+                    matchedSessionId: Swift.String? = nil
                 ) {
                     self.externalId = externalId
                     self.status = status
                     self.activityId = activityId
                     self.suggestedSessionId = suggestedSessionId
+                    self.matchedSessionId = matchedSessionId
                 }
                 public enum CodingKeys: String, CodingKey {
                     case externalId
                     case status
                     case activityId
                     case suggestedSessionId
+                    case matchedSessionId
                 }
             }
             /// - Remark: Generated from `#/components/schemas/ActivityBatchResponse/results`.

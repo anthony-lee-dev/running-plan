@@ -29,6 +29,8 @@ struct SessionScreen: View {
     @State private var editing = false
     @State private var pickingRun = false
     @State private var runDetails: String?
+    /// The after-run check-in opened from the matched run (issue #186).
+    @State private var afterCheckIn: InboxStore.CheckInTarget?
     @State private var moving = false
     @State private var showWatchSettings = false
     @State private var busy = false
@@ -42,6 +44,8 @@ struct SessionScreen: View {
             let today = PreviewViewModel.localToday()
             let schedule = PlanSchedule(plan: plan, today: today)
             let matched = inbox.flatMap { RunMatchModel.matchedRun(for: sessionId, in: $0.allRuns) }
+            let offersCheckIn = MatchedToday.offersCheckIn(session, matched: matched != nil, today: today, answered: inbox?.answered ?? [])
+            let askAfter: (() -> Void)? = offersCheckIn ? { afterCheckIn = inbox?.checkInTarget(sessionId: sessionId) } : nil
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
                 busy: busy || inbox?.busy == true, error: error ?? inbox?.error, checkedIn: checkedIn,
@@ -58,8 +62,15 @@ struct SessionScreen: View {
                 canMatchRun: inbox?.allRunsLoaded == true && matched == nil && RunMatchModel.canMatch(session, today: today),
                 onPickRun: { pickingRun = true },
                 onUnmatchRun: { if let inbox { Task { await inbox.unmatch(sessionId: sessionId) } } },
-                onRunDetails: { runDetails = matched?.value2.id }
+                onRunDetails: { runDetails = matched?.value2.id },
+                onAfterCheckIn: askAfter
             )
+            .fullScreenCover(item: $afterCheckIn) { target in
+                CheckInScreen(plans: plans, target: target, backTitle: "Session", onClose: { saved in
+                    if saved { inbox?.markCheckedIn(target.id) }
+                    afterCheckIn = nil
+                })
+            }
             .fullScreenCover(isPresented: Binding(get: { runDetails != nil }, set: { if !$0 { runDetails = nil } })) {
                 if let inbox, let id = runDetails {
                     RunDetailsScreen(inbox: inbox, plans: plans, activityId: id, heart: APIMaxHeartRateService(client: APIConfiguration.liveSignedInClient()), summaries: APIRunSummaryService(client: APIConfiguration.liveSignedInClient()), onClose: { runDetails = nil })

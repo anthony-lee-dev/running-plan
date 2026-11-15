@@ -11,6 +11,13 @@ enum InboxError: Error, Equatable {
     case server
 }
 
+/// What one upload came back with, by activity id: the session suggested for a run still in the inbox, and the session
+/// a run was matched to at once (issue #186).
+struct UploadOutcome: Equatable, Sendable {
+    var suggested: [String: String] = [:]
+    var matched: [String: String] = [:]
+}
+
 /// The activity endpoints the inbox uses.
 protocol InboxServing: Sendable {
     /// Activities waiting for review, newest first.
@@ -19,9 +26,18 @@ protocol InboxServing: Sendable {
     func allRuns() async throws -> [Components.Schemas.Activity]
     /// One upload of at most 200 records. Returns the suggested session per activity id.
     func upload(_ inputs: [Components.Schemas.ActivityInput]) async throws -> [String: String]
+    /// The same upload, asking the server to match a new run to its day's only planned session when `autoMatch` is set.
+    func upload(_ inputs: [Components.Schemas.ActivityInput], autoMatch: Bool) async throws -> UploadOutcome
     func confirm(sessionId: String, activityId: String) async throws -> Components.Schemas.MatchWriteResult
     func unmatch(sessionId: String) async throws -> Components.Schemas.SessionWriteResult
     func setDisposition(activityId: String, _ disposition: Components.Schemas.ActivityUpdate.dispositionPayload) async throws
+}
+
+extension InboxServing {
+    /// A service that does not match on upload answers with its suggestions only.
+    func upload(_ inputs: [Components.Schemas.ActivityInput], autoMatch: Bool) async throws -> UploadOutcome {
+        UploadOutcome(suggested: try await upload(inputs))
+    }
 }
 
 struct APIInboxService: InboxServing {
@@ -58,11 +74,19 @@ struct APIInboxService: InboxServing {
     }
 
     func upload(_ inputs: [Components.Schemas.ActivityInput]) async throws -> [String: String] {
-        let output = try await call { try await client.importActivities(body: .json(.init(activities: inputs))) }
+        try await upload(inputs, autoMatch: false).suggested
+    }
+
+    func upload(_ inputs: [Components.Schemas.ActivityInput], autoMatch: Bool) async throws -> UploadOutcome {
+        // The flag is left out when it is off, so a plain upload is the request it always was.
+        let output = try await call { try await client.importActivities(body: .json(.init(activities: inputs, autoMatch: autoMatch ? true : nil))) }
         switch output {
         case .ok(let ok):
             let results = try ok.body.json.results
-            return Dictionary(results.compactMap { r in r.suggestedSessionId.map { (r.activityId, $0) } }, uniquingKeysWith: { first, _ in first })
+            return UploadOutcome(
+                suggested: Dictionary(results.compactMap { r in r.suggestedSessionId.map { (r.activityId, $0) } }, uniquingKeysWith: { first, _ in first }),
+                matched: Dictionary(results.compactMap { r in r.matchedSessionId.map { (r.activityId, $0) } }, uniquingKeysWith: { first, _ in first })
+            )
         case .unauthorized: throw InboxError.signedOut
         case .forbidden: throw InboxError.forbidden
         case .badRequest, .contentTooLarge: throw InboxError.invalid

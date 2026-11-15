@@ -34,6 +34,9 @@ struct NextModel: Equatable {
         case finished, noMoreSessions
     }
 
+    /// The screen's title: today's date, "Wednesday, Oct 28" (issue #186 took "Ready when you are" away).
+    let title: String
+    /// Where the plan stands, above the title: "Week 4 of 10 · Build".
     let eyebrow: String
     /// Today's session, or the next one when today has none. Nil once the plan is finished.
     let focus: Focus?
@@ -62,7 +65,7 @@ struct NextModel: Equatable {
     init(schedule: PlanSchedule, progress: Components.Schemas.Progress? = nil) {
         let distance = DistanceDone(progress: progress, schedule: schedule)
         let today = schedule.today
-        let day = "\(Self.weekday(today)), \(PlanPreview.shortDate(today))"
+        title = "\(Self.weekday(today)), \(PlanPreview.shortDate(today))"
         // Only what is still to do today; a session done or skipped gives way to the next one.
         let todays = schedule.todaySessions.filter { $0.value2.status == .planned }
         // A run before strength when a day has both.
@@ -70,14 +73,14 @@ struct NextModel: Equatable {
 
         switch schedule.position {
         case .notStarted(let start):
-            eyebrow = "\(day) · Starts \(Self.weekday(start)), \(PlanPreview.shortDate(start))"
+            eyebrow = "Starts \(Self.weekday(start)), \(PlanPreview.shortDate(start))"
             focus = schedule.nextSession.map { Self.focus($0, label: "FIRST SESSION · \(Self.weekday($0.value2.date).uppercased()), \(PlanPreview.shortDate($0.value2.date).uppercased())") }
             week = []
             weekHeader = nil
             weekProgress = 0
             nextUp = nil
         case .finished:
-            eyebrow = "\(day) · Plan finished"
+            eyebrow = "Plan finished"
             focus = nil
             week = []
             weekHeader = nil
@@ -85,7 +88,7 @@ struct NextModel: Equatable {
             nextUp = nil
         case .week(let index):
             let phase = schedule.phase(ofWeek: index).map { " · \($0.title)" } ?? ""
-            eyebrow = "\(day) · Week \(index + 1) of \(schedule.weekCount)\(phase)"
+            eyebrow = "Week \(index + 1) of \(schedule.weekCount)\(phase)"
             if let todayMain {
                 focus = Self.focus(todayMain, label: "TODAY")
                 nextUp = schedule.nextSession.map { "Next up: \($0.value2.title ?? SessionSummary.effort($0.value2)), \(Self.weekday($0.value2.date)) · \(Self.size($0.value2))" }

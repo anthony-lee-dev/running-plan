@@ -193,3 +193,70 @@ describe("suggestedSessionId in the upload results", () => {
     expect(r).not.toHaveProperty("suggestedSessionId");
   });
 });
+
+describe("autoMatch on the upload (issue #186)", () => {
+  const send = async (activities: unknown[], autoMatch: unknown = true) => call("POST", "/v1/activities:batch", { activities, autoMatch });
+  const results = async (activities: unknown[], autoMatch: unknown = true) => ((await (await send(activities, autoMatch)).json()) as Json).results as Json[];
+  const session = async (sid: string) => ((await (await call("GET", `/v1/plans/${P}`)).json()) as Json).sessions.find((s: Json) => s.id === sid) as Json;
+  const inboxIds = async () => ((await (await call("GET", "/v1/activities?inbox=true")).json()) as Json).activities.map((a: Json) => a.id) as string[];
+  const D = "2026-11-02";
+  const S = id(204);
+
+  it("matches a new run to the day's only planned session: the session is done and the run has left the inbox", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, easy(S, D));
+    const [r] = await results([run(10, D)]);
+    expect(r).toMatchObject({ status: "created", matchedSessionId: S });
+    expect(r).not.toHaveProperty("suggestedSessionId");
+    expect(await session(S)).toMatchObject({ status: "done" });
+    expect(await inboxIds()).not.toContain(r!.activityId);
+    const stored = (await listed()).find((a) => a.id === r!.activityId)!;
+    expect(stored).toMatchObject({ disposition: "matched", match: { sessionId: S, status: "confirmed" } });
+  });
+
+  it("only suggests when the request does not ask, or says false", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, easy(S, D));
+    const [plain] = ((await (await call("POST", "/v1/activities:batch", { activities: [run(10, D)] })).json()) as Json).results as Json[];
+    expect(plain).toMatchObject({ suggestedSessionId: S });
+    expect(plain).not.toHaveProperty("matchedSessionId");
+    expect(await session(S)).toMatchObject({ status: "planned" });
+  });
+
+  it("does not match a run sent again: one the runner took off its session stays in the inbox", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, easy(S, D));
+    const [first] = await results([run(10, D)]);
+    expect((await call("DELETE", `/v1/sessions/${S}/match`)).status).toBe(200);
+    const [again] = await results([run(10, D)]);
+    expect(again).toMatchObject({ status: "duplicate", activityId: first!.activityId, suggestedSessionId: S });
+    expect(again).not.toHaveProperty("matchedSessionId");
+    expect(await session(S)).toMatchObject({ status: "planned" });
+  });
+
+  it("leaves a skipped session skipped and the run in the inbox", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, { ...easy(S, D), status: "skipped" });
+    expect(await session(S)).toMatchObject({ status: "skipped" });
+    const [r] = await results([run(10, D)]);
+    expect(r).not.toHaveProperty("matchedSessionId");
+    expect(r).not.toHaveProperty("suggestedSessionId");
+    expect(await session(S)).toMatchObject({ status: "skipped" });
+    expect(await inboxIds()).toContain(r!.activityId);
+  });
+
+  it("leaves two runs on one day, and a run on a day with nothing planned, in the inbox", async () => {
+    await call("POST", `/v1/plans/${P}/sessions`, easy(S, D));
+    const two = await results([run(10, D), { ...run(11, D), startedAt: `${D}T18:00:00-04:00` }, run(12, "2026-11-03")]);
+    for (const r of two) expect(r).not.toHaveProperty("matchedSessionId");
+    expect(two.filter((r) => r.suggestedSessionId === S)).toHaveLength(1);
+    expect(await session(S)).toMatchObject({ status: "planned" });
+  });
+
+  it("does not count a second run when the day's first is already waiting in the inbox", async () => {
+    // A1 waits in the inbox on S1's day (from beforeEach, uploaded without autoMatch).
+    const [r] = await results([{ ...run(13, "2026-10-28"), startedAt: "2026-10-28T18:00:00-04:00" }]);
+    expect(r).not.toHaveProperty("matchedSessionId");
+    expect(await session(S1)).toMatchObject({ status: "planned" });
+  });
+
+  it("answers 400 to an autoMatch that is not true or false", async () => {
+    expect((await send([run(10, D)], "yes")).status).toBe(400);
+  });
+});

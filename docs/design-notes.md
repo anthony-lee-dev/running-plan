@@ -144,6 +144,7 @@ operation ids; `scripts/test/design-notes.test.sh` checks this section against `
 | DK-Interview | Nothing: questions and answers stay on the device | Continue goes to the preview; "build my own plan" starts a blank plan, saved with `createPlan` after sign-in |
 | DK-Preview | `generatePlan` (no account; called again when an answer changes) | Save your plan: `startEmailSignIn`, `verifyEmailSignIn`, then `createPlan` |
 | DK-Next | Local store, refreshed by `sync`; `listPlans` on first launch to pick the active plan; `listProposals` and `getWeeklyReview` for the review-ready card; inbox count from `listActivities` | Make it easier, Move or skip: `updateSession` (`session.update`) |
+| DK-NextMatched | DK-Next after today's run was matched on import (issue #186): `importActivities`, asked to match, answers the matched session; the card is drawn from the plan's session and the run list (`listActivities`) | How did it feel?: `createCheckIn` (`checkin.create`); Not this session: `deleteMatch` (the run returns to the inbox) |
 | DK-Week | Local store, refreshed by `sync`; `getPlan` on first load of a plan | Add a session opens the editor; marking done or skipped: `updateSession` (`session.update`) |
 | DK-Whole | `getPlan`; per-week done distance and on-track badge from `getProgress` | Tap a week opens DK-Week for that week |
 | DK-Progress | `getProgress` | None |

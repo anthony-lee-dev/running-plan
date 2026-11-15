@@ -30,20 +30,51 @@ final class InboxStore {
         var id: String { session.value1.id }
     }
 
+    /// Sessions whose after-run check-in was saved on this device (issue #186): "How did it feel?" is not offered again.
+    private(set) var answered: Set<String> = []
+
     private let service: InboxServing
     private let health: HealthImporting
     private let plans: PlanStore
     private let now: () -> Date
     private let zone: () -> TimeZone
+    private let memory: CheckInMemory
+    /// A Health import is running: a second one started meanwhile (the root view imports on every foreground, the
+    /// inbox and the session page when they open) would upload the same new workouts twice.
+    private var importing = false
     /// How far back a Health import looks.
     static let lookbackDays = 30
 
-    init(service: InboxServing, health: HealthImporting, plans: PlanStore, now: @escaping () -> Date = Date.init, zone: @escaping () -> TimeZone = { .current }) {
+    init(
+        service: InboxServing, health: HealthImporting, plans: PlanStore, now: @escaping () -> Date = Date.init, zone: @escaping () -> TimeZone = { .current },
+        memory: CheckInMemory = CheckInMemory()
+    ) {
         self.service = service
         self.health = health
         self.plans = plans
         self.now = now
         self.zone = zone
+        self.memory = memory
+        answered = memory.answered
+    }
+
+    /// The "Done today" card on Next: today's done session with its matched run, until its check-in is saved.
+    func matchedToday(today: String) -> MatchedToday? {
+        guard allRunsLoaded else { return nil }
+        return MatchedToday(sessions: plans.plan?.value2.sessions ?? [], runs: allRuns, today: today, answered: answered)
+    }
+
+    /// The session and its matched run, for the check-in opened from Next or the session page.
+    func checkInTarget(sessionId: String) -> CheckInTarget? {
+        guard let session = plans.plan?.value2.sessions.first(where: { $0.value1.id == sessionId && $0.value1.deletedAt == nil }),
+              let run = RunMatchModel.matchedRun(for: sessionId, in: allRuns) else { return nil }
+        return CheckInTarget(session: session, activity: run.value1)
+    }
+
+    /// The after-run check-in of this session was saved.
+    func markCheckedIn(_ sessionId: String) {
+        memory.add(sessionId)
+        answered.insert(sessionId)
     }
 
     var healthAvailable: Bool { health.isAvailable }
@@ -71,6 +102,7 @@ final class InboxStore {
     func openSessionPage() async {
         await load()
         await loadAllRuns()
+        if allRunsLoaded, planMissesAMatch { await reloadPlan() }
     }
 
     func refresh() async {
@@ -127,13 +159,32 @@ final class InboxStore {
         if error == nil { error = importError }
     }
 
+    /// Uploads what Health has, asking the server to match a new run to its day's only planned session (issue #186).
+    /// When it matched one, the plan is read again so the session shows done everywhere.
     private func importFromHealth() async {
+        guard !importing else { return }
+        importing = true
+        defer { importing = false }
+        var matched = false
         await run {
             let since = Calendar.current.date(byAdding: .day, value: -Self.lookbackDays, to: self.now()) ?? self.now()
             for batch in HealthWorkoutMapper.batches(try await self.health.workouts(since: since)) {
-                self.suggestions.merge(try await self.service.upload(batch)) { _, new in new }
+                let outcome = try await self.service.upload(batch, autoMatch: true)
+                self.suggestions.merge(outcome.suggested) { _, new in new }
+                if !outcome.matched.isEmpty { matched = true }
             }
             self.lastSynced = self.now()
+        }
+        if matched { await reloadPlan() }
+    }
+
+    /// A run matched to a session the loaded plan does not show done: the server matched it and the reply never
+    /// arrived (the app went away mid-upload, or it timed out), and a later upload only says `duplicate`.
+    private var planMissesAMatch: Bool {
+        let sessions = plans.plan?.value2.sessions ?? []
+        return allRuns.contains { run in
+            guard run.value2.disposition == .matched, let id = run.value2.match?.sessionId else { return false }
+            return sessions.contains { $0.value1.id == id && $0.value1.deletedAt == nil && $0.value2.status == .planned }
         }
     }
 
@@ -178,18 +229,23 @@ final class InboxStore {
     /// The check-in was skipped, or saved: then Undo goes, since unmatching would leave the stored check-in feeding
     /// proposals for a session that is no longer done.
     func finishCheckIn(saved: Bool = false) {
+        if saved, let done = pendingCheckIn { markCheckedIn(done.id) }
         pendingCheckIn = nil
         if saved { lastConfirmed = nil }
     }
 
-    /// Takes the run off this session; it returns to the inbox and the session to planned.
-    func unmatch(sessionId: String) async {
+    /// Takes the run off this session; it returns to the inbox and the session to planned. Returns the sentence for
+    /// the screen when it failed (the caller's own, since `error` is shared with imports running meanwhile).
+    @discardableResult
+    func unmatch(sessionId: String) async -> String? {
         let ok = await run {
             let result = try await self.service.unmatch(sessionId: sessionId)
             self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
             self.lastConfirmed = nil
         }
-        if ok { await refreshLists() }
+        guard ok else { return error ?? "Something went wrong. Please try again." }
+        await refreshLists()
+        return nil
     }
 
     func undo() async {

@@ -91,8 +91,9 @@ enum LocalAPI {
     /// skips the interview, the preview and sign-in (about 40 s a test), so use it for every test that is not about
     /// those flows; `PreviewUITests`, `SignInAgainUITests` and `InterviewUITests` cover them in full. The account and
     /// plan come from the UI-test API's `/__test/seed`, `startingOn` is the plan's start date (today by default).
+    /// `runToday` also seeds a run from Health for today, matched on upload to today's session (issue #186).
     @MainActor
-    static func signedInApp(_ api: URL, startingOn start: Date = Date()) async throws -> XCUIApplication {
+    static func signedInApp(_ api: URL, startingOn start: Date = Date(), runToday: Bool = false) async throws -> XCUIApplication {
         let day = DateFormatter()
         day.calendar = Calendar(identifier: .gregorian)
         day.locale = Locale(identifier: "en_US_POSIX")
@@ -101,7 +102,9 @@ enum LocalAPI {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         let email = "ui-\(UUID().uuidString.prefix(8).lowercased())@example.com"
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["email": email, "today": day.string(from: start)])
+        var seedBody: [String: Any] = ["email": email, "today": day.string(from: start)]
+        if runToday { seedBody["runToday"] = true }
+        request.httpBody = try JSONSerialization.data(withJSONObject: seedBody)
         let (data, response) = try await send(request)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200, String(decoding: data, as: UTF8.self))
         let seed = try JSONDecoder().decode([String: String].self, from: data)

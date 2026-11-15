@@ -5,6 +5,8 @@ import SwiftUI
 struct CheckInScreen: View {
     let plans: PlanStore
     let target: InboxStore.CheckInTarget
+    /// Where the back link returns to: "Inbox" after a match confirmed there, "Next" or "Session" from those screens.
+    var backTitle = "Inbox"
     /// Closes the screen; true when the check-in was saved.
     let onClose: (_ saved: Bool) -> Void
     @State private var feeling: AfterFeeling?
@@ -16,7 +18,7 @@ struct CheckInScreen: View {
     var body: some View {
         CheckInView(
             model: CheckInModel(session: target.session.value2, activity: target.activity),
-            feeling: $feeling, pain: $pain, saving: saving, error: error,
+            feeling: $feeling, pain: $pain, saving: saving, error: error, backTitle: backTitle,
             onSave: save, onSkip: { onClose(false) }
         )
     }
@@ -39,6 +41,7 @@ struct CheckInView: View {
     @Binding var pain: Bool
     var saving = false
     var error: String?
+    var backTitle = "Inbox"
     var onSave: () -> Void = {}
     var onSkip: () -> Void = {}
 
@@ -48,14 +51,14 @@ struct CheckInView: View {
                 Button(action: onSkip) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
-                        Text("Inbox").font(.system(size: 16, weight: .semibold))
+                        Text(backTitle).font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundStyle(Palette.ink.color)
                     .frame(minHeight: Metrics.minTouchTarget)
                     .contentShape(Rectangle())
                 }
                 .padding(.leading, -6)
-                .accessibilityLabel("Back to Inbox")
+                .accessibilityLabel("Back to \(backTitle)")
                 header
                 planVsActual
                 checkIn
