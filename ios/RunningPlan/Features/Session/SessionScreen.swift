@@ -44,7 +44,7 @@ struct SessionScreen: View {
             let today = PreviewViewModel.localToday()
             let schedule = PlanSchedule(plan: plan, today: today)
             let matched = inbox.flatMap { RunMatchModel.matchedRun(for: sessionId, in: $0.allRuns) }
-            let offersCheckIn = Self.offersCheckIn(session, matched: matched != nil, today: today, answered: inbox?.answered ?? [])
+            let offersCheckIn = MatchedToday.offersCheckIn(session, matched: matched != nil, today: today, answered: inbox?.answered ?? [])
             let askAfter: (() -> Void)? = offersCheckIn ? { afterCheckIn = inbox?.checkInTarget(sessionId: sessionId) } : nil
             SessionView(
                 model: SessionSheetModel(schedule: schedule, session: session),
@@ -113,17 +113,6 @@ struct SessionScreen: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Palette.bg.color.ignoresSafeArea())
         }
-    }
-
-    /// How far back the check-in is still offered on a session's page.
-    static let checkInDays = 7
-
-    /// "How did it feel?" on the session page: a done session with its run, from the last week, not yet answered on
-    /// this device. Older sessions are left alone: an answer that late says little, and one may exist from before.
-    static func offersCheckIn(_ session: Components.Schemas.Session, matched: Bool, today: String, answered: Set<String>) -> Bool {
-        guard matched, session.value2.status == .done, !answered.contains(session.value1.id) else { return false }
-        let age = PlanPreview.dayNumber(today) - PlanPreview.dayNumber(session.value2.date)
-        return age >= 0 && age <= checkInDays
     }
 
     private func adjust(_ adjustment: QuickAdjustment, _ session: Components.Schemas.Session) {

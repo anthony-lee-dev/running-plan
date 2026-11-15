@@ -114,6 +114,14 @@ describe("autoMatches (issue #186)", () => {
     expect(autoMatches([short], [short], [sess("s1", D, "long", 90)]).size).toBe(0);
   });
 
+  it("never matches a walk, a ride or another workout to a cross-training session: those keep their suggestion", () => {
+    for (const type of ["walking", "cycling", "swimming", "other"] as const) {
+      const w = run("a9", D, 1800, type);
+      expect(autoMatches([w], [w], [sess("cus", D, "custom")]).size).toBe(0);
+      expect(suggestSessions([w], [sess("cus", D, "custom")]).get("a9")).toBe("cus");
+    }
+  });
+
   it("only matches the activities it is asked about, and never across days", () => {
     const old = run("a0", "2026-10-27");
     expect(autoMatches([one], [old, one], [sess("s0", "2026-10-27"), sess("s1", D)])).toEqual(new Map([["a1", "s1"]]));

@@ -39,8 +39,9 @@ final class InboxStore {
     private let now: () -> Date
     private let zone: () -> TimeZone
     private let memory: CheckInMemory
-    /// Set while a Health import runs, when the server matched one of its runs: the plan is read again afterwards.
-    private var importMatched = false
+    /// A Health import is running: a second one started meanwhile (the root view imports on every foreground, the
+    /// inbox and the session page when they open) would upload the same new workouts twice.
+    private var importing = false
     /// How far back a Health import looks.
     static let lookbackDays = 30
 
@@ -101,6 +102,7 @@ final class InboxStore {
     func openSessionPage() async {
         await load()
         await loadAllRuns()
+        if allRunsLoaded, planMissesAMatch { await reloadPlan() }
     }
 
     func refresh() async {
@@ -160,22 +162,29 @@ final class InboxStore {
     /// Uploads what Health has, asking the server to match a new run to its day's only planned session (issue #186).
     /// When it matched one, the plan is read again so the session shows done everywhere.
     private func importFromHealth() async {
-        importMatched = false
+        guard !importing else { return }
+        importing = true
+        defer { importing = false }
+        var matched = false
         await run {
             let since = Calendar.current.date(byAdding: .day, value: -Self.lookbackDays, to: self.now()) ?? self.now()
             for batch in HealthWorkoutMapper.batches(try await self.health.workouts(since: since)) {
                 let outcome = try await self.service.upload(batch, autoMatch: true)
                 self.suggestions.merge(outcome.suggested) { _, new in new }
-                if !outcome.matched.isEmpty { self.importMatched = true }
+                if !outcome.matched.isEmpty { matched = true }
             }
             self.lastSynced = self.now()
         }
-        if importMatched {
-            importMatched = false
-            // Keep the import's own error, if any, over the reload's.
-            let importError = error
-            await reloadPlan()
-            if error == nil { error = importError }
+        if matched { await reloadPlan() }
+    }
+
+    /// A run matched to a session the loaded plan does not show done: the server matched it and the reply never
+    /// arrived (the app went away mid-upload, or it timed out), and a later upload only says `duplicate`.
+    private var planMissesAMatch: Bool {
+        let sessions = plans.plan?.value2.sessions ?? []
+        return allRuns.contains { run in
+            guard run.value2.disposition == .matched, let id = run.value2.match?.sessionId else { return false }
+            return sessions.contains { $0.value1.id == id && $0.value1.deletedAt == nil && $0.value2.status == .planned }
         }
     }
 
@@ -225,14 +234,18 @@ final class InboxStore {
         if saved { lastConfirmed = nil }
     }
 
-    /// Takes the run off this session; it returns to the inbox and the session to planned.
-    func unmatch(sessionId: String) async {
+    /// Takes the run off this session; it returns to the inbox and the session to planned. Returns the sentence for
+    /// the screen when it failed (the caller's own, since `error` is shared with imports running meanwhile).
+    @discardableResult
+    func unmatch(sessionId: String) async -> String? {
         let ok = await run {
             let result = try await self.service.unmatch(sessionId: sessionId)
             self.plans.replace(session: result.session, planContentRevision: result.planContentRevision, warnings: result.warnings)
             self.lastConfirmed = nil
         }
-        if ok { await refreshLists() }
+        guard ok else { return error ?? "Something went wrong. Please try again." }
+        await refreshLists()
+        return nil
     }
 
     func undo() async {

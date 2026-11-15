@@ -7,7 +7,7 @@ const ATTEMPTS = 3;
 
 /**
  * `found` says whether the state has what the change needs; when it does not, the result is undefined (a 404 for
- * the routes). Throws MatchConflictError when the state kept moving.
+ * the routes). Throws MatchConflictError when the state kept moving through all `attempts`.
  */
 export async function changeMatch(
   deps: Deps,
@@ -15,6 +15,7 @@ export async function changeMatch(
   ref: { sessionId?: string; activityId?: string },
   change: MatchChange,
   found: (s: MatchState) => boolean,
+  attempts = ATTEMPTS,
 ): Promise<MatchEffects | undefined> {
   for (let attempt = 1; ; attempt++) {
     const state = await deps.matches.load(userId, ref);
@@ -25,7 +26,7 @@ export async function changeMatch(
       await deps.matches.apply(userId, state, effects, now);
       return effects;
     } catch (error) {
-      if (!(error instanceof MatchConflictError) || attempt >= ATTEMPTS) throw error;
+      if (!(error instanceof MatchConflictError) || attempt >= attempts) throw error;
     }
   }
 }

@@ -35,6 +35,17 @@ struct MatchedToday: Equatable {
         source = Self.sourceLine(run.value1)
     }
 
+    /// How far back the check-in is still offered on a session's page.
+    static let checkInDays = 7
+
+    /// "How did it feel?" on the session page: a done session with its run, from the last week, not yet answered on
+    /// this device. Older sessions are left alone: an answer that late says little, and one may exist from before.
+    static func offersCheckIn(_ session: Components.Schemas.Session, matched: Bool, today: String, answered: Set<String>) -> Bool {
+        guard matched, session.value2.status == .done, !answered.contains(session.value1.id) else { return false }
+        let age = PlanPreview.dayNumber(today) - PlanPreview.dayNumber(session.value2.date)
+        return age >= 0 && age <= checkInDays
+    }
+
     /// Distance and time, then the pace for a run. No heart rate: the card stays one line.
     static func numbers(_ run: Components.Schemas.ActivityFields) -> String {
         let pace = InboxModel.detail(run).components(separatedBy: " · ").first { $0.hasSuffix("/km average") }

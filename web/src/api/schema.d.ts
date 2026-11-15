@@ -1213,7 +1213,7 @@ export interface components {
         ActivityBatchRequest: {
             activities: components["schemas"]["ActivityInput"][];
             /**
-             * @description Confirm the suggested match at once when there is nothing to decide: an activity created by this upload, the only one of its kind (run, strength, other) waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
+             * @description Confirm the suggested match at once when there is nothing to decide: a run or strength workout created by this upload, the only one of its kind waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
              * @default false
              */
             autoMatch: boolean;

@@ -20,6 +20,6 @@ Part of the iOS guide (`ios/CLAUDE.md` has the index). Read this before changing
   feeding proposals for a session no longer done. Opening the inbox drops a check-in left pending from an earlier visit.
 - Issue #186: the check-in also opens from Next's "Done today" card ("How did it feel?", back link "Next") and from a
   session page's matched run (`session.run.checkin`, back link "Session") for a done session of the last 7 days
-  (`SessionScreen.offersCheckIn`). A saved check-in is remembered in `CheckInMemory` (see the inbox note), which is what
+  (`MatchedToday.offersCheckIn`). A saved check-in is remembered in `CheckInMemory` (see the inbox note), which is what
   stops the offer; "Skip for now" keeps it. Still not wired: after a re-map from the all-runs list.
 - UI-test request counts are for the whole run (one server), so compare before and after an action.

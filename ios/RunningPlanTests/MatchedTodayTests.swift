@@ -76,13 +76,13 @@ struct MatchedTodayTests {
     @Test func theSessionPageOffersTheCheckInForAWeek() throws {
         let (all, id) = try sessions()
         let session = try #require(all.first { $0.value1.id == id })
-        #expect(SessionScreen.offersCheckIn(session, matched: true, today: today, answered: []))
-        #expect(SessionScreen.offersCheckIn(session, matched: true, today: "2026-11-04", answered: []))
-        #expect(!SessionScreen.offersCheckIn(session, matched: true, today: "2026-11-05", answered: []))
-        #expect(!SessionScreen.offersCheckIn(session, matched: false, today: today, answered: []))
-        #expect(!SessionScreen.offersCheckIn(session, matched: true, today: today, answered: [id]))
+        #expect(MatchedToday.offersCheckIn(session, matched: true, today: today, answered: []))
+        #expect(MatchedToday.offersCheckIn(session, matched: true, today: "2026-11-04", answered: []))
+        #expect(!MatchedToday.offersCheckIn(session, matched: true, today: "2026-11-05", answered: []))
+        #expect(!MatchedToday.offersCheckIn(session, matched: false, today: today, answered: []))
+        #expect(!MatchedToday.offersCheckIn(session, matched: true, today: today, answered: [id]))
         let (planned, plannedId) = try sessions(status: .planned)
         let open = try #require(planned.first { $0.value1.id == plannedId })
-        #expect(!SessionScreen.offersCheckIn(open, matched: true, today: today, answered: []))
+        #expect(!MatchedToday.offersCheckIn(open, matched: true, today: today, answered: []))
     }
 }

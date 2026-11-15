@@ -89,10 +89,11 @@ export function activityRoutes(deps: Deps) {
               const effects = await changeMatch(deps, userId, { sessionId, activityId }, { kind: "put", sessionId, activityId, status: "confirmed" }, (s) =>
                 // Still planned and free: the session may have been matched, skipped or deleted since the candidates were read.
                 s.sessions.some((x) => x.id === sessionId && x.status === "planned") && s.activities.some((x) => x.id === activityId) && s.matches.length === 0,
+                1, // one try: a conflict leaves the run in the inbox, and ten matches stay at two queries each
               );
               if (effects?.putMatch) matched.set(activityId, sessionId);
             } catch (error) {
-              // The state kept moving: leave this one in the inbox with its suggestion.
+              // The state moved under us: leave this one in the inbox with its suggestion.
               if (!(error instanceof MatchConflictError)) throw error;
             }
           }

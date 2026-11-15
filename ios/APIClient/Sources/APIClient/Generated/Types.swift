@@ -4445,7 +4445,7 @@ public enum Components {
         public struct ActivityBatchRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ActivityBatchRequest/activities`.
             public var activities: [Components.Schemas.ActivityInput]
-            /// Confirm the suggested match at once when there is nothing to decide: an activity created by this upload, the only one of its kind (run, strength, other) waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
+            /// Confirm the suggested match at once when there is nothing to decide: a run or strength workout created by this upload, the only one of its kind waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
             ///
             /// - Remark: Generated from `#/components/schemas/ActivityBatchRequest/autoMatch`.
             public var autoMatch: Swift.Bool?
@@ -4453,7 +4453,7 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - activities:
-            ///   - autoMatch: Confirm the suggested match at once when there is nothing to decide: an activity created by this upload, the only one of its kind (run, strength, other) waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
+            ///   - autoMatch: Confirm the suggested match at once when there is nothing to decide: a run or strength workout created by this upload, the only one of its kind waiting on its local date, with exactly one planned, unmatched session that fits on that date. Skipped and done sessions are never matched, and nothing is matched across days. At most 10 per request; the rest keep their suggestion.
             public init(
                 activities: [Components.Schemas.ActivityInput],
                 autoMatch: Swift.Bool? = nil

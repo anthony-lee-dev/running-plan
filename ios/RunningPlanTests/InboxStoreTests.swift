@@ -215,7 +215,12 @@ struct InboxStoreTests {
         await plans.load()
         let waiting = try activities ?? [activityFixture(id: "a1", date: "2026-10-26")]
         let service = FakeService(waiting: waiting, session: monday)
-        let store = InboxStore(service: service, health: health, plans: plans, now: { Date(timeIntervalSince1970: 1_793_080_000) }, zone: { TimeZone(identifier: "UTC")! })
+        // Its own defaults, never the standard ones: a saved check-in is remembered there.
+        let defaults = try #require(UserDefaults(suiteName: "InboxStoreTests.\(UUID().uuidString)"))
+        let store = InboxStore(
+            service: service, health: health, plans: plans, now: { Date(timeIntervalSince1970: 1_793_080_000) }, zone: { TimeZone(identifier: "UTC")! },
+            memory: CheckInMemory(defaults: defaults)
+        )
         return (store, service, plans, monday.value1.id)
     }
 
@@ -242,6 +247,34 @@ struct InboxStoreTests {
         await store.load()
 
         #expect(plans.plan?.value2.sessions.first { $0.value1.id == mondayId }?.value2.status == .planned, "The plan was read again")
+    }
+
+    // The reply to the matching upload was lost (the app went away mid-upload): the run list says matched while the
+    // plan still shows the session planned, and that alone reloads the plan.
+    @Test func aMatchTheReplyNeverReportedStillReloadsThePlan() async throws {
+        let (store, service, plans, mondayId) = try await make()
+        let before = try #require(plans.plan?.value1.value3.contentRevision)
+        let monday = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
+        // A local revision the loader does not have, so a reload shows as the loader's revision coming back.
+        plans.replace(session: monday, planContentRevision: before + 40, warnings: [])
+        await service.setEverything([try activityFixture(id: "a1", date: "2026-10-26", matchedSession: mondayId, disposition: "matched")])
+
+        await store.openSessionPage()
+
+        #expect(plans.plan?.value1.value3.contentRevision == before, "The plan was read again from the loader")
+    }
+
+    @Test func runsThatAgreeWithThePlanDoNotReloadIt() async throws {
+        let (store, service, plans, mondayId) = try await make()
+        let before = try #require(plans.plan?.value1.value3.contentRevision)
+        var monday = try #require(plans.plan?.value2.sessions.first { $0.value1.id == mondayId })
+        monday.value2.status = .done
+        plans.replace(session: monday, planContentRevision: before + 40, warnings: [])
+        await service.setEverything([try activityFixture(id: "a1", date: "2026-10-26", matchedSession: mondayId, disposition: "matched")])
+
+        await store.openSessionPage()
+
+        #expect(plans.plan?.value1.value3.contentRevision == before + 40)
     }
 
     @Test func anImportThatMatchedNothingLeavesThePlanAlone() async throws {

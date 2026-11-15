@@ -66,12 +66,15 @@ const kindOf = (workout: WorkoutType): Kind => (workout === "running" ? "run" : 
  * upload created; `waiting` is every activity in the inbox on their dates (the created ones among them); `sessions`
  * are the planned, unmatched candidates. An activity is matched only when nothing is left to decide: it is the only
  * one of its kind waiting on its local date, exactly one candidate on that date fits its type, and the planned time
- * passes the suggestion's check. Never across days. Skipped and done sessions are not candidates at all.
+ * passes the suggestion's check. Runs and strength workouts only; other workouts keep their suggestion. Never across
+ * days. Skipped and done sessions are not candidates at all.
  */
 export function autoMatches(created: SuggestActivity[], waiting: SuggestActivity[], sessions: SuggestSession[]): Map<string, string> {
   const out = new Map<string, string>();
   for (const a of created) {
     if (out.size >= AUTO_MATCH_LIMIT) break;
+    // A walk or a ride on the day of a cross-training session is too weak a sign to mark it done unasked.
+    if (kindOf(a.workoutType) === "other") continue;
     const sameKind = waiting.filter((w) => w.localDate === a.localDate && kindOf(w.workoutType) === kindOf(a.workoutType));
     if (sameKind.length !== 1 || sameKind[0]!.id !== a.id) continue;
     const fitting = sessions.filter((s) => s.date === a.localDate && fits(a.workoutType, s.type));

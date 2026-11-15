@@ -97,8 +97,7 @@ struct NextScreen: View {
         unmatching = true
         matchError = nil
         Task {
-            await inbox.unmatch(sessionId: id)
-            matchError = inbox.error
+            matchError = await inbox.unmatch(sessionId: id)
             unmatching = false
         }
     }
