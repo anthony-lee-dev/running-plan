@@ -2,17 +2,17 @@
 // an extra run or ignored. The rules are in domain/matches.ts; the store writes each change in one transaction.
 import { Hono, type Context } from "hono";
 import { parseCheckInCreate, sameCheckIn } from "../domain/checkins";
-import { planMatchChange, type MatchChange, type MatchState } from "../domain/matches";
-import { MatchConflictError, type Deps } from "../ports";
+import type { MatchChange, MatchState } from "../domain/matches";
+import type { Deps } from "../ports";
 import { requireScope, type AuthVariables } from "./auth";
 import { activityView } from "./activities";
+import { changeMatch } from "./match-change";
 import { sessionView, warningsFor } from "./plans";
 import { problem } from "./problem";
 import { raiseForPain } from "./proposals";
 import { readBody } from "./validate";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ATTEMPTS = 3;
 
 export function matchRoutes(deps: Deps) {
   const app = new Hono<{ Variables: AuthVariables }>();
@@ -20,24 +20,8 @@ export function matchRoutes(deps: Deps) {
   const notFound = (c: Context) => problem(c, 404, "not_found", "Not found");
   const invalid = (c: Context, message: string) => problem(c, 400, "bad_request", message);
 
-  /**
-   * Loads, decides and writes, again from a fresh read when something changed in between. `found` says whether the
-   * state has what the change needs; when it does not, the result is undefined (a 404).
-   */
-  async function run(userId: string, ref: { sessionId?: string; activityId?: string }, change: MatchChange, found: (s: MatchState) => boolean) {
-    for (let attempt = 1; ; attempt++) {
-      const state = await deps.matches.load(userId, ref);
-      if (!found(state)) return undefined;
-      const now = deps.clock.now().toISOString();
-      const effects = planMatchChange(state, change, now);
-      try {
-        await deps.matches.apply(userId, state, effects, now);
-        return effects;
-      } catch (error) {
-        if (!(error instanceof MatchConflictError) || attempt >= ATTEMPTS) throw error;
-      }
-    }
-  }
+  const run = (userId: string, ref: { sessionId?: string; activityId?: string }, change: MatchChange, found: (s: MatchState) => boolean) =>
+    changeMatch(deps, userId, ref, change, found);
 
   async function sessionResult(userId: string, sessionId: string) {
     const got = await deps.plans.getSession(userId, sessionId);

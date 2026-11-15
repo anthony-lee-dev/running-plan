@@ -340,6 +340,16 @@ export function apiContract(name: string, setup: () => Promise<ContractTarget>) 
       await ok("POST /v1/sessions/{sessionId}/checkins", C, 200, { token, body: checkIn });
       await rejected("POST /v1/sessions/{sessionId}/checkins", C, { token, body: { id: id(302), when: "after", feel: 3, extra: 1 } }, "/extra");
       await ok("POST /v1/sessions/{sessionId}/checkins", `/v1/sessions/${id(299)}/checkins`, 404, { token, body: { id: id(303), when: "after", feel: 3 } });
+
+      // Issue #186: an upload that asks for it matches the day's only planned session at once.
+      await ok("POST /v1/plans/{planId}/sessions", `/v1/plans/${id(101)}/sessions`, 201, { token, body: easy(13, "2026-11-12") });
+      const auto = await ok("POST /v1/activities:batch", batch, 200, { token, body: { activities: [run(9, "2026-11-12")], autoMatch: true } });
+      expect(auto.json.results[0]).toMatchObject({ status: "created", matchedSessionId: id(213) });
+      const inboxAfter = await ok("GET /v1/activities", "/v1/activities?inbox=true", 200, { token });
+      expect(inboxAfter.json.activities.map((a: Json) => a.id)).not.toContain(auto.json.results[0].activityId);
+      const again = await ok("POST /v1/activities:batch", batch, 200, { token, body: { activities: [run(9, "2026-11-12")], autoMatch: true } });
+      expect(again.json.results[0]).toMatchObject({ status: "duplicate", activityId: auto.json.results[0].activityId });
+      await rejected("POST /v1/activities:batch", batch, { token, body: { activities: [run(9, "2026-11-12")], autoMatch: "yes" } }, "/autoMatch");
     });
 
     it("sync: push, conflict, duplicate, pull and forbidden shapes", async () => {

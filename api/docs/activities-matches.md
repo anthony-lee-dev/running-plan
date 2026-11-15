@@ -25,3 +25,14 @@ Part of the API guide (`api/CLAUDE.md` has the index). Read this before changing
   intervals/tempo, strength to strength, other types to custom, never rest; planned time (`plannedTimeSec`) within a
   factor of 2 of the duration (a session with no planned time is allowed but ranks last); closest fit first, and a
   session is suggested to at most one activity per batch. Starting values for the coach review (H.1).
+- Automatic matching (issue #186, `autoMatches` in `src/domain/suggestions.ts`): an upload with `autoMatch: true`
+  confirms the match in the same request and answers `matchedSessionId` in place of `suggestedSessionId`. Only for an
+  activity this upload **created** (a run the runner took off its session is sent again on every import and must
+  stay in the inbox), when it is the only one of its kind (run, strength, other) waiting on its local date, counting
+  what was already in the inbox, and exactly one candidate fits. Candidates are the suggestion's: planned and
+  unmatched, so a skipped or done session is never matched, and never across days (the human's call: simple and
+  expected). The flag is the client's: the iOS app sends it for Health imports and not for a run typed in by hand,
+  which is why every older test that uploads and then confirms still holds. Each match is the usual load, decide,
+  write (`changeMatch` in `src/http/match-change.ts`, shared with the match routes), two queries each, so at most
+  `AUTO_MATCH_LIMIT` (10) per request; the rest keep their suggestion. A session that stopped being planned and free
+  between the candidates query and the write is left alone.

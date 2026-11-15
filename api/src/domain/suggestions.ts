@@ -54,3 +54,30 @@ export function suggestSessions(activities: SuggestActivity[], sessions: Suggest
   }
   return out;
 }
+
+/** Auto-matches per upload, so a first import of many runs stays within the request's query budget. Starting value. */
+export const AUTO_MATCH_LIMIT = 10;
+
+type Kind = "run" | "strength" | "other";
+const kindOf = (workout: WorkoutType): Kind => (workout === "running" ? "run" : workout === "strength" ? "strength" : "other");
+
+/**
+ * The matches to confirm without asking (issue #186), activity id to session id. `created` are the activities this
+ * upload created; `waiting` is every activity in the inbox on their dates (the created ones among them); `sessions`
+ * are the planned, unmatched candidates. An activity is matched only when nothing is left to decide: it is the only
+ * one of its kind waiting on its local date, exactly one candidate on that date fits its type, and the planned time
+ * passes the suggestion's check. Never across days. Skipped and done sessions are not candidates at all.
+ */
+export function autoMatches(created: SuggestActivity[], waiting: SuggestActivity[], sessions: SuggestSession[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const a of created) {
+    if (out.size >= AUTO_MATCH_LIMIT) break;
+    const sameKind = waiting.filter((w) => w.localDate === a.localDate && kindOf(w.workoutType) === kindOf(a.workoutType));
+    if (sameKind.length !== 1 || sameKind[0]!.id !== a.id) continue;
+    const fitting = sessions.filter((s) => s.date === a.localDate && fits(a.workoutType, s.type));
+    if (fitting.length !== 1) continue;
+    const sessionId = suggestSessions([a], fitting).get(a.id);
+    if (sessionId !== undefined) out.set(a.id, sessionId);
+  }
+  return out;
+}

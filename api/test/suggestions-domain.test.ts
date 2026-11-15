@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { suggestSessions, type SuggestActivity, type SuggestSession } from "../src/domain/suggestions";
+import { AUTO_MATCH_LIMIT, autoMatches, suggestSessions, type SuggestActivity, type SuggestSession } from "../src/domain/suggestions";
 
 const run = (id: string, localDate: string, durationSec = 1800, workoutType: SuggestActivity["workoutType"] = "running"): SuggestActivity => ({ id, localDate, durationSec, workoutType });
 const sess = (id: string, date: string, type: SuggestSession["type"] = "easy", minutes = 30): SuggestSession => ({
@@ -80,5 +80,48 @@ describe("suggestSessions", () => {
         }
       }),
     );
+  });
+});
+
+describe("autoMatches (issue #186)", () => {
+  const D = "2026-10-28";
+  const one = run("a1", D);
+
+  it("matches the only waiting run of the day to the only planned session that fits", () => {
+    expect(autoMatches([one], [one], [sess("s1", D), sess("s2", "2026-10-29")])).toEqual(new Map([["a1", "s1"]]));
+  });
+
+  it("leaves two runs on one day to the runner, also when the other was uploaded earlier", () => {
+    const evening = run("a2", D, 1500);
+    expect(autoMatches([one, evening], [one, evening], [sess("s1", D)]).size).toBe(0);
+    expect(autoMatches([evening], [one, evening], [sess("s1", D)]).size).toBe(0);
+  });
+
+  it("leaves a day with two sessions that fit to the runner", () => {
+    expect(autoMatches([one], [one], [sess("s1", D), sess("s2", D, "tempo", 40)]).size).toBe(0);
+  });
+
+  it("counts by kind: a strength workout the same day does not get in the way of the run", () => {
+    const lift = run("a2", D, 1800, "strength");
+    const sessions = [sess("s1", D), sess("str", D, "strength")];
+    expect(autoMatches([one, lift], [one, lift], sessions)).toEqual(new Map([["a1", "s1"], ["a2", "str"]]));
+  });
+
+  it("does not match the wrong type, a day with no session, or a duration far from the plan", () => {
+    expect(autoMatches([one], [one], [sess("str", D, "strength")]).size).toBe(0);
+    expect(autoMatches([one], [one], [sess("s1", "2026-10-29")]).size).toBe(0);
+    const short = run("a3", D, 10 * 60);
+    expect(autoMatches([short], [short], [sess("s1", D, "long", 90)]).size).toBe(0);
+  });
+
+  it("only matches the activities it is asked about, and never across days", () => {
+    const old = run("a0", "2026-10-27");
+    expect(autoMatches([one], [old, one], [sess("s0", "2026-10-27"), sess("s1", D)])).toEqual(new Map([["a1", "s1"]]));
+  });
+
+  it("stops at the limit", () => {
+    const days = Array.from({ length: AUTO_MATCH_LIMIT + 3 }, (_, i) => `2026-11-${String(i + 1).padStart(2, "0")}`);
+    const runs = days.map((d, i) => run(`a${i}`, d));
+    expect(autoMatches(runs, runs, days.map((d, i) => sess(`s${i}`, d))).size).toBe(AUTO_MATCH_LIMIT);
   });
 });
